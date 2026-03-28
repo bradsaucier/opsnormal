@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { expect, test } from '@playwright/test';
 
 function buildImportPayload(todayKey: string) {
@@ -30,7 +31,7 @@ test.describe('OpsNormal import workflow', () => {
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-import.json',
       mimeType: 'application/json',
-      buffer: new TextEncoder().encode(JSON.stringify(buildImportPayload(todayKey)))
+      buffer: Buffer.from(JSON.stringify(buildImportPayload(todayKey)), 'utf-8')
     });
 
     await expect(page.getByRole('heading', { name: 'Import ready' })).toBeVisible();
@@ -45,7 +46,7 @@ test.describe('OpsNormal import workflow', () => {
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-invalid.json',
       mimeType: 'application/json',
-      buffer: new TextEncoder().encode(
+      buffer: Buffer.from(
         JSON.stringify({
           app: 'OpsNormal',
           schemaVersion: 1,
@@ -58,7 +59,8 @@ test.describe('OpsNormal import workflow', () => {
               updatedAt: '2026-03-28T12:00:00.000Z'
             }
           ]
-        })
+        }),
+        'utf-8'
       )
     });
 
