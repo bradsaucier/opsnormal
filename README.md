@@ -10,6 +10,9 @@ LICENSE : MIT
 ```
 
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
+[![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
+![Local-Only](https://img.shields.io/badge/Local--Only-No%20Cloud-0f766e?style=flat-square)
+![Offline-Capable](https://img.shields.io/badge/Offline--Capable-PWA-166534?style=flat-square)
 
 ---
 
