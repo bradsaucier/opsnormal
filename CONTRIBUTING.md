@@ -1,0 +1,40 @@
+# Contributing to OpsNormal
+
+Thank you for contributing.
+
+## Operating constraints
+
+OpsNormal is intentionally small.
+Every change should preserve these boundaries:
+
+1. Keep the app local-only.
+2. Do not add accounts, analytics, cloud sync, or background services.
+3. Preserve the fixed five-sector model in the current product scope.
+4. Preserve offline-first behavior and export as the recovery path.
+5. Do not rely on color alone to communicate state.
+
+## Local setup
+
+```bash
+npm ci
+npm run dev
+```
+
+## Quality gates
+
+Run these before opening a pull request:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
+```
+
+## Pull requests
+
+1. Keep changes scoped and explain the operational reason for the change.
+2. Update tests and docs when behavior changes.
+3. Do not commit build output, coverage output, or local tooling artifacts.
+4. Keep language clinical and professional throughout the repo.

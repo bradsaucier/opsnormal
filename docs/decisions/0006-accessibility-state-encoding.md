@@ -1,0 +1,17 @@
+# ADR 0006 - State encoding beyond color
+
+## Status
+
+Accepted
+
+## Context
+
+The app uses a compact grid. Color-only state encoding would fail accessibility expectations and reduce legibility under stress.
+
+## Decision
+
+Encode status through text plus color: N for nominal, D for degraded, and dash for unmarked.
+
+## Consequences
+
+The interface remains readable for more users and aligns with the project requirement for operational clarity.
