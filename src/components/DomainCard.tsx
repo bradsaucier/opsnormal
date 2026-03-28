@@ -19,7 +19,7 @@ export function DomainCard({ sector, status, busy = false, onCycle }: DomainCard
       type="button"
       onClick={() => void onCycle(sector.id)}
       disabled={busy}
-      className="group flex min-h-28 w-full flex-col justify-between rounded-xl border border-white/10 bg-zinc-950/70 p-4 text-left transition hover:border-emerald-400/40 hover:bg-zinc-900/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-wait disabled:opacity-70"
+      className="group flex min-h-28 w-full flex-col justify-between rounded-lg border border-white/10 bg-zinc-950/70 p-4 text-left transition hover:border-emerald-400/40 hover:bg-zinc-900/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-wait disabled:opacity-70"
       aria-label={`${sector.label}. Current state ${statusLabel}. Activate to change to ${nextStatusLabel}.`}
     >
       <div className="flex items-start justify-between gap-4">

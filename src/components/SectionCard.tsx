@@ -8,7 +8,7 @@ interface SectionCardProps extends PropsWithChildren {
 
 export function SectionCard({ title, eyebrow, meta, children }: SectionCardProps) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-black/35 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] sm:p-5">
+    <section className="tactical-panel rounded-lg border border-emerald-400/15 bg-black/40 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] sm:p-5">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {eyebrow ? (
