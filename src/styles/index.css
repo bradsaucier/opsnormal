@@ -38,6 +38,32 @@ button {
   color: #ecfdf5;
 }
 
+.tactical-panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    inset 0 1px 0 rgba(16, 185, 129, 0.25),
+    inset 0 0 0 1px rgba(16, 185, 129, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.tactical-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top left / 8px 1px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top left / 1px 8px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top right / 8px 1px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top right / 1px 8px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom left / 8px 1px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom left / 1px 8px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom right / 8px 1px no-repeat,
+    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom right / 1px 8px no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
