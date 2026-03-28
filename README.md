@@ -1,6 +1,15 @@
 # OpsNormal
 
-Offline-first personal readiness tracker for daily balance across work or school, household, relationships, body, and rest.
+```yaml
+STATUS  : OPERATIONALLY READY
+AUTHOR  : Bradley Saucier, SMSgt, USAF (Ret.)
+SCOPE   : Offline-first personal readiness tracker for daily balance
+LICENSE : MIT
+```
+
+[![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
+
+---
 
 ## Executive Summary
 
