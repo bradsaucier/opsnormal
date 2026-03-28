@@ -64,6 +64,28 @@ button {
     linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom right / 1px 8px no-repeat;
 }
 
+@layer utilities {
+  @utility clip-notched {
+    --notch: 12px;
+    clip-path: polygon(
+      var(--notch) 0,
+      100% 0,
+      100% calc(100% - var(--notch)),
+      calc(100% - var(--notch)) 100%,
+      0 100%,
+      0 var(--notch)
+    );
+  }
+
+  @utility panel-shadow {
+    --panel-ring: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+    filter:
+      drop-shadow(0 14px 24px rgba(0, 0, 0, 0.55))
+      drop-shadow(0 0 0 1px rgba(255, 255, 255, 0.03))
+      var(--panel-ring);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
