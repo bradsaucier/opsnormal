@@ -1,4 +1,5 @@
-import { Buffer } from 'node:buffer';
+/// <reference types="node" />
+
 import { expect, test } from '@playwright/test';
 
 function buildImportPayload(todayKey: string) {
