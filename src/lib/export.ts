@@ -1,16 +1,24 @@
-import type { DailyEntry } from '../types';
+import {
+  EXPORT_SCHEMA_VERSION,
+  OPSNORMAL_APP_NAME,
+  type DailyEntry,
+  type JsonExportPayload
+} from '../types';
 
-export function createJsonExport(entries: DailyEntry[]): string {
-  return JSON.stringify(
-    {
-      app: 'OpsNormal',
-      schemaVersion: 1,
-      exportedAt: new Date().toISOString(),
-      entries
-    },
-    null,
-    2
-  );
+const LAST_EXPORT_AT_KEY = 'opsnormal-last-export-at';
+
+export function createJsonExport(
+  entries: DailyEntry[],
+  exportedAt: string = new Date().toISOString()
+): string {
+  const payload: JsonExportPayload = {
+    app: OPSNORMAL_APP_NAME,
+    schemaVersion: EXPORT_SCHEMA_VERSION,
+    exportedAt,
+    entries
+  };
+
+  return JSON.stringify(payload, null, 2);
 }
 
 export function createCsvExport(entries: DailyEntry[]): string {
@@ -35,6 +43,42 @@ export function downloadTextFile(fileName: string, content: string, mimeType: st
   anchor.remove();
 
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function recordExportCompleted(exportedAt: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(LAST_EXPORT_AT_KEY, exportedAt);
+}
+
+export function getLastExportCompletedAt(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.localStorage.getItem(LAST_EXPORT_AT_KEY);
+}
+
+export function formatLastExportCompletedAt(value: string | null): string {
+  if (!value) {
+    return 'No external backup recorded on this browser yet.';
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Last backup timestamp is unreadable. Export again to refresh the record.';
+  }
+
+  return `Last external backup: ${new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(parsedDate)}.`;
 }
 
 function escapeCsvCell(cell: string): string {

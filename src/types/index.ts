@@ -1,3 +1,6 @@
+export const OPSNORMAL_APP_NAME = 'OpsNormal';
+export const EXPORT_SCHEMA_VERSION = 1;
+
 export const SECTORS = [
   {
     id: 'work-school',
@@ -36,6 +39,7 @@ export type SectorId = Sector['id'];
 
 export type EntryStatus = 'nominal' | 'degraded';
 export type UiStatus = EntryStatus | 'unmarked';
+export type ImportMode = 'merge' | 'replace';
 
 export interface DailyEntry {
   id?: number;
@@ -43,4 +47,22 @@ export interface DailyEntry {
   sectorId: SectorId;
   status: EntryStatus;
   updatedAt: string;
+}
+
+export interface JsonExportPayload {
+  app: typeof OPSNORMAL_APP_NAME;
+  schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+  exportedAt: string;
+  entries: DailyEntry[];
+}
+
+export interface ImportPreview {
+  payload: JsonExportPayload;
+  overwriteCount: number;
+  newEntryCount: number;
+  totalEntries: number;
+  dateRange: {
+    start: string;
+    end: string;
+  } | null;
 }
