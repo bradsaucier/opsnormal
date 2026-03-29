@@ -6,20 +6,15 @@ import { TodayPanel } from './features/checkin/TodayPanel';
 import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
+import { useStorageHealth } from './hooks/useStorageHealth';
+import { formatStorageSummary } from './lib/storage';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
-import {
-  estimateStorage,
-  formatStorageHint,
-  hasAttemptedPersistentStorage,
-  requestPersistentStorage
-} from './lib/storage';
 
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
-  const [storageHint, setStorageHint] = useState<string>('Storage status not checked yet.');
-  const [persistentStorageGranted, setPersistentStorageGranted] = useState(false);
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
+  const { storageHealth, refreshStorageHealth } = useStorageHealth();
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -36,15 +31,6 @@ function App() {
       }, 60 * 60 * 1000);
     }
   });
-
-  useEffect(() => {
-    async function initializeStorage() {
-      const estimate = await estimateStorage();
-      setStorageHint(formatStorageHint(estimate, false));
-    }
-
-    void initializeStorage();
-  }, []);
 
   useEffect(() => {
     function refreshCalendarWindow() {
@@ -69,15 +55,8 @@ function App() {
     };
   }, []);
 
-  async function reinforceLocalStorageDurability() {
-    if (persistentStorageGranted || hasAttemptedPersistentStorage()) {
-      return;
-    }
-
-    const persisted = await requestPersistentStorage();
-    const estimate = await estimateStorage();
-    setPersistentStorageGranted(persisted);
-    setStorageHint(formatStorageHint(estimate, persisted));
+  function reinforceLocalStorageDurability() {
+    void refreshStorageHealth({ requestPersistence: true });
   }
 
   const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
@@ -104,7 +83,9 @@ function App() {
               <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
                 Local only
               </div>
-              <div className="mt-2 text-xs leading-5 text-zinc-400">{storageHint}</div>
+              <div className="mt-2 text-xs leading-5 text-zinc-400">
+                {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+              </div>
             </div>
           </div>
         </header>
@@ -121,9 +102,9 @@ function App() {
           }}
         />
 
-        <TodayPanel todayKey={todayKey} onMeaningfulSave={() => void reinforceLocalStorageDurability()} />
+        <TodayPanel todayKey={todayKey} onMeaningfulSave={reinforceLocalStorageDurability} />
         <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
-        <ExportPanel />
+        <ExportPanel storageHealth={storageHealth} />
 
         <footer className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
           <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>

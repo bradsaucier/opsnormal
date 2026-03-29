@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 
-import { db, getAllEntries } from '../db/appDb';
+import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
 import { JsonImportSchema, type ParsedJsonImport } from '../schemas/import';
 import type { DailyEntry, ImportMode, ImportPreview, JsonExportPayload } from '../types';
 
@@ -135,23 +135,27 @@ export async function applyImport(
   const snapshot = await getAllEntries();
   const normalizedEntries = normalizeImportedEntries(payload.entries, snapshot, mode);
 
-  await db.transaction('rw', db.dailyEntries, async () => {
-    if (mode === 'replace') {
-      await db.dailyEntries.clear();
-    }
+  await runDatabaseWrite(async () =>
+    db.transaction('rw', db.dailyEntries, async () => {
+      if (mode === 'replace') {
+        await db.dailyEntries.clear();
+      }
 
-    await db.dailyEntries.bulkPut(normalizedEntries);
-  });
+      await db.dailyEntries.bulkPut(normalizedEntries);
+    })
+  );
 
   return {
     importedCount: normalizedEntries.length,
     undo: async () => {
-      await db.transaction('rw', db.dailyEntries, async () => {
-        await db.dailyEntries.clear();
-        if (snapshot.length > 0) {
-          await db.dailyEntries.bulkPut(snapshot);
-        }
-      });
+      await runDatabaseWrite(async () =>
+        db.transaction('rw', db.dailyEntries, async () => {
+          await db.dailyEntries.clear();
+          if (snapshot.length > 0) {
+            await db.dailyEntries.bulkPut(snapshot);
+          }
+        })
+      );
     }
   };
 }
