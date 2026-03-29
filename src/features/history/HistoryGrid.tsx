@@ -44,7 +44,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
-        <table className="min-w-[980px] border-collapse text-sm">
+        <table className="min-w-max w-full border-collapse text-sm">
           <caption className="sr-only">
             Thirty-day readiness grid with one row per sector and one column per day. Cell labels use
             OK for nominal, DG for degraded, and UN for unmarked.
@@ -58,8 +58,8 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                 <th
                   key={dateKey}
                   className={[
-                    'border-b border-white/10 px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.14em]',
-                    dateKey === todayKey ? 'bg-emerald-500/10 text-emerald-300' : 'text-zinc-400'
+                    'border-b border-white/10 px-1 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
+                    dateKey === todayKey ? 'bg-emerald-500/[0.06] text-emerald-300' : 'text-zinc-400'
                   ].join(' ')}
                   scope="col"
                 >
@@ -70,7 +70,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
           </thead>
           <tbody>
             {SECTORS.map((sector) => (
-              <tr key={sector.id} className="odd:bg-white/[0.02]">
+              <tr key={sector.id} className="odd:bg-white/[0.04]">
                 <th
                   className="sticky left-0 z-10 border-b border-r border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-zinc-300"
                   scope="row"
@@ -81,12 +81,18 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                   const status = getUiStatus(entryLookup, dateKey, sector.id);
 
                   return (
-                    <td key={`${sector.id}:${dateKey}`} className="border-b border-white/5 px-2 py-3">
+                    <td
+                      key={`${sector.id}:${dateKey}`}
+                      className={[
+                        'border-b border-white/5 px-1 py-2',
+                        dateKey === todayKey ? 'bg-emerald-500/[0.06]' : ''
+                      ].join(' ')}
+                    >
                       <div
                         title={`${sector.label} on ${dateKey}: ${getStatusLabel(status)}`}
                         aria-label={`${sector.label} on ${dateKey}: ${getStatusLabel(status)}`}
                         className={[
-                          'mx-auto flex h-11 w-11 items-center justify-center rounded-md border text-sm font-semibold tracking-[0.16em]',
+                          'mx-auto flex h-10 w-10 items-center justify-center rounded-md border text-xs font-bold tracking-[0.08em]',
                           status === 'nominal'
                             ? 'border-sky-500/40 bg-sky-500/15 text-sky-300'
                             : '',
