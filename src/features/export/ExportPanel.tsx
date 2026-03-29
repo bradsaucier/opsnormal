@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
 import { SectionCard } from '../../components/SectionCard';
 import { getAllEntries } from '../../db/appDb';
 import {
@@ -10,10 +11,15 @@ import {
   getLastExportCompletedAt,
   recordExportCompleted
 } from '../../lib/export';
+import type { StorageHealth } from '../../lib/storage';
 import { applyImport, previewImportFile } from '../../services/importService';
 import type { ImportMode, ImportPreview } from '../../types';
 
-export function ExportPanel() {
+interface ExportPanelProps {
+  storageHealth: StorageHealth | null;
+}
+
+export function ExportPanel({ storageHealth }: ExportPanelProps) {
   const [message, setMessage] = useState<string>(
     'Backup and recovery are local actions. No cloud sync. No account system.'
   );
@@ -30,10 +36,7 @@ export function ExportPanel() {
     setLastBackupAt(getLastExportCompletedAt());
   }, []);
 
-  const backupStatus = useMemo(
-    () => formatLastExportCompletedAt(lastBackupAt),
-    [lastBackupAt]
-  );
+  const backupStatus = useMemo(() => formatLastExportCompletedAt(lastBackupAt), [lastBackupAt]);
 
   async function handleJsonExport() {
     try {
@@ -130,6 +133,8 @@ export function ExportPanel() {
             Local-first only works if recovery is real. Export creates external backups. Import
             restores them with validation before any write reaches IndexedDB.
           </p>
+
+          <StorageHealthIndicator storageHealth={storageHealth} />
 
           <div className="rounded-xl border border-white/10 bg-black/25 p-4">
             <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
