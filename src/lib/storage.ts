@@ -176,7 +176,7 @@ export function createStorageHealth(
     }
   } else if (!persistenceAvailable && !estimateAvailable) {
     status = 'unavailable';
-    message = 'Storage durability telemetry unavailable on this browser. Export routinely as the external backup.';
+    message = 'Storage telemetry unavailable on this browser. Export routinely as the external backup.';
   } else if (percentUsed !== null && percentUsed >= HIGH_STORAGE_USAGE_THRESHOLD) {
     status = 'warning';
     message = `Persistent storage not granted. ${formatBytes(usageBytes ?? 0)} used of ${formatBytes(quotaBytes ?? 0)} quota. Export now.`;
