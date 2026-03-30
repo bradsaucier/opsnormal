@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  computeJsonExportChecksum,
   createCsvExport,
   createJsonExport,
   formatLastExportCompletedAt
 } from '../../src/lib/export';
+import { parseImportPayload } from '../../src/services/importService';
 import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, type DailyEntry } from '../../src/types';
 
 const sampleEntries: DailyEntry[] = [
@@ -25,20 +27,52 @@ describe('export helpers', () => {
     expect(csv).toContain('2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z');
   });
 
-  it('creates versioned json payload with entries', () => {
+  it('creates versioned json payload with entries and checksum', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = createJsonExport(sampleEntries, exportedAt);
+    const json = await createJsonExport(sampleEntries, exportedAt);
     const parsed = JSON.parse(json) as {
       app: string;
       schemaVersion: number;
       exportedAt: string;
       entries: DailyEntry[];
+      checksum: string;
     };
 
     expect(parsed.app).toBe(OPSNORMAL_APP_NAME);
     expect(parsed.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
     expect(parsed.exportedAt).toBe(exportedAt);
     expect(parsed.entries).toHaveLength(1);
+    expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('produces output that passes import validation', async () => {
+    const exportedAt = '2026-03-28T10:11:12.000Z';
+    const json = await createJsonExport(sampleEntries, exportedAt);
+    const parsed = await parseImportPayload(json);
+
+    expect(parsed.entries).toEqual(sampleEntries);
+    expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('includes a checksum that matches recomputation', async () => {
+    const exportedAt = '2026-03-28T10:11:12.000Z';
+    const json = await createJsonExport(sampleEntries, exportedAt);
+    const parsed = JSON.parse(json) as {
+      app: typeof OPSNORMAL_APP_NAME;
+      schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+      exportedAt: string;
+      entries: DailyEntry[];
+      checksum: string;
+    };
+
+    const recomputedChecksum = await computeJsonExportChecksum({
+      app: parsed.app,
+      schemaVersion: parsed.schemaVersion,
+      exportedAt: parsed.exportedAt,
+      entries: parsed.entries
+    });
+
+    expect(parsed.checksum).toBe(recomputedChecksum);
   });
 
   it('formats backup status text when no export is recorded', () => {
