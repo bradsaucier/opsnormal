@@ -1,7 +1,6 @@
 # OpsNormal
 
-Local-first, offline-first daily readiness tracker. No account. No cloud sync. No analytics. Your data stays in the browser unless you explicitly export it.
-
+Local-first daily readiness tracker. No account. No backend. No cloud sync. No telemetry. Data stays in the browser unless you export it.
 
 ```yaml
 STATUS  : OPERATIONALLY READY
@@ -11,8 +10,8 @@ LICENSE : MIT
 
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
-![Local-Only](https://img.shields.io/badge/Local--Only-No%20Cloud-0f766e?style=flat-square)
-![Offline-Capable](https://img.shields.io/badge/Offline--Capable-PWA-166534?style=flat-square)
+![Data](https://img.shields.io/badge/Data-Local--Only-36476F?style=flat-square)
+![PWA](https://img.shields.io/badge/PWA-Offline--Capable-2F6F63?style=flat-square)
 
 ---
 
@@ -20,10 +19,9 @@ LICENSE : MIT
 ## Bottom Line Up Front (BLUF)
 
 > [!IMPORTANT]
-> **OpsNormal is a deliberately narrow Progressive Web App built to answer one question fast: are the main sectors of life still holding together, or is something quietly degrading in the background.**
+> **OpsNormal is a deliberately narrow, local-first Progressive Web App for fast daily readiness tracking.**
 >
-> The app uses a five-sector daily check-in, a three-state model, and a 30-day trailing grid to provide a fast operating picture without turning personal readiness into a gamified dashboard. The system is local-first by design. There is no backend, no account model, and no telemetry pipeline.
->
+> It uses five sectors, a three-state model, and a 30-day trailing grid to show whether the main sectors of life are holding together or quietly degrading. There is no backend, no account model, no analytics pipeline, and no cloud sync. Data stays in the browser unless you explicitly export it.
 
 ---
 
@@ -31,7 +29,7 @@ LICENSE : MIT
 
 Most personal tracking tools fail in one of two ways.
 
-1. They collect too much and create friction.
+1. They ask for too much and create friction.
 2. They push data into a cloud stack the user never asked for.
 
 OpsNormal takes the opposite path.
@@ -226,7 +224,12 @@ JSON import is validated before any write reaches IndexedDB.
 
 ## Data durability and storage posture
 
-Browser-local storage is durable enough for a personal tool, but it is not the same thing as a cloud backup.
+Browser-local storage is durable enough for a personal tool, but it is not the same thing as backup storage.
+
+> [!CAUTION]
+> **Browser-local storage is not backup storage.**
+>
+> Manual browser data clearing, profile loss, device loss, storage eviction, and some mobile browser policies can remove data permanently. Export routinely. On iPhone and iPad, install to Home Screen for better durability. OpsNormal cannot recover data once the host browser or OS deletes it.
 
 ### What survives
 
@@ -267,7 +270,7 @@ OpsNormal is intentionally narrow in what it can do and what it is allowed to kn
 5. No cloud sync
 6. No data leaves the device unless the user explicitly exports it
 
-The trust boundary is simple: after the app is loaded, the working data path is the browser, not a remote service.
+The trust boundary is simple: after the app is loaded, the working data path stays in the browser, not a remote service.
 
 ## Accessibility and safety posture
 
@@ -332,6 +335,6 @@ This repo is stronger because it says no.
 3. No forced journaling workflow
 4. No feature bloat that breaks the ten-second daily interaction
 
-## License
-
-MIT
+```text
+// END TRANSMISSION
+```
