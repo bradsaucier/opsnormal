@@ -20,8 +20,8 @@ export function InstallBanner() {
                 Install the app
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-ops-text-secondary">
-                Your data stays on this device. Installing improves offline reopen behavior and local
-                storage durability, especially on iPhone and iPad.
+                Your data stays on this device. Installing improves offline reopen behavior and
+                browser storage reliability, especially on iPhone and iPad.
               </p>
 
               {isIOS ? (
