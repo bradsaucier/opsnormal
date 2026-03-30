@@ -7,18 +7,27 @@ import {
 
 const LAST_EXPORT_AT_KEY = 'opsnormal-last-export-at';
 
-export function createJsonExport(
+interface ChecksumPayload {
+  app: JsonExportPayload['app'];
+  schemaVersion: JsonExportPayload['schemaVersion'];
+  exportedAt: JsonExportPayload['exportedAt'];
+  entries: JsonExportPayload['entries'];
+}
+
+export async function createJsonExport(
   entries: DailyEntry[],
   exportedAt: string = new Date().toISOString()
-): string {
-  const payload: JsonExportPayload = {
+): Promise<string> {
+  const payload: ChecksumPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
     entries
   };
 
-  return JSON.stringify(payload, null, 2);
+  const checksum = await computeJsonExportChecksum(payload);
+
+  return JSON.stringify({ ...payload, checksum }, null, 2);
 }
 
 export function createCsvExport(entries: DailyEntry[]): string {
@@ -79,6 +88,19 @@ export function formatLastExportCompletedAt(value: string | null): string {
     hour: 'numeric',
     minute: '2-digit'
   }).format(parsedDate)}.`;
+}
+
+export async function computeJsonExportChecksum(payload: ChecksumPayload): Promise<string> {
+  const serialized = JSON.stringify({
+    app: payload.app,
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    entries: payload.entries
+  });
+  const bytes = new TextEncoder().encode(serialized);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 function escapeCsvCell(cell: string): string {

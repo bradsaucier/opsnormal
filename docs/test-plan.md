@@ -8,6 +8,7 @@ Prove that the app:
 - survives page reloads
 - reopens offline after first load
 - exports consistent data
+- verifies export to import round-trip integrity
 
 ## Layers
 
@@ -15,7 +16,11 @@ Prove that the app:
 - date formatting and parsing
 - trailing 30-day range generation
 - export formatting
+- export checksum verification
+- legacy import warning path
+- export to import round-trip validation
 - streak computation
+- status cycle helpers
 
 ### Integration tests
 - Dexie persistence behavior

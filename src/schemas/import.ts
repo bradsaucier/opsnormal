@@ -10,6 +10,9 @@ const sectorIds = SECTORS.map((sector) => sector.id) as [
 const DateKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.');
 const SectorIdSchema = z.enum(sectorIds);
 const EntryStatusSchema = z.enum(['nominal', 'degraded']);
+const ChecksumSchema = z
+  .string()
+  .regex(/^[a-f0-9]{64}$/, 'Checksum must be a 64-character lowercase SHA-256 hex digest.');
 
 export const DailyEntrySchema = z
   .object({
@@ -26,7 +29,8 @@ export const JsonImportSchema = z
     app: z.literal(OPSNORMAL_APP_NAME),
     schemaVersion: z.literal(EXPORT_SCHEMA_VERSION),
     exportedAt: z.string().datetime({ offset: true }),
-    entries: z.array(DailyEntrySchema).max(10000)
+    entries: z.array(DailyEntrySchema).max(10000),
+    checksum: ChecksumSchema.optional()
   })
   .strict()
   .superRefine((value, context) => {

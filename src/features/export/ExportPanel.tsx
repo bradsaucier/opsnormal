@@ -42,7 +42,7 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
     try {
       const entries = await getAllEntries();
       const exportedAt = new Date().toISOString();
-      const payload = createJsonExport(entries, exportedAt);
+      const payload = await createJsonExport(entries, exportedAt);
       downloadTextFile('opsnormal-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
       setLastBackupAt(exportedAt);
@@ -76,7 +76,9 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
       setPendingFileName(file.name);
       setImportMode('merge');
       setMessage(
-        `Import staged. ${preview.totalEntries} entries validated. Review the mode and confirm to write.`
+        preview.integrityStatus === 'verified'
+          ? `Import staged. ${preview.totalEntries} entries validated. Review the mode and confirm to write.`
+          : `Legacy import staged. ${preview.totalEntries} entries validated, but this file has no integrity checksum. Review the mode and confirm to write.`
       );
     } catch (error) {
       setPendingImport(null);
@@ -211,6 +213,17 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                 {pendingFileName || 'Selected file'} passed validation. Review the impact before
                 committing it to local storage.
               </p>
+              {pendingImport.integrityStatus === 'legacy-unverified' ? (
+                <p className="mt-2 rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-sm leading-6 text-amber-100">
+                  Legacy backup detected. This file predates export integrity checks, so content
+                  structure is validated but file integrity is not cryptographically verified.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm leading-6 text-emerald-100/90">
+                  Integrity verified. The embedded SHA-256 checksum matched before this import was
+                  staged.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs tracking-[0.14em] text-sky-100 uppercase sm:grid-cols-4">
               <div>

@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'eslint.config.js']
+    ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'eslint.config.js', 'playwright.config.js', 'vite.config.js', 'vitest.config.js', 'playwright.config.d.ts', 'vite.config.d.ts', 'vitest.config.d.ts']
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

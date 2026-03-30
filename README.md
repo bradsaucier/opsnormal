@@ -198,7 +198,8 @@ JSON export creates a versioned backup payload:
   "app": "OpsNormal",
   "schemaVersion": 1,
   "exportedAt": "2026-03-28T00:00:00.000Z",
-  "entries": []
+  "entries": [],
+  "checksum": "<sha-256>"
 }
 ```
 
@@ -211,10 +212,12 @@ JSON import is validated before any write reaches IndexedDB.
 1. File size is checked first.
 2. JSON parsing rejects malformed files.
 3. Unsafe keys such as `__proto__`, `constructor`, and `prototype` are blocked.
-4. Zod validates app name, schema version, timestamps, sector IDs, statuses, and duplicate date plus sector pairs.
-5. The database write occurs inside a Dexie transaction.
-6. Import supports two modes: merge and replace.
-7. Undo restores the pre-import snapshot for the current session.
+4. Zod validates app name, schema version, timestamps, sector IDs, statuses, duplicate date plus sector pairs, and checksum format.
+5. When a checksum is present, import recomputes SHA-256 over the canonical backup payload and rejects any mismatch before write.
+6. Legacy exports without a checksum still import, but the UI flags them as unverified.
+7. The database write occurs inside a Dexie transaction.
+8. Import supports two modes: merge and replace.
+9. Undo restores the pre-import snapshot for the current session.
 
 ### Merge semantics
 

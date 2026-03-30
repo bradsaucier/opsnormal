@@ -1,8 +1,15 @@
 import { ZodError } from 'zod';
 
 import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
+import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema, type ParsedJsonImport } from '../schemas/import';
-import type { DailyEntry, ImportMode, ImportPreview, JsonExportPayload } from '../types';
+import type {
+  DailyEntry,
+  ImportIntegrityStatus,
+  ImportMode,
+  ImportPreview,
+  JsonExportPayload
+} from '../types';
 
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
@@ -43,6 +50,25 @@ function formatValidationError(error: ZodError): string {
   return `${path}${primaryIssue.message}`;
 }
 
+async function verifyExportChecksum(payload: JsonExportPayload): Promise<void> {
+  if (!payload.checksum) {
+    return;
+  }
+
+  const computedChecksum = await computeJsonExportChecksum({
+    app: payload.app,
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    entries: payload.entries
+  });
+
+  if (computedChecksum !== payload.checksum) {
+    throw new Error(
+      'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
+    );
+  }
+}
+
 function normalizeImportedEntries(
   entries: ParsedJsonImport['entries'],
   existingEntries: DailyEntry[],
@@ -63,6 +89,12 @@ function normalizeImportedEntries(
       updatedAt: entry.updatedAt
     };
   });
+}
+
+
+
+function getImportIntegrityStatus(payload: JsonExportPayload): ImportIntegrityStatus {
+  return payload.checksum ? 'verified' : 'legacy-unverified';
 }
 
 function getDateRange(entries: DailyEntry[]): ImportPreview['dateRange'] {
@@ -86,7 +118,7 @@ export async function readImportFile(file: File): Promise<string> {
   return file.text();
 }
 
-export function parseImportPayload(rawText: string): JsonExportPayload {
+export async function parseImportPayload(rawText: string): Promise<JsonExportPayload> {
   let parsed: unknown;
 
   try {
@@ -105,6 +137,8 @@ export function parseImportPayload(rawText: string): JsonExportPayload {
     throw new Error(formatValidationError(validated.error));
   }
 
+  await verifyExportChecksum(validated.data);
+
   return validated.data;
 }
 
@@ -115,6 +149,7 @@ export async function previewImportPayload(payload: JsonExportPayload): Promise<
 
   return {
     payload,
+    integrityStatus: getImportIntegrityStatus(payload),
     overwriteCount,
     newEntryCount: payload.entries.length - overwriteCount,
     totalEntries: payload.entries.length,
@@ -124,7 +159,7 @@ export async function previewImportPayload(payload: JsonExportPayload): Promise<
 
 export async function previewImportFile(file: File): Promise<ImportPreview> {
   const rawText = await readImportFile(file);
-  const payload = parseImportPayload(rawText);
+  const payload = await parseImportPayload(rawText);
   return previewImportPayload(payload);
 }
 

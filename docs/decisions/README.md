@@ -14,6 +14,8 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0006 | State encoding beyond color |
 | 0007 | Local-only and no-cloud trust boundary |
 | 0008 | Versioned backup and validated recovery |
+| 0009 | Storage durability hardening |
+| 0010 | Export integrity checksum |
 
 ## Operating rule
 
