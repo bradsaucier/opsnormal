@@ -36,6 +36,7 @@ test.describe('OpsNormal import workflow', () => {
     });
 
     await expect(page.getByRole('heading', { name: 'Import ready' })).toBeVisible();
+    await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
     await page.getByRole('button', { name: 'Confirm Import' }).click();
 
     await expect(page.getByRole('button', { name: /body/i })).toContainText('DEGRADED');
