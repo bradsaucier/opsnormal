@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ops-base: #0a0f0d;
+  --color-ops-surface-1: #111916;
+  --color-ops-surface-2: #162019;
+  --color-ops-surface-3: #1c2820;
+  --color-ops-text-primary: #e0e6e3;
+  --color-ops-text-secondary: #939f99;
+  --color-ops-text-muted: #5c6662;
+  --color-ops-accent: #6ee7b7;
+  --color-ops-accent-muted: #a7f3d0;
+  --color-ops-border-soft: #ffffff0f;
+  --color-ops-border-struct: #ffffff1f;
+  --color-ops-border-strong: #ffffff2e;
+  --color-ops-accent-border: #6ee7b71f;
+}
+
 :root {
   color-scheme: dark;
   font-family:
@@ -10,19 +26,25 @@
     "Liberation Mono",
     Menlo,
     monospace;
-  background-color: #0a0f0d;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-ops-base);
+}
+
+html {
+  background-color: var(--color-ops-base);
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  overscroll-behavior-y: contain;
   background:
-    radial-gradient(circle at top, rgba(16, 185, 129, 0.09), transparent 38%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%),
-    #0a0f0d;
+    radial-gradient(circle at top, rgba(110, 231, 183, 0.08), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
+    var(--color-ops-base);
+  color: var(--color-ops-text-primary);
 }
 
 * {
@@ -34,8 +56,8 @@ button {
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.35);
-  color: #ecfdf5;
+  background: rgba(110, 231, 183, 0.28);
+  color: #f3fcf7;
 }
 
 .tactical-panel {
@@ -43,9 +65,9 @@ button {
   overflow: hidden;
   isolation: isolate;
   box-shadow:
-    inset 0 1px 0 rgba(16, 185, 129, 0.25),
-    inset 0 0 0 1px rgba(16, 185, 129, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.02);
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    0 0 0 1px rgba(255, 255, 255, 0.015);
 }
 
 .tactical-panel::before {
@@ -54,14 +76,38 @@ button {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top left / 8px 1px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top left / 1px 8px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top right / 8px 1px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) top right / 1px 8px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom left / 8px 1px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom left / 1px 8px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom right / 8px 1px no-repeat,
-    linear-gradient(rgba(16, 185, 129, 0.16), rgba(16, 185, 129, 0.16)) bottom right / 1px 8px no-repeat;
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top left / 8px 1px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top left / 1px 8px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top right / 8px 1px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top right / 1px 8px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom left / 8px 1px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom left / 1px 8px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom right / 8px 1px no-repeat,
+    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom right / 1px 8px no-repeat;
+}
+
+.history-scroll-shell {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(110, 231, 183, 0.32) rgba(255, 255, 255, 0.04);
+}
+
+.history-scroll-shell:focus-visible {
+  outline: 2px solid rgba(167, 243, 208, 0.6);
+  outline-offset: 2px;
+}
+
+.history-scroll-shell::-webkit-scrollbar {
+  height: 12px;
+}
+
+.history-scroll-shell::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.history-scroll-shell::-webkit-scrollbar-thumb {
+  background: rgba(110, 231, 183, 0.24);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.04);
 }
 
 @utility clip-notched {
@@ -79,7 +125,7 @@ button {
 @utility panel-shadow {
   --panel-ring: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
   filter:
-    drop-shadow(0 14px 24px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 14px 24px rgba(0, 0, 0, 0.42))
     drop-shadow(0 0 0 1px rgba(255, 255, 255, 0.03))
     var(--panel-ring);
 }
