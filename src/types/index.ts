@@ -40,6 +40,7 @@ export type SectorId = Sector['id'];
 export type EntryStatus = 'nominal' | 'degraded';
 export type UiStatus = EntryStatus | 'unmarked';
 export type ImportMode = 'merge' | 'replace';
+export type ImportIntegrityStatus = 'verified' | 'legacy-unverified';
 
 export interface DailyEntry {
   id?: number;
@@ -54,10 +55,12 @@ export interface JsonExportPayload {
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
   exportedAt: string;
   entries: DailyEntry[];
+  checksum?: string;
 }
 
 export interface ImportPreview {
   payload: JsonExportPayload;
+  integrityStatus: ImportIntegrityStatus;
   overwriteCount: number;
   newEntryCount: number;
   totalEntries: number;
