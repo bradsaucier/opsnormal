@@ -1,6 +1,6 @@
 # OpsNormal
 
-Local-first daily readiness tracker. No account. No backend. No cloud sync. No telemetry. Data stays in the browser unless you export it.
+Offline-first daily readiness tracking that runs entirely in your browser.
 
 ```yaml
 STATUS  : OPERATIONALLY READY
@@ -10,87 +10,93 @@ LICENSE : MIT
 
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
-![Data](https://img.shields.io/badge/Data-Local--Only-36476F?style=flat-square)
-![PWA](https://img.shields.io/badge/PWA-Offline--Capable-2F6F63?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
+[![Version](https://img.shields.io/badge/Version-v0.1.0-2F6F63?style=flat-square)](./package.json)
+[![Data](https://img.shields.io/badge/Data-Local--Only-36476F?style=flat-square)](#privacy-and-data)
+[![PWA](https://img.shields.io/badge/PWA-Offline--Capable-2F6F63?style=flat-square)](#offline-and-pwa)
 
----
+OpsNormal is a deliberately narrow personal readiness tracker built for fast daily use, not feature sprawl. Five sectors. Three states. Thirty trailing days. No account system, no backend, no cloud sync, and no telemetry.
 
-<a id="bluf"></a>
+Live app: https://opsnormal.app
+
 ## Bottom Line Up Front (BLUF)
 
 > [!IMPORTANT]
-> **OpsNormal is a deliberately narrow, local-first Progressive Web App for fast daily readiness tracking.**
+> **OpsNormal is a local-first Progressive Web App for sub-10-second daily readiness tracking.**
 >
-> It uses five sectors, a three-state model, and a 30-day trailing grid to show whether the main sectors of life are holding together or quietly degrading. There is no backend, no account model, no analytics pipeline, and no cloud sync. Data stays in the browser unless you explicitly export it.
+> It tracks five core sectors with a three-state model and a 30-day trailing grid to show whether the main sectors of life are holding together or quietly degrading. After the app loads, the working data path stays local in IndexedDB unless you explicitly export it. Recovery is real because export, validated import, undo, and storage durability checks are part of the operating model.
 
----
+## Why this exists
 
-## Why this repo matters
+Most personal tracking tools miss the mark in one of two ways. They either demand too much attention, or they push routine personal data into a cloud stack the operator never asked for.
 
-Most personal tracking tools fail in one of two ways.
+OpsNormal takes the opposite path. The interaction is intentionally coarse, intentionally fast, and intentionally local. The objective is not quantified-self theater. The objective is to maintain a simple daily signal that still works when life gets noisy.
 
-1. They ask for too much and create friction.
-2. They push data into a cloud stack the user never asked for.
+## Core model
 
-OpsNormal takes the opposite path.
+### Sectors
 
-1. Daily interaction stays under ten seconds.
-2. State is intentionally coarse: unmarked, nominal, degraded.
-3. Persistence is browser-local through IndexedDB.
-4. The PWA shell keeps the app usable offline after first load.
-5. Export and validated import provide a real recovery path.
+- Work or School
+- Household
+- Relationships
+- Body
+- Rest
 
-## Core operating model
+### States
 
-### Fixed sectors
+- Unmarked
+- Nominal
+- Degraded
 
-1. Work or School
-2. Household
-3. Relationships
-4. Body
-5. Rest
+### Operating boundaries
 
-### Daily states
+- No accounts
+- No backend
+- No cloud sync
+- No third-party APIs
+- No telemetry
+- No journaling requirement
+- No automated coaching layer
+- No medical or psychological claims
 
-1. Unmarked
-2. Nominal
-3. Degraded
+## Operational capabilities
 
-### Product boundaries
-
-1. No accounts
-2. No cloud sync
-3. No third-party APIs
-4. No journal requirement
-5. No automated coaching layer
-6. No medical or psychological claims
-
-## Key capabilities
-
-1. Five-sector daily check-in with single-click state cycling
-2. 30-day readiness grid for pattern recognition
-3. Local-only persistence through Dexie on top of IndexedDB
-4. Installable PWA with offline app-shell caching
-5. JSON export for backup and JSON import for recovery
-6. CSV export for external review or spreadsheet work
-7. Persistent storage request after the first meaningful save
-8. CI-backed lint, typecheck, unit, integration, and end-to-end test posture
+- Single-click daily check-in across five fixed sectors
+- 30-day readiness grid for fast pattern recognition
+- Local-only persistence through Dexie on top of IndexedDB
+- Installable PWA with offline app-shell support after first successful load
+- JSON export for backup and validated JSON import for recovery
+- CSV export for external review and spreadsheet work
+- Storage durability checks with persistent storage requests when supported
+- Lint, typecheck, unit, integration, and end-to-end verification in CI
 
 ## Quick start
 
-### Prerequisites
+### Use the app
 
-1. Node.js 20.19.0 or newer
-2. npm 10 or newer
+Open the live deployment:
+
+```text
+https://opsnormal.app
+```
+
+Install it from your browser if you want a tighter app-like workflow and stronger local durability posture.
 
 ### Run locally
+
+Prerequisites:
+
+- Node.js 20.19.0 or newer
+- npm 10 or newer
+
+Start the app:
 
 ```bash
 npm ci
 npm run dev
 ```
 
-### Verify locally
+Run the full local verification stack:
 
 ```bash
 npm run lint
@@ -100,243 +106,98 @@ npm run test:e2e
 npm run build
 ```
 
-## Architecture
+## Privacy and data
 
-```mermaid
-flowchart TD
-    U[User] --> T[Today Panel]
-    U --> H[30-Day History Grid]
-    U --> X[Backup and Recovery Panel]
+Privacy in OpsNormal is an architectural fact, not a marketing slogan.
 
-    T --> C[cycleDailyStatus]
-    C --> D[Dexie appDb]
-    H --> Q[dexie-react-hooks useLiveQuery]
-    Q --> D
-    X --> E[JSON and CSV Export]
-    X --> I[Validated JSON Import]
+- Working data is stored in IndexedDB through Dexie
+- There is no account model
+- There is no backend service handling user records
+- There are no analytics or telemetry calls
+- There is no cloud sync path
+- Data leaves the device only when the operator explicitly exports it
 
-    D --> IDB[(IndexedDB)]
-    E --> FS[User Downloads Backup File]
-    I --> Z[Zod Validation]
-    Z --> D
+### Backup and recovery posture
 
-    SW[Service Worker] --> CACHE[(Cache Storage)]
-    APP[React plus Vite PWA Shell] --> SW
-    APP --> D
-```
+Local-first only works if recovery is real.
 
-### Runtime shape
+- JSON export writes a versioned backup payload with app metadata, schema version, export timestamp, entries, and a SHA-256 checksum
+- CSV export provides a flat external record for review or spreadsheet work
+- Import validates payload structure before any write reaches IndexedDB
+- When a checksum is present, import recomputes integrity and rejects mismatches before write
+- Legacy JSON exports without a checksum can still import, but they are flagged as unverified
+- Import supports merge and replace modes
+- Undo restores the pre-import snapshot for the current session
 
-1. React renders the Today panel, 30-day history grid, install guidance, update banner, and backup and recovery panel.
-2. Daily writes flow through `cycleDailyStatus()` and `setDailyStatus()`.
-3. Dexie persists entries into IndexedDB under a compound unique key.
-4. `dexie-react-hooks` keeps the UI reactive without a separate client-side sync layer.
-5. The service worker caches the app shell for offline reopen after first load.
-6. Export creates explicit external backups. Import validates file contents before any write reaches IndexedDB.
+### Honest limits
 
-### Tech stack
+Browser-local storage is not backup storage.
 
-1. UI: React 19 + TypeScript
-2. Build: Vite 7
-3. Styling: Tailwind CSS 4
-4. Persistence: Dexie 4 + IndexedDB
-5. Runtime validation: Zod
-6. Offline support: vite-plugin-pwa
-7. Unit and integration tests: Vitest + fake-indexeddb
-8. End-to-end tests: Playwright
-9. Deployment: GitHub Actions to GitHub Pages
+- Manual browser data clearing can destroy records
+- Profile deletion can destroy records
+- Device loss can destroy records
+- Some browser eviction policies can destroy records
+- On iPhone and iPad, install to Home Screen and export routinely
+- Operator guidance: Treat browser-local data as local working storage, not your only copy. Export routinely.
 
-## Data model
+## Offline and PWA
 
-OpsNormal stores one row per date and sector pair.
+OpsNormal is built as a Progressive Web App, but it stays disciplined about scope.
 
-```ts
-this.version(1).stores({
-  dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-});
-```
+- The app shell is cached for offline reopen after first successful load
+- The app is installable from supported browsers
+- A reload banner appears when an updated service worker is ready
+- GitHub Pages serves the static deployment
+- `index.html` is copied to `404.html` so direct navigation on GitHub Pages still resolves cleanly for the SPA shell
 
-### What that means
+This is not a sync engine pretending to be offline. It is a local-first static deployment with explicit export and recovery.
 
-1. `++id` is an auto-increment primary key.
-2. `&[date+sectorId]` is a unique compound key. A day can only have one row per sector.
-3. `date` is stored as `YYYY-MM-DD` to avoid timezone drift across renders.
-4. `updatedAt` stores an ISO timestamp for export and auditability.
+## Verification posture
 
-### Type shape
+OpsNormal is designed to prove reliability, not just feature count.
 
-```ts
-export interface DailyEntry {
-  id?: number;
-  date: string;
-  sectorId: 'work-school' | 'household' | 'relationships' | 'body' | 'rest';
-  status: 'nominal' | 'degraded';
-  updatedAt: string;
-}
-```
+- Unit tests cover date handling, export formatting, validation helpers, and storage logic
+- Integration tests cover Dexie persistence, compound key behavior, and import workflows with fake IndexedDB
+- End-to-end tests cover daily check-in flow, export and import behavior, and the operator-facing path through the application
+- GitHub Actions enforces lint, typecheck, tests, and build on the main verification path
 
-### State model rationale
+## Tech stack
 
-The UI presents three states.
+- React 19
+- TypeScript 5
+- Vite 7
+- Tailwind CSS 4
+- Dexie 4 with IndexedDB
+- Zod for runtime validation
+- vite-plugin-pwa for installability and offline shell support
+- Vitest for unit and integration testing
+- Playwright for end-to-end testing
+- GitHub Actions and GitHub Pages for verification and deployment
 
-1. `unmarked`
-2. `nominal`
-3. `degraded`
+## Docs and repository standards
 
-The database stores only the two marked states. `unmarked` is represented by the absence of a row. That keeps the persistence layer smaller and makes reset semantics explicit.
+The README is the landing page. Deeper material lives in `/docs`.
 
-## Backup and recovery
+- [Architecture overview](./docs/architecture.md)
+- [Architecture Decision Records](./docs/decisions/README.md)
+- [Risk register](./docs/risk-register.md)
+- [Test plan](./docs/test-plan.md)
+- [Release checklist](./docs/release-checklist.md)
+- [Contributing guide](./CONTRIBUTING.md)
+- [Security policy](./SECURITY.md)
+- [Code of conduct](./CODE_OF_CONDUCT.md)
 
-OpsNormal is local-first. That only works if recovery is real.
+## Contributing
 
-### Export
+If you want to contribute, start with the standards files and keep changes inside the existing operating boundary.
 
-JSON export creates a versioned backup payload:
+- Read [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Report security issues through [SECURITY.md](./SECURITY.md)
+- Follow the baseline in [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 
-```json
-{
-  "app": "OpsNormal",
-  "schemaVersion": 1,
-  "exportedAt": "2026-03-28T00:00:00.000Z",
-  "entries": [],
-  "checksum": "<sha-256>"
-}
-```
+## License
 
-CSV export is also available for external inspection and spreadsheet workflows.
-
-### Import
-
-JSON import is validated before any write reaches IndexedDB.
-
-1. File size is checked first.
-2. JSON parsing rejects malformed files.
-3. Unsafe keys such as `__proto__`, `constructor`, and `prototype` are blocked.
-4. Zod validates app name, schema version, timestamps, sector IDs, statuses, duplicate date plus sector pairs, and checksum format.
-5. When a checksum is present, import recomputes SHA-256 over the canonical backup payload and rejects any mismatch before write.
-6. Legacy exports without a checksum still import, but the UI flags them as unverified.
-7. The database write occurs inside a Dexie transaction.
-8. Import supports two modes: merge and replace.
-9. Undo restores the pre-import snapshot for the current session.
-
-### Merge semantics
-
-1. Merge keeps unrelated local entries.
-2. Matching date plus sector pairs are overwritten by the imported file.
-3. Replace clears the browser database and restores from the import payload.
-
-## Data durability and storage posture
-
-Browser-local storage is durable enough for a personal tool, but it is not the same thing as backup storage.
-
-> [!CAUTION]
-> **Browser-local storage is not backup storage.**
->
-> Manual browser data clearing, profile loss, device loss, storage eviction, and some mobile browser policies can remove data permanently. Export routinely. On iPhone and iPad, install to Home Screen for better durability. OpsNormal cannot recover data once the host browser or OS deletes it.
-
-### What survives
-
-1. Tab close and reopen
-2. Browser restart
-3. Offline use after first successful load and service worker registration
-
-### What does not survive reliably
-
-1. Manual browser data clearing
-2. Profile deletion
-3. Device loss
-4. Some browser eviction policies on non-persistent storage
-5. Safari storage eviction risk for non-installed iPhone and iPad usage
-
-### Mitigations already in the repo
-
-1. Install guidance is shown for better offline behavior and more durable local storage.
-2. The app requests persistent storage after the first meaningful save instead of wasting the permission cycle on initial page load.
-3. JSON and CSV export are available at any time.
-4. The UI records the last completed external backup timestamp.
-5. Import provides a real restore path instead of export-only theater.
-
-### Operator guidance
-
-1. Export routinely.
-2. On iPhone and iPad, install to Home Screen.
-3. Treat browser-local data as local working storage, not your only copy.
-
-## Privacy and trust boundaries
-
-OpsNormal is intentionally narrow in what it can do and what it is allowed to know.
-
-1. No account system
-2. No backend
-3. No analytics or telemetry
-4. No third-party API calls
-5. No cloud sync
-6. No data leaves the device unless the user explicitly exports it
-
-The trust boundary is simple: after the app is loaded, the working data path stays in the browser, not a remote service.
-
-## Accessibility and safety posture
-
-1. State is not conveyed by color alone. Cells also use text markers.
-2. Buttons maintain clear labels and focus-visible treatment.
-3. Touch targets are sized for repeated daily use.
-4. Reduced-motion users get instant transitions.
-5. The app is a personal status tracker, not a medical device.
-6. The app does not diagnose, treat, cure, or prevent any disease or condition.
-
-## Testing and verification
-
-### Test layers
-
-1. Unit tests cover date utilities, export formatting, validation helpers, and import parsing rules.
-2. Integration tests cover Dexie persistence behavior, compound key uniqueness, merge or replace import logic, and undo behavior with fake IndexedDB.
-3. End-to-end tests cover daily check-in persistence, export and import flow, and offline reopen behavior through Playwright.
-
-### Quality gates
-
-```bash
-npm run lint
-npm run typecheck
-npm run test
-npm run test:e2e
-npm run build
-```
-
-### Verification intent
-
-The repo is not trying to prove feature quantity. It is trying to prove that a small local-first system behaves reliably under normal use, reload, offline reopen, export, and recovery.
-
-## Deployment
-
-OpsNormal is built as a static site and deployed through GitHub Actions.
-
-### Deployment posture
-
-1. `vite build` produces the production artifact.
-2. The PWA plugin generates the service worker and manifest assets.
-3. GitHub Pages hosts the static output.
-4. `index.html` is copied to `404.html` so first navigation on GitHub Pages still resolves for SPA routes before the service worker takes over.
-5. The service worker checks for updates on an interval and the UI surfaces a reload banner when a fresh version is ready.
-
-## Repository standards
-
-1. `CONTRIBUTING.md` defines contribution rules and quality gates.
-2. `SECURITY.md` defines vulnerability reporting expectations.
-3. `CODE_OF_CONDUCT.md` defines community baseline.
-4. `docs/architecture.md` captures the architectural posture.
-5. `docs/test-plan.md` captures verification intent.
-6. `docs/risk-register.md` records platform and operational risks.
-7. `docs/release-checklist.md` defines pre-release verification steps.
-8. `docs/decisions/` is the correct place for ADRs and architectural records.
-
-## Roadmap pressure that will stay resisted
-
-This repo is stronger because it says no.
-
-1. No cloud account creep
-2. No score addiction layer
-3. No forced journaling workflow
-4. No feature bloat that breaks the ten-second daily interaction
+See [LICENSE](./LICENSE).
 
 ```text
 // END TRANSMISSION
