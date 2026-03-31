@@ -20,7 +20,8 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 2. Dexie persists rows in IndexedDB under a compound unique key.
 3. `useLiveQuery()` reacts to database changes without separate client-side state orchestration.
 4. History and export views consume the same persistence layer.
-5. The PWA service worker provides offline app-shell caching.
+5. The PWA service worker is registered through the Vite PWA virtual module so update prompts remain under application control.
+6. The deployed app probes for newer service workers on a low-frequency interval and on reconnect or refocus events, then surfaces the existing update banner when a new worker is waiting.
 
 ## Storage durability layer
 
@@ -40,3 +41,9 @@ Write paths route through guarded operations so quota failures and interrupted d
 The architecture is intentionally narrow.
 The point is not feature count.
 The point is reliable daily use under stress.
+
+## Deployment hardening
+
+The Vite build now emits all static assets as files instead of inlined data URIs. This keeps production CSP posture tighter and makes asset caching behavior more explicit on static hosts.
+
+The Dexie schema now advances through Version 2. The current layout keeps the unique compound key on `[date+sectorId]`, preserves the standalone `sectorId` index for trailing-field lookups, and removes redundant standalone indexes that did not provide additional query coverage. Full export reads now order from the compound key so the storage and export paths stay aligned.
