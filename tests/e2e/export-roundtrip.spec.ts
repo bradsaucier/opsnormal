@@ -4,20 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { computeJsonExportChecksum } from '../../src/lib/export';
 
-type ExportEntry = {
-  date: string;
-  sectorId: string;
-  status: string;
-  updatedAt: string;
-};
-
-type ExportPayload = {
-  app: string;
-  schemaVersion: number;
-  exportedAt: string;
-  entries: ExportEntry[];
-  checksum?: string;
-};
+type ChecksumPayload = Parameters<typeof computeJsonExportChecksum>[0];
+type ExportPayload = ChecksumPayload & { checksum?: string };
 
 function requireDownloadPath(path: string | null): string {
   if (!path) {
@@ -28,6 +16,15 @@ function requireDownloadPath(path: string | null): string {
 
 function parseExportPayload(rawText: string): ExportPayload {
   return JSON.parse(rawText) as ExportPayload;
+}
+
+function toChecksumPayload(payload: ExportPayload): ChecksumPayload {
+  return {
+    app: payload.app,
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    entries: payload.entries
+  };
 }
 
 function normalizeExportPayload(payload: ExportPayload) {
@@ -104,19 +101,12 @@ test.describe('OpsNormal export recovery', () => {
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-      const firstRecomputedChecksum = await computeJsonExportChecksum({
-        app: firstPayload.app,
-        schemaVersion: firstPayload.schemaVersion,
-        exportedAt: firstPayload.exportedAt,
-        entries: firstPayload.entries
-      });
-
-      const secondRecomputedChecksum = await computeJsonExportChecksum({
-        app: secondPayload.app,
-        schemaVersion: secondPayload.schemaVersion,
-        exportedAt: secondPayload.exportedAt,
-        entries: secondPayload.entries
-      });
+      const firstRecomputedChecksum = await computeJsonExportChecksum(
+        toChecksumPayload(firstPayload)
+      );
+      const secondRecomputedChecksum = await computeJsonExportChecksum(
+        toChecksumPayload(secondPayload)
+      );
 
       expect(firstPayload.checksum).toBe(firstRecomputedChecksum);
       expect(secondPayload.checksum).toBe(secondRecomputedChecksum);
