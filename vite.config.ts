@@ -7,6 +7,9 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
+  build: {
+    assetsInlineLimit: 0
+  },
   plugins: [
     react(),
     tailwindcss(),

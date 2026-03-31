@@ -20,7 +20,8 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 2. Dexie persists rows in IndexedDB under a compound unique key.
 3. `useLiveQuery()` reacts to database changes without separate client-side state orchestration.
 4. History and export views consume the same persistence layer.
-5. The PWA service worker provides offline app-shell caching.
+5. The PWA service worker is registered through the Vite PWA virtual module path already used by the app.
+6. The deployed app performs a guarded low-frequency service worker revalidation loop so long-lived sessions can discover newer builds without noisy churn.
 
 ## Storage durability layer
 
@@ -40,3 +41,11 @@ Write paths route through guarded operations so quota failures and interrupted d
 The architecture is intentionally narrow.
 The point is not feature count.
 The point is reliable daily use under stress.
+
+## Deployment hardening
+
+The Vite build now emits all static assets as files instead of inlining small assets into application bundles. This keeps cache behavior on static hosting explicit and avoids needless bundle churn when a small asset changes.
+
+The Dexie schema now advances through Version 2. The runtime keeps the unique compound key on `[date+sectorId]`, removes redundant standalone indexes that did not provide query coverage, and orders full export reads from the compound key so storage and export paths stay aligned.
+
+The automated verification posture is split cleanly. Playwright proves Chromium service worker registration. Vitest proves the update banner contract. Real deployed update behavior remains a manual release check.

@@ -11,6 +11,9 @@ class OpsNormalDb extends Dexie {
     this.version(1).stores({
       dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
     });
+    this.version(2).stores({
+      dailyEntries: '++id, &[date+sectorId]'
+    });
   }
 }
 
@@ -111,5 +114,5 @@ export async function cycleDailyStatus(date: string, sectorId: SectorId): Promis
 }
 
 export async function getAllEntries(): Promise<DailyEntry[]> {
-  return runDatabaseOperation(async () => db.dailyEntries.orderBy('date').toArray());
+  return runDatabaseOperation(async () => db.dailyEntries.orderBy('[date+sectorId]').toArray());
 }
