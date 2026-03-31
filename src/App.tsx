@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
+import { useServiceWorkerRegistration } from './hooks/useServiceWorkerRegistration';
 import { useStorageHealth } from './hooks/useStorageHealth';
 import { formatStorageSummary } from './lib/storage';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
@@ -20,17 +20,7 @@ function App() {
     needRefresh: [needRefresh, setNeedRefresh],
     offlineReady: [offlineReady, setOfflineReady],
     updateServiceWorker
-  } = useRegisterSW({
-    onRegisteredSW(_swUrl, registration) {
-      if (!registration) {
-        return;
-      }
-
-      window.setInterval(() => {
-        void registration.update();
-      }, 60 * 60 * 1000);
-    }
-  });
+  } = useServiceWorkerRegistration();
 
   useEffect(() => {
     function refreshCalendarWindow() {
