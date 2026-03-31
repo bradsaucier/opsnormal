@@ -30,6 +30,7 @@ Prove that the app:
 ### End-to-end tests
 - daily check-in persists through reload
 - production preview can reopen offline after first load
+- JSON export can be imported into a clean browser context and re-exported without data loss
 
 ## Coverage posture
 
