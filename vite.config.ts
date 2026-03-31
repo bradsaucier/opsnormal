@@ -7,12 +7,15 @@ const base = process.env.VITE_BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
+  build: {
+    assetsInlineLimit: 0
+  },
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      injectRegister: 'auto',
+      injectRegister: null,
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: base,
