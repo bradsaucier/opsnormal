@@ -7,6 +7,7 @@ test.describe('OpsNormal service worker update posture', () => {
   test('surfaces the update banner when a newer service worker is detected', async ({ page, context }) => {
     await page.goto('/');
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await page.waitForLoadState('networkidle');
 
     const currentServiceWorker = await readFile('dist/sw.js', 'utf-8');
     const updatedServiceWorker = `${currentServiceWorker}\n// opsnormal-playwright-update-marker\n`;
@@ -21,7 +22,6 @@ test.describe('OpsNormal service worker update posture', () => {
     await page.evaluate(() => {
       window.dispatchEvent(new Event('focus'));
       window.dispatchEvent(new Event('online'));
-      document.dispatchEvent(new Event('visibilitychange'));
     });
 
     await expect(page.getByRole('heading', { name: 'Update Ready' })).toBeVisible({ timeout: 10000 });
