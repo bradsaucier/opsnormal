@@ -7,7 +7,8 @@ Before tagging a release:
 - [ ] unit and integration tests pass
 - [ ] Playwright tests pass
 - [ ] production build passes
-- [ ] service worker update banner works
+- [ ] service worker registration smoke test passes in Chromium
+- [ ] service worker update banner verified manually after a deployed worker change
 - [ ] offline reopen verified manually
 - [ ] export verified manually
 - [ ] iOS install guidance reviewed
