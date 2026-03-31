@@ -11,6 +11,13 @@ import type {
   JsonExportPayload
 } from '../types';
 
+type RawChecksumPayload = Pick<
+  JsonExportPayload,
+  'app' | 'schemaVersion' | 'exportedAt' | 'checksum'
+> & {
+  entries: JsonExportPayload['entries'];
+};
+
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 function getCompoundKey(entry: Pick<DailyEntry, 'date' | 'sectorId'>): string {
@@ -50,7 +57,10 @@ function formatValidationError(error: ZodError): string {
   return `${path}${primaryIssue.message}`;
 }
 
-async function verifyExportChecksum(payload: JsonExportPayload): Promise<void> {
+async function verifyExportChecksum(
+  rawPayload: RawChecksumPayload,
+  payload: JsonExportPayload
+): Promise<void> {
   if (!payload.checksum) {
     return;
   }
@@ -59,7 +69,7 @@ async function verifyExportChecksum(payload: JsonExportPayload): Promise<void> {
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
-    entries: payload.entries
+    entries: rawPayload.entries
   });
 
   if (computedChecksum !== payload.checksum) {
@@ -137,7 +147,7 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
     throw new Error(formatValidationError(validated.error));
   }
 
-  await verifyExportChecksum(validated.data);
+  await verifyExportChecksum(parsed as RawChecksumPayload, validated.data);
 
   return validated.data;
 }
