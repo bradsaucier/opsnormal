@@ -27,6 +27,14 @@ function App() {
       }
 
       window.setInterval(() => {
+        if (registration.installing) {
+          return;
+        }
+
+        if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
+          return;
+        }
+
         void registration.update();
       }, 60 * 60 * 1000);
     }
