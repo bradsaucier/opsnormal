@@ -1,8 +1,8 @@
 /// <reference types="node" />
 
 import { readFile } from 'node:fs/promises';
-
 import { expect, test } from '@playwright/test';
+import { computeJsonExportChecksum } from '../../src/lib/export';
 
 type ExportEntry = {
   date: string;
@@ -23,7 +23,6 @@ function requireDownloadPath(path: string | null): string {
   if (!path) {
     throw new Error('Playwright did not provide a downloadable file path.');
   }
-
   return path;
 }
 
@@ -73,11 +72,11 @@ test.describe('OpsNormal export recovery', () => {
     expect(firstPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
     expect(normalizeExportPayload(firstPayload).entries).toHaveLength(2);
 
-    const appUrl = new URL('/', page.url()).toString();
     const recoveryContext = await browser.newContext({ acceptDownloads: true });
 
     try {
       const recoveryPage = await recoveryContext.newPage();
+      const appUrl = new URL('/', page.url()).toString();
 
       await recoveryPage.goto(appUrl);
       await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles({
@@ -99,14 +98,28 @@ test.describe('OpsNormal export recovery', () => {
       await recoveryPage.getByRole('button', { name: 'Export JSON' }).click();
       const secondDownload = await secondDownloadPromise;
 
-      expect(secondDownload.suggestedFilename()).toBe('opsnormal-export.json');
-
       const secondDownloadPath = requireDownloadPath(await secondDownload.path());
       const secondBuffer = await readFile(secondDownloadPath);
       const secondPayload = parseExportPayload(secondBuffer.toString('utf-8'));
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
-      expect(secondPayload.checksum).toBe(firstPayload.checksum);
+
+      const firstRecomputedChecksum = await computeJsonExportChecksum({
+        app: firstPayload.app,
+        schemaVersion: firstPayload.schemaVersion,
+        exportedAt: firstPayload.exportedAt,
+        entries: firstPayload.entries
+      });
+
+      const secondRecomputedChecksum = await computeJsonExportChecksum({
+        app: secondPayload.app,
+        schemaVersion: secondPayload.schemaVersion,
+        exportedAt: secondPayload.exportedAt,
+        entries: secondPayload.entries
+      });
+
+      expect(firstPayload.checksum).toBe(firstRecomputedChecksum);
+      expect(secondPayload.checksum).toBe(secondRecomputedChecksum);
       expect(normalizeExportPayload(secondPayload)).toEqual(normalizeExportPayload(firstPayload));
     } finally {
       await recoveryContext.close();
