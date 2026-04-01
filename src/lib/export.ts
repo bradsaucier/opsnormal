@@ -4,6 +4,8 @@ import {
   type DailyEntry,
   type JsonExportPayload
 } from '../types';
+import { db, reopenIfClosed } from '../db/appDb';
+import { createStorageOperationError } from './storage';
 
 const LAST_EXPORT_AT_KEY = 'opsnormal-last-export-at';
 
@@ -12,6 +14,11 @@ interface ChecksumPayload {
   schemaVersion: JsonExportPayload['schemaVersion'];
   exportedAt: JsonExportPayload['exportedAt'];
   entries: JsonExportPayload['entries'];
+}
+
+interface ExportSnapshotResult {
+  entries: DailyEntry[];
+  exportedAt: string;
 }
 
 export async function createJsonExport(
@@ -90,6 +97,33 @@ export function formatLastExportCompletedAt(value: string | null): string {
   }).format(parsedDate)}.`;
 }
 
+export async function exportCurrentEntriesAsJson(): Promise<{
+  entryCount: number;
+  exportedAt: string;
+  payload: string;
+}> {
+  const snapshot = await readExportSnapshot();
+  const payload = await createJsonExport(snapshot.entries, snapshot.exportedAt);
+
+  return {
+    entryCount: snapshot.entries.length,
+    exportedAt: snapshot.exportedAt,
+    payload
+  };
+}
+
+export async function exportCurrentEntriesAsCsv(): Promise<{
+  entryCount: number;
+  payload: string;
+}> {
+  const snapshot = await readExportSnapshot();
+
+  return {
+    entryCount: snapshot.entries.length,
+    payload: createCsvExport(snapshot.entries)
+  };
+}
+
 export async function computeJsonExportChecksum(payload: ChecksumPayload): Promise<string> {
   const serialized = JSON.stringify({
     app: payload.app,
@@ -101,6 +135,23 @@ export async function computeJsonExportChecksum(payload: ChecksumPayload): Promi
   const digest = await crypto.subtle.digest('SHA-256', bytes);
 
   return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+async function readExportSnapshot(): Promise<ExportSnapshotResult> {
+  try {
+    await reopenIfClosed();
+
+    const entries = await db.transaction('r', db.dailyEntries, async () =>
+      db.dailyEntries.orderBy('[date+sectorId]').toArray()
+    );
+
+    return {
+      entries,
+      exportedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    throw createStorageOperationError(error);
+  }
 }
 
 function escapeCsvCell(cell: string): string {

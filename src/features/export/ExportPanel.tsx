@@ -2,11 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
 import { SectionCard } from '../../components/SectionCard';
-import { getAllEntries } from '../../db/appDb';
 import {
-  createCsvExport,
-  createJsonExport,
   downloadTextFile,
+  exportCurrentEntriesAsCsv,
+  exportCurrentEntriesAsJson,
   formatLastExportCompletedAt,
   getLastExportCompletedAt,
   recordExportCompleted
@@ -40,13 +39,11 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
 
   async function handleJsonExport() {
     try {
-      const entries = await getAllEntries();
-      const exportedAt = new Date().toISOString();
-      const payload = await createJsonExport(entries, exportedAt);
+      const { entryCount, exportedAt, payload } = await exportCurrentEntriesAsJson();
       downloadTextFile('opsnormal-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
       setLastBackupAt(exportedAt);
-      setMessage(`JSON export complete. ${entries.length} entries written to disk.`);
+      setMessage(`JSON export complete. ${entryCount} entries written to disk.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'JSON export failed. Reload the app and try again.');
     }
@@ -54,10 +51,9 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
 
   async function handleCsvExport() {
     try {
-      const entries = await getAllEntries();
-      const payload = createCsvExport(entries);
+      const { entryCount, payload } = await exportCurrentEntriesAsCsv();
       downloadTextFile('opsnormal-export.csv', payload, 'text/csv;charset=utf-8');
-      setMessage(`CSV export complete. ${entries.length} entries written to disk.`);
+      setMessage(`CSV export complete. ${entryCount} entries written to disk.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'CSV export failed. Reload the app and try again.');
     }
@@ -193,7 +189,7 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
           <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
             Operating notes
           </p>
-          <ol className="mt-3 space-y-2 pl-5 text-sm leading-6 text-zinc-300 list-decimal">
+          <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-6 text-zinc-300">
             <li>Export routinely, especially on iPhone and iPad.</li>
             <li>Use merge to add or refresh selected days without wiping the browser database.</li>
             <li>Use replace only when restoring a full backup snapshot.</li>
@@ -219,107 +215,119 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                   structure is validated but file integrity is not cryptographically verified.
                 </p>
               ) : (
-                <p className="mt-2 text-sm leading-6 text-emerald-100/90">
-                  Integrity verified. The embedded SHA-256 checksum matched before this import was
-                  staged.
+                <p className="mt-2 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm leading-6 text-emerald-100">
+                  Integrity verified. The embedded SHA-256 checksum matched before write staging.
                 </p>
               )}
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs tracking-[0.14em] text-sky-100 uppercase sm:grid-cols-4">
-              <div>
-                <div className="text-sky-200/70">Entries</div>
-                <div className="mt-1 text-sm font-semibold text-white">{pendingImport.totalEntries}</div>
-              </div>
-              <div>
-                <div className="text-sky-200/70">Overwrite</div>
-                <div className="mt-1 text-sm font-semibold text-white">{pendingImport.overwriteCount}</div>
-              </div>
-              <div>
-                <div className="text-sky-200/70">New</div>
-                <div className="mt-1 text-sm font-semibold text-white">{pendingImport.newEntryCount}</div>
-              </div>
-              <div>
-                <div className="text-sky-200/70">Range</div>
-                <div className="mt-1 text-sm font-semibold text-white">
-                  {pendingImport.dateRange
-                    ? `${pendingImport.dateRange.start} to ${pendingImport.dateRange.end}`
-                    : 'No entries'}
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
+                    Entries
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold text-white">
+                    {pendingImport.totalEntries}
+                  </dd>
                 </div>
+                <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
+                    Date range
+                  </dt>
+                  <dd className="mt-1 text-sm font-semibold text-white">
+                    {pendingImport.dateRange
+                      ? `${pendingImport.dateRange.start} to ${pendingImport.dateRange.end}`
+                      : 'No valid dates detected'}
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
+                    New rows
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold text-white">
+                    {pendingImport.newEntryCount}
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+                  <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
+                    Overwrites
+                  </dt>
+                  <dd className="mt-1 text-lg font-semibold text-white">
+                    {pendingImport.overwriteCount}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="w-full max-w-xs rounded-xl border border-white/10 bg-black/20 p-4">
+              <fieldset>
+                <legend className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
+                  Import mode
+                </legend>
+                <div className="mt-3 space-y-3 text-sm text-zinc-300">
+                  <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                    <input
+                      type="radio"
+                      name="import-mode"
+                      value="merge"
+                      checked={importMode === 'merge'}
+                      onChange={() => setImportMode('merge')}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block font-semibold text-zinc-100">Merge</span>
+                      <span className="block leading-6">
+                        Write imported rows and preserve all other local rows.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                    <input
+                      type="radio"
+                      name="import-mode"
+                      value="replace"
+                      checked={importMode === 'replace'}
+                      onChange={() => setImportMode('replace')}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block font-semibold text-zinc-100">Replace</span>
+                      <span className="block leading-6">
+                        Clear local rows first, then restore from the selected backup.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmImport()}
+                  disabled={importBusy}
+                  className="min-h-11 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-emerald-200 uppercase transition hover:bg-emerald-400/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {importBusy ? 'Writing Import' : 'Confirm Import'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingImport(null);
+                    setPendingFileName('');
+                    setMessage('Import staging cleared. Local data unchanged.');
+                  }}
+                  disabled={importBusy}
+                  className="min-h-11 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
-          </div>
-
-          <fieldset className="mt-4">
-            <legend className="text-xs font-semibold tracking-[0.16em] text-sky-100 uppercase">
-              Import mode
-            </legend>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <label className="flex cursor-pointer gap-3 rounded-lg border border-white/10 bg-black/20 p-3 text-sm text-sky-50/95">
-                <input
-                  type="radio"
-                  name="import-mode"
-                  value="merge"
-                  checked={importMode === 'merge'}
-                  onChange={() => setImportMode('merge')}
-                />
-                <span>
-                  <span className="block font-semibold tracking-[0.08em] text-white uppercase">Merge</span>
-                  <span className="mt-1 block text-sm leading-6 text-zinc-300">
-                    Keep unrelated local entries. Overwrite only matching date and sector pairs.
-                  </span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer gap-3 rounded-lg border border-white/10 bg-black/20 p-3 text-sm text-sky-50/95">
-                <input
-                  type="radio"
-                  name="import-mode"
-                  value="replace"
-                  checked={importMode === 'replace'}
-                  onChange={() => setImportMode('replace')}
-                />
-                <span>
-                  <span className="block font-semibold tracking-[0.08em] text-white uppercase">Replace</span>
-                  <span className="mt-1 block text-sm leading-6 text-zinc-300">
-                    Clear the current browser database and replace it with the imported snapshot.
-                  </span>
-                </span>
-              </label>
-            </div>
-          </fieldset>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => void handleConfirmImport()}
-              disabled={importBusy}
-              className="min-h-11 rounded-lg border border-sky-300/40 bg-sky-300/10 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-sky-100 uppercase transition hover:bg-sky-300/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-wait disabled:opacity-70"
-            >
-              {importBusy ? 'Importing' : 'Confirm Import'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPendingImport(null);
-                setPendingFileName('');
-                setMessage('Import staging canceled. No data was written.');
-              }}
-              disabled={importBusy}
-              className="min-h-11 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-wait disabled:opacity-70"
-            >
-              Cancel
-            </button>
           </div>
         </div>
       ) : null}
 
-      <p
-        className="mt-4 text-xs tracking-[0.14em] text-zinc-500 uppercase"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      >
+      <div className="mt-5 rounded-xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-300">
         {message}
-      </p>
+      </div>
     </SectionCard>
   );
 }
