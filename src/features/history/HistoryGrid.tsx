@@ -90,8 +90,14 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
     }
 
     function updateScrollAffordance() {
-      const remainingScroll = scrollNode.scrollWidth - scrollNode.clientWidth - scrollNode.scrollLeft;
-      setCanScrollLeft(scrollNode.scrollLeft > 2);
+      const node = scrollRef.current;
+
+      if (!node) {
+        return;
+      }
+
+      const remainingScroll = node.scrollWidth - node.clientWidth - node.scrollLeft;
+      setCanScrollLeft(node.scrollLeft > 2);
       setCanScrollRight(remainingScroll > 2);
     }
 
