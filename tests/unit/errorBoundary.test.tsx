@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ReactElement } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -40,7 +41,7 @@ class Explodes extends Error {
   }
 }
 
-function CrashOnRender(): JSX.Element {
+function CrashOnRender(): ReactElement {
   throw new Explodes();
 }
 
@@ -91,7 +92,7 @@ describe('ErrorBoundary', () => {
   it('remounts the crashed subtree when retry is selected', async () => {
     let shouldThrow = true;
 
-    function CrashThenRecover(): JSX.Element {
+    function CrashThenRecover(): ReactElement {
       if (shouldThrow) {
         throw new Explodes('retry failure');
       }
