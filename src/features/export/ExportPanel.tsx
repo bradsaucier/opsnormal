@@ -233,7 +233,9 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                     Date range
                   </dt>
                   <dd className="mt-1 text-sm font-semibold text-white">
-                    {pendingImport.dateRange.start} to {pendingImport.dateRange.end}
+                    {pendingImport.dateRange
+                      ? `${pendingImport.dateRange.start} to ${pendingImport.dateRange.end}`
+                      : 'No valid dates detected'}
                   </dd>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-black/20 p-3">
