@@ -34,17 +34,13 @@ function CrashOnRender() {
 }
 
 describe('ErrorBoundary', () => {
-  let reloadSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    reloadSpy.mockRestore();
     vi.restoreAllMocks();
   });
 
@@ -131,6 +127,8 @@ describe('ErrorBoundary', () => {
   });
 
   it('reloads the page from the crash fallback', async () => {
+    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
+
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
