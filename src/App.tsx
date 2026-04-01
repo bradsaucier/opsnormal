@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
+import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
@@ -111,7 +113,18 @@ function App() {
         />
 
         <TodayPanel todayKey={todayKey} onMeaningfulSave={reinforceLocalStorageDurability} />
-        <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
+        <ErrorBoundary
+          resetKeys={[historyKey, todayKey]}
+          fallbackRender={({ error, resetErrorBoundary }) => (
+            <SectionCrashFallback
+              label="History Grid"
+              error={error}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
+        </ErrorBoundary>
         <ExportPanel storageHealth={storageHealth} />
 
         <footer className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
