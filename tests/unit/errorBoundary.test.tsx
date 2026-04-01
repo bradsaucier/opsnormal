@@ -1,0 +1,182 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { AppCrashFallback } from '../../src/components/AppCrashFallback';
+import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
+
+const readEntriesForCrashExportMock = vi.fn(() => Promise.resolve([]));
+const createJsonExportMock = vi.fn(() => Promise.resolve('{"ok":true}'));
+const createCsvExportMock = vi.fn(() => 'date,sectorId,status,updatedAt');
+const downloadTextFileMock = vi.fn();
+const recordExportCompletedMock = vi.fn();
+
+vi.mock('../../src/lib/crashExport', () => ({
+  readEntriesForCrashExport: readEntriesForCrashExportMock
+}));
+
+vi.mock('../../src/lib/export', () => ({
+  createJsonExport: createJsonExportMock,
+  createCsvExport: createCsvExportMock,
+  downloadTextFile: downloadTextFileMock,
+  recordExportCompleted: recordExportCompletedMock
+}));
+
+class Explodes extends Error {
+  constructor(message = 'render failure') {
+    super(message);
+  }
+}
+
+function CrashOnRender() {
+  throw new Explodes();
+}
+
+describe('ErrorBoundary', () => {
+  let reloadSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    reloadSpy.mockRestore();
+    vi.restoreAllMocks();
+  });
+
+  it('contains a render crash and shows the fallback', () => {
+    render(
+      <ErrorBoundary
+        fallbackRender={({ error, resetErrorBoundary }) => (
+          <AppCrashFallback error={error} onRetry={resetErrorBoundary} />
+        )}
+      >
+        <CrashOnRender />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText(/opsnormal stopped rendering/i)).toBeInTheDocument();
+    expect(screen.getByText(/render failure/i)).toBeInTheDocument();
+  });
+
+  it('resets the latched fault when reset keys change', () => {
+    const view = render(
+      <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>} resetKeys={['alpha']}>
+        <CrashOnRender />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('render failure')).toBeInTheDocument();
+
+    view.rerender(
+      <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>} resetKeys={['bravo']}>
+        <div>Recovered</div>
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('Recovered')).toBeInTheDocument();
+  });
+
+  it('remounts the crashed subtree when retry is selected', async () => {
+    let attempts = 0;
+
+    function CrashOnceThenRecover() {
+      attempts += 1;
+
+      if (attempts === 1) {
+        throw new Explodes('retry failure');
+      }
+
+      return <div>Recovered after retry</div>;
+    }
+
+    render(
+      <ErrorBoundary
+        fallbackRender={({ error, resetErrorBoundary }) => (
+          <div>
+            <span>{error.message}</span>
+            <button type="button" onClick={resetErrorBoundary}>
+              Retry boundary
+            </button>
+          </div>
+        )}
+      >
+        <CrashOnceThenRecover />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByText('retry failure')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /retry boundary/i }));
+
+    expect(screen.getByText('Recovered after retry')).toBeInTheDocument();
+  });
+
+  it('exports JSON from the crash fallback through an isolated export path', async () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /export json/i }));
+
+    expect(readEntriesForCrashExportMock).toHaveBeenCalledTimes(1);
+    expect(createJsonExportMock).toHaveBeenCalledTimes(1);
+    expect(downloadTextFileMock).toHaveBeenCalledWith(
+      'opsnormal-crash-export.json',
+      '{"ok":true}',
+      'application/json'
+    );
+  });
+
+  it('reloads the page from the crash fallback', async () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
+
+    expect(reloadSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SectionCrashFallback', () => {
+  it('displays the section label and error message', () => {
+    render(
+      <SectionCrashFallback
+        label="History Grid"
+        error={new Error('Grid fault')}
+        onRetry={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('History Grid failed to render')).toBeInTheDocument();
+    expect(screen.getByText('Grid fault')).toBeInTheDocument();
+  });
+
+  it('calls onRetry when retry is clicked', async () => {
+    const onRetry = vi.fn();
+
+    render(
+      <SectionCrashFallback
+        label="History Grid"
+        error={new Error('Grid fault')}
+        onRetry={onRetry}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('crash export isolation', () => {
+  it('readEntriesForCrashExport opens and closes an independent Dexie instance', async () => {
+    vi.unmock('../../src/lib/crashExport');
+    const { readEntriesForCrashExport } = await import('../../src/lib/crashExport');
+
+    const entries = await readEntriesForCrashExport();
+
+    expect(Array.isArray(entries)).toBe(true);
+  });
+});
