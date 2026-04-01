@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ops-base: #0a0f0d;
-  --color-ops-surface-1: #111916;
-  --color-ops-surface-2: #162019;
-  --color-ops-surface-3: #1c2820;
-  --color-ops-text-primary: #e0e6e3;
-  --color-ops-text-secondary: #939f99;
-  --color-ops-text-muted: #5c6662;
+  --color-ops-base: #0d1210;
+  --color-ops-surface-1: #151d1a;
+  --color-ops-surface-2: #1c2521;
+  --color-ops-surface-3: #24302a;
+  --color-ops-text-primary: #e6ece9;
+  --color-ops-text-secondary: #b4bfba;
+  --color-ops-text-muted: #8b9691;
   --color-ops-accent: #6ee7b7;
-  --color-ops-accent-muted: #a7f3d0;
-  --color-ops-border-soft: #ffffff0f;
-  --color-ops-border-struct: #ffffff1f;
-  --color-ops-border-strong: #ffffff2e;
-  --color-ops-accent-border: #6ee7b71f;
+  --color-ops-accent-muted: #b7f7da;
+  --color-ops-border-soft: #ffffff14;
+  --color-ops-border-struct: #ffffff29;
+  --color-ops-border-strong: #ffffff3a;
+  --color-ops-accent-border: #6ee7b724;
 }
 
 :root {
@@ -65,9 +65,9 @@ button {
   overflow: hidden;
   isolation: isolate;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
     inset 0 0 0 1px var(--color-ops-border-soft),
-    0 0 0 1px rgba(255, 255, 255, 0.015);
+    0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 .tactical-panel::before {
@@ -92,7 +92,7 @@ button {
 }
 
 .history-scroll-shell:focus-visible {
-  outline: 2px solid rgba(167, 243, 208, 0.6);
+  outline: 2px solid rgba(183, 247, 218, 0.72);
   outline-offset: 2px;
 }
 
