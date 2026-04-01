@@ -68,6 +68,7 @@ OpsNormal takes the opposite path. The interaction is intentionally coarse, inte
 - JSON export for backup and validated JSON import for recovery
 - CSV export for external review and spreadsheet work
 - Storage durability checks with persistent storage requests when supported
+- Root and sectional crash containment so render faults do not degrade into a blank screen
 - Lint, typecheck, unit, integration, and end-to-end verification in CI
 
 ## Quick start
@@ -128,6 +129,7 @@ Local-first only works if recovery is real.
 - Legacy JSON exports without a checksum can still import, but they are flagged as unverified
 - Import supports merge and replace modes
 - Undo restores the pre-import snapshot for the current session
+- Crash fallback keeps export actions available if the main React shell faults
 
 ### Honest limits
 
