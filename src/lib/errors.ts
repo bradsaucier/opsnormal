@@ -30,7 +30,7 @@ export function shouldSuppressRecoverableError(
   error: unknown,
   errorInfo?: ErrorInfo | ErrorInfoLike
 ): boolean {
-  const message = error instanceof Error ? error.message : String(error ?? '');
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
   const stack = errorInfo?.componentStack ?? '';
   const haystack = `${message}\n${stack}`.toLowerCase();
 
