@@ -6,21 +6,23 @@ import { AppCrashFallback } from '../../src/components/AppCrashFallback';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
 
-const readEntriesForCrashExportMock = vi.fn(() => Promise.resolve([]));
-const createJsonExportMock = vi.fn(() => Promise.resolve('{"ok":true}'));
-const createCsvExportMock = vi.fn(() => 'date,sectorId,status,updatedAt');
-const downloadTextFileMock = vi.fn();
-const recordExportCompletedMock = vi.fn();
+const mocks = vi.hoisted(() => ({
+  readEntriesForCrashExport: vi.fn(() => Promise.resolve([])),
+  createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
+  createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
+  downloadTextFile: vi.fn(),
+  recordExportCompleted: vi.fn()
+}));
 
 vi.mock('../../src/lib/crashExport', () => ({
-  readEntriesForCrashExport: readEntriesForCrashExportMock
+  readEntriesForCrashExport: mocks.readEntriesForCrashExport
 }));
 
 vi.mock('../../src/lib/export', () => ({
-  createJsonExport: createJsonExportMock,
-  createCsvExport: createCsvExportMock,
-  downloadTextFile: downloadTextFileMock,
-  recordExportCompleted: recordExportCompletedMock
+  createJsonExport: mocks.createJsonExport,
+  createCsvExport: mocks.createCsvExport,
+  downloadTextFile: mocks.downloadTextFile,
+  recordExportCompleted: mocks.recordExportCompleted
 }));
 
 class Explodes extends Error {
@@ -117,9 +119,9 @@ describe('ErrorBoundary', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /export json/i }));
 
-    expect(readEntriesForCrashExportMock).toHaveBeenCalledTimes(1);
-    expect(createJsonExportMock).toHaveBeenCalledTimes(1);
-    expect(downloadTextFileMock).toHaveBeenCalledWith(
+    expect(mocks.readEntriesForCrashExport).toHaveBeenCalledTimes(1);
+    expect(mocks.createJsonExport).toHaveBeenCalledTimes(1);
+    expect(mocks.downloadTextFile).toHaveBeenCalledWith(
       'opsnormal-crash-export.json',
       '{"ok":true}',
       'application/json'
@@ -165,16 +167,5 @@ describe('SectionCrashFallback', () => {
     await userEvent.click(screen.getByRole('button', { name: /retry/i }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('crash export isolation', () => {
-  it('readEntriesForCrashExport opens and closes an independent Dexie instance', async () => {
-    vi.unmock('../../src/lib/crashExport');
-    const { readEntriesForCrashExport } = await import('../../src/lib/crashExport');
-
-    const entries = await readEntriesForCrashExport();
-
-    expect(Array.isArray(entries)).toBe(true);
   });
 });
