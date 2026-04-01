@@ -36,6 +36,10 @@ The database layer now watches Dexie close events.
 If the IndexedDB connection drops, `reopenIfClosed()` re-establishes the handle before the next read or write.
 Write paths route through guarded operations so quota failures and interrupted database connections surface as explicit user-facing errors instead of opaque transaction aborts.
 
+React error boundaries now provide render-fault containment at two levels.
+A root boundary keeps the app from collapsing into a white screen and preserves direct export actions on the crash fallback.
+A second boundary isolates the 30-day history grid so a panel fault does not take Today, backup, or install controls offline.
+
 ## Why this matters
 
 The architecture is intentionally narrow.
