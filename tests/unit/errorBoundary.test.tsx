@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => ({
   createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
   createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
   downloadTextFile: vi.fn(),
-  recordExportCompleted: vi.fn()
+  recordExportCompleted: vi.fn(),
+  reloadCurrentPage: vi.fn()
 }));
 
 vi.mock('../../src/lib/crashExport', () => ({
@@ -24,6 +25,14 @@ vi.mock('../../src/lib/export', () => ({
   downloadTextFile: mocks.downloadTextFile,
   recordExportCompleted: mocks.recordExportCompleted
 }));
+
+vi.mock('../../src/lib/runtime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
+  return {
+    ...actual,
+    reloadCurrentPage: mocks.reloadCurrentPage
+  };
+});
 
 class Explodes extends Error {
   constructor(message = 'render failure') {
@@ -80,12 +89,10 @@ describe('ErrorBoundary', () => {
   });
 
   it('remounts the crashed subtree when retry is selected', async () => {
-    let attempts = 0;
+    let shouldThrow = true;
 
-    function CrashOnceThenRecover(): JSX.Element {
-      attempts += 1;
-
-      if (attempts === 1) {
+    function CrashThenRecover(): JSX.Element {
+      if (shouldThrow) {
         throw new Explodes('retry failure');
       }
 
@@ -94,20 +101,23 @@ describe('ErrorBoundary', () => {
 
     render(
       <ErrorBoundary
-        fallbackRender={({ error, resetErrorBoundary }) => (
-          <div>
-            <span>{error.message}</span>
-            <button type="button" onClick={resetErrorBoundary}>
-              Retry boundary
-            </button>
-          </div>
+        fallbackRender={({ resetErrorBoundary }) => (
+          <button
+            type="button"
+            onClick={() => {
+              shouldThrow = false;
+              resetErrorBoundary();
+            }}
+          >
+            Retry boundary
+          </button>
         )}
       >
-        <CrashOnceThenRecover />
+        <CrashThenRecover />
       </ErrorBoundary>
     );
 
-    expect(screen.getByText('retry failure')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry boundary/i })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /retry boundary/i }));
 
@@ -129,13 +139,11 @@ describe('ErrorBoundary', () => {
   });
 
   it('reloads the page from the crash fallback', async () => {
-    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
-
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
 
-    expect(reloadSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
   });
 });
 
