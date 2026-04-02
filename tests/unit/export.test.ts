@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   computeJsonExportChecksum,
@@ -20,6 +20,10 @@ const sampleEntries: DailyEntry[] = [
 ];
 
 describe('export helpers', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('creates csv with header and rows', () => {
     const csv = createCsvExport(sampleEntries);
 
@@ -73,6 +77,22 @@ describe('export helpers', () => {
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
+  });
+
+  it('fails cleanly when subtle crypto is unavailable', async () => {
+    vi.stubGlobal('crypto', {
+      subtle: undefined
+    });
+    vi.stubGlobal('isSecureContext', true);
+
+    await expect(
+      computeJsonExportChecksum({
+        app: OPSNORMAL_APP_NAME,
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: '2026-03-28T10:11:12.000Z',
+        entries: sampleEntries
+      })
+    ).rejects.toThrow('required Web Crypto API');
   });
 
   it('formats backup status text when no export is recorded', () => {

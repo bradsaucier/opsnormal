@@ -129,7 +129,7 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
         <div className="space-y-4">
           <p className="max-w-2xl text-sm leading-6 text-zinc-300">
             Local-first only works if recovery is real. Export creates external backups. Import
-            restores them with validation before any write reaches IndexedDB.
+            validates before write and aborts the transaction if post-write verification fails.
           </p>
 
           <StorageHealthIndicator storageHealth={storageHealth} />

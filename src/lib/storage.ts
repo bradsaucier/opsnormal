@@ -75,6 +75,40 @@ function resolvePercentUsed(usageBytes: number | null, quotaBytes: number | null
   return Math.min(usageBytes / quotaBytes, 1);
 }
 
+function isDesktopSafariBrowser(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent;
+  const isSafari = /safari/i.test(userAgent);
+  const isExcluded = /chrome|crios|chromium|android|edg|opr|fxios|firefox/i.test(userAgent);
+
+  return isSafari && !isExcluded && !isIOSDevice();
+}
+
+function isStandaloneIOSPwa(): boolean {
+  return isIOSDevice() && isStandaloneDisplayMode();
+}
+
+function hasWebKitEvictionRisk(): boolean {
+  return isDesktopSafariBrowser() || (isIOSDevice() && !isStandaloneIOSPwa());
+}
+
+function usesConservativeProtectionLanguage(persisted: boolean): boolean {
+  return persisted && (hasWebKitEvictionRisk() || isStandaloneIOSPwa());
+}
+
+function getProtectionSummary(persisted: boolean): string {
+  if (!persisted) {
+    return 'Protection not granted';
+  }
+
+  return usesConservativeProtectionLanguage(persisted)
+    ? 'Best-effort protection active'
+    : 'Protection active';
+}
+
 export function canUseStorageApi(): boolean {
   return getStorageManager() !== null;
 }
@@ -162,6 +196,9 @@ export function createStorageHealth(
   const quotaBytes = typeof estimate?.quota === 'number' ? estimate.quota : null;
   const percentUsed = resolvePercentUsed(usageBytes, quotaBytes);
   const estimateAvailable = quotaBytes !== null || usageBytes !== null;
+  const standaloneIOSPwa = isStandaloneIOSPwa();
+  const webKitEvictionRisk = hasWebKitEvictionRisk();
+  const iOSNotInstalledRisk = isIOSDevice() && !standaloneIOSPwa;
 
   let status: StorageHealth['status'];
   let message: string;
@@ -169,11 +206,37 @@ export function createStorageHealth(
   if (persisted) {
     status = 'protected';
 
-    if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
+    if (iOSNotInstalledRisk) {
+      message =
+        'Best-effort storage protection is active, but iPhone and iPad browsers can still evict non-installed app data. Install to Home Screen and export routinely.';
+    } else if (standaloneIOSPwa) {
+      message =
+        'Best-effort storage protection is active. Home Screen mode avoids the standard Safari browser inactivity purge, but local-only data can still be lost to storage pressure or manual clearing. Export routinely.';
+    } else if (webKitEvictionRisk) {
+      message =
+        'Best-effort storage protection is active, but Safari-family browsers can still evict local data. Keep routine exports and verify the installed path when available.';
+    } else if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
       message = `Persistent storage active. ${formatBytes(usageBytes)} used of ${formatBytes(quotaBytes)} quota.`;
     } else {
       message = 'Persistent storage active. Quota telemetry unavailable on this browser.';
     }
+  } else if (iOSNotInstalledRisk) {
+    status = 'warning';
+    message =
+      'High-risk storage posture on iPhone or iPad. Browser data can be evicted after inactivity. Install to Home Screen and export routinely.';
+  } else if (standaloneIOSPwa) {
+    status = 'monitor';
+
+    if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
+      message = `Persistent storage not granted. Home Screen mode reduces Safari inactivity eviction risk. ${formatBytes(usageBytes)} used of ${formatBytes(quotaBytes)} quota. Export routinely.`;
+    } else {
+      message =
+        'Persistent storage not granted. Home Screen mode reduces Safari inactivity eviction risk, but export remains the external backup.';
+    }
+  } else if (webKitEvictionRisk) {
+    status = 'warning';
+    message =
+      'High-risk storage posture on Safari-family browsers. Local browser data can disappear without backup. Export routinely.';
   } else if (!persistenceAvailable && !estimateAvailable) {
     status = 'unavailable';
     message = 'Storage telemetry unavailable on this browser. Export routinely as the external backup.';
@@ -227,7 +290,7 @@ export function formatStorageHint(estimate: StorageEstimate | null, persisted: b
 }
 
 export function formatStorageSummary(storageHealth: StorageHealth): string {
-  const protectionSummary = storageHealth.persisted ? 'Protection active' : 'Protection not granted';
+  const protectionSummary = getProtectionSummary(storageHealth.persisted);
 
   if (storageHealth.usageBytes !== null && storageHealth.quotaBytes !== null) {
     return `${protectionSummary}. ${formatBytes(storageHealth.usageBytes)} used of ${formatBytes(storageHealth.quotaBytes)} quota.`;
@@ -283,6 +346,10 @@ export function createStorageOperationError(error: unknown): Error {
 }
 
 export function isStandaloneDisplayMode(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (typeof navigator !== 'undefined' &&
@@ -292,5 +359,9 @@ export function isStandaloneDisplayMode(): boolean {
 }
 
 export function isIOSDevice(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }

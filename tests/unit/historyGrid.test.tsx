@@ -103,7 +103,7 @@ describe('HistoryGrid', () => {
       name: /work or school on wed, apr 1, 2026: degraded/i
     });
 
-    selectedCell.focus();
+    await userEvent.click(selectedCell);
     await userEvent.keyboard('{ArrowDown}');
 
     expect(
@@ -122,7 +122,7 @@ describe('HistoryGrid', () => {
       name: /work or school on tue, mar 31, 2026: nominal/i
     });
 
-    startCell.focus();
+    await userEvent.click(startCell);
     await userEvent.keyboard('{PageDown}');
     await userEvent.keyboard('{PageDown}');
 
@@ -142,7 +142,7 @@ describe('HistoryGrid', () => {
       name: /work or school on fri, apr 3, 2026: unmarked/i
     });
 
-    startCell.focus();
+    await userEvent.click(startCell);
     await userEvent.keyboard('{PageUp}');
     await userEvent.keyboard('{PageUp}');
 
@@ -162,7 +162,7 @@ describe('HistoryGrid', () => {
       name: /work or school on tue, mar 31, 2026: nominal/i
     });
 
-    startCell.focus();
+    await userEvent.click(startCell);
     await userEvent.keyboard('{Home}');
 
     const firstCell = screen.getByRole('gridcell', {

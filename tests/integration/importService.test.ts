@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { db, getAllEntries, setDailyStatus } from '../../src/db/appDb';
 import { applyImport, previewImportPayload } from '../../src/services/importService';
@@ -113,5 +113,119 @@ describe('import service', () => {
 
     const restoredKeys = allEntries.map((entry) => `${entry.date}:${entry.sectorId}`).sort();
     expect(restoredKeys).toEqual(['2026-03-27:body', '2026-03-27:rest']);
+  });
+
+  it('aborts the transaction when post-write verification fails', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z'
+      }
+    ]);
+
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    let orderByCallCount = 0;
+
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) => {
+        orderByCallCount += 1;
+
+        if (index === '[date+sectorId]' && orderByCallCount === 2) {
+          return {
+            toArray: () => Promise.resolve([])
+          } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
+        }
+
+        return originalOrderBy(index as '[date+sectorId]');
+      }) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await expect(applyImport(payload, 'replace')).rejects.toThrow(
+        /indexeddb transaction aborted before commit/i
+      );
+    } finally {
+      orderBySpy.mockRestore();
+    }
+
+    const allEntries = await getAllEntries();
+
+    expect(allEntries).toHaveLength(1);
+    expect(allEntries[0]).toMatchObject({
+      date: '2026-03-27',
+      sectorId: 'body',
+      status: 'nominal'
+    });
+  });
+
+  it('aborts merge import when transaction-scope verification detects a mismatch', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-27',
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-29T12:00:00.000Z'
+      },
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:01:00.000Z'
+      }
+    ]);
+
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    let orderByCallCount = 0;
+
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) => {
+        orderByCallCount += 1;
+
+        if (index === '[date+sectorId]' && orderByCallCount === 2) {
+          return {
+            toArray: () =>
+              Promise.resolve([
+                {
+                  date: '2026-03-27',
+                  sectorId: 'body',
+                  status: 'degraded',
+                  updatedAt: '2026-03-29T12:00:00.000Z'
+                },
+                {
+                  date: '2026-03-27',
+                  sectorId: 'rest',
+                  status: 'degraded',
+                  updatedAt: '2026-03-27T00:00:00.000Z'
+                }
+              ])
+          } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
+        }
+
+        return originalOrderBy(index as '[date+sectorId]');
+      }) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await expect(applyImport(payload, 'merge')).rejects.toThrow(
+        /first mismatch near \[2026-03-29:household\]/i
+      );
+    } finally {
+      orderBySpy.mockRestore();
+    }
+
+    const allEntries = await getAllEntries();
+    const byCompoundKey = new Map(allEntries.map((entry) => [`${entry.date}:${entry.sectorId}`, entry]));
+
+    expect(allEntries).toHaveLength(2);
+    expect(byCompoundKey.get('2026-03-27:body')?.status).toBe('nominal');
+    expect(byCompoundKey.get('2026-03-27:rest')?.status).toBe('degraded');
+    expect(byCompoundKey.has('2026-03-29:household')).toBe(false);
   });
 });

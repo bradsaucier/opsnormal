@@ -101,8 +101,6 @@ function normalizeImportedEntries(
   });
 }
 
-
-
 function getImportIntegrityStatus(payload: JsonExportPayload): ImportIntegrityStatus {
   return payload.checksum ? 'verified' : 'legacy-unverified';
 }
@@ -118,6 +116,113 @@ function getDateRange(entries: DailyEntry[]): ImportPreview['dateRange'] {
     start: sortedDateKeys[0] ?? '',
     end: sortedDateKeys[sortedDateKeys.length - 1] ?? ''
   };
+}
+
+function buildExpectedFinalEntries(
+  snapshot: DailyEntry[],
+  normalizedEntries: DailyEntry[],
+  mode: ImportMode
+): DailyEntry[] {
+  if (mode === 'replace') {
+    return normalizedEntries;
+  }
+
+  const byCompoundKey = new Map(snapshot.map((entry) => [getCompoundKey(entry), entry]));
+
+  for (const entry of normalizedEntries) {
+    byCompoundKey.set(getCompoundKey(entry), entry);
+  }
+
+  return Array.from(byCompoundKey.values()).sort((left, right) => {
+    const leftKey = getCompoundKey(left);
+    const rightKey = getCompoundKey(right);
+    return leftKey.localeCompare(rightKey);
+  });
+}
+
+function createComparableEntry(entry: DailyEntry) {
+  return {
+    date: entry.date,
+    sectorId: entry.sectorId,
+    status: entry.status,
+    updatedAt: entry.updatedAt
+  };
+}
+
+function hasMatchingEntrySet(expectedEntries: DailyEntry[], actualEntries: DailyEntry[]): boolean {
+  if (expectedEntries.length !== actualEntries.length) {
+    return false;
+  }
+
+  const actualByCompoundKey = new Map(
+    actualEntries.map((entry) => [getCompoundKey(entry), createComparableEntry(entry)])
+  );
+
+  return expectedEntries.every((entry) => {
+    const actual = actualByCompoundKey.get(getCompoundKey(entry));
+
+    if (!actual) {
+      return false;
+    }
+
+    return JSON.stringify(actual) === JSON.stringify(createComparableEntry(entry));
+  });
+}
+
+function getFirstMismatchCompoundKey(
+  expectedEntries: DailyEntry[],
+  actualEntries: DailyEntry[]
+): string | null {
+  if (expectedEntries.length !== actualEntries.length) {
+    const expectedKeys = new Set(expectedEntries.map(getCompoundKey));
+
+    for (const entry of actualEntries) {
+      const compoundKey = getCompoundKey(entry);
+
+      if (!expectedKeys.has(compoundKey)) {
+        return compoundKey;
+      }
+    }
+
+    const lastExpectedEntry = expectedEntries[expectedEntries.length - 1];
+    if (lastExpectedEntry) {
+      return getCompoundKey(lastExpectedEntry);
+    }
+
+    const lastActualEntry = actualEntries[actualEntries.length - 1];
+    if (lastActualEntry) {
+      return getCompoundKey(lastActualEntry);
+    }
+
+    return null;
+  }
+
+  const actualByCompoundKey = new Map(
+    actualEntries.map((entry) => [getCompoundKey(entry), createComparableEntry(entry)])
+  );
+
+  for (const entry of expectedEntries) {
+    const compoundKey = getCompoundKey(entry);
+    const actual = actualByCompoundKey.get(compoundKey);
+
+    if (!actual || JSON.stringify(actual) !== JSON.stringify(createComparableEntry(entry))) {
+      return compoundKey;
+    }
+  }
+
+  return null;
+}
+
+async function restoreUndoSnapshot(snapshot: DailyEntry[]): Promise<void> {
+  await runDatabaseWrite(async () =>
+    db.transaction('rw', db.dailyEntries, async () => {
+      await db.dailyEntries.clear();
+
+      if (snapshot.length > 0) {
+        await db.dailyEntries.bulkPut(snapshot);
+      }
+    })
+  );
 }
 
 export async function readImportFile(file: File): Promise<string> {
@@ -178,7 +283,9 @@ export async function applyImport(
   mode: ImportMode
 ): Promise<{ importedCount: number; undo: () => Promise<void> }> {
   const snapshot = await getAllEntries();
+  const undoSnapshot = snapshot.map((entry) => ({ ...entry }));
   const normalizedEntries = normalizeImportedEntries(payload.entries, snapshot, mode);
+  const expectedFinalEntries = buildExpectedFinalEntries(snapshot, normalizedEntries, mode);
 
   await runDatabaseWrite(async () =>
     db.transaction('rw', db.dailyEntries, async () => {
@@ -186,21 +293,32 @@ export async function applyImport(
         await db.dailyEntries.clear();
       }
 
-      await db.dailyEntries.bulkPut(normalizedEntries);
+      if (normalizedEntries.length > 0) {
+        await db.dailyEntries.bulkPut(normalizedEntries);
+      }
+
+      const actualEntries = await db.dailyEntries.orderBy('[date+sectorId]').toArray();
+
+      if (!hasMatchingEntrySet(expectedFinalEntries, actualEntries)) {
+        const firstMismatchCompoundKey = getFirstMismatchCompoundKey(
+          expectedFinalEntries,
+          actualEntries
+        );
+        const mismatchHint = firstMismatchCompoundKey
+          ? ` First mismatch near [${firstMismatchCompoundKey}].`
+          : '';
+
+        throw new Error(
+          `Import post-write verification failed. IndexedDB transaction aborted before commit.${mismatchHint}`
+        );
+      }
     })
   );
 
   return {
     importedCount: normalizedEntries.length,
     undo: async () => {
-      await runDatabaseWrite(async () =>
-        db.transaction('rw', db.dailyEntries, async () => {
-          await db.dailyEntries.clear();
-          if (snapshot.length > 0) {
-            await db.dailyEntries.bulkPut(snapshot);
-          }
-        })
-      );
+      await restoreUndoSnapshot(undoSnapshot);
     }
   };
 }

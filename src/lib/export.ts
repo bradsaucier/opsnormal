@@ -125,14 +125,16 @@ export async function exportCurrentEntriesAsCsv(): Promise<{
 }
 
 export async function computeJsonExportChecksum(payload: ChecksumPayload): Promise<string> {
+  const subtleCrypto = getSubtleCrypto();
   const serialized = JSON.stringify({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
     entries: payload.entries
   });
-  const bytes = new TextEncoder().encode(serialized);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const bytes = encodeChecksumInput(serialized);
+  const digestInput = toDigestBuffer(bytes);
+  const digest = await subtleCrypto.digest('SHA-256', digestInput);
 
   return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
 }
@@ -152,6 +154,47 @@ async function readExportSnapshot(): Promise<ExportSnapshotResult> {
   } catch (error) {
     throw createStorageOperationError(error);
   }
+}
+
+function getSubtleCrypto(): SubtleCrypto {
+  if (typeof globalThis.crypto?.subtle !== 'undefined') {
+    return globalThis.crypto.subtle;
+  }
+
+  const secureContextHint =
+    typeof window !== 'undefined' && typeof window.isSecureContext === 'boolean'
+      ? window.isSecureContext
+      : typeof globalThis.isSecureContext === 'boolean'
+        ? globalThis.isSecureContext
+        : true;
+
+  if (!secureContextHint) {
+    throw new Error(
+      'Export integrity check unavailable. Open the app from a secure HTTPS origin, then retry the export.'
+    );
+  }
+
+  throw new Error(
+    'Export integrity check unavailable. This browser does not expose the required Web Crypto API.'
+  );
+}
+
+function encodeChecksumInput(serialized: string): Uint8Array {
+  const bytes = new TextEncoder().encode(serialized);
+
+  if (serialized.length > 0 && bytes.length === 0) {
+    throw new Error(
+      'Export integrity check failed while encoding the backup payload. Retry the export before trusting the file.'
+    );
+  }
+
+  return bytes;
+}
+
+function toDigestBuffer(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
+  const digestInput = new Uint8Array(new ArrayBuffer(bytes.byteLength));
+  digestInput.set(bytes);
+  return digestInput;
 }
 
 function escapeCsvCell(cell: string): string {

@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  createStorageHealth,
   formatBytes,
+  formatStorageSummary,
   getStorageHealth,
   hasAttemptedPersistentStorage,
   isDatabaseClosedError,
@@ -16,10 +18,43 @@ function setNavigatorStorage(storage: Partial<StorageManager> | undefined) {
   });
 }
 
+function setUserAgent(userAgent: string) {
+  Object.defineProperty(window.navigator, 'userAgent', {
+    configurable: true,
+    value: userAgent
+  });
+}
+
+function setMatchMedia(matches: boolean) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn().mockImplementation(() => ({
+      matches,
+      media: '(display-mode: standalone)',
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn()
+    }))
+  });
+}
+
+function setNavigatorStandalone(standalone: boolean | undefined) {
+  Object.defineProperty(window.navigator, 'standalone', {
+    configurable: true,
+    value: standalone
+  });
+}
+
 describe('storage helpers', () => {
   afterEach(() => {
     localStorage.clear();
     setNavigatorStorage(undefined);
+    setUserAgent('Mozilla/5.0');
+    setMatchMedia(false);
+    setNavigatorStandalone(undefined);
     vi.restoreAllMocks();
   });
 
@@ -89,6 +124,50 @@ describe('storage helpers', () => {
     expect(health.persisted).toBe(false);
     expect(health.status).toBe('warning');
     expect(health.message).toContain('Export now.');
+  });
+
+  it('elevates iPhone and iPad browser storage to warning when not installed', () => {
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setMatchMedia(false);
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+
+    expect(health.status).toBe('warning');
+    expect(health.message).toContain('Install to Home Screen');
+  });
+
+  it('does not classify installed iPhone and iPad PWA mode as the same inactivity risk', () => {
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setMatchMedia(true);
+    setNavigatorStandalone(true);
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+
+    expect(health.status).toBe('monitor');
+    expect(health.message).toContain('Home Screen mode reduces Safari inactivity eviction risk');
+  });
+
+  it('keeps installed iPhone and iPad PWA messaging conservative when protection is granted', () => {
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setMatchMedia(true);
+    setNavigatorStandalone(true);
+
+    const summary = formatStorageSummary(
+      createStorageHealth({ usage: 100, quota: 1000 }, true, true)
+    );
+
+    expect(summary).toContain('Best-effort protection active');
+  });
+
+  it('uses conservative protection language on Safari-family risk platforms', () => {
+    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setMatchMedia(false);
+
+    const summary = formatStorageSummary(
+      createStorageHealth({ usage: 100, quota: 1000 }, true, true)
+    );
+
+    expect(summary).toContain('Best-effort protection active');
   });
 
   it('formats byte counts in human-readable form', () => {

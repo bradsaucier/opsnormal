@@ -126,6 +126,7 @@ Local-first only works if recovery is real.
 - CSV export provides a flat external record for review or spreadsheet work
 - Import validates payload structure before any write reaches IndexedDB
 - When a checksum is present, import recomputes integrity and rejects mismatches before write
+- Import validates payload structure and checksum before write, then verifies the written state inside the same IndexedDB transaction so a mismatch aborts before commit
 - Legacy JSON exports without a checksum can still import, but they are flagged as unverified
 - Import supports merge and replace modes
 - Undo restores the pre-import snapshot for the current session
@@ -140,6 +141,8 @@ Browser-local storage is not backup storage.
 - Device loss can destroy records
 - Some browser eviction policies can destroy records
 - On iPhone and iPad, install to Home Screen and export routinely
+- Safari-family browser sessions can still evict local data even when persistence signals look favorable
+- On iPhone and iPad, Home Screen mode avoids the standard Safari inactivity path but still does not replace routine export discipline
 - Operator guidance: Treat browser-local data as local working storage, not your only copy. Export routinely.
 
 ## Offline and PWA

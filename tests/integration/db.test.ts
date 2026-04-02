@@ -5,7 +5,8 @@ import {
   db,
   isDatabaseRecoveryRequired,
   reopenIfClosed,
-  setDailyStatus
+  setDailyStatus,
+  shouldBlockVersionChangeReload
 } from '../../src/db/appDb';
 
 describe('database operations', () => {
@@ -44,5 +45,19 @@ describe('database operations', () => {
 
     expect(db.isOpen()).toBe(true);
     expect(isDatabaseRecoveryRequired()).toBe(false);
+  });
+
+  it('blocks repeated schema reloads inside the guard window', () => {
+    expect(shouldBlockVersionChangeReload(10_000, null)).toBe(false);
+    expect(shouldBlockVersionChangeReload(10_000, 4_500)).toBe(false);
+    expect(shouldBlockVersionChangeReload(10_000, 9_500)).toBe(true);
+  });
+
+  it('pins Chromium transaction durability to strict where supported', () => {
+    const options = (db as typeof db & {
+      _options?: { chromeTransactionDurability?: string };
+    })._options;
+
+    expect(options?.chromeTransactionDurability).toBe('strict');
   });
 });
