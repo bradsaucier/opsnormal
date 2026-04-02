@@ -9,8 +9,14 @@ test.describe('OpsNormal mobile history', () => {
     await expect(page.getByText(/mobile holds the history picture one week at a time/i)).toBeVisible();
     await expect(page.getByText('Daily brief', { exact: true })).toBeVisible();
 
-    const dayButtons = page.locator('.history-scroll-shell-mobile button');
-    await expect(dayButtons).toHaveCount(7);
+    const weekCards = page.locator('.history-week-card');
+    await expect(weekCards).toHaveCount(5);
+
+    const firstWeekButtons = weekCards.first().getByRole('button');
+    await expect(firstWeekButtons).toHaveCount(7);
+
+    const allDayButtons = page.locator('.history-scroll-shell-mobile button');
+    await expect(allDayButtons).toHaveCount(30);
 
     const dailyBriefHeading = page.getByRole('heading', { level: 3 }).filter({ hasText: /,/ }).first();
     const initialHeading = (await dailyBriefHeading.textContent()) ?? '';
