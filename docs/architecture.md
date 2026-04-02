@@ -20,8 +20,9 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 2. Dexie persists rows in IndexedDB under a compound unique key.
 3. `useLiveQuery()` reacts to database changes without separate client-side state orchestration.
 4. History and export views consume the same persistence layer.
-5. The PWA service worker is registered through the Vite PWA virtual module path already used by the app.
-6. The deployed app performs a guarded low-frequency service worker revalidation loop so long-lived sessions can discover newer builds without noisy churn.
+5. The historical telemetry surface uses a bifurcated render path: wider viewports keep the full 30-column grid, while narrow viewports shift into week-paginated 7-day windows with a daily brief.
+6. The PWA service worker is registered through the Vite PWA virtual module path already used by the app.
+7. The deployed app performs a guarded low-frequency service worker revalidation loop so long-lived sessions can discover newer builds without noisy churn.
 
 ## Storage durability layer
 
@@ -41,6 +42,8 @@ Write paths route through guarded operations so quota failures and interrupted d
 React error boundaries now provide render-fault containment at two levels.
 A root boundary keeps the app from collapsing into a white screen and preserves direct export actions on the crash fallback.
 A second boundary isolates the 30-day history grid so a panel fault does not take Today, backup, or install controls offline.
+
+The app shell now uses dynamic viewport height plus safe-area inset padding so installed mobile mode keeps the first and last controls clear of the status bar, home indicator, and toolbar transitions. The history shell applies client-side week pagination without duplicating Dexie queries or index work, and narrow-screen history uses native day selection controls instead of desktop grid semantics so dense historical data remains readable without shrinking the interaction model into noise.
 
 ## Why this matters
 

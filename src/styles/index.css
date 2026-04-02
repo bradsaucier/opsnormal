@@ -30,21 +30,33 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-ops-base);
+  --ops-safe-top: env(safe-area-inset-top, 0px);
+  --ops-safe-right: env(safe-area-inset-right, 0px);
+  --ops-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ops-safe-left: env(safe-area-inset-left, 0px);
 }
 
 html {
+  min-height: 100%;
   background-color: var(--color-ops-base);
 }
 
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  min-height: 100dvh;
   overscroll-behavior-y: contain;
   background:
     radial-gradient(circle at top, rgba(110, 231, 183, 0.08), transparent 36%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
     var(--color-ops-base);
   color: var(--color-ops-text-primary);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 * {
@@ -58,6 +70,29 @@ button {
 ::selection {
   background: rgba(110, 231, 183, 0.28);
   color: #f3fcf7;
+}
+
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(1.5rem, var(--ops-safe-top));
+  padding-right: max(1rem, var(--ops-safe-right));
+  padding-bottom: max(1.5rem, var(--ops-safe-bottom));
+  padding-left: max(1rem, var(--ops-safe-left));
+}
+
+@media (min-width: 640px) {
+  .app-shell {
+    padding-right: max(1.5rem, var(--ops-safe-right));
+    padding-left: max(1.5rem, var(--ops-safe-left));
+  }
+}
+
+@media (min-width: 1024px) {
+  .app-shell {
+    padding-right: max(2rem, var(--ops-safe-right));
+    padding-left: max(2rem, var(--ops-safe-left));
+  }
 }
 
 .tactical-panel {
@@ -91,6 +126,12 @@ button {
   scrollbar-color: rgba(110, 231, 183, 0.32) rgba(255, 255, 255, 0.04);
 }
 
+.history-scroll-shell-mobile {
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  overscroll-behavior-x: contain;
+}
+
 .history-scroll-shell:focus-visible {
   outline: 2px solid rgba(183, 247, 218, 0.72);
   outline-offset: 2px;
@@ -108,6 +149,10 @@ button {
   background: rgba(110, 231, 183, 0.24);
   border-radius: 999px;
   border: 2px solid rgba(255, 255, 255, 0.04);
+}
+
+.history-week-card {
+  scroll-snap-align: start;
 }
 
 @utility clip-notched {

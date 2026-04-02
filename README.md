@@ -24,7 +24,7 @@ Live app: https://opsnormal.app
 > [!IMPORTANT]
 > **OpsNormal is a local-first Progressive Web App for sub-10-second daily readiness tracking.**
 >
-> It tracks five core sectors with a three-state model and a 30-day trailing grid to show whether the main sectors of life are holding together or quietly degrading. After the app loads, the working data path stays local in IndexedDB unless you explicitly export it. Recovery is real because export, validated import, undo, and storage durability checks are part of the operating model.
+> It tracks five core sectors with a three-state model and a 30-day trailing grid to show whether the main sectors of life are holding together or quietly degrading. On narrow screens, the history surface shifts into week-based snap groups with a daily brief instead of forcing a 30-column wall onto mobile hardware. After the app loads, the working data path stays local in IndexedDB unless you explicitly export it. Recovery is real because export, validated import, undo, and storage durability checks are part of the operating model.
 
 ## Why this exists
 
@@ -62,7 +62,8 @@ OpsNormal takes the opposite path. The interaction is intentionally coarse, inte
 ## Operational capabilities
 
 - Single-click daily check-in across five fixed sectors
-- 30-day readiness grid for fast pattern recognition
+- 30-day readiness grid for fast pattern recognition on desktop
+- Week-paginated mobile history view with snap scrolling and daily detail brief
 - Local-only persistence through Dexie on top of IndexedDB
 - Installable PWA with offline app-shell support after first successful load
 - JSON export for backup and validated JSON import for recovery
@@ -150,6 +151,7 @@ Browser-local storage is not backup storage.
 OpsNormal is built as a Progressive Web App, but it stays disciplined about scope.
 
 - The app shell is cached for offline reopen after first successful load
+- The app shell enforces viewport and safe-area discipline so installed mobile mode keeps controls clear of hardware cutouts and shifting system overlays
 - The app is installable from supported browsers
 - A reload banner appears when an updated service worker is ready
 - GitHub Pages serves the static deployment

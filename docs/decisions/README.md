@@ -18,6 +18,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0010 | Export integrity checksum |
 | 0011 | React error boundaries for render fault containment |
 | 0012 | Fail-closed import commit verification |
+| 0013 | Week-paginated mobile history grid |
 
 ## Operating rule
 
