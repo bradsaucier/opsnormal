@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { computeJsonExportChecksum } from '../../src/lib/export';
 
 type ChecksumPayload = Parameters<typeof computeJsonExportChecksum>[0];
@@ -38,6 +37,36 @@ function normalizeExportPayload(payload: ExportPayload) {
   };
 }
 
+async function readLocalFileText(page: Page, filePath: string): Promise<string> {
+  await page.evaluate(() => {
+    if (document.querySelector('[data-testid="playwright-local-file-reader"]')) {
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.setAttribute('data-testid', 'playwright-local-file-reader');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    input.style.top = '0';
+    document.body.appendChild(input);
+  });
+
+  const fileReaderInput = page.locator('[data-testid="playwright-local-file-reader"]');
+  await fileReaderInput.setInputFiles(filePath);
+
+  return await fileReaderInput.evaluate(async (element) => {
+    const input = element as HTMLInputElement;
+    const file = input.files?.item(0);
+
+    if (!file) {
+      throw new Error('No file attached to playwright local file reader.');
+    }
+
+    return await file.text();
+  });
+}
+
 test.describe('OpsNormal export recovery', () => {
   test('round-trips a json export through import and re-export without data loss', async ({
     page,
@@ -62,7 +91,7 @@ test.describe('OpsNormal export recovery', () => {
     expect(firstDownload.suggestedFilename()).toBe('opsnormal-export.json');
 
     const firstDownloadPath = requireDownloadPath(await firstDownload.path());
-    const firstRawText = await readFile(firstDownloadPath, 'utf8');
+    const firstRawText = await readLocalFileText(page, firstDownloadPath);
     const firstPayload = parseExportPayload(firstRawText);
 
     expect(firstPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
@@ -76,7 +105,9 @@ test.describe('OpsNormal export recovery', () => {
 
       await recoveryPage.goto(appUrl);
       await recoveryPage.getByRole('button', { name: /import and restore/i }).click();
-      await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles(firstDownloadPath);
+      await recoveryPage
+        .locator('[data-testid="import-file-input"]')
+        .setInputFiles(firstDownloadPath);
 
       await expect(recoveryPage.getByRole('heading', { name: /import preview/i })).toBeVisible();
       await expect(recoveryPage.getByText(/integrity verified/i)).toBeVisible();
@@ -94,7 +125,7 @@ test.describe('OpsNormal export recovery', () => {
       const secondDownload = await secondDownloadPromise;
 
       const secondDownloadPath = requireDownloadPath(await secondDownload.path());
-      const secondRawText = await readFile(secondDownloadPath, 'utf8');
+      const secondRawText = await readLocalFileText(recoveryPage, secondDownloadPath);
       const secondPayload = parseExportPayload(secondRawText);
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
