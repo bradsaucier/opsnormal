@@ -9,6 +9,22 @@ import { createStorageOperationError } from './storage';
 
 const LAST_EXPORT_AT_KEY = 'opsnormal-last-export-at';
 
+type SaveFilePickerWindow = Window & typeof globalThis & {
+  showSaveFilePicker?: (options?: {
+    suggestedName?: string;
+    excludeAcceptAllOption?: boolean;
+    types?: Array<{
+      description?: string;
+      accept: Record<string, string[]>;
+    }>;
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: Blob | string) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
+
 interface ChecksumPayload {
   app: JsonExportPayload['app'];
   schemaVersion: JsonExportPayload['schemaVersion'];
@@ -20,6 +36,12 @@ interface ExportSnapshotResult {
   entries: DailyEntry[];
   exportedAt: string;
 }
+
+export type BackupCheckpointResult =
+  | { kind: 'verified-save-succeeded'; fileName: string; exportedAt: string }
+  | { kind: 'fallback-download-triggered'; fileName: string; exportedAt: string }
+  | { kind: 'save-cancelled'; fileName: string; exportedAt: string; message: string }
+  | { kind: 'save-failed'; fileName: string; exportedAt: string; message: string };
 
 export async function createJsonExport(
   entries: DailyEntry[],
@@ -59,6 +81,113 @@ export function downloadTextFile(fileName: string, content: string, mimeType: st
   anchor.remove();
 
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export function canUseVerifiedFileSave(): boolean {
+  if (typeof window === 'undefined' || !window.isSecureContext) {
+    return false;
+  }
+
+  const pickerWindow = window as SaveFilePickerWindow;
+  return typeof pickerWindow.showSaveFilePicker === 'function';
+}
+
+export async function saveTextFileWithPicker(
+  fileName: string,
+  content: string,
+  mimeType: string
+): Promise<void> {
+  if (!canUseVerifiedFileSave()) {
+    throw new Error(
+      'Verified file save is unavailable in this browser context. Use the manual backup checkpoint instead.'
+    );
+  }
+
+  const pickerWindow = window as SaveFilePickerWindow;
+  const fileHandle = await pickerWindow.showSaveFilePicker?.({
+    suggestedName: fileName,
+    excludeAcceptAllOption: false,
+    types: [
+      {
+        description: 'OpsNormal backup',
+        accept: {
+          [mimeType]: ['.json']
+        }
+      }
+    ]
+  });
+
+  if (!fileHandle) {
+    throw new Error('Backup save cancelled. Local data unchanged.');
+  }
+
+  const writable = await fileHandle.createWritable();
+  await writable.write(new Blob([content], { type: mimeType }));
+  await writable.close();
+}
+
+
+function isSaveCancellationError(error: unknown): boolean {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+
+  return error instanceof Error && /cancelled|canceled/i.test(error.message);
+}
+
+export async function checkpointJsonBackupToDisk(args: {
+  fileName: string;
+  exportedAt: string;
+  payload: string;
+}): Promise<BackupCheckpointResult> {
+  if (canUseVerifiedFileSave()) {
+    try {
+      await saveTextFileWithPicker(args.fileName, args.payload, 'application/json');
+      return {
+        kind: 'verified-save-succeeded',
+        fileName: args.fileName,
+        exportedAt: args.exportedAt
+      };
+    } catch (error) {
+      if (isSaveCancellationError(error)) {
+        return {
+          kind: 'save-cancelled',
+          fileName: args.fileName,
+          exportedAt: args.exportedAt,
+          message: 'Backup save cancelled. Local data unchanged.'
+        };
+      }
+
+      return {
+        kind: 'save-failed',
+        fileName: args.fileName,
+        exportedAt: args.exportedAt,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Pre-replace backup failed. Local data remains untouched.'
+      };
+    }
+  }
+
+  try {
+    downloadTextFile(args.fileName, args.payload, 'application/json');
+    return {
+      kind: 'fallback-download-triggered',
+      fileName: args.fileName,
+      exportedAt: args.exportedAt
+    };
+  } catch (error) {
+    return {
+      kind: 'save-failed',
+      fileName: args.fileName,
+      exportedAt: args.exportedAt,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Pre-replace backup failed. Local data remains untouched.'
+    };
+  }
 }
 
 export function recordExportCompleted(exportedAt: string): void {

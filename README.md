@@ -125,12 +125,17 @@ Local-first only works if recovery is real.
 
 - JSON export writes a versioned backup payload with app metadata, schema version, export timestamp, entries, and a SHA-256 checksum
 - CSV export provides a flat external record for review or spreadsheet work
+- JSON export is the primary action in a staged backup panel built around progressive disclosure
 - Import validates payload structure before any write reaches IndexedDB
 - When a checksum is present, import recomputes integrity and rejects mismatches before write
 - Import validates payload structure and checksum before write, then verifies the written state inside the same IndexedDB transaction so a mismatch aborts before commit
-- Legacy JSON exports without a checksum can still import, but they are flagged as unverified
-- Import supports merge and replace modes
-- Undo restores the pre-import snapshot for the current session
+- Legacy JSON exports without a checksum can still import, but they are flagged as unverified in the import preview
+- Import supports merge and replace modes with an explicit preview of file metadata and write impact
+- Replace import now stays locked behind a pre-replace backup checkpoint before the destructive path can arm
+- When the browser exposes a verified save path, the pre-replace backup is written through a save picker and the restore stays blocked until the write closes cleanly
+- When verified save is unavailable, OpsNormal falls back to a manual backup acknowledgment step that requires the operator to explicitly confirm the backup file was saved to the device before replace can arm
+- Replace import requires an explicit arm state and a separate execute click. There is no timeout window on the destructive control
+- Undo restores the pre-import snapshot for the current session and does not replace an external backup
 - Crash fallback keeps export actions available if the main React shell faults
 
 ### Honest limits
