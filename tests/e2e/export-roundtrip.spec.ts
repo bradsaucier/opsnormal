@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import { computeJsonExportChecksum } from '../../src/lib/export';
@@ -11,6 +9,7 @@ function requireDownloadPath(path: string | null): string {
   if (!path) {
     throw new Error('Playwright did not provide a downloadable file path.');
   }
+
   return path;
 }
 
@@ -46,8 +45,8 @@ test.describe('OpsNormal export recovery', () => {
   }) => {
     await page.goto('/');
 
-    const workButton = page.getByRole('button', { name: /work or school/i });
-    const bodyButton = page.getByRole('button', { name: /body/i });
+    const workButton = page.getByRole('button', { name: /^Work or School\. Current state/i });
+    const bodyButton = page.getByRole('button', { name: /^Body\. Current state/i });
 
     await workButton.click();
     await workButton.click();
@@ -76,20 +75,23 @@ test.describe('OpsNormal export recovery', () => {
       const appUrl = new URL('/', page.url()).toString();
 
       await recoveryPage.goto(appUrl);
+      await recoveryPage.getByRole('button', { name: /import and restore/i }).click();
       await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles({
         name: firstDownload.suggestedFilename(),
         mimeType: 'application/json',
         buffer: firstBuffer
       });
 
-      await expect(recoveryPage.getByRole('heading', { name: 'Import ready' })).toBeVisible();
+      await expect(recoveryPage.getByRole('heading', { name: /import preview/i })).toBeVisible();
       await expect(recoveryPage.getByText(/integrity verified/i)).toBeVisible();
-      await recoveryPage.getByRole('button', { name: 'Confirm Import' }).click();
+      await recoveryPage.getByRole('button', { name: /confirm merge import/i }).click();
 
-      await expect(recoveryPage.getByRole('button', { name: /work or school/i })).toContainText(
-        'DEGRADED'
-      );
-      await expect(recoveryPage.getByRole('button', { name: /body/i })).toContainText('NOMINAL');
+      await expect(
+        recoveryPage.getByRole('button', { name: /^Work or School\. Current state/i })
+      ).toContainText('DEGRADED');
+      await expect(
+        recoveryPage.getByRole('button', { name: /^Body\. Current state/i })
+      ).toContainText('NOMINAL');
 
       const secondDownloadPromise = recoveryPage.waitForEvent('download');
       await recoveryPage.getByRole('button', { name: 'Export JSON' }).click();
