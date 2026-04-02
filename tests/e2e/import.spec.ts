@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { expect, test } from '@playwright/test';
 
 function buildImportPayload(todayKey: string) {
@@ -22,17 +23,21 @@ function buildImportPayload(todayKey: string) {
   };
 }
 
+function toJsonBuffer(payload: unknown): Buffer {
+  return Buffer.from(JSON.stringify(payload), 'utf8');
+}
+
 test.describe('OpsNormal import workflow', () => {
   test('imports valid JSON into the current browser database', async ({ page }) => {
     const todayKey = new Date().toISOString().slice(0, 10);
-    const importPayload = JSON.stringify(buildImportPayload(todayKey));
+    const importBuffer = toJsonBuffer(buildImportPayload(todayKey));
 
     await page.goto('/');
     await page.getByRole('button', { name: /import and restore/i }).click();
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-import.json',
       mimeType: 'application/json',
-      buffer: Buffer.from(importPayload, 'utf8')
+      buffer: importBuffer
     });
 
     await expect(page.getByRole('heading', { name: /import preview/i })).toBeVisible();
@@ -48,7 +53,7 @@ test.describe('OpsNormal import workflow', () => {
   });
 
   test('rejects invalid json payloads before write', async ({ page }) => {
-    const invalidPayload = JSON.stringify({
+    const invalidBuffer = toJsonBuffer({
       app: 'OpsNormal',
       schemaVersion: 1,
       exportedAt: '2026-03-28T12:00:00.000Z',
@@ -67,7 +72,7 @@ test.describe('OpsNormal import workflow', () => {
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-invalid.json',
       mimeType: 'application/json',
-      buffer: Buffer.from(invalidPayload, 'utf8')
+      buffer: invalidBuffer
     });
 
     await expect(page.getByText(/import rejected|entries\.0\.sectorId/i)).toBeVisible();
