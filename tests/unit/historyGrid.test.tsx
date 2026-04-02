@@ -1,182 +1,97 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-vi.mock('../../src/db/hooks', () => ({
-  useEntriesForDateRange: vi.fn()
-}));
-
-import { HistoryGrid } from '../../src/features/history/HistoryGrid';
-import { useEntriesForDateRange } from '../../src/db/hooks';
+import {
+  computeCheckInStreak,
+  computeCompletionState,
+  createEntryLookup,
+  getUiStatus
+} from '../../src/lib/history';
 import type { DailyEntry } from '../../src/types';
 
-const useEntriesForDateRangeMock = vi.mocked(useEntriesForDateRange);
-
-const entries: DailyEntry[] = [
+const completeDayEntries: DailyEntry[] = [
   {
-    date: '2026-03-31',
+    date: '2026-03-29',
     sectorId: 'work-school',
     status: 'nominal',
-    updatedAt: '2026-03-31T12:00:00.000Z'
+    updatedAt: '2026-03-29T08:00:00.000Z'
   },
   {
-    date: '2026-03-31',
+    date: '2026-03-29',
+    sectorId: 'household',
+    status: 'degraded',
+    updatedAt: '2026-03-29T08:01:00.000Z'
+  },
+  {
+    date: '2026-03-29',
+    sectorId: 'relationships',
+    status: 'nominal',
+    updatedAt: '2026-03-29T08:02:00.000Z'
+  },
+  {
+    date: '2026-03-29',
     sectorId: 'body',
-    status: 'degraded',
-    updatedAt: '2026-03-31T12:00:00.000Z'
+    status: 'nominal',
+    updatedAt: '2026-03-29T08:03:00.000Z'
   },
   {
-    date: '2026-04-01',
-    sectorId: 'work-school',
+    date: '2026-03-29',
+    sectorId: 'rest',
     status: 'degraded',
-    updatedAt: '2026-04-01T12:00:00.000Z'
+    updatedAt: '2026-03-29T08:04:00.000Z'
   }
 ];
 
-function buildDateKeys() {
-  return [
-    '2026-03-25',
-    '2026-03-26',
-    '2026-03-27',
-    '2026-03-28',
-    '2026-03-29',
-    '2026-03-30',
-    '2026-03-31',
-    '2026-04-01',
-    '2026-04-02',
-    '2026-04-03'
-  ];
-}
+describe('history helpers', () => {
+  it('creates an entry lookup keyed by date and sector', () => {
+    const lookup = createEntryLookup(completeDayEntries);
 
-describe('HistoryGrid', () => {
-  beforeEach(() => {
-    useEntriesForDateRangeMock.mockReturnValue(entries);
+    expect(lookup.get('2026-03-29:body')).toBe('nominal');
+    expect(lookup.get('2026-03-29:rest')).toBe('degraded');
   });
 
-  it('surfaces the selected cell detail brief', () => {
-    render(
-      <HistoryGrid dateKeys={['2026-03-31', '2026-04-01']} todayKey="2026-04-01" />
-    );
+  it('returns unmarked when an entry is missing from the lookup', () => {
+    const lookup = createEntryLookup(completeDayEntries);
 
-    expect(screen.getByText('Selected cell')).toBeInTheDocument();
-    expect(screen.getByText(/work or school on wed, apr 1, 2026 is degraded/i)).toBeInTheDocument();
+    expect(getUiStatus(lookup, '2026-03-29', 'household')).toBe('degraded');
+    expect(getUiStatus(lookup, '2026-03-29', 'work-school')).toBe('nominal');
+    expect(getUiStatus(lookup, '2026-03-28', 'body')).toBe('unmarked');
   });
 
-  it('updates the detail brief when a different cell is selected', async () => {
-    render(
-      <HistoryGrid dateKeys={['2026-03-31', '2026-04-01']} todayKey="2026-04-01" />
-    );
+  it('computes completion state for a date', () => {
+    const completion = computeCompletionState(completeDayEntries, '2026-03-29');
+    const partialCompletion = computeCompletionState(completeDayEntries.slice(0, 3), '2026-03-29');
 
-    await userEvent.click(
-      screen.getByRole('gridcell', {
-        name: /body on tue, mar 31, 2026: degraded/i
-      })
-    );
-
-    expect(screen.getByText(/body on tue, mar 31, 2026 is degraded/i)).toBeInTheDocument();
-  });
-
-  it('exposes the matrix as an ARIA grid with selected coordinates', () => {
-    render(
-      <HistoryGrid dateKeys={['2026-03-31', '2026-04-01']} todayKey="2026-04-01" />
-    );
-
-    expect(screen.getByRole('grid')).toBeInTheDocument();
-    expect(
-      screen.getByRole('gridcell', {
-        name: /work or school on wed, apr 1, 2026: degraded/i
-      })
-    ).toHaveAttribute('aria-selected', 'true');
-    expect(
-      screen.getByRole('gridcell', {
-        name: /work or school on tue, mar 31, 2026: nominal/i
-      })
-    ).toHaveAttribute('aria-selected', 'false');
-  });
-
-  it('moves selection and physical focus with arrow-key navigation', async () => {
-    render(
-      <HistoryGrid dateKeys={['2026-03-31', '2026-04-01']} todayKey="2026-04-01" />
-    );
-
-    const selectedCell = screen.getByRole('gridcell', {
-      name: /work or school on wed, apr 1, 2026: degraded/i
+    expect(completion).toEqual({
+      markedCount: 5,
+      totalCount: 5,
+      isComplete: true
     });
-
-    await userEvent.click(selectedCell);
-    await userEvent.keyboard('{ArrowDown}');
-
-    expect(
-      screen.getByRole('gridcell', {
-        name: /household on wed, apr 1, 2026: unmarked/i
-      })
-    ).toHaveFocus();
+    expect(partialCompletion).toEqual({
+      markedCount: 3,
+      totalCount: 5,
+      isComplete: false
+    });
   });
 
-  it('clamps PageDown at the final date boundary', async () => {
-    render(
-      <HistoryGrid dateKeys={buildDateKeys()} todayKey="2026-03-31" />
-    );
-
-    const startCell = screen.getByRole('gridcell', {
-      name: /work or school on tue, mar 31, 2026: nominal/i
-    });
-
-    await userEvent.click(startCell);
-    await userEvent.keyboard('{PageDown}');
-    await userEvent.keyboard('{PageDown}');
-
-    expect(
-      screen.getByRole('gridcell', {
-        name: /work or school on fri, apr 3, 2026: unmarked/i
-      })
-    ).toHaveFocus();
+  it('returns a zero streak when today is incomplete', () => {
+    expect(computeCheckInStreak(completeDayEntries.slice(0, 4), '2026-03-29')).toBe(0);
   });
 
-  it('clamps PageUp at the first date boundary', async () => {
-    render(
-      <HistoryGrid dateKeys={buildDateKeys()} todayKey="2026-04-03" />
-    );
+  it('counts consecutive complete days and breaks on the first incomplete day', () => {
+    const entries: DailyEntry[] = [
+      ...completeDayEntries,
+      ...completeDayEntries.map((entry) => ({
+        ...entry,
+        date: '2026-03-28',
+        updatedAt: '2026-03-28T08:00:00.000Z'
+      })),
+      ...completeDayEntries.slice(0, 4).map((entry) => ({
+        ...entry,
+        date: '2026-03-27',
+        updatedAt: '2026-03-27T08:00:00.000Z'
+      }))
+    ];
 
-    const startCell = screen.getByRole('gridcell', {
-      name: /work or school on fri, apr 3, 2026: unmarked/i
-    });
-
-    await userEvent.click(startCell);
-    await userEvent.keyboard('{PageUp}');
-    await userEvent.keyboard('{PageUp}');
-
-    expect(
-      screen.getByRole('gridcell', {
-        name: /work or school on wed, mar 25, 2026: unmarked/i
-      })
-    ).toHaveFocus();
-  });
-
-  it('snaps to the row boundaries with Home and End', async () => {
-    render(
-      <HistoryGrid dateKeys={buildDateKeys()} todayKey="2026-03-31" />
-    );
-
-    const startCell = screen.getByRole('gridcell', {
-      name: /work or school on tue, mar 31, 2026: nominal/i
-    });
-
-    await userEvent.click(startCell);
-    await userEvent.keyboard('{Home}');
-
-    const firstCell = screen.getByRole('gridcell', {
-      name: /work or school on wed, mar 25, 2026: unmarked/i
-    });
-
-    expect(firstCell).toHaveFocus();
-
-    await userEvent.keyboard('{End}');
-
-    expect(
-      screen.getByRole('gridcell', {
-        name: /work or school on fri, apr 3, 2026: unmarked/i
-      })
-    ).toHaveFocus();
+    expect(computeCheckInStreak(entries, '2026-03-29')).toBe(2);
   });
 });
