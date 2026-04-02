@@ -18,6 +18,12 @@ Prove that the app:
 - export formatting
 - export checksum verification
 - legacy import warning path
+- destructive replace arm-disarm path without a timer
+- verified save path before full replace when the browser exposes a save picker
+- manual backup acknowledgment fallback before full replace when verified save is unavailable
+- replace checkpoint resets if the operator leaves replace mode and comes back
+- live status and alert regions stay mounted with aria-atomic set
+- worker-backed preview path aborts cleanly on replacement selection or component teardown
 - export to import round-trip validation
 - streak computation
 - status cycle helpers
@@ -34,6 +40,8 @@ Prove that the app:
 - daily check-in persists through reload
 - production preview can reopen offline after first load
 - JSON export can be imported into a clean browser context and re-exported without data loss
+- import preview and staged merge path hold under the accordion backup panel
+- replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
 - mobile history week pagination and daily brief selection hold under a narrow viewport
 
 ## Coverage posture
@@ -54,3 +62,5 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify the installed PWA on physical iPhone hardware keeps the header, footer, and history controls clear of the dynamic island and home indicator
 - verify the installed PWA on physical Android hardware keeps the shell stable through address-bar collapse and software-keyboard transitions
 - verify the mobile history surface snaps cleanly to week boundaries, updates the daily brief after day selection, and does not leak horizontal overscroll into document navigation
+
+- Backup checkpoint tests should assert explicit result-state handling so verified save, fallback download trigger, user cancellation, and hard failure cannot collapse into the same control path.
