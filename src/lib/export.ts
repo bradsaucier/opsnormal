@@ -133,7 +133,8 @@ export async function computeJsonExportChecksum(payload: ChecksumPayload): Promi
     entries: payload.entries
   });
   const bytes = encodeChecksumInput(serialized);
-  const digest = await subtleCrypto.digest('SHA-256', bytes);
+  const digestInput = toDigestBuffer(bytes);
+  const digest = await subtleCrypto.digest('SHA-256', digestInput);
 
   return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
 }
@@ -188,6 +189,12 @@ function encodeChecksumInput(serialized: string): Uint8Array {
   }
 
   return bytes;
+}
+
+function toDigestBuffer(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
+  const digestInput = new Uint8Array(new ArrayBuffer(bytes.byteLength));
+  digestInput.set(bytes);
+  return digestInput;
 }
 
 function escapeCsvCell(cell: string): string {
