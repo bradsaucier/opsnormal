@@ -4,6 +4,9 @@ test.describe('OpsNormal', () => {
   test('persists a check-in across reloads', async ({ page }) => {
     await page.goto('/');
 
+    const storageHealthToggle = page.getByRole('button', { name: /storage health/i });
+    await expect(storageHealthToggle).toBeVisible();
+    await storageHealthToggle.click();
     await expect(page.getByText(/storage durability/i)).toBeVisible();
 
     const workButton = page.getByRole('button', { name: /work or school/i });
