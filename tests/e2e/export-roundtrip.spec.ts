@@ -62,7 +62,7 @@ test.describe('OpsNormal export recovery', () => {
     expect(firstDownload.suggestedFilename()).toBe('opsnormal-export.json');
 
     const firstDownloadPath = requireDownloadPath(await firstDownload.path());
-    const firstRawText = await readFile(firstDownloadPath, 'utf-8');
+    const firstRawText = await readFile(firstDownloadPath, 'utf8');
     const firstPayload = parseExportPayload(firstRawText);
 
     expect(firstPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
@@ -94,7 +94,7 @@ test.describe('OpsNormal export recovery', () => {
       const secondDownload = await secondDownloadPromise;
 
       const secondDownloadPath = requireDownloadPath(await secondDownload.path());
-      const secondRawText = await readFile(secondDownloadPath, 'utf-8');
+      const secondRawText = await readFile(secondDownloadPath, 'utf8');
       const secondPayload = parseExportPayload(secondRawText);
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
