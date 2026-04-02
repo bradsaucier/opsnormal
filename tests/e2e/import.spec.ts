@@ -28,7 +28,7 @@ test.describe('OpsNormal import workflow', () => {
     const todayKey = new Date().toISOString().slice(0, 10);
     const importFilePath = testInfo.outputPath('opsnormal-import.json');
 
-    await writeFile(importFilePath, JSON.stringify(buildImportPayload(todayKey)), 'utf-8');
+    await writeFile(importFilePath, JSON.stringify(buildImportPayload(todayKey)), 'utf8');
 
     await page.goto('/');
     await page.getByRole('button', { name: /import and restore/i }).click();
@@ -64,7 +64,7 @@ test.describe('OpsNormal import workflow', () => {
           }
         ]
       }),
-      'utf-8'
+      'utf8'
     );
 
     await page.goto('/');
