@@ -16,8 +16,10 @@ Before tagging a release:
 - [ ] iOS install guidance reviewed
 - [ ] README reflects current behavior
 - [ ] ADR index reflects current architecture
-- [ ] persistent storage request verified on launch
+- [ ] persistent storage request verified after a meaningful local save
 - [ ] JSON and CSV export verified on live build
+- [ ] replace import verified with pre-import undo restore
+- [ ] replace import verified with transactional post-write validation and pre-import state preserved on forced failure
 - [ ] manifest icons verified after build
 
 - [ ] error boundary crash fallback renders correctly when a component throws
