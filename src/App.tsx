@@ -72,8 +72,8 @@ function App() {
   const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
 
   return (
-    <div className="min-h-screen bg-[#0a0f0d] text-zinc-100">
-      <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen min-h-dvh bg-[#0a0f0d] text-zinc-100">
+      <main className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
         <header className="rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(255,255,255,0.02))] p-5 shadow-[0_0_0_1px_rgba(16,185,129,0.06)]">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
