@@ -1,4 +1,4 @@
-import { Buffer } from 'node:buffer';
+import { writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 function buildImportPayload(todayKey: string) {
@@ -24,17 +24,15 @@ function buildImportPayload(todayKey: string) {
 }
 
 test.describe('OpsNormal import workflow', () => {
-  test('imports valid JSON into the current browser database', async ({ page }) => {
+  test('imports valid JSON into the current browser database', async ({ page }, testInfo) => {
     const todayKey = new Date().toISOString().slice(0, 10);
+    const importFilePath = testInfo.outputPath('opsnormal-import.json');
+
+    await writeFile(importFilePath, JSON.stringify(buildImportPayload(todayKey)), 'utf-8');
 
     await page.goto('/');
     await page.getByRole('button', { name: /import and restore/i }).click();
-
-    await page.locator('[data-testid="import-file-input"]').setInputFiles({
-      name: 'opsnormal-import.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(buildImportPayload(todayKey)), 'utf-8')
-    });
+    await page.locator('[data-testid="import-file-input"]').setInputFiles(importFilePath);
 
     await expect(page.getByRole('heading', { name: /import preview/i })).toBeVisible();
     await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
@@ -48,30 +46,30 @@ test.describe('OpsNormal import workflow', () => {
     );
   });
 
-  test('rejects invalid json payloads before write', async ({ page }) => {
+  test('rejects invalid json payloads before write', async ({ page }, testInfo) => {
+    const invalidFilePath = testInfo.outputPath('opsnormal-invalid.json');
+
+    await writeFile(
+      invalidFilePath,
+      JSON.stringify({
+        app: 'OpsNormal',
+        schemaVersion: 1,
+        exportedAt: '2026-03-28T12:00:00.000Z',
+        entries: [
+          {
+            date: '2026-03-28',
+            sectorId: 'invalid-sector',
+            status: 'nominal',
+            updatedAt: '2026-03-28T12:00:00.000Z'
+          }
+        ]
+      }),
+      'utf-8'
+    );
+
     await page.goto('/');
     await page.getByRole('button', { name: /import and restore/i }).click();
-
-    await page.locator('[data-testid="import-file-input"]').setInputFiles({
-      name: 'opsnormal-invalid.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(
-        JSON.stringify({
-          app: 'OpsNormal',
-          schemaVersion: 1,
-          exportedAt: '2026-03-28T12:00:00.000Z',
-          entries: [
-            {
-              date: '2026-03-28',
-              sectorId: 'invalid-sector',
-              status: 'nominal',
-              updatedAt: '2026-03-28T12:00:00.000Z'
-            }
-          ]
-        }),
-        'utf-8'
-      )
-    });
+    await page.locator('[data-testid="import-file-input"]').setInputFiles(invalidFilePath);
 
     await expect(page.getByText(/import rejected|entries\.0\.sectorId/i)).toBeVisible();
     await expect(page.getByRole('heading', { name: /import preview/i })).toHaveCount(0);
