@@ -18,12 +18,13 @@ test.describe('OpsNormal mobile history', () => {
     const allDayButtons = page.locator('.history-scroll-shell-mobile button');
     await expect(allDayButtons).toHaveCount(30);
 
-    const dailyBriefHeading = page.getByRole('heading', { level: 3 }).filter({ hasText: /,/ }).first();
+    const dailyBrief = page.locator('#mobile-history-daily-brief');
+    const dailyBriefHeading = dailyBrief.getByRole('heading', { level: 3 }).filter({ hasText: /,/ }).first();
     const initialHeading = (await dailyBriefHeading.textContent()) ?? '';
 
     await page.getByRole('button', { name: /open daily brief for thu, mar 26, 2026/i }).click();
 
     await expect(dailyBriefHeading).not.toHaveText(initialHeading);
-    await expect(page.getByText('Rest')).toBeVisible();
+    await expect(dailyBrief.getByText('Rest', { exact: true })).toBeVisible();
   });
 });
