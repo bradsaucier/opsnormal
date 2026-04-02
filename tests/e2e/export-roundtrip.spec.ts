@@ -62,8 +62,8 @@ test.describe('OpsNormal export recovery', () => {
     expect(firstDownload.suggestedFilename()).toBe('opsnormal-export.json');
 
     const firstDownloadPath = requireDownloadPath(await firstDownload.path());
-    const firstBuffer = await readFile(firstDownloadPath);
-    const firstPayload = parseExportPayload(firstBuffer.toString('utf-8'));
+    const firstRawText = await readFile(firstDownloadPath, 'utf-8');
+    const firstPayload = parseExportPayload(firstRawText);
 
     expect(firstPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
     expect(normalizeExportPayload(firstPayload).entries).toHaveLength(2);
@@ -76,11 +76,7 @@ test.describe('OpsNormal export recovery', () => {
 
       await recoveryPage.goto(appUrl);
       await recoveryPage.getByRole('button', { name: /import and restore/i }).click();
-      await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles({
-        name: firstDownload.suggestedFilename(),
-        mimeType: 'application/json',
-        buffer: firstBuffer
-      });
+      await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles(firstDownloadPath);
 
       await expect(recoveryPage.getByRole('heading', { name: /import preview/i })).toBeVisible();
       await expect(recoveryPage.getByText(/integrity verified/i)).toBeVisible();
@@ -98,8 +94,8 @@ test.describe('OpsNormal export recovery', () => {
       const secondDownload = await secondDownloadPromise;
 
       const secondDownloadPath = requireDownloadPath(await secondDownload.path());
-      const secondBuffer = await readFile(secondDownloadPath);
-      const secondPayload = parseExportPayload(secondBuffer.toString('utf-8'));
+      const secondRawText = await readFile(secondDownloadPath, 'utf-8');
+      const secondPayload = parseExportPayload(secondRawText);
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
