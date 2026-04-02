@@ -7,7 +7,7 @@ test.describe('OpsNormal mobile history', () => {
     await page.goto('/');
 
     await expect(page.getByText(/mobile holds the history picture one week at a time/i)).toBeVisible();
-    await expect(page.getByText('Daily brief')).toBeVisible();
+    await expect(page.getByText('Daily brief', { exact: true })).toBeVisible();
 
     const dayButtons = page.locator('.history-scroll-shell-mobile button');
     await expect(dayButtons).toHaveCount(7);
