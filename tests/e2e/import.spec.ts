@@ -29,15 +29,16 @@ test.describe('OpsNormal import workflow', () => {
     const todayKey = new Date().toISOString().slice(0, 10);
 
     await page.goto('/');
+    await page.getByRole('button', { name: /import and restore/i }).click();
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-import.json',
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify(buildImportPayload(todayKey)), 'utf-8')
     });
 
-    await expect(page.getByRole('heading', { name: 'Import ready' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Import preview' })).toBeVisible();
     await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
-    await page.getByRole('button', { name: 'Confirm Import' }).click();
+    await page.getByRole('button', { name: 'Confirm Merge Import' }).click();
 
     await expect(page.getByRole('button', { name: /body/i })).toContainText('DEGRADED');
     await expect(page.getByRole('button', { name: /rest/i })).toContainText('NOMINAL');
@@ -45,6 +46,7 @@ test.describe('OpsNormal import workflow', () => {
 
   test('rejects invalid json payloads before write', async ({ page }) => {
     await page.goto('/');
+    await page.getByRole('button', { name: /import and restore/i }).click();
     await page.locator('[data-testid="import-file-input"]').setInputFiles({
       name: 'opsnormal-invalid.json',
       mimeType: 'application/json',
@@ -67,6 +69,6 @@ test.describe('OpsNormal import workflow', () => {
     });
 
     await expect(page.getByText(/import rejected|entries\.0\.sectorId/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Import ready' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Import preview' })).toHaveCount(0);
   });
 });
