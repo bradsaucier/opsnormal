@@ -137,7 +137,7 @@ describe('import service', () => {
 
         if (index === '[date+sectorId]' && orderByCallCount === 2) {
           return {
-            toArray: async () => []
+            toArray: () => Promise.resolve([])
           } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
         }
 
@@ -161,7 +161,6 @@ describe('import service', () => {
       status: 'nominal'
     });
   });
-
 
   it('aborts merge import when transaction-scope verification detects a mismatch', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
@@ -192,20 +191,21 @@ describe('import service', () => {
 
         if (index === '[date+sectorId]' && orderByCallCount === 2) {
           return {
-            toArray: async () => [
-              {
-                date: '2026-03-27',
-                sectorId: 'body',
-                status: 'degraded',
-                updatedAt: '2026-03-29T12:00:00.000Z'
-              },
-              {
-                date: '2026-03-27',
-                sectorId: 'rest',
-                status: 'degraded',
-                updatedAt: '2026-03-27T00:00:00.000Z'
-              }
-            ]
+            toArray: () =>
+              Promise.resolve([
+                {
+                  date: '2026-03-27',
+                  sectorId: 'body',
+                  status: 'degraded',
+                  updatedAt: '2026-03-29T12:00:00.000Z'
+                },
+                {
+                  date: '2026-03-27',
+                  sectorId: 'rest',
+                  status: 'degraded',
+                  updatedAt: '2026-03-27T00:00:00.000Z'
+                }
+              ])
           } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
         }
 
