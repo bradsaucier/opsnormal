@@ -3,11 +3,14 @@ import Dexie, { type EntityTable } from 'dexie';
 import { createStorageOperationError, isDatabaseClosedError } from '../lib/storage';
 import type { DailyEntry, SectorId, UiStatus } from '../types';
 
+const SCHEMA_RELOAD_GUARD_KEY = 'opsnormal-schema-reload-guard';
+const SCHEMA_RELOAD_GUARD_WINDOW_MS = 5000;
+
 class OpsNormalDb extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
 
   constructor() {
-    super('opsnormal');
+    super('opsnormal', { chromeTransactionDurability: 'strict' });
     this.version(1).stores({
       dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
     });
@@ -20,6 +23,58 @@ class OpsNormalDb extends Dexie {
 export const db = new OpsNormalDb();
 
 let databaseRecoveryRequired = false;
+let schemaReloadLoopDetected = false;
+
+export function shouldBlockVersionChangeReload(
+  now: number,
+  lastReloadAt: number | null,
+  windowMs = SCHEMA_RELOAD_GUARD_WINDOW_MS
+): boolean {
+  return lastReloadAt !== null && now - lastReloadAt < windowMs;
+}
+
+function readLastSchemaReloadAt(): number | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(SCHEMA_RELOAD_GUARD_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function recordSchemaReloadAt(timestamp: number): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(SCHEMA_RELOAD_GUARD_KEY, String(timestamp));
+  } catch {
+    // Ignore sessionStorage access failures during emergency handoff.
+  }
+}
+
+function clearSchemaReloadGuard(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(SCHEMA_RELOAD_GUARD_KEY);
+  } catch {
+    // Ignore sessionStorage access failures during normal recovery.
+  }
+}
 
 db.on('close', () => {
   databaseRecoveryRequired = true;
@@ -27,6 +82,33 @@ db.on('close', () => {
 
 db.on('ready', () => {
   databaseRecoveryRequired = false;
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadGuard();
+});
+
+db.on('versionchange', () => {
+  databaseRecoveryRequired = true;
+
+  try {
+    db.close();
+  } catch {
+    // Ignore redundant close failures during version handoff.
+  }
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const now = Date.now();
+  const lastReloadAt = readLastSchemaReloadAt();
+
+  if (shouldBlockVersionChangeReload(now, lastReloadAt)) {
+    schemaReloadLoopDetected = true;
+    return;
+  }
+
+  recordSchemaReloadAt(now);
+  window.location.reload();
 });
 
 export function isDatabaseRecoveryRequired(): boolean {
@@ -34,6 +116,12 @@ export function isDatabaseRecoveryRequired(): boolean {
 }
 
 export async function reopenIfClosed(): Promise<void> {
+  if (schemaReloadLoopDetected) {
+    throw new Error(
+      'Schema upgrade handoff stalled. Close duplicate OpsNormal tabs, reload once, then verify local data before retrying.'
+    );
+  }
+
   if (!db.isOpen()) {
     await db.open();
   }
