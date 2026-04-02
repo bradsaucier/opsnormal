@@ -18,7 +18,31 @@ type RawChecksumPayload = Pick<
   entries: JsonExportPayload['entries'];
 };
 
+interface ParsedImportSummary {
+  payload: JsonExportPayload;
+  integrityStatus: ImportIntegrityStatus;
+  totalEntries: number;
+  dateRange: ImportPreview['dateRange'];
+}
+
+interface WorkerPreviewRequest {
+  buffer: ArrayBuffer;
+  size: number;
+}
+
+interface WorkerSuccessMessage {
+  ok: true;
+  summary: ParsedImportSummary;
+}
+
+interface WorkerErrorMessage {
+  ok: false;
+  error: string;
+}
+
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+const IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES = 256 * 1024;
+const IMPORT_BATCH_SIZE = 500;
 
 function getCompoundKey(entry: Pick<DailyEntry, 'date' | 'sectorId'>): string {
   return `${entry.date}:${entry.sectorId}`;
@@ -118,6 +142,35 @@ function getDateRange(entries: DailyEntry[]): ImportPreview['dateRange'] {
   };
 }
 
+function summarizeParsedPayload(payload: JsonExportPayload): ParsedImportSummary {
+  return {
+    payload,
+    integrityStatus: getImportIntegrityStatus(payload),
+    totalEntries: payload.entries.length,
+    dateRange: getDateRange(payload.entries)
+  };
+}
+
+function buildPreviewFromSummary(
+  summary: ParsedImportSummary,
+  existingEntries: DailyEntry[]
+): ImportPreview {
+  const existingKeys = new Set(existingEntries.map((entry) => getCompoundKey(entry)));
+  const overwriteCount = summary.payload.entries.filter((entry) =>
+    existingKeys.has(getCompoundKey(entry))
+  ).length;
+
+  return {
+    payload: summary.payload,
+    integrityStatus: summary.integrityStatus,
+    existingEntryCount: existingEntries.length,
+    overwriteCount,
+    newEntryCount: summary.payload.entries.length - overwriteCount,
+    totalEntries: summary.totalEntries,
+    dateRange: summary.dateRange
+  };
+}
+
 function buildExpectedFinalEntries(
   snapshot: DailyEntry[],
   normalizedEntries: DailyEntry[],
@@ -213,23 +266,33 @@ function getFirstMismatchCompoundKey(
   return null;
 }
 
+async function bulkPutEntries(entries: DailyEntry[]): Promise<void> {
+  for (let index = 0; index < entries.length; index += IMPORT_BATCH_SIZE) {
+    const chunk = entries.slice(index, index + IMPORT_BATCH_SIZE);
+    await db.dailyEntries.bulkPut(chunk);
+  }
+}
+
 async function restoreUndoSnapshot(snapshot: DailyEntry[]): Promise<void> {
   await runDatabaseWrite(async () =>
     db.transaction('rw', db.dailyEntries, async () => {
       await db.dailyEntries.clear();
 
       if (snapshot.length > 0) {
-        await db.dailyEntries.bulkPut(snapshot);
+        await bulkPutEntries(snapshot);
       }
     })
   );
 }
 
-export async function readImportFile(file: File): Promise<string> {
+function validateImportFileSize(file: Pick<File, 'size'>): void {
   if (file.size > MAX_IMPORT_BYTES) {
     throw new Error('Import rejected. File exceeds the 5 MB limit.');
   }
+}
 
+export async function readImportFile(file: File): Promise<string> {
+  validateImportFileSize(file);
   return file.text();
 }
 
@@ -259,23 +322,102 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
 
 export async function previewImportPayload(payload: JsonExportPayload): Promise<ImportPreview> {
   const existingEntries = await getAllEntries();
-  const existingKeys = new Set(existingEntries.map((entry) => getCompoundKey(entry)));
-  const overwriteCount = payload.entries.filter((entry) => existingKeys.has(getCompoundKey(entry))).length;
-
-  return {
-    payload,
-    integrityStatus: getImportIntegrityStatus(payload),
-    overwriteCount,
-    newEntryCount: payload.entries.length - overwriteCount,
-    totalEntries: payload.entries.length,
-    dateRange: getDateRange(payload.entries)
-  };
+  return buildPreviewFromSummary(summarizeParsedPayload(payload), existingEntries);
 }
 
-export async function previewImportFile(file: File): Promise<ImportPreview> {
-  const rawText = await readImportFile(file);
+function createImportPreviewAbortError(): Error {
+  const error = new Error('Import preview cancelled.');
+  error.name = 'AbortError';
+  return error;
+}
+
+function throwIfPreviewAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw createImportPreviewAbortError();
+  }
+}
+
+async function parseImportFileWithWorker(
+  file: File,
+  signal?: AbortSignal
+): Promise<ParsedImportSummary> {
+  validateImportFileSize(file);
+  throwIfPreviewAborted(signal);
+
+  const buffer = await file.arrayBuffer();
+  throwIfPreviewAborted(signal);
+
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./importPreviewWorker.ts', import.meta.url), {
+      type: 'module'
+    });
+
+    const cleanup = () => {
+      worker.onmessage = null;
+      worker.onerror = null;
+      worker.terminate();
+      signal?.removeEventListener('abort', handleAbort);
+    };
+
+    const handleAbort = () => {
+      cleanup();
+      reject(createImportPreviewAbortError());
+    };
+
+    worker.onmessage = (event: MessageEvent<WorkerSuccessMessage | WorkerErrorMessage>) => {
+      cleanup();
+
+      if (event.data.ok) {
+        resolve(event.data.summary);
+        return;
+      }
+
+      reject(new Error(event.data.error));
+    };
+
+    worker.onerror = () => {
+      cleanup();
+      reject(new Error('Import preparation failed in the preview worker.'));
+    };
+
+    signal?.addEventListener('abort', handleAbort, { once: true });
+
+    const request: WorkerPreviewRequest = {
+      buffer,
+      size: file.size
+    };
+
+    worker.postMessage(request, [buffer]);
+  });
+}
+
+async function parseImportFileForPreview(
+  file: File,
+  signal?: AbortSignal
+): Promise<ParsedImportSummary> {
+  validateImportFileSize(file);
+
+  if (typeof Worker !== 'undefined' && file.size >= IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES) {
+    return parseImportFileWithWorker(file, signal);
+  }
+
+  throwIfPreviewAborted(signal);
+  const rawText = await file.text();
+  throwIfPreviewAborted(signal);
   const payload = await parseImportPayload(rawText);
-  return previewImportPayload(payload);
+  return summarizeParsedPayload(payload);
+}
+
+export async function previewImportFile(
+  file: File,
+  signal?: AbortSignal
+): Promise<ImportPreview> {
+  const [summary, existingEntries] = await Promise.all([
+    parseImportFileForPreview(file, signal),
+    getAllEntries()
+  ]);
+
+  return buildPreviewFromSummary(summary, existingEntries);
 }
 
 export async function applyImport(
@@ -294,7 +436,7 @@ export async function applyImport(
       }
 
       if (normalizedEntries.length > 0) {
-        await db.dailyEntries.bulkPut(normalizedEntries);
+        await bulkPutEntries(normalizedEntries);
       }
 
       const actualEntries = await db.dailyEntries.orderBy('[date+sectorId]').toArray();
