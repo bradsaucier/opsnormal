@@ -184,11 +184,17 @@ function getFirstMismatchCompoundKey(
       }
     }
 
-    return expectedEntries[expectedEntries.length - 1]
-      ? getCompoundKey(expectedEntries[expectedEntries.length - 1])
-      : actualEntries[actualEntries.length - 1]
-        ? getCompoundKey(actualEntries[actualEntries.length - 1])
-        : null;
+    const lastExpectedEntry = expectedEntries[expectedEntries.length - 1];
+    if (lastExpectedEntry) {
+      return getCompoundKey(lastExpectedEntry);
+    }
+
+    const lastActualEntry = actualEntries[actualEntries.length - 1];
+    if (lastActualEntry) {
+      return getCompoundKey(lastActualEntry);
+    }
+
+    return null;
   }
 
   const actualByCompoundKey = new Map(
