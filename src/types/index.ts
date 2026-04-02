@@ -61,6 +61,7 @@ export interface JsonExportPayload {
 export interface ImportPreview {
   payload: JsonExportPayload;
   integrityStatus: ImportIntegrityStatus;
+  existingEntryCount: number;
   overwriteCount: number;
   newEntryCount: number;
   totalEntries: number;
