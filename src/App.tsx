@@ -79,10 +79,11 @@ function App() {
   const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
 
   return (
-    <div className="min-h-screen min-h-dvh bg-[#0a0f0d] text-zinc-100">
+    <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
       <main className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
-        <header className="rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(255,255,255,0.02))] p-5 shadow-[0_0_0_1px_rgba(16,185,129,0.06)]">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
+          <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="text-xs font-semibold tracking-[0.28em] text-emerald-300/90 uppercase">
                 Personal Readiness Tracker
@@ -95,17 +96,20 @@ function App() {
                 relationships, body, and rest. No account. No cloud sync. No analytics layer.
               </p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-right">
+            <div className="clip-notched ops-notch-panel-outer bg-white/10 p-px text-right">
+              <div className="clip-notched ops-notch-panel-inner bg-black/25 px-4 py-3">
               <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
               <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
                 Local only
               </div>
-              <div className="mt-2 text-xs leading-5 text-zinc-400">
-                {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+                  <div className="mt-2 text-xs leading-5 text-zinc-400">
+                  {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+                </div>
               </div>
             </div>
           </div>
-        </header>
+          </header>
+        </div>
 
         <InstallBanner />
         <PwaUpdateBanner
@@ -138,14 +142,16 @@ function App() {
         </ErrorBoundary>
         <ExportPanel storageHealth={storageHealth} />
 
-        <footer className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
-          <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>
-          <p className="mt-2">
-            OpsNormal is a personal status tracking tool. It is not a medical device and does not
-            diagnose, treat, cure, or prevent any disease or condition. It does not provide medical
-            or psychological advice.
-          </p>
-        </footer>
+        <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
+          <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">
+            <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>
+            <p className="mt-2">
+              OpsNormal is a personal status tracking tool. It is not a medical device and does not
+              diagnose, treat, cure, or prevent any disease or condition. It does not provide medical
+              or psychological advice.
+            </p>
+          </footer>
+        </div>
       </main>
     </div>
   );

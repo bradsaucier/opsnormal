@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ops-base: #0d1210;
+  --color-ops-base: #0a0f0d;
   --color-ops-surface-1: #151d1a;
   --color-ops-surface-2: #1c2521;
   --color-ops-surface-3: #24302a;
@@ -34,6 +34,20 @@
   --ops-safe-right: env(safe-area-inset-right, 0px);
   --ops-safe-bottom: env(safe-area-inset-bottom, 0px);
   --ops-safe-left: env(safe-area-inset-left, 0px);
+  --ops-notch-shell-outer: 16px;
+  --ops-notch-shell-inner: 15px;
+  --ops-notch-panel-outer: 12px;
+  --ops-notch-panel-inner: 11px;
+  --ops-notch-chip: 8px;
+  --ops-status-nominal-border: rgba(110, 231, 183, 0.56);
+  --ops-status-nominal-bg: rgba(110, 231, 183, 0.14);
+  --ops-status-nominal-text: #c9fae4;
+  --ops-status-degraded-border: rgba(245, 158, 11, 0.56);
+  --ops-status-degraded-bg: rgba(245, 158, 11, 0.14);
+  --ops-status-degraded-text: #fde7b0;
+  --ops-status-unmarked-border: rgba(255, 255, 255, 0.16);
+  --ops-status-unmarked-bg: rgba(36, 48, 42, 0.72);
+  --ops-status-unmarked-text: #96a39d;
 }
 
 html {
@@ -48,8 +62,8 @@ body {
   min-height: 100dvh;
   overscroll-behavior-y: contain;
   background:
-    radial-gradient(circle at top, rgba(110, 231, 183, 0.08), transparent 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 28%),
+    radial-gradient(circle at top, rgba(110, 231, 183, 0.05), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%),
     var(--color-ops-base);
   color: var(--color-ops-text-primary);
 }
@@ -155,8 +169,69 @@ button {
   scroll-snap-align: start;
 }
 
+.ops-notch-shell-outer {
+  --notch: var(--ops-notch-shell-outer);
+}
+
+.ops-notch-shell-inner {
+  --notch: var(--ops-notch-shell-inner);
+}
+
+.ops-notch-panel-outer {
+  --notch: var(--ops-notch-panel-outer);
+}
+
+.ops-notch-panel-inner {
+  --notch: var(--ops-notch-panel-inner);
+}
+
+.ops-notch-chip {
+  --notch: var(--ops-notch-chip);
+}
+
+.ops-status-frame {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ops-status-nominal {
+  border-color: var(--ops-status-nominal-border);
+  background: var(--ops-status-nominal-bg);
+  color: var(--ops-status-nominal-text);
+}
+
+.ops-status-degraded {
+  border-color: var(--ops-status-degraded-border);
+  background: var(--ops-status-degraded-bg);
+  color: var(--ops-status-degraded-text);
+}
+
+.ops-status-unmarked {
+  border-color: var(--ops-status-unmarked-border);
+  background: var(--ops-status-unmarked-bg);
+  color: var(--ops-status-unmarked-text);
+}
+
+.ops-grid-nominal {
+  border-color: var(--ops-status-nominal-border);
+  background: rgba(110, 231, 183, 0.18);
+  color: var(--ops-status-nominal-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ops-grid-degraded {
+  border-color: var(--ops-status-degraded-border);
+  background: rgba(245, 158, 11, 0.18);
+  color: var(--ops-status-degraded-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.ops-grid-unmarked {
+  border-color: var(--ops-status-unmarked-border);
+  background: rgba(36, 48, 42, 0.76);
+  color: var(--ops-status-unmarked-text);
+}
+
 @utility clip-notched {
-  --notch: 12px;
   clip-path: polygon(
     var(--notch) 0,
     100% 0,
@@ -168,11 +243,8 @@ button {
 }
 
 @utility panel-shadow {
-  --panel-ring: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
-  filter:
-    drop-shadow(0 14px 24px rgba(0, 0, 0, 0.42))
-    drop-shadow(0 0 0 1px rgba(255, 255, 255, 0.03))
-    var(--panel-ring);
+  position: relative;
+  isolation: isolate;
 }
 
 @media (prefers-reduced-motion: reduce) {

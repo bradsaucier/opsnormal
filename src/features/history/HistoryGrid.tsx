@@ -25,14 +25,14 @@ const DESKTOP_HISTORY_QUERY = '(min-width: 768px)';
 
 function getCellClassName(status: ReturnType<typeof getUiStatus>) {
   if (status === 'nominal') {
-    return 'border-sky-300/65 bg-sky-400/18 text-sky-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+    return 'ops-grid-nominal';
   }
 
   if (status === 'degraded') {
-    return 'border-orange-300/65 bg-orange-400/18 text-orange-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+    return 'ops-grid-degraded';
   }
 
-  return 'border-ops-border-struct bg-ops-surface-3 text-ops-text-secondary';
+  return 'ops-grid-unmarked';
 }
 
 function clampIndex(index: number, upperBound: number) {
@@ -368,147 +368,153 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
               className="pointer-events-none absolute right-0 top-0 z-40 h-full w-6 bg-gradient-to-l from-ops-surface-1 to-transparent"
             />
           ) : null}
-          <div
-            ref={desktopScrollRef}
-            className="history-scroll-shell overflow-x-auto rounded-xl border border-ops-border-struct bg-ops-base/80"
-            role="region"
-            aria-labelledby={captionId}
-          >
-            <table
-              className="min-w-max w-full border-separate border-spacing-0 text-sm"
-              role="grid"
-              aria-readonly="true"
-              aria-describedby={`${instructionsId} ${statusSummaryId}`}
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+            <div
+              ref={desktopScrollRef}
+              className="history-scroll-shell clip-notched ops-notch-panel-inner overflow-x-auto bg-ops-base/80"
+              role="region"
+              aria-labelledby={captionId}
             >
-              <caption id={captionId} className="sr-only">
-                Thirty-day readiness grid with one row per sector and one column per day. Cell labels use OK for nominal, DG for degraded, and UN for unmarked.
-              </caption>
-              <thead role="rowgroup">
-                <tr role="row">
-                  <th
-                    role="columnheader"
-                    className="sticky left-0 top-0 z-30 border-b border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-secondary shadow-[6px_0_12px_rgba(10,15,13,0.32)]"
-                    scope="col"
-                  >
-                    Sector
-                  </th>
-                  {dateKeys.map((dateKey) => {
-                    const isToday = dateKey === todayKey;
-                    const isSelectedColumn = dateKey === selectedCell.dateKey;
+              <table
+                className="min-w-max w-full border-separate border-spacing-0 text-sm"
+                role="grid"
+                aria-readonly="true"
+                aria-describedby={`${instructionsId} ${statusSummaryId}`}
+              >
+                <caption id={captionId} className="sr-only">
+                  Thirty-day readiness grid with one row per sector and one column per day. Cell labels use OK for nominal, DG for degraded, and UN for unmarked.
+                </caption>
+                <thead role="rowgroup">
+                  <tr role="row">
+                    <th
+                      role="columnheader"
+                      className="sticky left-0 top-0 z-30 border-b border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-secondary shadow-[6px_0_12px_rgba(10,15,13,0.32)]"
+                      scope="col"
+                    >
+                      Sector
+                    </th>
+                    {dateKeys.map((dateKey) => {
+                      const isToday = dateKey === todayKey;
+                      const isSelectedColumn = dateKey === selectedCell.dateKey;
+
+                      return (
+                        <th
+                          key={dateKey}
+                          role="columnheader"
+                          className={[
+                            'sticky top-0 z-20 border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
+                            isToday
+                              ? 'bg-emerald-300/12 text-ops-accent-muted'
+                              : isSelectedColumn
+                                ? 'bg-ops-surface-2 text-ops-text-primary'
+                                : 'bg-ops-surface-1 text-ops-text-secondary'
+                          ].join(' ')}
+                          scope="col"
+                          aria-current={isToday ? 'date' : undefined}
+                        >
+                          {formatDayLabel(dateKey)}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody role="rowgroup">
+                  {SECTORS.map((sector, sectorIndex) => {
+                    const isSelectedRow = sector.id === selectedCell.sectorId;
 
                     return (
-                      <th
-                        key={dateKey}
-                        role="columnheader"
-                        className={[
-                          'sticky top-0 z-20 border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
-                          isToday
-                            ? 'bg-emerald-300/12 text-ops-accent-muted'
-                            : isSelectedColumn
-                              ? 'bg-ops-surface-2 text-ops-text-primary'
-                              : 'bg-ops-surface-1 text-ops-text-secondary'
-                        ].join(' ')}
-                        scope="col"
-                        aria-current={isToday ? 'date' : undefined}
+                      <tr
+                        key={sector.id}
+                        role="row"
+                        className={isSelectedRow ? 'bg-white/[0.06]' : 'odd:bg-white/[0.04] even:bg-white/[0.02]'}
                       >
-                        {formatDayLabel(dateKey)}
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody role="rowgroup">
-                {SECTORS.map((sector, sectorIndex) => {
-                  const isSelectedRow = sector.id === selectedCell.sectorId;
+                        <th
+                          role="rowheader"
+                          className={[
+                            'sticky left-0 z-20 border-b border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
+                            isSelectedRow ? 'text-ops-accent-muted' : 'text-ops-text-primary'
+                          ].join(' ')}
+                          scope="row"
+                        >
+                          {sector.label}
+                        </th>
+                        {dateKeys.map((dateKey, dateIndex) => {
+                          const status = getUiStatus(entryLookup, dateKey, sector.id);
+                          const isToday = dateKey === todayKey;
+                          const isSelected = dateKey === selectedCell.dateKey && sector.id === selectedCell.sectorId;
+                          const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
 
-                  return (
-                    <tr
-                      key={sector.id}
-                      role="row"
-                      className={isSelectedRow ? 'bg-white/[0.06]' : 'odd:bg-white/[0.04] even:bg-white/[0.02]'}
-                    >
-                      <th
-                        role="rowheader"
-                        className={[
-                          'sticky left-0 z-20 border-b border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
-                          isSelectedRow ? 'text-ops-accent-muted' : 'text-ops-text-primary'
-                        ].join(' ')}
-                        scope="row"
-                      >
-                        {sector.label}
-                      </th>
-                      {dateKeys.map((dateKey, dateIndex) => {
-                        const status = getUiStatus(entryLookup, dateKey, sector.id);
-                        const isToday = dateKey === todayKey;
-                        const isSelected = dateKey === selectedCell.dateKey && sector.id === selectedCell.sectorId;
-                        const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
-
-                        return (
-                          <td
-                            key={`${sector.id}:${dateKey}`}
-                            ref={(element) => registerCellRef(buildCellKey(sector.id, dateKey), element)}
-                            role="gridcell"
-                            aria-label={cellLabel}
-                            aria-describedby={statusSummaryId}
-                            aria-selected={isSelected}
-                            tabIndex={isSelected ? 0 : -1}
-                            onClick={() => handleCellSelection({ dateKey, sectorId: sector.id })}
-                            onFocus={() => setSelectedCell({ dateKey, sectorId: sector.id })}
-                            onKeyDown={(event) => handleCellKeyDown(event, sectorIndex, dateIndex)}
-                            className={[
-                              'group cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
-                              isToday ? 'bg-emerald-300/[0.08]' : dateKey === selectedCell.dateKey ? 'bg-white/[0.03]' : ''
-                            ].join(' ')}
-                          >
-                            <div
-                              title={cellLabel}
+                          return (
+                            <td
+                              key={`${sector.id}:${dateKey}`}
+                              ref={(element) => registerCellRef(buildCellKey(sector.id, dateKey), element)}
+                              role="gridcell"
+                              aria-label={cellLabel}
+                              aria-describedby={statusSummaryId}
+                              aria-selected={isSelected}
+                              tabIndex={isSelected ? 0 : -1}
+                              onClick={() => handleCellSelection({ dateKey, sectorId: sector.id })}
+                              onFocus={() => setSelectedCell({ dateKey, sectorId: sector.id })}
+                              onKeyDown={(event) => handleCellKeyDown(event, sectorIndex, dateIndex)}
                               className={[
-                                'mx-auto flex h-11 w-11 items-center justify-center rounded-md border text-[12px] leading-none font-semibold tracking-[0.32px] transition [font-variant-numeric:tabular-nums]',
-                                isSelected
-                                  ? 'ring-2 ring-inset ring-ops-accent ring-offset-1 ring-offset-ops-surface-1'
-                                  : 'group-focus-visible:ring-2 group-focus-visible:ring-inset group-focus-visible:ring-ops-accent group-focus-visible:ring-offset-1 group-focus-visible:ring-offset-ops-surface-1',
-                                isToday && !isSelected ? 'ring-1 ring-inset ring-emerald-300/25' : '',
-                                getCellClassName(status)
+                                'group cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
+                                isToday ? 'bg-emerald-300/[0.08]' : dateKey === selectedCell.dateKey ? 'bg-white/[0.03]' : ''
                               ].join(' ')}
                             >
-                              {getStatusCellText(status)}
-                            </div>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                              <div
+                                title={cellLabel}
+                                className={[
+                                  'ops-notch-chip clip-notched mx-auto flex h-11 w-11 items-center justify-center border text-[12px] leading-none font-semibold tracking-[0.32px] transition [font-variant-numeric:tabular-nums]',
+                                  isSelected
+                                    ? 'ring-2 ring-inset ring-ops-accent ring-offset-1 ring-offset-ops-surface-1'
+                                    : 'group-focus-visible:ring-2 group-focus-visible:ring-inset group-focus-visible:ring-ops-accent group-focus-visible:ring-offset-1 group-focus-visible:ring-offset-ops-surface-1',
+                                  isToday && !isSelected ? 'ring-1 ring-inset ring-emerald-300/25' : '',
+                                  getCellClassName(status)
+                                ].join(' ')}
+                              >
+                                {getStatusCellText(status)}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="rounded-xl border border-ops-border-struct bg-ops-surface-2/70 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
-                  Selected cell
-                </p>
-                <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
-                  {selectedSector.label}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
-                  {formatLongDate(selectedCell.dateKey)}
-                </p>
-                <p id={statusSummaryId} className="mt-2 text-sm leading-6 text-ops-text-secondary">
-                  {selectedStatusSummary}
-                </p>
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+            <div className="clip-notched ops-notch-panel-inner bg-ops-surface-2/70 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                    Selected cell
+                  </p>
+                  <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+                    {selectedSector.label}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+                    {formatLongDate(selectedCell.dateKey)}
+                  </p>
+                  <p id={statusSummaryId} className="mt-2 text-sm leading-6 text-ops-text-secondary">
+                    {selectedStatusSummary}
+                  </p>
+                </div>
+                <StatusBadge status={selectedStatus} />
               </div>
-              <StatusBadge status={selectedStatus} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-ops-border-soft bg-black/20 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
-            {selectedCell.dateKey === todayKey
-              ? 'Today is live. Use the Today panel to update the current status picture.'
-              : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
+            <div className="clip-notched ops-notch-panel-inner bg-black/20 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
+              {selectedCell.dateKey === todayKey
+                ? 'Today is live. Use the Today panel to update the current status picture.'
+                : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
+            </div>
           </div>
         </div>
       </>
@@ -567,86 +573,88 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                 <div
                   key={weekStart}
                   ref={(element) => registerWeekRef(weekIndex, element)}
-                  className="history-week-card flex w-[calc(100%-2.75rem)] min-w-[17.5rem] max-w-[24rem] shrink-0 flex-col rounded-xl border border-ops-border-struct bg-ops-base/80 p-3"
+                  className="history-week-card clip-notched ops-notch-panel-outer w-[calc(100%-2.75rem)] min-w-[17.5rem] max-w-[24rem] shrink-0 bg-ops-border-struct p-px"
                 >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
-                        Week {weekIndex + 1}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
-                        {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
-                      </p>
+                  <div className="clip-notched ops-notch-panel-inner bg-ops-base/80 p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                          Week {weekIndex + 1}
+                        </p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+                          {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
+                        </p>
+                      </div>
+                      <div className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted">
+                        {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
+                      </div>
                     </div>
-                    <div className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted">
-                      {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
+
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: `minmax(4.5rem, auto) repeat(${weekGroup.length}, minmax(0, 1fr))` }}
+                    >
+                      <div className="sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-secondary">
+                        Sector
+                      </div>
+                      {weekGroup.map((dateKey) => {
+                        const isToday = dateKey === todayKey;
+                        const isSelectedDay = dateKey === selectedCell.dateKey;
+
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() => handleDaySelection(dateKey)}
+                            aria-label={`Open daily brief for ${formatLongDate(dateKey)}`}
+                            aria-controls="mobile-history-daily-brief"
+                            aria-pressed={isSelectedDay}
+                            aria-current={isToday ? 'date' : undefined}
+                            className={[
+                              'ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition',
+                              isSelectedDay
+                                ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
+                                : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
+                              isToday && !isSelectedDay ? 'ring-1 ring-inset ring-emerald-300/25' : ''
+                            ].join(' ')}
+                          >
+                            <span className="block text-[10px] text-ops-text-muted">{formatLongDate(dateKey).split(',')[0]}</span>
+                            <span className="mt-1 block">{formatDayLabel(dateKey)}</span>
+                          </button>
+                        );
+                      })}
+
+                      {SECTORS.map((sector) => {
+                        return [
+                          <div
+                            key={`${sector.id}:label`}
+                            className="sticky left-0 z-10 flex min-h-11 items-center bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-primary"
+                          >
+                            {sector.shortLabel}
+                          </div>,
+                          ...weekGroup.map((dateKey) => {
+                            const status = getUiStatus(entryLookup, dateKey, sector.id);
+                            const isSelectedDay = dateKey === selectedCell.dateKey;
+                            const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
+
+                            return (
+                              <div
+                                key={`${sector.id}:${dateKey}`}
+                                className={[
+                                  'ops-notch-chip clip-notched flex min-h-11 items-center justify-center border px-1 py-1 text-[11px] font-semibold tracking-[0.24px] [font-variant-numeric:tabular-nums]',
+                                  isSelectedDay ? 'ring-1 ring-inset ring-ops-accent/60' : '',
+                                  getCellClassName(status)
+                                ].join(' ')}
+                                title={cellLabel}
+                                aria-hidden="true"
+                              >
+                                {getStatusCellText(status)}
+                              </div>
+                            );
+                          })
+                        ];
+                      })}
                     </div>
-                  </div>
-
-                  <div
-                    className="grid gap-2"
-                    style={{ gridTemplateColumns: `minmax(4.5rem, auto) repeat(${weekGroup.length}, minmax(0, 1fr))` }}
-                  >
-                    <div className="sticky left-0 z-10 rounded-md bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-secondary">
-                      Sector
-                    </div>
-                    {weekGroup.map((dateKey) => {
-                      const isToday = dateKey === todayKey;
-                      const isSelectedDay = dateKey === selectedCell.dateKey;
-
-                      return (
-                        <button
-                          key={dateKey}
-                          type="button"
-                          onClick={() => handleDaySelection(dateKey)}
-                          aria-label={`Open daily brief for ${formatLongDate(dateKey)}`}
-                          aria-controls="mobile-history-daily-brief"
-                          aria-pressed={isSelectedDay}
-                          aria-current={isToday ? 'date' : undefined}
-                          className={[
-                            'min-h-11 rounded-md border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition',
-                            isSelectedDay
-                              ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
-                              : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
-                            isToday && !isSelectedDay ? 'ring-1 ring-inset ring-emerald-300/25' : ''
-                          ].join(' ')}
-                        >
-                          <span className="block text-[10px] text-ops-text-muted">{formatLongDate(dateKey).split(',')[0]}</span>
-                          <span className="mt-1 block">{formatDayLabel(dateKey)}</span>
-                        </button>
-                      );
-                    })}
-
-                    {SECTORS.map((sector) => {
-                      return [
-                        <div
-                          key={`${sector.id}:label`}
-                          className="sticky left-0 z-10 flex min-h-11 items-center rounded-md bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-primary"
-                        >
-                          {sector.shortLabel}
-                        </div>,
-                        ...weekGroup.map((dateKey) => {
-                          const status = getUiStatus(entryLookup, dateKey, sector.id);
-                          const isSelectedDay = dateKey === selectedCell.dateKey;
-                          const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
-
-                          return (
-                            <div
-                              key={`${sector.id}:${dateKey}`}
-                              className={[
-                                'flex min-h-11 items-center justify-center rounded-md border px-1 py-1 text-[11px] font-semibold tracking-[0.24px] [font-variant-numeric:tabular-nums]',
-                                isSelectedDay ? 'ring-1 ring-inset ring-ops-accent/60' : '',
-                                getCellClassName(status)
-                              ].join(' ')}
-                              title={cellLabel}
-                              aria-hidden="true"
-                            >
-                              {getStatusCellText(status)}
-                            </div>
-                          );
-                        })
-                      ];
-                    })}
                   </div>
                 </div>
               );
@@ -670,49 +678,50 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
 
         <div
           id="mobile-history-daily-brief"
-          className="mt-4 rounded-xl border border-ops-border-struct bg-ops-surface-2/70 p-4"
+          className="mt-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px"
           aria-live="polite"
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
-                Daily brief
-              </p>
-              <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
-                {formatLongDate(selectedCell.dateKey)}
-              </h3>
-              <p id={statusSummaryId} className="mt-2 text-sm leading-6 text-ops-text-secondary">
-                {selectedDaySummary}
-              </p>
-            </div>
-            <div className="rounded-md border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
-              {visibleWeekIndex + 1} of {weekGroups.length} week groups
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-2">
-            {selectedDayStatuses.map(({ sector, status }) => (
-              <div
-                key={sector.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-ops-border-soft bg-black/20 px-3 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
-                    {sector.label}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-ops-text-secondary">
-                    {sector.description}
-                  </p>
-                </div>
-                <StatusBadge status={status} />
+          <div className="clip-notched ops-notch-panel-inner bg-ops-surface-2/70 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                  Daily brief
+                </p>
+                <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+                  {formatLongDate(selectedCell.dateKey)}
+                </h3>
+                <p id={statusSummaryId} className="mt-2 text-sm leading-6 text-ops-text-secondary">
+                  {selectedDaySummary}
+                </p>
               </div>
-            ))}
+              <div className="clip-notched ops-notch-chip border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+                {visibleWeekIndex + 1} of {weekGroups.length} week groups
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {selectedDayStatuses.map(({ sector, status }) => (
+                <div
+                  key={sector.id}
+                  className="clip-notched ops-notch-chip flex items-center justify-between gap-3 border border-ops-border-soft bg-black/20 px-3 py-3"
+                >
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
+                      {sector.label}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-ops-text-secondary">
+                      {sector.description}
+                    </p>
+                  </div>
+                  <StatusBadge status={status} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </>
     );
   }
-
   return (
     <SectionCard
       eyebrow="Rolling History"

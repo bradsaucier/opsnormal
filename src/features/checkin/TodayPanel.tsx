@@ -82,8 +82,10 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: Today
       </p>
 
       {errorMessage ? (
-        <div className="mb-4 rounded-xl border border-orange-500/30 bg-orange-500/10 px-4 py-3 text-sm text-orange-200">
-          {errorMessage}
+        <div className="mb-4 clip-notched ops-notch-panel-outer bg-orange-500/30 p-px">
+          <div className="clip-notched ops-notch-panel-inner bg-orange-500/10 px-4 py-3 text-sm text-orange-200">
+            {errorMessage}
+          </div>
         </div>
       ) : null}
 
