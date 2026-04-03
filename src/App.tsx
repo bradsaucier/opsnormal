@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -17,6 +17,11 @@ function App() {
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const { storageHealth, refreshStorageHealth } = useStorageHealth();
+
+  const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
+    setTodayKey(formatDateKey(referenceDate));
+    setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
+  }, []);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -43,11 +48,6 @@ function App() {
   });
 
   useEffect(() => {
-    function refreshCalendarWindow() {
-      setTodayKey(formatDateKey());
-      setTrailingDateKeys(getTrailingDateKeys(30));
-    }
-
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
         refreshCalendarWindow();
@@ -63,7 +63,7 @@ function App() {
       window.removeEventListener('focus', refreshCalendarWindow);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [refreshCalendarWindow]);
 
   function reinforceLocalStorageDurability() {
     void refreshStorageHealth({ requestPersistence: true });
@@ -112,7 +112,11 @@ function App() {
           }}
         />
 
-        <TodayPanel todayKey={todayKey} onMeaningfulSave={reinforceLocalStorageDurability} />
+        <TodayPanel
+          todayKey={todayKey}
+          onDateRollover={refreshCalendarWindow}
+          onMeaningfulSave={reinforceLocalStorageDurability}
+        />
         <ErrorBoundary
           resetKeys={[historyKey, todayKey]}
           fallbackRender={({ error, resetErrorBoundary }) => (
