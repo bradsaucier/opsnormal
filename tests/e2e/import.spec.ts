@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import { readFile } from 'node:fs/promises';
 
 import { expect, test, type Page } from '@playwright/test';
@@ -26,25 +28,16 @@ type InvalidImportPayload = {
   }>;
 };
 
-const FIXED_TEST_TIME = '2026-03-28T12:00:00';
-
-function formatLocalDateKey(date: Date): string {
-  const year = date.getFullYear().toString();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
+const FIXED_TEST_TIME_ISO = '2026-03-28T12:00:00.000Z';
 
 function currentDateKey(): string {
-  return formatLocalDateKey(new Date(FIXED_TEST_TIME));
+  return FIXED_TEST_TIME_ISO.slice(0, 10);
 }
 
 function offsetDateKey(daysFromToday: number): string {
-  const date = new Date(FIXED_TEST_TIME);
-  date.setDate(date.getDate() + daysFromToday);
-
-  return formatLocalDateKey(date);
+  const date = new Date(FIXED_TEST_TIME_ISO);
+  date.setUTCDate(date.getUTCDate() + daysFromToday);
+  return date.toISOString().slice(0, 10);
 }
 
 function createImportEntry(args: {
@@ -65,7 +58,7 @@ function buildLegacyImportPayload(todayKey: string): ImportPayload {
   return {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
-    exportedAt: '2026-03-28T12:00:00.000Z',
+    exportedAt: FIXED_TEST_TIME_ISO,
     entries: [
       createImportEntry({
         date: todayKey,
@@ -87,7 +80,7 @@ async function buildVerifiedImportPayload(entries: ImportEntry[]): Promise<Impor
   const payload: ImportPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
-    exportedAt: '2026-03-28T12:00:00.000Z',
+    exportedAt: FIXED_TEST_TIME_ISO,
     entries
   };
 
@@ -105,7 +98,7 @@ function buildInvalidImportPayload(): InvalidImportPayload {
   return {
     app: 'OpsNormal',
     schemaVersion: 1,
-    exportedAt: '2026-03-28T12:00:00.000Z',
+    exportedAt: FIXED_TEST_TIME_ISO,
     entries: [
       {
         date: '2026-03-28',
@@ -230,7 +223,7 @@ async function completeManualReplaceCheckpoint(page: Page): Promise<void> {
 
 test.describe('OpsNormal import workflow', () => {
   test.beforeEach(async ({ page }) => {
-    await page.clock.setFixedTime(FIXED_TEST_TIME);
+    await page.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
   });
 
   test('imports valid JSON into the current browser database', async ({ page }) => {
