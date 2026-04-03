@@ -12,8 +12,8 @@ export function StatusBadge({ status, compact = false }: StatusBadgeProps) {
   return (
     <span
       className={[
-        'inline-flex items-center justify-center rounded-md border font-semibold tracking-[0.16em] uppercase',
-        compact ? 'min-h-8 min-w-8 px-2 text-xs' : 'min-h-10 min-w-10 px-3 text-xs',
+        'ops-notch-chip clip-notched ops-status-frame inline-flex items-center justify-center border font-semibold leading-none tracking-[0.16em] uppercase',
+        compact ? 'min-h-8 min-w-[3rem] px-2 text-[11px]' : 'min-h-10 min-w-[5rem] px-3 text-xs',
         content.classes
       ].join(' ')}
       aria-hidden="true"
