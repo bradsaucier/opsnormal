@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -9,14 +9,19 @@ import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
 import { useStorageHealth } from './hooks/useStorageHealth';
-import { formatStorageSummary } from './lib/storage';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
+import { formatStorageSummary } from './lib/storage';
 
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const { storageHealth, refreshStorageHealth } = useStorageHealth();
+
+  const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
+    setTodayKey(formatDateKey(referenceDate));
+    setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
+  }, []);
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
@@ -43,27 +48,29 @@ function App() {
   });
 
   useEffect(() => {
-    function refreshCalendarWindow() {
-      setTodayKey(formatDateKey());
-      setTrailingDateKeys(getTrailingDateKeys(30));
-    }
-
     function handleVisibilityChange() {
       if (document.visibilityState === 'visible') {
         refreshCalendarWindow();
       }
     }
 
-    const intervalId = window.setInterval(refreshCalendarWindow, 60 * 1000);
-    window.addEventListener('focus', refreshCalendarWindow);
+    function handleWindowFocus() {
+      refreshCalendarWindow();
+    }
+
+    const intervalId = window.setInterval(() => {
+      refreshCalendarWindow();
+    }, 60 * 1000);
+
+    window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener('focus', refreshCalendarWindow);
+      window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [refreshCalendarWindow]);
 
   function reinforceLocalStorageDurability() {
     void refreshStorageHealth({ requestPersistence: true });
@@ -112,7 +119,11 @@ function App() {
           }}
         />
 
-        <TodayPanel todayKey={todayKey} onMeaningfulSave={reinforceLocalStorageDurability} />
+        <TodayPanel
+          todayKey={todayKey}
+          onDateRollover={refreshCalendarWindow}
+          onMeaningfulSave={reinforceLocalStorageDurability}
+        />
         <ErrorBoundary
           resetKeys={[historyKey, todayKey]}
           fallbackRender={({ error, resetErrorBoundary }) => (

@@ -30,6 +30,8 @@ Prove that the app:
 - desktop history grid keyboard navigation
 - mobile history daily brief selection
 - viewport-driven history render-path changes
+- today-panel write path uses the live local date if a click lands after midnight before the shell refreshes
+- today-panel save failures surface an operator-visible error and clear the sector busy state
 
 ### Integration tests
 - Dexie persistence behavior

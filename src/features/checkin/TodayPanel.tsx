@@ -4,17 +4,18 @@ import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
 import { useEntriesForDate } from '../../db/hooks';
 import { cycleDailyStatus } from '../../db/appDb';
-import { formatLongDate } from '../../lib/date';
+import { formatDateKey, formatLongDate } from '../../lib/date';
 import { computeCompletionState, createEntryLookup, getUiStatus } from '../../lib/history';
 import { getStatusLabel } from '../../lib/status';
 import { SECTORS, type SectorId } from '../../types';
 
 interface TodayPanelProps {
   todayKey: string;
+  onDateRollover?: () => void;
   onMeaningfulSave?: () => void;
 }
 
-export function TodayPanel({ todayKey, onMeaningfulSave }: TodayPanelProps) {
+export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: TodayPanelProps) {
   const entries = useEntriesForDate(todayKey);
   const [busySectorId, setBusySectorId] = useState<SectorId | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -37,7 +38,13 @@ export function TodayPanel({ todayKey, onMeaningfulSave }: TodayPanelProps) {
     try {
       setErrorMessage(null);
       setBusySectorId(sectorId);
-      const nextStatus = await cycleDailyStatus(todayKey, sectorId);
+
+      const writeDateKey = formatDateKey();
+      const nextStatus = await cycleDailyStatus(writeDateKey, sectorId);
+
+      if (writeDateKey !== todayKey) {
+        onDateRollover?.();
+      }
       const sector = SECTORS.find((candidate) => candidate.id === sectorId);
       const sectorLabel = sector?.label ?? sectorId;
       setAnnouncement(`${sectorLabel} set to ${getStatusLabel(nextStatus)}.`);
