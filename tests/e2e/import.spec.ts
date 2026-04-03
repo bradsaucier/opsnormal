@@ -200,8 +200,11 @@ async function switchToReplaceMode(page: Page): Promise<void> {
 }
 
 async function completeManualReplaceCheckpoint(page: Page): Promise<void> {
+  const exportBackupButton = page.getByRole('button', { name: /export pre-replace backup/i });
+  await expect(exportBackupButton).toBeVisible();
+
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: /export pre-replace backup/i }).click();
+  await exportBackupButton.click();
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toMatch(/^opsnormal-pre-replace-backup-.*\.json$/);
@@ -223,6 +226,14 @@ async function completeManualReplaceCheckpoint(page: Page): Promise<void> {
 
 test.describe('OpsNormal import workflow', () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(window, 'showSaveFilePicker', {
+        configurable: true,
+        writable: true,
+        value: undefined
+      });
+    });
+
     await page.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
   });
 
