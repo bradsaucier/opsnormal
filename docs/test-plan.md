@@ -25,6 +25,7 @@ Prove that the app:
 - live status and alert regions stay mounted with aria-atomic set
 - worker-backed preview path aborts cleanly on replacement selection or component teardown
 - export to import round-trip validation
+- boot-failure fallback renders without inline handlers or style attributes
 - streak computation
 - status cycle helpers
 - desktop history grid keyboard navigation
@@ -45,6 +46,7 @@ Prove that the app:
 - import preview and staged merge path hold under the accordion backup panel
 - replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
 - mobile history week pagination and daily brief selection hold under a narrow viewport
+- CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium
 
 ## Coverage posture
 
