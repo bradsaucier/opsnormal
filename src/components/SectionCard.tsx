@@ -9,8 +9,8 @@ interface SectionCardProps extends PropsWithChildren {
 export function SectionCard({ title, eyebrow, meta, children }: SectionCardProps) {
   return (
     <div className="panel-shadow">
-      <div className="clip-notched bg-[linear-gradient(180deg,rgba(110,231,183,0.18),rgba(255,255,255,0.02))] p-px [--notch:12px]">
-        <section className="tactical-panel clip-notched bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_24%),var(--color-ops-surface-1)] p-5 [--notch:11px] sm:p-6">
+      <div className="clip-notched ops-notch-panel-outer bg-[linear-gradient(180deg,rgba(110,231,183,0.18),rgba(255,255,255,0.02))] p-px">
+        <section className="tactical-panel clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_24%),var(--color-ops-surface-1)] p-5 sm:p-6">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               {eyebrow ? (
