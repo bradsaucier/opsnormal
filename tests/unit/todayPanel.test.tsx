@@ -3,15 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TodayPanel } from '../../src/features/checkin/TodayPanel';
 
-const mockUseEntriesForDate = vi.fn();
-const mockCycleDailyStatus = vi.fn();
+type UseEntriesForDate = typeof import('../../src/db/hooks')['useEntriesForDate'];
+type CycleDailyStatus = typeof import('../../src/db/appDb')['cycleDailyStatus'];
+
+const { mockUseEntriesForDate, mockCycleDailyStatus } = vi.hoisted(() => ({
+  mockUseEntriesForDate: vi.fn<UseEntriesForDate>(),
+  mockCycleDailyStatus: vi.fn<CycleDailyStatus>()
+}));
 
 vi.mock('../../src/db/hooks', () => ({
-  useEntriesForDate: (date: string) => mockUseEntriesForDate(date)
+  useEntriesForDate: mockUseEntriesForDate
 }));
 
 vi.mock('../../src/db/appDb', () => ({
-  cycleDailyStatus: (date: string, sectorId: string) => mockCycleDailyStatus(date, sectorId)
+  cycleDailyStatus: mockCycleDailyStatus
 }));
 
 describe('TodayPanel', () => {
@@ -58,7 +63,6 @@ describe('TodayPanel', () => {
     expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-27', 'body');
     expect(onDateRollover).not.toHaveBeenCalled();
   });
-
 
   it('surfaces the error and clears the busy state if the rollover write fails', async () => {
     vi.setSystemTime(new Date('2026-03-27T23:59:30'));
