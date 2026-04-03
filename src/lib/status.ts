@@ -14,21 +14,21 @@ const statusContent: Record<
     label: 'NOMINAL',
     shortLabel: 'OK',
     cell: 'OK',
-    classes: 'border-sky-400/40 bg-sky-400/12 text-sky-200',
+    classes: 'ops-status-nominal',
     srHint: 'Nominal status.'
   },
   degraded: {
     label: 'DEGRADED',
     shortLabel: 'DG',
     cell: 'DG',
-    classes: 'border-orange-400/45 bg-orange-400/12 text-orange-200',
+    classes: 'ops-status-degraded',
     srHint: 'Degraded status.'
   },
   unmarked: {
     label: 'UNMARKED',
     shortLabel: 'UN',
     cell: 'UN',
-    classes: 'border-ops-border-struct bg-transparent text-ops-text-muted',
+    classes: 'ops-status-unmarked',
     srHint: 'Unmarked status.'
   }
 };
