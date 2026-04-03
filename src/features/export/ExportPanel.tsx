@@ -1,38 +1,20 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
 import { SectionCard } from '../../components/SectionCard';
-import {
-  canUseVerifiedFileSave,
-  checkpointJsonBackupToDisk,
-  downloadTextFile,
-  exportCurrentEntriesAsCsv,
-  exportCurrentEntriesAsJson,
-  formatLastExportCompletedAt,
-  getLastExportCompletedAt,
-  recordExportCompleted
-} from '../../lib/export';
 import type { StorageHealth } from '../../lib/storage';
-import { applyImport, previewImportFile } from '../../services/importService';
 import type { ImportMode, ImportPreview } from '../../types';
+import { useExportWorkflow } from './useExportWorkflow';
+import { useImportWorkflow } from './useImportWorkflow';
+import { useReplaceCheckpoint } from './useReplaceCheckpoint';
+import { useUndoImport } from './useUndoImport';
+import type { StatusMessage } from './workflowTypes';
 
 interface ExportPanelProps {
   storageHealth: StorageHealth | null;
 }
 
 type AccordionSectionKey = 'export' | 'import' | 'undo' | 'storage';
-type MessageTone = 'info' | 'success' | 'warning' | 'error';
-type ReplaceConfirmState = 'idle' | 'armed';
-type ReplaceBackupState =
-  | { phase: 'idle' }
-  | { phase: 'saving' }
-  | { phase: 'manual-awaiting-ack'; fileName: string }
-  | { phase: 'ready'; fileName: string; verification: 'verified' | 'manual' };
-
-interface StatusMessage {
-  tone: MessageTone;
-  text: string;
-}
 
 interface AccordionSectionProps {
   sectionKey: AccordionSectionKey;
@@ -123,125 +105,24 @@ function getDefaultStatusMessage(): StatusMessage {
   };
 }
 
-function buildPreReplaceBackupFileName(exportedAt: string): string {
-  const safeTimestamp = exportedAt.replaceAll(':', '-');
-  return `opsnormal-pre-replace-backup-${safeTimestamp}.json`;
-}
-
 export function ExportPanel({ storageHealth }: ExportPanelProps) {
   const [statusMessage, setStatusMessage] = useState<StatusMessage>(() => getDefaultStatusMessage());
-  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => getLastExportCompletedAt());
-  const [pendingImport, setPendingImport] = useState<ImportPreview | null>(null);
-  const [pendingFileName, setPendingFileName] = useState<string>('');
-  const [pendingFileSize, setPendingFileSize] = useState<number>(0);
-  const [importMode, setImportMode] = useState<ImportMode>('merge');
-  const [importBusy, setImportBusy] = useState(false);
-  const [undoBusy, setUndoBusy] = useState(false);
-  const [replaceConfirmState, setReplaceConfirmState] = useState<ReplaceConfirmState>('idle');
-  const [replaceBackupState, setReplaceBackupState] = useState<ReplaceBackupState>({ phase: 'idle' });
-  const [manualBackupConfirmed, setManualBackupConfirmed] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<AccordionSectionKey, boolean>>({
     export: true,
     import: false,
     undo: false,
     storage: false
   });
-  const fileInputId = useId();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const replaceActionRef = useRef<HTMLDivElement | null>(null);
-  const undoImportRef = useRef<(() => Promise<void>) | null>(null);
-  const previewAbortRef = useRef<AbortController | null>(null);
-  const previewRequestIdRef = useRef(0);
 
-  useEffect(() => {
-    setLastBackupAt(getLastExportCompletedAt());
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      previewAbortRef.current?.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (replaceConfirmState !== 'armed') {
-      return undefined;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') {
-        return;
-      }
-
-      setReplaceConfirmState('idle');
-      setStatusMessage({
-        tone: 'info',
-        text: 'Replace disarmed. Local data unchanged.'
-      });
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!replaceActionRef.current?.contains(event.target as Node)) {
-        setReplaceConfirmState('idle');
-        setStatusMessage({
-          tone: 'info',
-          text: 'Replace disarmed after focus moved off the destructive control group.'
-        });
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('pointerdown', handlePointerDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [replaceConfirmState]);
-
-  const backupStatus = useMemo(() => formatLastExportCompletedAt(lastBackupAt), [lastBackupAt]);
-  const canUndoImport = undoImportRef.current !== null;
-  const importIntegrityText =
-    pendingImport?.integrityStatus === 'verified'
-      ? 'Integrity verified. Embedded SHA-256 checksum matched before write staging.'
-      : 'Legacy backup detected. Structure validated, but this file has no integrity checksum.';
-  const replaceReady = replaceBackupState.phase === 'ready';
-  const passiveStatusText =
-    statusMessage.tone === 'info' || statusMessage.tone === 'success' ? statusMessage.text : '';
-  const alertStatusText =
-    statusMessage.tone === 'warning' || statusMessage.tone === 'error' ? statusMessage.text : '';
+  function updateStatusMessage(nextMessage: StatusMessage) {
+    setStatusMessage(nextMessage);
+  }
 
   function toggleSection(sectionKey: AccordionSectionKey) {
     setExpandedSections((current) => ({
       ...current,
       [sectionKey]: !current[sectionKey]
     }));
-  }
-
-  function resetReplaceWorkflow() {
-    setReplaceConfirmState('idle');
-    setReplaceBackupState({ phase: 'idle' });
-    setManualBackupConfirmed(false);
-  }
-
-  function clearPendingImport(nextMessage?: StatusMessage) {
-    previewAbortRef.current?.abort();
-    previewAbortRef.current = null;
-    previewRequestIdRef.current += 1;
-
-    setPendingImport(null);
-    setPendingFileName('');
-    setPendingFileSize(0);
-    setImportMode('merge');
-    resetReplaceWorkflow();
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-
-    if (nextMessage) {
-      setStatusMessage(nextMessage);
-    }
   }
 
   function openImportSection() {
@@ -251,271 +132,74 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
     }));
   }
 
-  function setImportModeWithReset(nextMode: ImportMode) {
-    setImportMode(nextMode);
+  function openUndoSection() {
+    setExpandedSections((current) => ({
+      ...current,
+      undo: true
+    }));
+  }
+
+  function handleReplaceWorkflowResetRequest() {
     resetReplaceWorkflow();
   }
 
-  async function handleJsonExport() {
-    try {
-      const { entryCount, exportedAt, payload } = await exportCurrentEntriesAsJson();
-      downloadTextFile('opsnormal-export.json', payload, 'application/json');
-      recordExportCompleted(exportedAt);
-      setLastBackupAt(exportedAt);
-      setStatusMessage({
-        tone: 'success',
-        text: `JSON export complete. ${entryCount} entries written to disk.`
-      });
-    } catch (error) {
-      setStatusMessage({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'JSON export failed. Reload the app and try again.'
-      });
-    }
-  }
-
-  async function handleCsvExport() {
-    try {
-      const { entryCount, payload } = await exportCurrentEntriesAsCsv();
-      downloadTextFile('opsnormal-export.csv', payload, 'text/csv;charset=utf-8');
-      setStatusMessage({
-        tone: 'success',
-        text: `CSV export complete. ${entryCount} entries written to disk.`
-      });
-    } catch (error) {
-      setStatusMessage({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'CSV export failed. Reload the app and try again.'
-      });
-    }
-  }
-
-  async function handleImportSelection(event: React.ChangeEvent<HTMLInputElement>) {
-    const [file] = Array.from(event.target.files ?? []);
-
-    if (!file) {
-      return;
-    }
-
-    previewAbortRef.current?.abort();
-    const controller = new AbortController();
-    previewAbortRef.current = controller;
-    const requestId = previewRequestIdRef.current + 1;
-    previewRequestIdRef.current = requestId;
-
-    resetReplaceWorkflow();
-
-    try {
-      const preview = await previewImportFile(file, controller.signal);
-
-      if (controller.signal.aborted || previewRequestIdRef.current !== requestId) {
-        return;
-      }
-
-      setPendingImport(preview);
-      setPendingFileName(file.name);
-      setPendingFileSize(file.size);
-      setImportMode('merge');
-      openImportSection();
-      setStatusMessage({
-        tone: preview.integrityStatus === 'verified' ? 'success' : 'warning',
-        text:
-          preview.integrityStatus === 'verified'
-            ? `Import staged. ${preview.totalEntries} entries validated. Review the preview and confirm the write path.`
-            : `Legacy import staged. ${preview.totalEntries} entries validated, but this file has no integrity checksum. Review the preview and confirm the write path.`
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-
-      clearPendingImport();
-      setStatusMessage({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Import preparation failed.'
-      });
-    } finally {
-      if (previewAbortRef.current === controller) {
-        previewAbortRef.current = null;
-      }
-
-      event.target.value = '';
-    }
-  }
-
-  async function handlePrepareReplaceBackup() {
-    if (!pendingImport) {
-      return;
-    }
-
-    setManualBackupConfirmed(false);
-
-    try {
-      setReplaceBackupState({ phase: 'saving' });
-      const { entryCount, exportedAt, payload } = await exportCurrentEntriesAsJson();
-      const fileName = buildPreReplaceBackupFileName(exportedAt);
-      const checkpointResult = await checkpointJsonBackupToDisk({
-        fileName,
-        exportedAt,
-        payload
-      });
-
-      if (checkpointResult.kind === 'verified-save-succeeded') {
-        recordExportCompleted(exportedAt);
-        setLastBackupAt(exportedAt);
-        setReplaceBackupState({ phase: 'ready', fileName, verification: 'verified' });
-        setStatusMessage({
-          tone: 'success',
-          text: `Verified pre-replace backup saved as ${fileName}. ${entryCount} current rows secured before restore.`
-        });
-        return;
-      }
-
-      if (checkpointResult.kind === 'fallback-download-triggered') {
-        recordExportCompleted(exportedAt);
-        setLastBackupAt(exportedAt);
-        setReplaceBackupState({ phase: 'manual-awaiting-ack', fileName });
-        setStatusMessage({
-          tone: 'warning',
-          text: `Backup download triggered for ${fileName}. Verify the file exists on local disk, then acknowledge before replace unlocks.`
-        });
-        return;
-      }
-
-      setReplaceBackupState({ phase: 'idle' });
-      setStatusMessage({
-        tone: checkpointResult.kind === 'save-cancelled' ? 'warning' : 'error',
-        text: checkpointResult.message
-      });
-    } catch (error) {
-      setReplaceBackupState({ phase: 'idle' });
-      setStatusMessage({
-        tone: 'error',
-        text:
-          error instanceof Error
-            ? error.message
-            : 'Pre-replace backup failed. Local data remains untouched.'
-      });
-    }
-  }
-
-  function handleAcknowledgeManualBackup() {
-    if (replaceBackupState.phase !== 'manual-awaiting-ack' || !manualBackupConfirmed) {
-      return;
-    }
-
-    setReplaceBackupState({
-      phase: 'ready',
-      fileName: replaceBackupState.fileName,
-      verification: 'manual'
+  const { backupStatus, handleCsvExport, handleJsonExport, markBackupCompleted } =
+    useExportWorkflow({
+      onStatusMessage: updateStatusMessage
     });
-    setManualBackupConfirmed(false);
-    setStatusMessage({
-      tone: 'warning',
-      text: `Manual backup checkpoint acknowledged for ${replaceBackupState.fileName}. Replace is unlocked, but the browser did not verify the disk write.`
-    });
-  }
+  const { canUndoImport, handleUndoImport, stageUndoImport, undoBusy } = useUndoImport({
+    onStatusMessage: updateStatusMessage
+  });
+  const {
+    clearPendingImport,
+    fileInputId,
+    fileInputRef,
+    handleConfirmImport,
+    handleImportSelection,
+    importBusy,
+    importMode,
+    pendingFileName,
+    pendingFileSize,
+    pendingImport,
+    setImportModeWithReset
+  } = useImportWorkflow({
+    onImportApplied: stageUndoImport,
+    onOpenImportSection: openImportSection,
+    onOpenUndoSection: openUndoSection,
+    onReplaceWorkflowResetRequested: handleReplaceWorkflowResetRequest,
+    onStatusMessage: updateStatusMessage
+  });
+  const {
+    handleAcknowledgeManualBackup,
+    handleArmReplace,
+    handleDisarmReplace,
+    handlePrepareReplaceBackup,
+    manualBackupConfirmed,
+    replaceActionRef,
+    replaceBackupState,
+    replaceConfirmState,
+    replaceReady,
+    resetReplaceWorkflow,
+    setManualBackupConfirmed,
+    supportsVerifiedFileSave
+  } = useReplaceCheckpoint({
+    onBackupCompleted: markBackupCompleted,
+    onStatusMessage: updateStatusMessage,
+    pendingImport
+  });
 
-  function handleArmReplace() {
-    if (!pendingImport) {
-      return;
-    }
 
-    if (!replaceReady) {
-      setStatusMessage({
-        tone: 'warning',
-        text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.'
-      });
-      return;
-    }
-
-    setReplaceConfirmState('armed');
-    setStatusMessage({
-      tone: 'warning',
-      text: `Replace armed. Executing this path will wipe ${pendingImport.existingEntryCount} current rows and restore ${pendingImport.totalEntries} imported rows. Press Escape, click outside the destructive control group, or use Disarm Replace to stand down.`
-    });
-  }
-
-  function handleDisarmReplace() {
-    setReplaceConfirmState('idle');
-    setStatusMessage({
-      tone: 'info',
-      text: 'Replace disarmed. Local data unchanged.'
-    });
-  }
-
-  async function runConfirmedImport() {
-    if (!pendingImport) {
-      return;
-    }
-
-    try {
-      setImportBusy(true);
-      const { importedCount, undo } = await applyImport(pendingImport.payload, importMode);
-      undoImportRef.current = undo;
-      clearPendingImport();
-      setExpandedSections((current) => ({
-        ...current,
-        undo: true
-      }));
-      setStatusMessage({
-        tone: 'success',
-        text:
-          importMode === 'replace'
-            ? `Replace import complete. ${importedCount} rows restored.`
-            : `Merge import complete. ${importedCount} rows applied.`
-      });
-    } catch (error) {
-      setStatusMessage({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Import failed during database write.'
-      });
-    } finally {
-      setImportBusy(false);
-      setReplaceConfirmState('idle');
-    }
-  }
-
-  async function handleConfirmImport() {
-    if (!pendingImport) {
-      return;
-    }
-
-    if (importMode === 'replace') {
-      if (replaceConfirmState !== 'armed') {
-        handleArmReplace();
-        return;
-      }
-
-      await runConfirmedImport();
-      return;
-    }
-
-    await runConfirmedImport();
-  }
-
-  async function handleUndoImport() {
-    if (!undoImportRef.current) {
-      return;
-    }
-
-    try {
-      setUndoBusy(true);
-      await undoImportRef.current();
-      undoImportRef.current = null;
-      setStatusMessage({
-        tone: 'success',
-        text: 'Undo complete. The pre-import database snapshot has been restored.'
-      });
-    } catch (error) {
-      setStatusMessage({
-        tone: 'error',
-        text: error instanceof Error ? error.message : 'Undo failed. Reload the app and verify local data.'
-      });
-    } finally {
-      setUndoBusy(false);
-    }
-  }
+  const importIntegrityText = useMemo(
+    () =>
+      pendingImport?.integrityStatus === 'verified'
+        ? 'Integrity verified. Embedded SHA-256 checksum matched before write staging.'
+        : 'Legacy backup detected. Structure validated, but this file has no integrity checksum.',
+    [pendingImport]
+  );
+  const passiveStatusText =
+    statusMessage.tone === 'info' || statusMessage.tone === 'success' ? statusMessage.text : '';
+  const alertStatusText =
+    statusMessage.tone === 'warning' || statusMessage.tone === 'error' ? statusMessage.text : '';
 
   const passiveStatusClasses =
     statusMessage.tone === 'success'
@@ -755,7 +439,7 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                             >
                               {replaceBackupState.phase === 'saving'
                                 ? 'Writing Backup'
-                                : canUseVerifiedFileSave()
+                                : supportsVerifiedFileSave
                                   ? 'Write Verified Pre-Replace Backup'
                                   : 'Export Pre-Replace Backup'}
                             </button>
@@ -775,7 +459,12 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                           <div className="flex flex-col gap-3">
                             <button
                               type="button"
-                              onClick={() => void handleConfirmImport()}
+                              onClick={() =>
+                                void handleConfirmImport({
+                                  onArmReplace: handleArmReplace,
+                                  replaceConfirmState
+                                })
+                              }
                               disabled={!replaceReady || importBusy}
                               className={`min-h-[44px] rounded-lg border px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${
                                 replaceConfirmState === 'armed'
@@ -817,7 +506,12 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                       <div className="flex flex-col gap-3">
                         <button
                           type="button"
-                          onClick={() => void handleConfirmImport()}
+                          onClick={() =>
+                            void handleConfirmImport({
+                              onArmReplace: handleArmReplace,
+                              replaceConfirmState
+                            })
+                          }
                           disabled={importBusy}
                           className="min-h-[44px] rounded-lg border border-emerald-400/40 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-emerald-200 uppercase transition hover:bg-emerald-400/12 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-wait disabled:opacity-70"
                         >
