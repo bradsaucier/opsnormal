@@ -9,8 +9,8 @@ import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
 import { useStorageHealth } from './hooks/useStorageHealth';
-import { formatStorageSummary } from './lib/storage';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
+import { formatStorageSummary } from './lib/storage';
 
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
@@ -54,13 +54,20 @@ function App() {
       }
     }
 
-    const intervalId = window.setInterval(refreshCalendarWindow, 60 * 1000);
-    window.addEventListener('focus', refreshCalendarWindow);
+    function handleWindowFocus() {
+      refreshCalendarWindow();
+    }
+
+    const intervalId = window.setInterval(() => {
+      refreshCalendarWindow();
+    }, 60 * 1000);
+
+    window.addEventListener('focus', handleWindowFocus);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener('focus', refreshCalendarWindow);
+      window.removeEventListener('focus', handleWindowFocus);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshCalendarWindow]);
