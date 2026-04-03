@@ -257,3 +257,61 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+.ops-boot-fallback-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 2rem;
+  background-color: var(--color-ops-base);
+  color: #e4e4e7;
+}
+
+.ops-boot-fallback-container {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.ops-boot-fallback-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #fca5a5;
+}
+
+.ops-boot-fallback-title {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ops-boot-fallback-copy {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: #a1a1aa;
+}
+
+.ops-boot-fallback-actions {
+  margin-top: 1.5rem;
+}
+
+.ops-boot-fallback-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fdba74;
+  background: rgba(251, 146, 60, 0.1);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.ops-boot-fallback-button:focus-visible {
+  outline: 2px solid rgba(253, 186, 116, 0.72);
+  outline-offset: 2px;
+}
