@@ -80,9 +80,9 @@ export function usePwaUpdate(): PwaUpdateController {
 
   useEffect(() => {
     if (!needRefresh) {
-      resetTransientState();
+      clearUpdateTimeout();
     }
-  }, [needRefresh, resetTransientState]);
+  }, [clearUpdateTimeout, needRefresh]);
 
   const handleApplyUpdate = useCallback(() => {
     resetTransientState();
@@ -132,8 +132,8 @@ export function usePwaUpdate(): PwaUpdateController {
   return {
     needRefresh,
     offlineReady: rawOfflineReady && !offlineBannerDismissed,
-    isApplyingUpdate,
-    updateStalled,
+    isApplyingUpdate: needRefresh ? isApplyingUpdate : false,
+    updateStalled: needRefresh ? updateStalled : false,
     handleApplyUpdate,
     handleDismissBanner,
     handleReloadPage
