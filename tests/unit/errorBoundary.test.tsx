@@ -6,9 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppCrashFallback } from '../../src/components/AppCrashFallback';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
+import type { CrashExportSnapshot } from '../../src/lib/crashExport';
+
+const emptyCrashExportSnapshot: CrashExportSnapshot = {
+  entries: [],
+  skippedCount: 0
+};
 
 const mocks = vi.hoisted(() => ({
-  readCrashExportSnapshot: vi.fn(() => Promise.resolve({ entries: [], skippedCount: 0 })),
+  readCrashExportSnapshot: vi.fn(() => Promise.resolve(emptyCrashExportSnapshot)),
   createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
   createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
   downloadTextFile: vi.fn(),
@@ -146,10 +152,10 @@ describe('ErrorBoundary', () => {
   });
 
   it('locks recovery controls while a crash export is running', async () => {
-    let resolveSnapshot: ((value: { entries: []; skippedCount: number }) => void) | undefined;
+    let resolveSnapshot: ((value: CrashExportSnapshot) => void) | undefined;
 
     mocks.readCrashExportSnapshot.mockReturnValueOnce(
-      new Promise((resolve: (value: { entries: []; skippedCount: number }) => void) => {
+      new Promise((resolve: (value: CrashExportSnapshot) => void) => {
         resolveSnapshot = resolve;
       })
     );
@@ -170,7 +176,10 @@ describe('ErrorBoundary', () => {
       expect(reloadButton).toBeDisabled();
     });
 
-    resolveSnapshot?.({ entries: [], skippedCount: 0 });
+    resolveSnapshot?.({
+      entries: [],
+      skippedCount: 0
+    });
 
     await waitFor(() => {
       expect(exportJsonButton).not.toBeDisabled();
