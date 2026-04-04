@@ -24,6 +24,8 @@ Prove that the app:
 - manual backup acknowledgment fallback before full replace when verified save is unavailable
 - replace checkpoint resets if the operator leaves replace mode and comes back
 - live status and alert regions stay mounted with aria-atomic set
+- stalled service worker update handoff surfaces manual recovery guidance and a direct reload path
+- service worker revalidation survives React Strict Mode effect replay after registration is captured
 - worker-backed preview path aborts cleanly on replacement selection or component teardown
 - export to import round-trip validation
 - boot-failure fallback renders without inline handlers or style attributes
@@ -67,5 +69,6 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify the installed PWA on physical iPhone hardware keeps the header, footer, and history controls clear of the dynamic island and home indicator
 - verify the installed PWA on physical Android hardware keeps the shell stable through address-bar collapse and software-keyboard transitions
 - verify the mobile history surface snaps cleanly to week boundaries, updates the daily brief after day selection, and does not leak horizontal overscroll into document navigation
+- verify a deployed service worker update either hands off cleanly or escalates to the manual recovery path when another OpsNormal tab holds the active worker
 
 - Backup checkpoint tests should assert explicit result-state handling so verified save, fallback download trigger, user cancellation, and hard failure cannot collapse into the same control path.

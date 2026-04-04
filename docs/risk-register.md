@@ -12,7 +12,7 @@
 
 ### Service worker update drift
 - Risk: users stay on stale cached code.
-- Mitigation: explicit update banner, cache versioning, and stale cache cleanup.
+- Mitigation: explicit update banner, cache versioning, stale cache cleanup, and manual recovery guidance when the waiting-worker handoff stalls.
 
 ### Uncontained React render fault
 - Risk: an uncaught render error can collapse the full UI into a blank screen at the worst possible moment.
