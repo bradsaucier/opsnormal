@@ -123,10 +123,13 @@ describe('useImportWorkflow', () => {
       })
     );
 
-    const firstSelection = act(async () => {
-      await result.current.handleImportSelection(
+    let firstSelection: Promise<void>;
+
+    await act(async () => {
+      firstSelection = result.current.handleImportSelection(
         createFileSelectionEvent(new File(['{}'], 'first.json', { type: 'application/json' }))
       );
+      await Promise.resolve();
     });
 
     await act(async () => {
@@ -135,7 +138,9 @@ describe('useImportWorkflow', () => {
       );
     });
 
-    await firstSelection;
+    await act(async () => {
+      await firstSelection;
+    });
 
     expect(result.current.pendingImport?.integrityStatus).toBe('verified');
     expect(result.current.pendingFileName).toBe('second.json');
