@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie';
 
 import { createStorageOperationError, isDatabaseClosedError } from '../lib/storage';
 import type { DailyEntry, SectorId, UiStatus } from '../types';
+import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from './schema';
 
 const SCHEMA_RELOAD_GUARD_KEY = 'opsnormal-schema-reload-guard';
 const SCHEMA_RELOAD_GUARD_WINDOW_MS = 5000;
@@ -10,13 +11,8 @@ class OpsNormalDb extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
 
   constructor() {
-    super('opsnormal', { chromeTransactionDurability: 'strict' });
-    this.version(1).stores({
-      dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-    });
-    this.version(2).stores({
-      dailyEntries: '++id, &[date+sectorId]'
-    });
+    super(OPSNORMAL_DB_NAME, { chromeTransactionDurability: 'strict' });
+    applyOpsNormalDbSchema(this);
   }
 }
 
