@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => {
         ? {
             input: {
               main: resolve(__dirname, 'index.html'),
-              bootFallbackHarness: resolve(__dirname, 'boot-fallback-harness.html')
+              bootFallbackHarness: resolve(__dirname, 'boot-fallback-harness.html'),
+              crashFallbackHarness: resolve(__dirname, 'crash-fallback-harness.html')
             }
           }
         : undefined
@@ -61,6 +62,12 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+          globIgnores: [
+            '**/boot-fallback-harness.html',
+            '**/crash-fallback-harness.html',
+            '**/assets/bootFallbackHarness-*.js',
+            '**/assets/crashFallbackHarness-*.js'
+          ],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: false,
