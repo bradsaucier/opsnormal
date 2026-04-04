@@ -22,24 +22,26 @@ const BLOCKED_IMPORT_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 export const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
-function isBlockedImportKey(key: string): boolean {
+export function isBlockedImportKey(key: string): boolean {
   return BLOCKED_IMPORT_KEYS.has(key);
 }
 
 function parseJsonImportText(rawText: string): unknown {
   let blockedKeyDetected = false;
 
+  const reviver = (key: string, value: unknown): unknown => {
+    if (isBlockedImportKey(key)) {
+      blockedKeyDetected = true;
+      return undefined;
+    }
+
+    return value;
+  };
+
   let parsed: unknown;
 
   try {
-    parsed = JSON.parse(rawText, (key, value) => {
-      if (isBlockedImportKey(key)) {
-        blockedKeyDetected = true;
-        return undefined;
-      }
-
-      return value;
-    }) as unknown;
+    parsed = JSON.parse(rawText, reviver) as unknown;
   } catch {
     throw new Error('Import rejected. File is not valid JSON.');
   }
