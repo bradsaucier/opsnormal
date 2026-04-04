@@ -6,7 +6,7 @@ import {
   createJsonExport,
   formatLastExportCompletedAt
 } from '../../src/lib/export';
-import { parseImportPayload } from '../../src/services/importService';
+import { parseImportPayload } from '../../src/services/importValidation';
 import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, type DailyEntry } from '../../src/types';
 
 const sampleEntries: DailyEntry[] = [

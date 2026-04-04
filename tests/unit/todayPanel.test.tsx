@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TodayPanel } from '../../src/features/checkin/TodayPanel';
@@ -41,9 +41,11 @@ describe('TodayPanel', () => {
     render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
 
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
-    fireEvent.click(screen.getByRole('button', { name: /work or school/i }));
 
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /work or school/i }));
+      await vi.runAllTimersAsync();
+    });
 
     expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-28', 'work-school');
     expect(onDateRollover).toHaveBeenCalledTimes(1);
@@ -56,9 +58,10 @@ describe('TodayPanel', () => {
 
     render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /body/i }));
-
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /body/i }));
+      await vi.runAllTimersAsync();
+    });
 
     expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-27', 'body');
     expect(onDateRollover).not.toHaveBeenCalled();
@@ -75,9 +78,11 @@ describe('TodayPanel', () => {
 
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
     const bodyButton = screen.getByRole('button', { name: /body/i });
-    fireEvent.click(bodyButton);
 
-    await vi.runAllTimersAsync();
+    await act(async () => {
+      fireEvent.click(bodyButton);
+      await vi.runAllTimersAsync();
+    });
 
     expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-28', 'body');
     expect(onDateRollover).not.toHaveBeenCalled();
