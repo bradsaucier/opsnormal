@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
+import { readCrashExportSnapshot } from '../lib/crashExport';
 import { getErrorMessage } from '../lib/errors';
-import { readEntriesForCrashExport } from '../lib/crashExport';
 import {
   createCsvExport,
   createJsonExport,
@@ -15,6 +15,28 @@ interface AppCrashFallbackProps {
   onRetry: () => void;
 }
 
+function formatEntryCount(count: number): string {
+  return `${count} ${count === 1 ? 'entry' : 'entries'} recovered.`;
+}
+
+function formatSkippedCount(count: number): string {
+  return `${count} malformed ${count === 1 ? 'row' : 'rows'} skipped.`;
+}
+
+function formatCrashExportMessage(
+  formatLabel: 'JSON' | 'CSV',
+  recoveredCount: number,
+  skippedCount: number
+): string {
+  const recoveredMessage = formatEntryCount(recoveredCount);
+
+  if (skippedCount === 0) {
+    return `${formatLabel} export complete. ${recoveredMessage}`;
+  }
+
+  return `${formatLabel} export complete. ${recoveredMessage} ${formatSkippedCount(skippedCount)}`;
+}
+
 export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   const [busyAction, setBusyAction] = useState<'json' | 'csv' | null>(null);
   const [message, setMessage] = useState(
@@ -26,15 +48,17 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
     [error]
   );
 
+  const recoveryControlsDisabled = busyAction !== null;
+
   async function handleJsonExport() {
     try {
       setBusyAction('json');
-      const entries = await readEntriesForCrashExport();
+      const { entries, skippedCount } = await readCrashExportSnapshot();
       const exportedAt = new Date().toISOString();
       const payload = await createJsonExport(entries, exportedAt);
       downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
-      setMessage(`JSON export complete. ${entries.length} entries recovered.`);
+      setMessage(formatCrashExportMessage('JSON', entries.length, skippedCount));
     } catch {
       setMessage('JSON export failed. Try reloading first.');
     } finally {
@@ -45,12 +69,12 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   async function handleCsvExport() {
     try {
       setBusyAction('csv');
-      const entries = await readEntriesForCrashExport();
+      const { entries, skippedCount } = await readCrashExportSnapshot();
       const payload = createCsvExport(entries);
       const exportedAt = new Date().toISOString();
       downloadTextFile('opsnormal-crash-export.csv', payload, 'text/csv;charset=utf-8');
       recordExportCompleted(exportedAt);
-      setMessage(`CSV export complete. ${entries.length} entries recovered.`);
+      setMessage(formatCrashExportMessage('CSV', entries.length, skippedCount));
     } catch {
       setMessage('CSV export failed. Try reloading first.');
     } finally {
@@ -139,7 +163,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
           <button
             type="button"
             onClick={() => void handleJsonExport()}
-            disabled={busyAction !== null}
+            disabled={recoveryControlsDisabled}
             style={{
               padding: '0.5rem 1rem',
               fontSize: '0.8125rem',
@@ -150,8 +174,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               backgroundColor: 'rgba(16,185,129,0.1)',
               border: '1px solid rgba(52,211,153,0.4)',
               borderRadius: '0.5rem',
-              cursor: busyAction === null ? 'pointer' : 'wait',
-              opacity: busyAction === null ? 1 : 0.7
+              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
+              opacity: recoveryControlsDisabled ? 0.7 : 1
             }}
           >
             {busyAction === 'json' ? 'Exporting JSON' : 'Export JSON'}
@@ -159,7 +183,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
           <button
             type="button"
             onClick={() => void handleCsvExport()}
-            disabled={busyAction !== null}
+            disabled={recoveryControlsDisabled}
             style={{
               padding: '0.5rem 1rem',
               fontSize: '0.8125rem',
@@ -170,8 +194,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               backgroundColor: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '0.5rem',
-              cursor: busyAction === null ? 'pointer' : 'wait',
-              opacity: busyAction === null ? 1 : 0.7
+              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
+              opacity: recoveryControlsDisabled ? 0.7 : 1
             }}
           >
             {busyAction === 'csv' ? 'Exporting CSV' : 'Export CSV'}
@@ -179,6 +203,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
           <button
             type="button"
             onClick={onRetry}
+            disabled={recoveryControlsDisabled}
             style={{
               padding: '0.5rem 1rem',
               fontSize: '0.8125rem',
@@ -189,7 +214,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               backgroundColor: 'rgba(59,130,246,0.1)',
               border: '1px solid rgba(96,165,250,0.4)',
               borderRadius: '0.5rem',
-              cursor: 'pointer'
+              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
+              opacity: recoveryControlsDisabled ? 0.7 : 1
             }}
           >
             Retry app
@@ -197,6 +223,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
           <button
             type="button"
             onClick={reloadCurrentPage}
+            disabled={recoveryControlsDisabled}
             style={{
               padding: '0.5rem 1rem',
               fontSize: '0.8125rem',
@@ -207,7 +234,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               backgroundColor: 'rgba(251,146,60,0.1)',
               border: '1px solid rgba(251,146,60,0.4)',
               borderRadius: '0.5rem',
-              cursor: 'pointer'
+              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
+              opacity: recoveryControlsDisabled ? 0.7 : 1
             }}
           >
             Reload page
