@@ -93,6 +93,7 @@ async function seedCrashExportEntries(page: Page): Promise<void> {
 async function openCrashFallbackHarness(page: Page): Promise<void> {
   await page.goto('/crash-fallback-harness.html');
 
+  await expect(page).toHaveTitle('OpsNormal Crash Fallback Harness');
   await expect(page.getByRole('heading', { name: 'OpsNormal stopped rendering' })).toBeVisible();
   await expect(page.getByText(/crash fallback harness injected render fault/i)).toBeVisible();
 }
@@ -138,6 +139,8 @@ async function importCrashJsonPayload(page: Page, payloadText: string): Promise<
 async function createCleanImportContext(browser: Browser): Promise<BrowserContext> {
   return await browser.newContext();
 }
+
+test.use({ serviceWorkers: 'block' });
 
 test.describe('OpsNormal crash export recovery', () => {
   test.beforeEach(async ({ page }) => {
