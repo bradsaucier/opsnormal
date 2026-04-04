@@ -16,6 +16,7 @@ Prove that the app:
 - date formatting and parsing
 - trailing 30-day range generation
 - export formatting
+- shared import validation under native SubtleCrypto in a node-environment unit path
 - export checksum verification
 - legacy import warning path
 - destructive replace arm-disarm path without a timer
