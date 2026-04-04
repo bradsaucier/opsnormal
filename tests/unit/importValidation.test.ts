@@ -1,7 +1,9 @@
+// @vitest-environment node
+
 import { describe, expect, it } from 'vitest';
 
-import { computeJsonExportChecksum, createJsonExport } from '../../src/lib/export';
-import { parseImportPayload } from '../../src/services/importService';
+import { createJsonExport, computeJsonExportChecksum } from '../../src/lib/export';
+import { parseImportPayload } from '../../src/services/importValidation';
 import { OPSNORMAL_APP_NAME, type JsonExportPayload } from '../../src/types';
 
 function buildPayload(overrides: Partial<JsonExportPayload> = {}): JsonExportPayload {
@@ -22,49 +24,27 @@ function buildPayload(overrides: Partial<JsonExportPayload> = {}): JsonExportPay
   };
 }
 
-describe('import validation', () => {
-  it('accepts a valid export payload', async () => {
-    const raw = JSON.stringify(buildPayload());
-    const parsed = await parseImportPayload(raw);
-
-    expect(parsed.entries).toHaveLength(1);
+describe('shared import validation', () => {
+  it('rejects invalid JSON', async () => {
+    await expect(parseImportPayload('{')).rejects.toThrow('Import rejected. File is not valid JSON.');
   });
 
-  it('rejects malformed json', async () => {
-    await expect(parseImportPayload('{bad json')).rejects.toThrow(
-      'Import rejected. File is not valid JSON.'
+  it('rejects a payload missing required fields', async () => {
+    await expect(parseImportPayload(JSON.stringify({ entries: [] }))).rejects.toThrow(
+      'app - Invalid literal value, expected "OpsNormal"'
     );
   });
 
-  it('rejects duplicate date and sector pairs', async () => {
-    const raw = JSON.stringify(
-      buildPayload({
-        entries: [
-          {
-            id: 1,
-            date: '2026-03-28',
-            sectorId: 'body',
-            status: 'nominal',
-            updatedAt: '2026-03-28T12:00:00.000Z'
-          },
-          {
-            id: 2,
-            date: '2026-03-28',
-            sectorId: 'body',
-            status: 'degraded',
-            updatedAt: '2026-03-28T12:05:00.000Z'
-          }
-        ]
-      })
-    );
+  it('rejects blocked keys before schema validation', async () => {
+    const raw = '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"__proto__":{}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
-      'Duplicate entry detected for 2026-03-28:body.'
+      'Import rejected. File contains blocked keys.'
     );
   });
 
-  it('rejects blocked keys', async () => {
-    const raw = '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"__proto__":{}}';
+  it('rejects nested blocked keys before schema validation', async () => {
+    const raw = '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"metadata":{"constructor":{}}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
       'Import rejected. File contains blocked keys.'
