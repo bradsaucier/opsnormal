@@ -104,40 +104,42 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef(new Map<string, HTMLElement>());
   const weekRefs = useRef(new Map<number, HTMLDivElement>());
+  const initialSelectedDateKey = dateKeys.includes(todayKey)
+    ? todayKey
+    : (dateKeys[dateKeys.length - 1] ?? todayKey);
+  const initialSelectedWeekIndex = Math.max(
+    weekGroups.findIndex((weekGroup) => weekGroup.includes(initialSelectedDateKey)),
+    0
+  );
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [visibleWeekIndex, setVisibleWeekIndex] = useState(0);
-  const [selectedCell, setSelectedCell] = useState<SelectedCell>(() => ({
-    dateKey: todayKey,
+  const [visibleWeekIndex, setVisibleWeekIndex] = useState(initialSelectedWeekIndex);
+  const [selectedCellState, setSelectedCellState] = useState<SelectedCell>(() => ({
+    dateKey: initialSelectedDateKey,
     sectorId: DEFAULT_SECTOR_ID
   }));
+
+  const selectedCell = useMemo<SelectedCell>(() => {
+    const fallbackDateKey = dateKeys.includes(todayKey)
+      ? todayKey
+      : (dateKeys[dateKeys.length - 1] ?? todayKey);
+    const selectedDateKey = dateKeys.includes(selectedCellState.dateKey)
+      ? selectedCellState.dateKey
+      : fallbackDateKey;
+    const selectedSectorId = SECTORS.some((sector) => sector.id === selectedCellState.sectorId)
+      ? selectedCellState.sectorId
+      : DEFAULT_SECTOR_ID;
+
+    return {
+      dateKey: selectedDateKey,
+      sectorId: selectedSectorId
+    };
+  }, [dateKeys, selectedCellState.dateKey, selectedCellState.sectorId, todayKey]);
 
   const selectedWeekIndex = useMemo(() => {
     const index = weekGroups.findIndex((weekGroup) => weekGroup.includes(selectedCell.dateKey));
     return index >= 0 ? index : 0;
   }, [selectedCell.dateKey, weekGroups]);
-
-  useEffect(() => {
-    const fallbackDateKey = dateKeys.includes(todayKey)
-      ? todayKey
-      : (dateKeys[dateKeys.length - 1] ?? todayKey);
-    const selectedDateKey = dateKeys.includes(selectedCell.dateKey)
-      ? selectedCell.dateKey
-      : fallbackDateKey;
-    const selectedSectorId = SECTORS.some((sector) => sector.id === selectedCell.sectorId)
-      ? selectedCell.sectorId
-      : DEFAULT_SECTOR_ID;
-
-    if (
-      selectedDateKey !== selectedCell.dateKey ||
-      selectedSectorId !== selectedCell.sectorId
-    ) {
-      setSelectedCell({
-        dateKey: selectedDateKey,
-        sectorId: selectedSectorId
-      });
-    }
-  }, [dateKeys, selectedCell.dateKey, selectedCell.sectorId, todayKey]);
 
   useEffect(() => {
     const scrollNode = isDesktopHistory ? desktopScrollRef.current : mobileScrollRef.current;
@@ -186,8 +188,6 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
   }, [dateKeys, isDesktopHistory, selectedWeekIndex]);
 
   useEffect(() => {
-    setVisibleWeekIndex(selectedWeekIndex);
-
     if (isDesktopHistory) {
       return;
     }
@@ -239,7 +239,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
   }
 
   function handleDaySelection(dateKey: string) {
-    setSelectedCell((currentSelection) => ({
+    setSelectedCellState((currentSelection) => ({
       ...currentSelection,
       dateKey
     }));
@@ -327,12 +327,12 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
     }
 
     event.preventDefault();
-    setSelectedCell(nextSelection);
+    setSelectedCellState(nextSelection);
     focusSelectedCell(nextSelection);
   }
 
   function handleCellSelection(nextSelection: SelectedCell) {
-    setSelectedCell(nextSelection);
+    setSelectedCellState(nextSelection);
     focusSelectedCell(nextSelection);
   }
 
@@ -454,7 +454,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                               aria-selected={isSelected}
                               tabIndex={isSelected ? 0 : -1}
                               onClick={() => handleCellSelection({ dateKey, sectorId: sector.id })}
-                              onFocus={() => setSelectedCell({ dateKey, sectorId: sector.id })}
+                              onFocus={() => setSelectedCellState({ dateKey, sectorId: sector.id })}
                               onKeyDown={(event) => handleCellKeyDown(event, sectorIndex, dateIndex)}
                               className={[
                                 'group cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
@@ -722,6 +722,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
       </>
     );
   }
+
   return (
     <SectionCard
       eyebrow="Rolling History"

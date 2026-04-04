@@ -21,7 +21,9 @@ export function useStorageHealth(): UseStorageHealthResult {
   }, []);
 
   useEffect(() => {
-    void refreshStorageHealth();
+    const initialRefreshId = window.setTimeout(() => {
+      void refreshStorageHealth();
+    }, 0);
 
     function handleForegroundRefresh() {
       void refreshStorageHealth();
@@ -38,6 +40,7 @@ export function useStorageHealth(): UseStorageHealthResult {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      window.clearTimeout(initialRefreshId);
       window.clearInterval(intervalId);
       window.removeEventListener('focus', handleForegroundRefresh);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
