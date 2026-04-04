@@ -12,7 +12,7 @@ Before tagging a release:
 - [ ] stalled multi-tab update handoff surfaces manual recovery guidance instead of silently failing
 - [ ] offline reopen verified manually
 - [ ] export verified manually
-- [ ] root crash fallback verified manually
+- [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
 - [ ] iOS install guidance reviewed
 - [ ] README reflects current behavior
@@ -24,7 +24,7 @@ Before tagging a release:
 - [ ] manifest icons verified after build
 
 - [ ] error boundary crash fallback renders correctly when a component throws
-- [ ] crash-state JSON and CSV export works from the root fallback
+- [ ] crash-state JSON and CSV export works from the root fallback outside the automated Chromium coverage path
 - [ ] sectional boundary shows fallback when history grid is artificially faulted
 - [ ] retry from crash fallback recovers cleanly
 - [ ] reload from crash fallback performs a full page reload
