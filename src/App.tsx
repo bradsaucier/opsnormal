@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
@@ -8,6 +7,7 @@ import { TodayPanel } from './features/checkin/TodayPanel';
 import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
+import { usePwaUpdate } from './features/pwa/usePwaUpdate';
 import { useStorageHealth } from './hooks/useStorageHealth';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
 import { formatStorageSummary } from './lib/storage';
@@ -15,37 +15,21 @@ import { formatStorageSummary } from './lib/storage';
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
-  const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const { storageHealth, refreshStorageHealth } = useStorageHealth();
+  const {
+    needRefresh,
+    offlineReady,
+    isApplyingUpdate,
+    updateStalled,
+    handleApplyUpdate,
+    handleDismissBanner,
+    handleReloadPage
+  } = usePwaUpdate();
 
   const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
     setTodayKey(formatDateKey(referenceDate));
     setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
   }, []);
-
-  const {
-    needRefresh: [needRefresh, setNeedRefresh],
-    offlineReady: [offlineReady, setOfflineReady],
-    updateServiceWorker
-  } = useRegisterSW({
-    onRegisteredSW(_swUrl, registration) {
-      if (!registration) {
-        return;
-      }
-
-      window.setInterval(() => {
-        if (registration.installing) {
-          return;
-        }
-
-        if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
-          return;
-        }
-
-        void registration.update();
-      }, 60 * 60 * 1000);
-    }
-  });
 
   useEffect(() => {
     function handleVisibilityChange() {
@@ -114,13 +98,12 @@ function App() {
         <InstallBanner />
         <PwaUpdateBanner
           needRefresh={needRefresh}
-          offlineReady={offlineReady && !offlineBannerDismissed}
-          onReload={() => void updateServiceWorker(true)}
-          onDismiss={() => {
-            setNeedRefresh(false);
-            setOfflineReady(false);
-            setOfflineBannerDismissed(true);
-          }}
+          offlineReady={offlineReady}
+          isApplyingUpdate={isApplyingUpdate}
+          updateStalled={updateStalled}
+          onReload={handleApplyUpdate}
+          onDismiss={handleDismissBanner}
+          onReloadPage={handleReloadPage}
         />
 
         <TodayPanel
