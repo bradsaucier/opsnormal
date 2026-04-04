@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useRegisterSW } from './registerSw';
 
 import { reloadCurrentPage } from '../../lib/runtime';
 
