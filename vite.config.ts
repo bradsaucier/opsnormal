@@ -8,6 +8,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const base = process.env.VITE_BASE_PATH ?? '/';
   const isE2E = mode === 'e2e';
+  const normalizedBase = base.startsWith('/') ? base : `/${base}`;
+  const basePath = normalizedBase.endsWith('/') ? normalizedBase : `${normalizedBase}/`;
+  const escapedBasePath = basePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   return {
     base,
@@ -71,7 +74,11 @@ export default defineConfig(({ mode }) => {
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: false,
-          navigateFallback: 'index.html'
+          navigateFallback: 'index.html',
+          navigateFallbackDenylist: [
+            new RegExp(`^${escapedBasePath}boot-fallback-harness\\.html$`),
+            new RegExp(`^${escapedBasePath}crash-fallback-harness\\.html$`)
+          ]
         },
         devOptions: {
           enabled: false
