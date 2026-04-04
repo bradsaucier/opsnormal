@@ -27,7 +27,13 @@ function sanitizeCrashExportEntries(rawEntries: unknown[]): CrashExportSnapshot 
       continue;
     }
 
-    entries.push(parsed.data);
+    const { date, sectorId, status, updatedAt } = parsed.data;
+    entries.push({
+      date,
+      sectorId,
+      status,
+      updatedAt
+    });
   }
 
   entries.sort(compareEntries);
