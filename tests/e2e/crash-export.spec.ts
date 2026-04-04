@@ -94,7 +94,7 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
   await page.evaluate(
     async ({ dateKey, updatedAt }) => {
       await new Promise<void>((resolve, reject) => {
-        const request = window.indexedDB.open('opsnormal', 2);
+        const request = window.indexedDB.open('opsnormal');
 
         request.onerror = () => {
           reject(request.error ?? new Error('Failed to open IndexedDB for malformed crash export seed.'));
