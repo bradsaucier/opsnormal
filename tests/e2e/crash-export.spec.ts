@@ -90,6 +90,56 @@ async function seedCrashExportEntries(page: Page): Promise<void> {
   await expect(restButton).toContainText('DEGRADED');
 }
 
+async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
+  await page.evaluate(
+    async ({ dateKey, updatedAt }) => {
+      await new Promise<void>((resolve, reject) => {
+        const request = window.indexedDB.open('opsnormal', 2);
+
+        request.onerror = () => {
+          reject(request.error ?? new Error('Failed to open IndexedDB for malformed crash export seed.'));
+        };
+
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction('dailyEntries', 'readwrite');
+          const store = transaction.objectStore('dailyEntries');
+
+          store.add({
+            date: dateKey,
+            sectorId: 'household',
+            status: 'invalid-status',
+            updatedAt
+          });
+
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+
+          transaction.onerror = () => {
+            const transactionError =
+              transaction.error ?? new Error('Failed to seed malformed crash export row.');
+            database.close();
+            reject(transactionError);
+          };
+
+          transaction.onabort = () => {
+            const transactionError =
+              transaction.error ?? new Error('Malformed crash export row was aborted.');
+            database.close();
+            reject(transactionError);
+          };
+        };
+      });
+    },
+    {
+      dateKey: FIXED_TEST_DATE_KEY,
+      updatedAt: FIXED_TEST_TIME_ISO
+    }
+  );
+}
+
 async function openCrashFallbackHarness(page: Page): Promise<void> {
   await page.goto('/crash-fallback-harness.html');
 
@@ -174,6 +224,44 @@ test.describe('OpsNormal crash export recovery', () => {
       await expect(
         importPage.getByRole('button', { name: /^Rest\. Current state/i })
       ).toContainText('DEGRADED');
+    } finally {
+      await importContext.close();
+    }
+  });
+
+  test('skips malformed stored rows and still exports importable crash-state JSON', async ({
+    browser,
+    page
+  }) => {
+    await seedCrashExportEntries(page);
+    await seedMalformedCrashExportEntry(page);
+    await openCrashFallbackHarness(page);
+
+    const payload = await exportCrashJson(page);
+
+    await expectExportPayloadIntegrity(payload);
+    expect(normalizeEntries(payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    await expect(
+      page.getByText('JSON export complete. 2 entries recovered. 1 malformed row skipped.')
+    ).toBeVisible();
+
+    const importContext = await createCleanImportContext(browser);
+
+    try {
+      const importPage = await importContext.newPage();
+      await importPage.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
+      await importPage.goto('/');
+      await importCrashJsonPayload(importPage, JSON.stringify(payload));
+
+      await expect(
+        importPage.getByRole('button', { name: /^Work or School\. Current state/i })
+      ).toContainText('NOMINAL');
+      await expect(
+        importPage.getByRole('button', { name: /^Rest\. Current state/i })
+      ).toContainText('DEGRADED');
+      await expect(
+        importPage.getByRole('button', { name: /^Household\. Current state/i })
+      ).toContainText('UNMARKED');
     } finally {
       await importContext.close();
     }
