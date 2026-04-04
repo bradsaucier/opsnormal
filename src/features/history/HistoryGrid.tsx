@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { SectionCard } from '../../components/SectionCard';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -22,6 +22,7 @@ interface SelectedCell {
 const DEFAULT_SECTOR_ID = SECTORS[0].id;
 const WEEK_GROUP_SIZE = 7;
 const DESKTOP_HISTORY_QUERY = '(min-width: 768px)';
+const getServerSnapshot = () => false;
 
 function getCellClassName(status: ReturnType<typeof getUiStatus>) {
   if (status === 'nominal') {
@@ -58,34 +59,37 @@ function chunkDateKeys(dateKeys: string[], chunkSize: number) {
 }
 
 function useViewportMatch(query: string) {
-  const subscribe = (callback: () => void) => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return () => undefined;
-    }
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+        return () => undefined;
+      }
 
-    const mediaQueryList = window.matchMedia(query);
-    const handleChange = () => {
-      callback();
-    };
+      const mediaQueryList = window.matchMedia(query);
+      const handleChange = () => {
+        callback();
+      };
 
-    if (typeof mediaQueryList.addEventListener === 'function') {
-      mediaQueryList.addEventListener('change', handleChange);
-      return () => mediaQueryList.removeEventListener('change', handleChange);
-    }
+      if (typeof mediaQueryList.addEventListener === 'function') {
+        mediaQueryList.addEventListener('change', handleChange);
+        return () => mediaQueryList.removeEventListener('change', handleChange);
+      }
 
-    mediaQueryList.addListener(handleChange);
-    return () => mediaQueryList.removeListener(handleChange);
-  };
+      mediaQueryList.addListener(handleChange);
+      return () => mediaQueryList.removeListener(handleChange);
+    },
+    [query]
+  );
 
-  const getSnapshot = () => {
+  const getSnapshot = useCallback(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return false;
     }
 
     return window.matchMedia(query).matches;
-  };
+  }, [query]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, () => false);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
@@ -97,9 +101,11 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
   const entryLookup = useMemo(() => createEntryLookup(entries), [entries]);
   const streak = useMemo(() => computeCheckInStreak(entries, todayKey), [entries, todayKey]);
   const weekGroups = useMemo(() => chunkDateKeys(dateKeys, WEEK_GROUP_SIZE), [dateKeys]);
+  const lastWeekIndex = Math.max(weekGroups.length - 1, 0);
   const captionId = 'history-grid-caption';
   const instructionsId = 'history-grid-instructions';
   const statusSummaryId = 'history-grid-status-summary';
+  const mobileRegionId = 'history-mobile-region';
   const desktopScrollRef = useRef<HTMLDivElement | null>(null);
   const mobileScrollRef = useRef<HTMLDivElement | null>(null);
   const cellRefs = useRef(new Map<string, HTMLElement>());
@@ -107,9 +113,9 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
   const initialSelectedDateKey = dateKeys.includes(todayKey)
     ? todayKey
     : (dateKeys[dateKeys.length - 1] ?? todayKey);
-  const initialSelectedWeekIndex = Math.max(
+  const initialSelectedWeekIndex = clampIndex(
     weekGroups.findIndex((weekGroup) => weekGroup.includes(initialSelectedDateKey)),
-    0
+    lastWeekIndex
   );
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -136,10 +142,14 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
     };
   }, [dateKeys, selectedCellState.dateKey, selectedCellState.sectorId, todayKey]);
 
-  const selectedWeekIndex = useMemo(() => {
-    const index = weekGroups.findIndex((weekGroup) => weekGroup.includes(selectedCell.dateKey));
-    return index >= 0 ? index : 0;
-  }, [selectedCell.dateKey, weekGroups]);
+  const visibleWeek = useMemo(
+    () => weekGroups[visibleWeekIndex] ?? weekGroups[lastWeekIndex] ?? [],
+    [lastWeekIndex, visibleWeekIndex, weekGroups]
+  );
+  const visibleWeekStart = visibleWeek[0] ?? selectedCell.dateKey;
+  const visibleWeekEnd = visibleWeek[visibleWeek.length - 1] ?? selectedCell.dateKey;
+  const canViewPreviousWeek = visibleWeekIndex > 0;
+  const canViewNextWeek = visibleWeekIndex < lastWeekIndex;
 
   useEffect(() => {
     const scrollNode = isDesktopHistory ? desktopScrollRef.current : mobileScrollRef.current;
@@ -158,23 +168,6 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
       const remainingScroll = node.scrollWidth - node.clientWidth - node.scrollLeft;
       setCanScrollLeft(node.scrollLeft > 2);
       setCanScrollRight(remainingScroll > 2);
-
-      if (!isDesktopHistory) {
-        const nearestWeek = Array.from(weekRefs.current.entries()).reduce(
-          (closest, [weekIndex, element]) => {
-            const offset = Math.abs(element.offsetLeft - node.scrollLeft);
-
-            if (offset < closest.offset) {
-              return { weekIndex, offset };
-            }
-
-            return closest;
-          },
-          { weekIndex: selectedWeekIndex, offset: Number.POSITIVE_INFINITY }
-        );
-
-        setVisibleWeekIndex(nearestWeek.weekIndex);
-      }
     }
 
     updateScrollAffordance();
@@ -185,16 +178,82 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
       scrollNode.removeEventListener('scroll', updateScrollAffordance);
       window.removeEventListener('resize', updateScrollAffordance);
     };
-  }, [dateKeys, isDesktopHistory, selectedWeekIndex]);
+  }, [isDesktopHistory]);
+
+  const hasAlignedInitialMobileWeekRef = useRef(false);
 
   useEffect(() => {
     if (isDesktopHistory) {
+      hasAlignedInitialMobileWeekRef.current = false;
       return;
     }
 
-    const weekNode = weekRefs.current.get(selectedWeekIndex);
+    if (hasAlignedInitialMobileWeekRef.current) {
+      return;
+    }
+
+    hasAlignedInitialMobileWeekRef.current = true;
+    const weekNode = weekRefs.current.get(initialSelectedWeekIndex);
     weekNode?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  }, [isDesktopHistory, selectedWeekIndex]);
+  }, [initialSelectedWeekIndex, isDesktopHistory]);
+
+  useEffect(() => {
+    if (isDesktopHistory || !mobileScrollRef.current || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const dominantEntry = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
+
+        if (!dominantEntry) {
+          return;
+        }
+
+        const nextWeekIndexValue = dominantEntry.target.getAttribute('data-week-index');
+
+        if (!nextWeekIndexValue) {
+          return;
+        }
+
+        const nextWeekIndex = Number.parseInt(nextWeekIndexValue, 10);
+
+        if (Number.isNaN(nextWeekIndex)) {
+          return;
+        }
+
+        setVisibleWeekIndex((currentIndex) => (currentIndex === nextWeekIndex ? currentIndex : nextWeekIndex));
+
+        setSelectedCellState((currentSelection) => {
+          const nextWeek = weekGroups[nextWeekIndex] ?? [];
+
+          if (nextWeek.length === 0 || nextWeek.includes(currentSelection.dateKey)) {
+            return currentSelection;
+          }
+
+          return {
+            ...currentSelection,
+            dateKey: nextWeek[nextWeek.length - 1] ?? currentSelection.dateKey
+          };
+        });
+      },
+      {
+        root: mobileScrollRef.current,
+        threshold: [0.5, 0.75]
+      }
+    );
+
+    const weekNodes = Array.from(weekRefs.current.values());
+    weekNodes.forEach((weekNode) => observer.observe(weekNode));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isDesktopHistory, weekGroups]);
+
+
 
   const selectedSector = SECTORS.find((sector) => sector.id === selectedCell.sectorId) ?? SECTORS[0];
   const selectedStatus = getUiStatus(entryLookup, selectedCell.dateKey, selectedCell.sectorId);
@@ -243,6 +302,37 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
       ...currentSelection,
       dateKey
     }));
+  }
+
+  function scrollToWeek(weekIndex: number) {
+    const targetWeekIndex = clampIndex(weekIndex, lastWeekIndex);
+    const targetWeek = weekGroups[targetWeekIndex] ?? [];
+    const targetDateKey = targetWeek[targetWeek.length - 1] ?? selectedCell.dateKey;
+
+    setVisibleWeekIndex(targetWeekIndex);
+    setSelectedCellState((currentSelection) => ({
+      ...currentSelection,
+      dateKey: targetDateKey
+    }));
+
+    const weekNode = weekRefs.current.get(targetWeekIndex);
+    weekNode?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function handlePreviousWeek() {
+    if (!canViewPreviousWeek) {
+      return;
+    }
+
+    scrollToWeek(visibleWeekIndex - 1);
+  }
+
+  function handleNextWeek() {
+    if (!canViewNextWeek) {
+      return;
+    }
+
+    scrollToWeek(visibleWeekIndex + 1);
   }
 
   function handleCellKeyDown(
@@ -527,20 +617,55 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
         <div className="mb-4 flex flex-col gap-3">
           <div className="space-y-1">
             <p className="max-w-2xl text-sm leading-6 text-ops-text-secondary">
-              Mobile holds the history picture one week at a time. Swipe by week. Tap a day column for the daily brief.
+              Mobile holds the history picture one week at a time. Swipe by week or step the window with the week controls. Tap a day column for the daily brief.
             </p>
             <p className="text-xs tracking-[0.14em] text-ops-text-muted uppercase">
-              Week groups snap into place. The next week stays partially visible so the scroll path is obvious.
+              Week groups snap into place. Explicit previous and next controls keep the path visible when swipe is inconvenient or unavailable.
             </p>
           </div>
-          <StatusLegend />
+
+          <div className="flex flex-col gap-3">
+            <StatusLegend />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePreviousWeek}
+                disabled={!canViewPreviousWeek}
+                aria-controls={mobileRegionId}
+                className="min-h-11 rounded-lg border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold tracking-[0.14em] text-ops-text-primary uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ops-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous week
+              </button>
+              <div
+                data-testid="mobile-history-week-status"
+                aria-live="polite"
+                className="clip-notched ops-notch-chip border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+              >
+                <span className="block text-[10px] text-ops-text-muted">
+                  Week {visibleWeekIndex + 1} of {weekGroups.length}
+                </span>
+                <span className="mt-1 block text-ops-text-primary">
+                  {formatDayLabel(visibleWeekStart)} to {formatDayLabel(visibleWeekEnd)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleNextWeek}
+                disabled={!canViewNextWeek}
+                aria-controls={mobileRegionId}
+                className="min-h-11 rounded-lg border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold tracking-[0.14em] text-ops-text-primary uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ops-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next week
+              </button>
+            </div>
+          </div>
         </div>
 
         <p id={captionId} className="sr-only">
           Week-paginated readiness history for the trailing 30-day window.
         </p>
         <p id={instructionsId} className="sr-only">
-          Swipe left or right to move by week. Activate a day header to open the daily brief for that date. The daily brief lists all five sector states for the selected day.
+          Swipe left or right, or use the previous and next week buttons, to move by week. Activate a day header to open the daily brief for that date. The daily brief lists all five sector states for the selected day.
         </p>
 
         <div className="relative">
@@ -558,9 +683,11 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
           ) : null}
 
           <div
+            id={mobileRegionId}
             ref={mobileScrollRef}
             className="history-scroll-shell history-scroll-shell-mobile flex gap-3 overflow-x-auto pr-10"
             role="region"
+            aria-roledescription="carousel"
             aria-labelledby={captionId}
             aria-describedby={`${instructionsId} ${statusSummaryId}`}
             tabIndex={0}
@@ -573,6 +700,10 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                 <div
                   key={weekStart}
                   ref={(element) => registerWeekRef(weekIndex, element)}
+                  data-week-index={weekIndex}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`Week ${weekIndex + 1} of ${weekGroups.length}`}
                   className="history-week-card clip-notched ops-notch-panel-outer w-[calc(100%-2.75rem)] min-w-[17.5rem] max-w-[24rem] shrink-0 bg-ops-border-struct p-px"
                 >
                   <div className="clip-notched ops-notch-panel-inner bg-ops-base/80 p-3">

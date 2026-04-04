@@ -38,3 +38,22 @@ Trade-offs:
 - the history surface now has separate mobile and desktop render paths
 - test coverage must prove both layouts stay aligned on the same underlying data
 - mobile history emphasizes day-level review instead of cell-by-cell keyboard navigation
+
+## Amendment
+
+The mobile history surface now includes explicit `Previous week` and `Next week` controls in addition to the existing swipe-driven, scroll-snap week carousel.
+
+This amendment does not change the underlying decision recorded in this ADR. Mobile history remains a week-paginated surface optimized for narrow screens, and horizontal swipe remains a valid primary interaction path. The added controls are an additive usability and accessibility improvement intended to make week movement more discoverable and more reliable when swipe is inconvenient, unavailable, or imprecise.
+
+Scope of the amendment:
+
+- preserves the existing local-first architecture and read-only history model
+- preserves the existing week-grouped mobile carousel structure
+- preserves desktop history behavior without modification
+- adds explicit week-step controls for movement across the trailing 30-day window
+- keeps the daily brief synchronized with the currently visible week
+- strengthens assistive technology support through clearer carousel semantics and explicit navigation affordances
+
+Operational effect:
+
+Mobile operators can now move by week using either swipe or explicit controls without changing the product's narrow scope, persistence model, or visual posture.
