@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 
+import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from '../db/schema';
 import type { DailyEntry } from '../types';
 
 /**
@@ -10,15 +11,8 @@ import type { DailyEntry } from '../types';
  * that instance may have tainted connection state from the crash.
  */
 export async function readEntriesForCrashExport(): Promise<DailyEntry[]> {
-  const tempDb = new Dexie('opsnormal');
-
-  tempDb.version(1).stores({
-    dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-  });
-
-  tempDb.version(2).stores({
-    dailyEntries: '++id, &[date+sectorId]'
-  });
+  const tempDb = new Dexie(OPSNORMAL_DB_NAME);
+  applyOpsNormalDbSchema(tempDb);
 
   try {
     return await tempDb.table<DailyEntry>('dailyEntries').orderBy('[date+sectorId]').toArray();
