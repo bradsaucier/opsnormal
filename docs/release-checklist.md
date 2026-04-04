@@ -9,6 +9,7 @@ Before tagging a release:
 - [ ] production build passes
 - [ ] service worker registration smoke test passes in Chromium
 - [ ] service worker update banner verified manually after a deployed worker change
+- [ ] stalled multi-tab update handoff surfaces manual recovery guidance instead of silently failing
 - [ ] offline reopen verified manually
 - [ ] export verified manually
 - [ ] root crash fallback verified manually
