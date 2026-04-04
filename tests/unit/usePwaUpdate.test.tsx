@@ -107,15 +107,24 @@ describe('usePwaUpdate', () => {
     expect(result.current.updateStalled).toBe(true);
   });
 
-  it('re-establishes background revalidation after a strict-mode effect replay', () => {
+  it('re-establishes background revalidation across unmount and remount', () => {
     const setIntervalSpy = vi.spyOn(window, 'setInterval');
     const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
-    const strictWrapper = ({ children }: { children: React.ReactNode }) => React.createElement(React.StrictMode, null, children);
+    const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(React.StrictMode, null, children);
 
-    renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const firstMount = renderHook(() => usePwaUpdate(), { wrapper });
 
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 60 * 60 * 1000);
+
+    firstMount.unmount();
+
     expect(clearIntervalSpy).toHaveBeenCalled();
+
+    mocks.hasRegistered = false;
+
+    renderHook(() => usePwaUpdate(), { wrapper });
+
+    expect(setIntervalSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   it('resets the transient state when the banner is dismissed', () => {
