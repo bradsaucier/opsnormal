@@ -59,16 +59,16 @@ describe('usePwaUpdate', () => {
     mocks.updateServiceWorker.mockImplementation(() => Promise.resolve());
   });
 
-  it('marks the update as stalled when the handoff timeout expires', async () => {
+  it('marks the update as stalled when the handoff timeout expires', () => {
     const { result } = renderHook(() => usePwaUpdate());
 
-    await act(async () => {
+    act(() => {
       result.current.handleApplyUpdate();
     });
 
     expect(result.current.isApplyingUpdate).toBe(true);
 
-    await act(async () => {
+    act(() => {
       vi.advanceTimersByTime(4000);
     });
 
@@ -88,11 +88,11 @@ describe('usePwaUpdate', () => {
 
     const { result } = renderHook(() => usePwaUpdate());
 
-    await act(async () => {
+    act(() => {
       result.current.handleApplyUpdate();
     });
 
-    await act(async () => {
+    act(() => {
       vi.advanceTimersByTime(4000);
     });
 
@@ -118,15 +118,15 @@ describe('usePwaUpdate', () => {
     expect(clearIntervalSpy).toHaveBeenCalled();
   });
 
-  it('resets the transient state when the banner is dismissed', async () => {
+  it('resets the transient state when the banner is dismissed', () => {
     const { result } = renderHook(() => usePwaUpdate());
 
-    await act(async () => {
+    act(() => {
       result.current.handleApplyUpdate();
       vi.advanceTimersByTime(4000);
     });
 
-    await act(async () => {
+    act(() => {
       result.current.handleDismissBanner();
     });
 
