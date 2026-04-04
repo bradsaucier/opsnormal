@@ -1,14 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ReactElement } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppCrashFallback } from '../../src/components/AppCrashFallback';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
 
 const mocks = vi.hoisted(() => ({
-  readEntriesForCrashExport: vi.fn(() => Promise.resolve([])),
+  readCrashExportSnapshot: vi.fn(() => Promise.resolve({ entries: [], skippedCount: 0 })),
   createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
   createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
   downloadTextFile: vi.fn(),
@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/lib/crashExport', () => ({
-  readEntriesForCrashExport: mocks.readEntriesForCrashExport
+  readCrashExportSnapshot: mocks.readCrashExportSnapshot
 }));
 
 vi.mock('../../src/lib/export', () => ({
@@ -126,17 +126,78 @@ describe('ErrorBoundary', () => {
   });
 
   it('exports JSON from the crash fallback through an isolated export path', async () => {
+    mocks.readCrashExportSnapshot.mockResolvedValueOnce({
+      entries: [],
+      skippedCount: 0
+    });
+
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: /export json/i }));
 
-    expect(mocks.readEntriesForCrashExport).toHaveBeenCalledTimes(1);
+    expect(mocks.readCrashExportSnapshot).toHaveBeenCalledTimes(1);
     expect(mocks.createJsonExport).toHaveBeenCalledTimes(1);
     expect(mocks.downloadTextFile).toHaveBeenCalledWith(
       'opsnormal-crash-export.json',
       '{"ok":true}',
       'application/json'
     );
+    expect(screen.getByText('JSON export complete. 0 entries recovered.')).toBeInTheDocument();
+  });
+
+  it('locks recovery controls while a crash export is running', async () => {
+    let resolveSnapshot: ((value: { entries: []; skippedCount: number }) => void) | undefined;
+
+    mocks.readCrashExportSnapshot.mockReturnValueOnce(
+      new Promise((resolve: (value: { entries: []; skippedCount: number }) => void) => {
+        resolveSnapshot = resolve;
+      })
+    );
+
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const exportJsonButton = screen.getByRole('button', { name: /export json/i });
+    const exportCsvButton = screen.getByRole('button', { name: /export csv/i });
+    const retryButton = screen.getByRole('button', { name: /retry app/i });
+    const reloadButton = screen.getByRole('button', { name: /reload page/i });
+
+    await userEvent.click(exportJsonButton);
+
+    await waitFor(() => {
+      expect(exportJsonButton).toBeDisabled();
+      expect(exportCsvButton).toBeDisabled();
+      expect(retryButton).toBeDisabled();
+      expect(reloadButton).toBeDisabled();
+    });
+
+    resolveSnapshot?.({ entries: [], skippedCount: 0 });
+
+    await waitFor(() => {
+      expect(exportJsonButton).not.toBeDisabled();
+      expect(exportCsvButton).not.toBeDisabled();
+      expect(retryButton).not.toBeDisabled();
+      expect(reloadButton).not.toBeDisabled();
+    });
+  });
+
+  it('reports skipped malformed rows after a crash export', async () => {
+    mocks.readCrashExportSnapshot.mockResolvedValueOnce({
+      entries: [
+        {
+          date: '2026-03-28',
+          sectorId: 'body',
+          status: 'nominal',
+          updatedAt: '2026-03-28T12:00:00.000Z'
+        }
+      ],
+      skippedCount: 2
+    });
+
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /export csv/i }));
+
+    expect(screen.getByText('CSV export complete. 1 entry recovered. 2 malformed rows skipped.')).toBeInTheDocument();
   });
 
   it('reloads the page from the crash fallback', async () => {
