@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
   hasRegistered: false
 }));
 
-vi.mock('virtual:pwa-register/react', () => ({
+vi.mock('../../src/features/pwa/registerSw', () => ({
   useRegisterSW: vi.fn((options?: { onRegisteredSW?: (swUrl: string, registration: ServiceWorkerRegistration | undefined) => void }) => {
     const [needRefresh, setNeedRefresh] = React.useState(mocks.state.needRefresh);
     const [offlineReady, setOfflineReady] = React.useState(mocks.state.offlineReady);
