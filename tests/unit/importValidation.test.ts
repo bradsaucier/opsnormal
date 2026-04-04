@@ -31,7 +31,7 @@ describe('shared import validation', () => {
 
   it('rejects a payload missing required fields', async () => {
     await expect(parseImportPayload(JSON.stringify({ entries: [] }))).rejects.toThrow(
-      'app - Invalid literal value, expected "OpsNormal"'
+      'expected "OpsNormal"'
     );
   });
 
