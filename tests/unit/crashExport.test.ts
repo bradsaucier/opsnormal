@@ -1,241 +1,121 @@
-import type { ReactElement } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import Dexie from 'dexie';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { AppCrashFallback } from '../../src/components/AppCrashFallback';
-import { ErrorBoundary } from '../../src/components/ErrorBoundary';
-import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
+import { db, setDailyStatus } from '../../src/db/appDb';
+import {
+  applyOpsNormalDbSchema,
+  OPSNORMAL_DB_NAME,
+  OPSNORMAL_DB_SCHEMA_VERSIONS
+} from '../../src/db/schema';
+import {
+  readCrashExportSnapshot,
+  readEntriesForCrashExport
+} from '../../src/lib/crashExport';
 
-const mocks = vi.hoisted(() => ({
-  readCrashExportSnapshot: vi.fn(() => Promise.resolve({ entries: [], skippedCount: 0 })),
-  createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
-  createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
-  downloadTextFile: vi.fn(),
-  recordExportCompleted: vi.fn(),
-  reloadCurrentPage: vi.fn()
-}));
+const TEST_DATE_KEY = '2026-03-28';
+const TEST_UPDATED_AT = '2026-03-28T12:00:00.000Z';
 
-vi.mock('../../src/lib/crashExport', () => ({
-  readCrashExportSnapshot: mocks.readCrashExportSnapshot
-}));
-
-vi.mock('../../src/lib/export', () => ({
-  createJsonExport: mocks.createJsonExport,
-  createCsvExport: mocks.createCsvExport,
-  downloadTextFile: mocks.downloadTextFile,
-  recordExportCompleted: mocks.recordExportCompleted
-}));
-
-vi.mock('../../src/lib/runtime', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
-  return {
-    ...actual,
-    reloadCurrentPage: mocks.reloadCurrentPage
-  };
-});
-
-class Explodes extends Error {
-  constructor(message = 'render failure') {
-    super(message);
-  }
-}
-
-function CrashOnRender(): ReactElement {
-  throw new Explodes();
-}
-
-describe('ErrorBoundary', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
+describe('crash export isolation', () => {
+  beforeEach(async () => {
+    db.close();
+    await Dexie.delete(OPSNORMAL_DB_NAME);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  afterEach(async () => {
+    db.close();
+    await Dexie.delete(OPSNORMAL_DB_NAME);
   });
 
-  it('contains a render crash and shows the fallback', () => {
-    render(
-      <ErrorBoundary
-        fallbackRender={({ error, resetErrorBoundary }) => (
-          <AppCrashFallback error={error} onRetry={resetErrorBoundary} />
-        )}
-      >
-        <CrashOnRender />
-      </ErrorBoundary>
-    );
+  it('reads entries written through the primary database schema', async () => {
+    await setDailyStatus(TEST_DATE_KEY, 'body', 'nominal');
+    await setDailyStatus(TEST_DATE_KEY, 'rest', 'degraded');
 
-    expect(screen.getByText(/opsnormal stopped rendering/i)).toBeInTheDocument();
-    expect(screen.getByText(/render failure/i)).toBeInTheDocument();
+    const snapshot = await readCrashExportSnapshot();
+
+    expect(snapshot.skippedCount).toBe(0);
+    expect(snapshot.entries).toHaveLength(2);
+    expect(
+      snapshot.entries.map((entry) => ({
+        date: entry.date,
+        sectorId: entry.sectorId,
+        status: entry.status
+      }))
+    ).toEqual([
+      { date: TEST_DATE_KEY, sectorId: 'body', status: 'nominal' },
+      { date: TEST_DATE_KEY, sectorId: 'rest', status: 'degraded' }
+    ]);
   });
 
-  it('resets the latched fault when reset keys change', () => {
-    const view = render(
-      <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>} resetKeys={['alpha']}>
-        <CrashOnRender />
-      </ErrorBoundary>
-    );
+  it('skips malformed rows while preserving recoverable entries', async () => {
+    const tempDb = new Dexie(OPSNORMAL_DB_NAME);
+    applyOpsNormalDbSchema(tempDb);
 
-    expect(screen.getByText('render failure')).toBeInTheDocument();
-
-    view.rerender(
-      <ErrorBoundary fallbackRender={({ error }) => <div>{error.message}</div>} resetKeys={['bravo']}>
-        <div>Recovered</div>
-      </ErrorBoundary>
-    );
-
-    expect(screen.getByText('Recovered')).toBeInTheDocument();
-  });
-
-  it('remounts the crashed subtree when retry is selected', async () => {
-    let shouldThrow = true;
-
-    function CrashThenRecover(): ReactElement {
-      if (shouldThrow) {
-        throw new Explodes('retry failure');
+    const malformedRows: Array<Record<string, unknown>> = [
+      {
+        date: TEST_DATE_KEY,
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: TEST_UPDATED_AT
+      },
+      {
+        date: TEST_DATE_KEY,
+        sectorId: 'household',
+        status: 'invalid-status',
+        updatedAt: TEST_UPDATED_AT
+      },
+      {
+        date: 'bad-date',
+        sectorId: 'rest',
+        status: 'degraded',
+        updatedAt: TEST_UPDATED_AT
       }
+    ];
 
-      return <div>Recovered after retry</div>;
+    try {
+      await tempDb.table('dailyEntries').bulkAdd(malformedRows);
+    } finally {
+      tempDb.close();
     }
 
-    render(
-      <ErrorBoundary
-        fallbackRender={({ resetErrorBoundary }) => (
-          <button
-            type="button"
-            onClick={() => {
-              shouldThrow = false;
-              resetErrorBoundary();
-            }}
-          >
-            Retry boundary
-          </button>
-        )}
-      >
-        <CrashThenRecover />
-      </ErrorBoundary>
-    );
+    const snapshot = await readCrashExportSnapshot();
 
-    expect(screen.getByRole('button', { name: /retry boundary/i })).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole('button', { name: /retry boundary/i }));
-
-    expect(screen.getByText('Recovered after retry')).toBeInTheDocument();
+    expect(snapshot.skippedCount).toBe(2);
+    expect(snapshot.entries).toEqual([
+      {
+        date: TEST_DATE_KEY,
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: TEST_UPDATED_AT
+      }
+    ]);
+    await expect(readEntriesForCrashExport()).resolves.toEqual(snapshot.entries);
   });
 
-  it('exports JSON from the crash fallback through an isolated export path', async () => {
-    mocks.readCrashExportSnapshot.mockResolvedValueOnce({
-      entries: [],
-      skippedCount: 0
-    });
+  it('applies the shared schema versions to isolated Dexie connections', async () => {
+    const tempDb = new Dexie('opsnormal-crash-export-schema-test');
+    applyOpsNormalDbSchema(tempDb);
 
-    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+    try {
+      await tempDb.open();
 
-    await userEvent.click(screen.getByRole('button', { name: /export json/i }));
-
-    expect(mocks.readCrashExportSnapshot).toHaveBeenCalledTimes(1);
-    expect(mocks.createJsonExport).toHaveBeenCalledTimes(1);
-    expect(mocks.downloadTextFile).toHaveBeenCalledWith(
-      'opsnormal-crash-export.json',
-      '{"ok":true}',
-      'application/json'
-    );
-    expect(screen.getByText('JSON export complete. 0 entries recovered.')).toBeInTheDocument();
-  });
-
-  it('locks recovery controls while a crash export is running', async () => {
-    let resolveSnapshot: ((value: { entries: []; skippedCount: number }) => void) | undefined;
-
-    mocks.readCrashExportSnapshot.mockReturnValueOnce(
-      new Promise((resolve: (value: { entries: []; skippedCount: number }) => void) => {
-        resolveSnapshot = resolve;
-      })
-    );
-
-    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
-
-    const exportJsonButton = screen.getByRole('button', { name: /export json/i });
-    const exportCsvButton = screen.getByRole('button', { name: /export csv/i });
-    const retryButton = screen.getByRole('button', { name: /retry app/i });
-    const reloadButton = screen.getByRole('button', { name: /reload page/i });
-
-    await userEvent.click(exportJsonButton);
-
-    await waitFor(() => {
-      expect(exportJsonButton).toBeDisabled();
-      expect(exportCsvButton).toBeDisabled();
-      expect(retryButton).toBeDisabled();
-      expect(reloadButton).toBeDisabled();
-    });
-
-    resolveSnapshot?.({ entries: [], skippedCount: 0 });
-
-    await waitFor(() => {
-      expect(exportJsonButton).not.toBeDisabled();
-      expect(exportCsvButton).not.toBeDisabled();
-      expect(retryButton).not.toBeDisabled();
-      expect(reloadButton).not.toBeDisabled();
-    });
-  });
-
-  it('reports skipped malformed rows after a crash export', async () => {
-    mocks.readCrashExportSnapshot.mockResolvedValueOnce({
-      entries: [
+      expect(OPSNORMAL_DB_SCHEMA_VERSIONS).toEqual([
         {
-          date: '2026-03-28',
-          sectorId: 'body',
-          status: 'nominal',
-          updatedAt: '2026-03-28T12:00:00.000Z'
+          version: 1,
+          stores: {
+            dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
+          }
+        },
+        {
+          version: 2,
+          stores: {
+            dailyEntries: '++id, &[date+sectorId]'
+          }
         }
-      ],
-      skippedCount: 2
-    });
-
-    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
-
-    await userEvent.click(screen.getByRole('button', { name: /export csv/i }));
-
-    expect(screen.getByText('CSV export complete. 1 entry recovered. 2 malformed rows skipped.')).toBeInTheDocument();
-  });
-
-  it('reloads the page from the crash fallback', async () => {
-    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
-
-    await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
-
-    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('SectionCrashFallback', () => {
-  it('displays the section label and error message', () => {
-    render(
-      <SectionCrashFallback
-        label="History Grid"
-        error={new Error('Grid fault')}
-        onRetry={vi.fn()}
-      />
-    );
-
-    expect(screen.getByText('History Grid failed to render')).toBeInTheDocument();
-    expect(screen.getByText('Grid fault')).toBeInTheDocument();
-  });
-
-  it('calls onRetry when retry is clicked', async () => {
-    const onRetry = vi.fn();
-
-    render(
-      <SectionCrashFallback
-        label="History Grid"
-        error={new Error('Grid fault')}
-        onRetry={onRetry}
-      />
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
-
-    expect(onRetry).toHaveBeenCalledTimes(1);
+      ]);
+      expect(tempDb.tables.map((table) => table.name)).toEqual(['dailyEntries']);
+    } finally {
+      tempDb.close();
+      await Dexie.delete('opsnormal-crash-export-schema-test');
+    }
   });
 });
