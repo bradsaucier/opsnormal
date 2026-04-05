@@ -18,6 +18,7 @@ import {
   type BackupCheckpointResult
 } from '../../src/lib/export';
 import { useReplaceCheckpoint } from '../../src/features/export/useReplaceCheckpoint';
+import type { StatusMessage } from '../../src/features/export/workflowTypes';
 import type { ImportPreview, JsonExportPayload } from '../../src/types';
 
 const exportCurrentEntriesAsJsonMock = vi.mocked(exportCurrentEntriesAsJson);
@@ -62,12 +63,15 @@ function primeExportSnapshot() {
   });
 }
 
+type OnBackupCompleted = (exportedAt: string) => void;
+type OnStatusMessage = (message: StatusMessage) => void;
+
 function renderSubject(args: {
-  onBackupCompleted?: ReturnType<typeof vi.fn>;
-  onStatusMessage?: ReturnType<typeof vi.fn>;
+  onBackupCompleted?: OnBackupCompleted;
+  onStatusMessage?: OnStatusMessage;
 }) {
-  const onBackupCompleted = args.onBackupCompleted ?? vi.fn();
-  const onStatusMessage = args.onStatusMessage ?? vi.fn();
+  const onBackupCompleted = args.onBackupCompleted ?? vi.fn<OnBackupCompleted>();
+  const onStatusMessage = args.onStatusMessage ?? vi.fn<OnStatusMessage>();
 
   const hook = renderHook(() =>
     useReplaceCheckpoint({
@@ -293,7 +297,7 @@ describe('useReplaceCheckpoint', () => {
       exportedAt: EXPORTED_AT
     });
 
-    const onStatusMessage = vi.fn();
+    const onStatusMessage = vi.fn<OnStatusMessage>();
     const { result } = renderSubject({ onStatusMessage });
 
     await act(async () => {
@@ -330,7 +334,7 @@ describe('useReplaceCheckpoint', () => {
       exportedAt: EXPORTED_AT
     });
 
-    const onStatusMessage = vi.fn();
+    const onStatusMessage = vi.fn<OnStatusMessage>();
     const { result, unmount } = renderSubject({ onStatusMessage });
 
     await act(async () => {
