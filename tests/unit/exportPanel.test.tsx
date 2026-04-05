@@ -119,6 +119,48 @@ describe('ExportPanel import warnings', () => {
     expect(screen.getByRole('alert')).toHaveAttribute('aria-atomic', 'true');
   });
 
+  it('surfaces operator summary signals before the accordion detail', () => {
+    render(<ExportPanel storageHealth={null} />);
+
+    const dataBoundary = screen.getByText('Data boundary');
+    const exportAccordionButton = screen.getByRole('button', { name: /export and backup/i });
+
+    expect(screen.getByText('Local only')).toBeInTheDocument();
+    expect(screen.getByText('Export first')).toBeInTheDocument();
+    expect(screen.getByText('Locked until checkpoint')).toBeInTheDocument();
+    expect(screen.getByText('Undo not staged')).toBeInTheDocument();
+    expect(
+      dataBoundary.compareDocumentPosition(exportAccordionButton) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('preserves accordion button and region bindings for backup sections', async () => {
+    render(<ExportPanel storageHealth={null} />);
+
+    const exportAccordionButton = screen.getByRole('button', { name: /export and backup/i });
+    const importAccordionButton = screen.getByRole('button', { name: /import and restore/i });
+
+    expect(exportAccordionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(importAccordionButton).toHaveAttribute('aria-expanded', 'false');
+
+    const exportPanel = document.getElementById(
+      exportAccordionButton.getAttribute('aria-controls') ?? ''
+    );
+    const importPanel = document.getElementById(
+      importAccordionButton.getAttribute('aria-controls') ?? ''
+    );
+
+    expect(exportPanel).toHaveAttribute('role', 'region');
+    expect(exportPanel).toHaveAttribute('aria-labelledby', exportAccordionButton.id);
+    expect(importPanel).toHaveAttribute('role', 'region');
+    expect(importPanel).toHaveAttribute('aria-labelledby', importAccordionButton.id);
+
+    await userEvent.click(importAccordionButton);
+
+    expect(importAccordionButton).toHaveAttribute('aria-expanded', 'true');
+    expect(importPanel).not.toHaveAttribute('hidden');
+  });
+
   it('flags legacy imports as unverified before confirm', async () => {
     previewImportFileMock.mockResolvedValue(buildPreview());
 

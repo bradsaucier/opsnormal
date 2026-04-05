@@ -105,6 +105,53 @@ function getDefaultStatusMessage(): StatusMessage {
   };
 }
 
+function getSignalToneClasses(tone: 'default' | 'safe' | 'warning' = 'default'): string {
+  if (tone === 'safe') {
+    return 'border-emerald-400/25 bg-emerald-400/8';
+  }
+
+  if (tone === 'warning') {
+    return 'border-amber-400/25 bg-amber-400/8';
+  }
+
+  return 'border-white/10 bg-black/20';
+}
+
+interface SignalCardProps {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: 'default' | 'safe' | 'warning';
+}
+
+function SignalCard({ label, value, detail, tone = 'default' }: SignalCardProps) {
+  return (
+    <div className={`rounded-xl border p-4 ${getSignalToneClasses(tone)}`}>
+      <dt className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">{label}</dt>
+      <dd className="mt-2 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
+        {value}
+      </dd>
+      <dd className="mt-2 text-sm leading-6 text-zinc-300">{detail}</dd>
+    </div>
+  );
+}
+
+interface PreviewFactCardProps {
+  label: string;
+  value: string;
+  detail?: string;
+}
+
+function PreviewFactCard({ label, value, detail }: PreviewFactCardProps) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/20 p-3">
+      <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">{label}</dt>
+      <dd className="mt-1 text-sm font-semibold text-white">{value}</dd>
+      {detail ? <p className="mt-2 text-xs leading-5 text-zinc-400">{detail}</p> : null}
+    </div>
+  );
+}
+
 export function ExportPanel({ storageHealth }: ExportPanelProps) {
   const [statusMessage, setStatusMessage] = useState<StatusMessage>(() => getDefaultStatusMessage());
   const [expandedSections, setExpandedSections] = useState<Record<AccordionSectionKey, boolean>>({
@@ -210,6 +257,38 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
       ? 'border-red-500/35 bg-red-500/10 text-red-100'
       : 'border-amber-400/30 bg-amber-400/10 text-amber-100';
 
+  const operatorSignals = useMemo(
+    () => [
+      {
+        label: 'Data boundary',
+        value: 'Local only',
+        detail: 'No cloud sync. No account system. Recovery stays on the operator and this device.',
+        tone: 'safe' as const
+      },
+      {
+        label: 'Safe path',
+        value: 'Export first',
+        detail: backupStatus,
+        tone: 'safe' as const
+      },
+      {
+        label: 'Replace posture',
+        value: 'Locked until checkpoint',
+        detail: 'Replace stays locked until a pre-replace backup checkpoint is complete.',
+        tone: 'warning' as const
+      },
+      {
+        label: 'Session undo',
+        value: canUndoImport ? 'Undo staged' : 'Undo not staged',
+        detail: canUndoImport
+          ? 'A rollback is staged for the most recent import in this session only.'
+          : 'Undo appears only after a successful import and expires on reload.',
+        tone: canUndoImport ? ('safe' as const) : ('default' as const)
+      }
+    ],
+    [backupStatus, canUndoImport]
+  );
+
   return (
     <SectionCard eyebrow="Data Sovereignty" title="Backup and Recovery">
       <div className="space-y-4">
@@ -217,6 +296,18 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
           Local-first only works if recovery is real. Safe actions stay forward. Destructive
           restore paths stay collapsed until you deliberately open, stage, and confirm them.
         </p>
+
+        <dl className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Backup and recovery summary signals">
+          {operatorSignals.map((signal) => (
+            <SignalCard
+              key={signal.label}
+              label={signal.label}
+              value={signal.value}
+              detail={signal.detail}
+              tone={signal.tone}
+            />
+          ))}
+        </dl>
 
         <AccordionSection
           sectionKey="export"
@@ -226,28 +317,33 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
           onToggle={toggleSection}
         >
           <div className="space-y-4">
-            <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-              <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
-                Backup posture
-              </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">{backupStatus}</p>
-            </div>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
+                  Backup posture
+                </p>
+                <p className="mt-2 text-sm leading-6 text-zinc-300">{backupStatus}</p>
+                <p className="mt-2 text-xs leading-5 text-zinc-400">
+                  Export is the primary safe recovery path. Run it routinely.
+                </p>
+              </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <button
-                type="button"
-                onClick={() => void handleJsonExport()}
-                className="min-h-[44px] rounded-lg border border-emerald-400/45 bg-emerald-500 px-4 py-3 text-sm font-semibold tracking-[0.14em] text-white uppercase transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
-              >
-                Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleCsvExport()}
-                className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100"
-              >
-                Export CSV
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <button
+                  type="button"
+                  onClick={() => void handleJsonExport()}
+                  className="min-h-[44px] rounded-lg border border-emerald-400/45 bg-emerald-500 px-4 py-3 text-sm font-semibold tracking-[0.14em] text-white uppercase transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+                >
+                  Export JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCsvExport()}
+                  className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100"
+                >
+                  Export CSV
+                </button>
+              </div>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
@@ -283,9 +379,19 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
               </label>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
-              Merge is the low-risk path. Replace is the destructive restore path. Replace now stays
-              locked until a pre-replace backup checkpoint is complete.
+            <div className="grid gap-3 lg:grid-cols-2">
+              <SignalCard
+                label="Preferred path"
+                value="Merge first"
+                detail="Merge is the low-risk path. It writes imported rows and leaves all other local rows in place."
+                tone="safe"
+              />
+              <SignalCard
+                label="Destructive path"
+                value="Replace stays gated"
+                detail="Replace clears current rows first and stays locked until the pre-replace backup checkpoint is complete."
+                tone="warning"
+              />
             </div>
 
             {pendingImport ? (
@@ -295,58 +401,43 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                     <h4 className="text-sm font-semibold tracking-[0.16em] text-sky-100 uppercase">
                       Import preview
                     </h4>
+                    <p className="mt-2 break-all text-sm font-semibold text-white">
+                      {pendingFileName || 'Selected file'}
+                    </p>
                     <p className="mt-2 text-sm leading-6 text-sky-50/95">{importIntegrityText}</p>
-                    <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          File
-                        </dt>
-                        <dd className="mt-1 break-all text-sm font-semibold text-white">
-                          {pendingFileName || 'Selected file'}
-                        </dd>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          File size
-                        </dt>
-                        <dd className="mt-1 text-sm font-semibold text-white">
-                          {formatBytes(pendingFileSize)}
-                        </dd>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          Imported rows
-                        </dt>
-                        <dd className="mt-1 text-lg font-semibold text-white">
-                          {pendingImport.totalEntries}
-                        </dd>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          Current rows
-                        </dt>
-                        <dd className="mt-1 text-lg font-semibold text-white">
-                          {pendingImport.existingEntryCount}
-                        </dd>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          Date range
-                        </dt>
-                        <dd className="mt-1 text-sm font-semibold text-white">
-                          {pendingImport.dateRange
+                    <p className="mt-2 text-xs tracking-[0.14em] text-zinc-400 uppercase">
+                      File size - {formatBytes(pendingFileSize)}
+                    </p>
+                    <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <PreviewFactCard
+                        label="Imported rows"
+                        value={String(pendingImport.totalEntries)}
+                      />
+                      <PreviewFactCard
+                        label="Current rows"
+                        value={String(pendingImport.existingEntryCount)}
+                      />
+                      <PreviewFactCard
+                        label="Date range"
+                        value={
+                          pendingImport.dateRange
                             ? `${pendingImport.dateRange.start} to ${pendingImport.dateRange.end}`
-                            : 'No valid dates detected'}
-                        </dd>
-                      </div>
-                      <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-                        <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">
-                          Merge impact
-                        </dt>
-                        <dd className="mt-1 text-sm font-semibold text-white">
-                          {pendingImport.newEntryCount} new / {pendingImport.overwriteCount} overwrite
-                        </dd>
-                      </div>
+                            : 'No valid dates detected'
+                        }
+                      />
+                      <PreviewFactCard
+                        label={importMode === 'replace' ? 'Replace impact' : 'Merge impact'}
+                        value={
+                          importMode === 'replace'
+                            ? `${pendingImport.existingEntryCount} current rows cleared`
+                            : `${pendingImport.newEntryCount} new / ${pendingImport.overwriteCount} overwrite`
+                        }
+                        detail={
+                          importMode === 'replace'
+                            ? 'All current rows will be cleared before restore.'
+                            : 'All other local rows stay in place.'
+                        }
+                      />
                     </dl>
                   </div>
 
@@ -396,13 +487,19 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
                     </fieldset>
 
                     <div className="mt-4 rounded-lg border border-white/10 bg-black/25 px-3 py-3 text-sm leading-6 text-zinc-300">
+                      {importMode === 'replace'
+                        ? 'Destructive restore path selected. '
+                        : 'Merge path selected. '}
                       {getImportImpactText(pendingImport, importMode)}
                     </div>
 
                     <div className="my-4 border-t border-white/10" />
 
                     {importMode === 'replace' ? (
-                      <div ref={replaceActionRef} className="space-y-4">
+                      <div
+                        ref={replaceActionRef}
+                        className="mt-6 space-y-4 rounded-xl border border-red-500/20 bg-red-950/10 p-4"
+                      >
                         <div className="rounded-lg border border-amber-400/25 bg-amber-400/8 p-3 text-sm leading-6 text-amber-100">
                           Step 1 - secure a pre-replace backup. Step 2 - verify that the backup file exists on local disk if the browser cannot prove the write. Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
                         </div>
