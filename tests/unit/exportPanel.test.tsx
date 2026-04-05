@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +31,8 @@ import {
   checkpointJsonBackupToDisk,
   downloadTextFile,
   exportCurrentEntriesAsJson,
-  recordExportCompleted
+  recordExportCompleted,
+  type BackupCheckpointResult
 } from '../../src/lib/export';
 import { applyImport, previewImportFile } from '../../src/services/importService';
 import type { ImportPreview, JsonExportPayload } from '../../src/types';
@@ -43,6 +44,9 @@ const exportCurrentEntriesAsJsonMock = vi.mocked(exportCurrentEntriesAsJson);
 const checkpointJsonBackupToDiskMock = vi.mocked(checkpointJsonBackupToDisk);
 const downloadTextFileMock = vi.mocked(downloadTextFile);
 const recordExportCompletedMock = vi.mocked(recordExportCompleted);
+
+const EXPORTED_AT = '2026-04-02T21:00:00.000Z';
+const FILE_NAME = 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json';
 
 function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview {
   return {
@@ -70,6 +74,28 @@ function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview
       end: '2026-03-28'
     }
   };
+}
+
+function primeReplacePreview() {
+  previewImportFileMock.mockResolvedValue(buildPreview());
+  exportCurrentEntriesAsJsonMock.mockResolvedValue({
+    entryCount: 3,
+    exportedAt: EXPORTED_AT,
+    payload: '{"app":"OpsNormal"}'
+  });
+}
+
+async function stageReplacePreview() {
+  await userEvent.click(screen.getByRole('button', { name: /import and restore/i }));
+  await userEvent.upload(
+    screen.getByTestId('import-file-input'),
+    new File(['{}'], 'replace-export.json', { type: 'application/json' })
+  );
+  await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
+}
+
+async function triggerPreReplaceBackup() {
+  await userEvent.click(screen.getByRole('button', { name: /export pre-replace backup/i }));
 }
 
 describe('ExportPanel import warnings', () => {
@@ -127,16 +153,11 @@ describe('ExportPanel import warnings', () => {
   });
 
   it('requires a backup checkpoint before destructive replace import runs', async () => {
-    previewImportFileMock.mockResolvedValue(buildPreview());
-    exportCurrentEntriesAsJsonMock.mockResolvedValue({
-      entryCount: 3,
-      exportedAt: '2026-04-02T21:00:00.000Z',
-      payload: '{"app":"OpsNormal"}'
-    });
+    primeReplacePreview();
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'fallback-download-triggered',
-      fileName: 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json',
-      exportedAt: '2026-04-02T21:00:00.000Z'
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT
     });
     applyImportMock.mockResolvedValue({
       importedCount: 1,
@@ -145,31 +166,36 @@ describe('ExportPanel import warnings', () => {
 
     render(<ExportPanel storageHealth={null} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /import and restore/i }));
+    await stageReplacePreview();
 
-    const input = screen.getByTestId('import-file-input');
-    const file = new File(['{}'], 'replace-export.json', { type: 'application/json' });
-    await userEvent.upload(input, file);
+    const armButton = screen.getByRole('button', { name: /arm replace all data/i });
+    expect(armButton).toBeDisabled();
 
-    await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
-
-    expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeDisabled();
-
-    await userEvent.click(screen.getByRole('button', { name: /export pre-replace backup/i }));
+    await triggerPreReplaceBackup();
 
     expect(exportCurrentEntriesAsJsonMock).toHaveBeenCalledTimes(1);
     expect(checkpointJsonBackupToDiskMock).toHaveBeenCalledTimes(1);
-    expect(recordExportCompletedMock).toHaveBeenCalledWith('2026-04-02T21:00:00.000Z');
+    expect(recordExportCompletedMock).toHaveBeenCalledWith(EXPORTED_AT);
+
+    const unlockButton = screen.getByRole('button', {
+      name: /unlock replace after manual backup check/i
+    });
+    expect(unlockButton).toBeDisabled();
+    expect(armButton).toBeDisabled();
 
     await userEvent.click(
       screen.getByRole('checkbox', {
         name: /i confirm the backup file was successfully saved to my device before importing this restore/i
       })
     );
-    await userEvent.click(
-      screen.getByRole('button', { name: /unlock replace after manual backup check/i })
-    );
-    await userEvent.click(screen.getByRole('button', { name: /arm replace all data/i }));
+
+    expect(unlockButton).toBeEnabled();
+    expect(armButton).toBeDisabled();
+
+    await userEvent.click(unlockButton);
+    expect(armButton).toBeEnabled();
+
+    await userEvent.click(armButton);
 
     expect(applyImportMock).not.toHaveBeenCalled();
     expect(await screen.findByText(/replace armed\./i)).toBeInTheDocument();
@@ -180,34 +206,25 @@ describe('ExportPanel import warnings', () => {
   });
 
   it('forces the replace checkpoint to reset if the operator leaves and re-enters replace mode', async () => {
-    previewImportFileMock.mockResolvedValue(buildPreview());
-    exportCurrentEntriesAsJsonMock.mockResolvedValue({
-      entryCount: 3,
-      exportedAt: '2026-04-02T21:00:00.000Z',
-      payload: '{"app":"OpsNormal"}'
-    });
+    primeReplacePreview();
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'fallback-download-triggered',
-      fileName: 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json',
-      exportedAt: '2026-04-02T21:00:00.000Z'
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT
     });
 
     render(<ExportPanel storageHealth={null} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /import and restore/i }));
-    await userEvent.upload(
-      screen.getByTestId('import-file-input'),
-      new File(['{}'], 'replace-export.json', { type: 'application/json' })
-    );
-
-    await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
-    await userEvent.click(screen.getByRole('button', { name: /export pre-replace backup/i }));
+    await stageReplacePreview();
+    await triggerPreReplaceBackup();
     await userEvent.click(
       screen.getByRole('checkbox', {
         name: /i confirm the backup file was successfully saved to my device before importing this restore/i
       })
     );
-    await userEvent.click(screen.getByRole('button', { name: /unlock replace after manual backup check/i }));
+    await userEvent.click(
+      screen.getByRole('button', { name: /unlock replace after manual backup check/i })
+    );
 
     expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeEnabled();
 
@@ -217,31 +234,110 @@ describe('ExportPanel import warnings', () => {
     expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeDisabled();
   });
 
-  it('uses verified file save when the browser exposes a save picker', async () => {
-    previewImportFileMock.mockResolvedValue(buildPreview());
-    canUseVerifiedFileSaveMock.mockReturnValue(true);
-    exportCurrentEntriesAsJsonMock.mockResolvedValue({
-      entryCount: 3,
-      exportedAt: '2026-04-02T21:00:00.000Z',
-      payload: '{"app":"OpsNormal"}'
+  it('keeps replace locked and surfaces a warning when the operator cancels backup save', async () => {
+    primeReplacePreview();
+    checkpointJsonBackupToDiskMock.mockResolvedValue({
+      kind: 'save-cancelled',
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT,
+      message: 'Backup save cancelled. Local data unchanged.'
     });
+
+    const { container } = render(<ExportPanel storageHealth={null} />);
+
+    await stageReplacePreview();
+    await triggerPreReplaceBackup();
+
+    expect(within(container).getByRole('alert')).toHaveTextContent(
+      'Backup save cancelled. Local data unchanged.'
+    );
+    expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeDisabled();
+    expect(
+      screen.queryByRole('checkbox', {
+        name: /i confirm the backup file was successfully saved to my device before importing this restore/i
+      })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/backup ready -/i)).not.toBeInTheDocument();
+    expect(recordExportCompletedMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      name: 'save-failed',
+      result: {
+        kind: 'save-failed',
+        fileName: FILE_NAME,
+        exportedAt: EXPORTED_AT,
+        message: 'Disk write failed hard.'
+      } satisfies BackupCheckpointResult,
+      expectedText: 'Disk write failed hard.'
+    },
+    {
+      name: 'unexpected exception',
+      result: new Error('Pre-replace backup exploded.'),
+      expectedText: 'Pre-replace backup exploded.'
+    }
+  ])(
+    'keeps replace locked and surfaces an error when backup preparation hits $name',
+    async ({ expectedText, result }) => {
+      primeReplacePreview();
+
+      if (result instanceof Error) {
+        checkpointJsonBackupToDiskMock.mockRejectedValue(result);
+      } else {
+        checkpointJsonBackupToDiskMock.mockResolvedValue(result);
+      }
+
+      const { container } = render(<ExportPanel storageHealth={null} />);
+
+      await stageReplacePreview();
+      await triggerPreReplaceBackup();
+
+      expect(within(container).getByRole('alert')).toHaveTextContent(expectedText);
+      expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeDisabled();
+      expect(screen.queryByText(/backup ready -/i)).not.toBeInTheDocument();
+      expect(recordExportCompletedMock).not.toHaveBeenCalled();
+    }
+  );
+
+  it('keeps replace locked and surfaces an error when data snapshot generation fails', async () => {
+    previewImportFileMock.mockResolvedValue(buildPreview());
+    exportCurrentEntriesAsJsonMock.mockRejectedValue(
+      new Error('Database read failure during snapshot.')
+    );
+
+    const { container } = render(<ExportPanel storageHealth={null} />);
+
+    await stageReplacePreview();
+    await triggerPreReplaceBackup();
+
+    expect(within(container).getByRole('alert')).toHaveTextContent(
+      'Database read failure during snapshot.'
+    );
+    expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeDisabled();
+    expect(recordExportCompletedMock).not.toHaveBeenCalled();
+    expect(checkpointJsonBackupToDiskMock).not.toHaveBeenCalled();
+  });
+
+  it('uses verified file save when the browser exposes a save picker', async () => {
+    primeReplacePreview();
+    canUseVerifiedFileSaveMock.mockReturnValue(true);
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'verified-save-succeeded',
-      fileName: 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json',
-      exportedAt: '2026-04-02T21:00:00.000Z'
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT
     });
 
     render(<ExportPanel storageHealth={null} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /import and restore/i }));
-    await userEvent.upload(
-      screen.getByTestId('import-file-input'),
-      new File(['{}'], 'replace-export.json', { type: 'application/json' })
-    );
-    await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
+    await stageReplacePreview();
     await userEvent.click(screen.getByRole('button', { name: /write verified pre-replace backup/i }));
 
     await waitFor(() => expect(checkpointJsonBackupToDiskMock).toHaveBeenCalledTimes(1));
     expect(screen.getByRole('button', { name: /arm replace all data/i })).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: /unlock replace after manual backup check/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/disk write verified before replace unlock\./i)).toBeInTheDocument();
   });
 });
