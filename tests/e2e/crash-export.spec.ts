@@ -15,7 +15,6 @@ import {
 const FIXED_TEST_TIME_ISO = '2026-03-28T12:00:00.000Z';
 const FIXED_TEST_DATE_KEY = FIXED_TEST_TIME_ISO.slice(0, 10);
 
-type ImportPayload = JsonExportPayload;
 type CrashEntry = {
   date: string;
   sectorId: SectorId;
