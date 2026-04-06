@@ -69,10 +69,13 @@ function CrashOnRender(): ReactElement {
 }
 
 describe('ErrorBoundary', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mocks.readCrashExportSnapshot.mockResolvedValue(emptyCrashExportSnapshot);
+    user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -147,7 +150,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('button', { name: /retry boundary/i })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /retry boundary/i }));
+    await user.click(screen.getByRole('button', { name: /retry boundary/i }));
 
     expect(screen.getByText('Recovered after retry')).toBeInTheDocument();
   });
@@ -161,7 +164,7 @@ describe('ErrorBoundary', () => {
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /export json/i }));
+    await user.click(screen.getByRole('button', { name: /export json/i }));
 
     expect(mocks.readCrashExportSnapshot).toHaveBeenCalledTimes(1);
     expect(mocks.createCrashJsonExport).toHaveBeenCalledTimes(1);
@@ -189,7 +192,7 @@ describe('ErrorBoundary', () => {
     const retryButton = screen.getByRole('button', { name: /retry app/i });
     const reloadButton = screen.getByRole('button', { name: /reload page/i });
 
-    await userEvent.click(exportJsonButton);
+    await user.click(exportJsonButton);
 
     await waitFor(() => {
       expect(exportJsonButton).toBeDisabled();
@@ -228,7 +231,7 @@ describe('ErrorBoundary', () => {
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /export csv/i }));
+    await user.click(screen.getByRole('button', { name: /export csv/i }));
 
     expect(screen.getByText('CSV export complete. 1 entry recovered. 2 malformed rows skipped.')).toBeInTheDocument();
   });
@@ -244,7 +247,7 @@ describe('ErrorBoundary', () => {
 
     expect(clearDataButton).toBeDisabled();
 
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
     expect(clearDataButton).not.toBeDisabled();
   });
@@ -255,16 +258,16 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
     const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
-    await userEvent.click(clearDataButton);
+    await user.click(clearDataButton);
 
     expect(
       screen.getByRole('button', { name: /confirm delete all local data and reload/i })
     ).toBeInTheDocument();
 
-    await userEvent.click(
+    await user.click(
       screen.getByRole('button', { name: /confirm delete all local data and reload/i })
     );
 
@@ -278,9 +281,9 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
-    await userEvent.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
     await waitFor(() => {
@@ -298,10 +301,10 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
     const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
-    await userEvent.click(clearDataButton);
+    await user.click(clearDataButton);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
     act(() => {
@@ -324,10 +327,10 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
-    await userEvent.click(screen.getByRole('button', { name: /clear local data and reload/i }));
-    await userEvent.click(
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    await user.click(
       screen.getByRole('button', { name: /confirm delete all local data and reload/i })
     );
 
@@ -363,10 +366,10 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-    await userEvent.click(acknowledgment);
+    await user.click(acknowledgment);
 
-    await userEvent.click(screen.getByRole('button', { name: /clear local data and reload/i }));
-    await userEvent.click(
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    await user.click(
       screen.getByRole('button', { name: /confirm delete all local data and reload/i })
     );
 
@@ -379,7 +382,7 @@ describe('ErrorBoundary', () => {
   it('reloads the page from the crash fallback', async () => {
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
+    await user.click(screen.getByRole('button', { name: /reload page/i }));
 
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
   });
@@ -410,7 +413,7 @@ describe('SectionCrashFallback', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+    await user.click(screen.getByRole('button', { name: /retry/i }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
