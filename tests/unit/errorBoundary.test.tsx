@@ -1,7 +1,6 @@
 import type { ReactElement } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppCrashFallback } from '../../src/components/AppCrashFallback';
@@ -73,16 +72,13 @@ describe('ErrorBoundary', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
     mocks.readCrashExportSnapshot.mockResolvedValue(emptyCrashExportSnapshot);
-    user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    user = userEvent.setup();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
@@ -257,7 +253,6 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
-
     await user.click(acknowledgment);
 
     const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
@@ -296,6 +291,13 @@ describe('ErrorBoundary', () => {
   });
 
   it('restores focus to the clear-data button when the destructive path is disarmed', async () => {
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback): number => {
+        callback(0);
+        return 1;
+      });
+
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
     const acknowledgment = screen.getByRole('checkbox', {
@@ -307,11 +309,10 @@ describe('ErrorBoundary', () => {
     await user.click(clearDataButton);
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
-    act(() => {
-      vi.advanceTimersByTime(16);
+    await waitFor(() => {
+      expect(clearDataButton).toHaveFocus();
     });
-
-    expect(clearDataButton).toHaveFocus();
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
   });
 
   it('ignores Escape disarm input while local data deletion is already running', async () => {
