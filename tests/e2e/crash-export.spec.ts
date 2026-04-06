@@ -102,6 +102,7 @@ async function seedCrashExportEntries(page: Page): Promise<void> {
 
   await restNominal.click();
   await expectSectorStatus(page, 'Rest', 'nominal');
+  await expect(restDegraded).toBeEnabled();
   await restDegraded.click();
   await expectSectorStatus(page, 'Rest', 'degraded');
 }
@@ -267,9 +268,7 @@ test.describe('OpsNormal crash export recovery', () => {
 
       await expectSectorStatus(importPage, 'Work or School', 'nominal');
       await expectSectorStatus(importPage, 'Rest', 'degraded');
-      await expect(
-        importPage.getByRole('button', { name: /^Household\. Current state/i })
-      ).toContainText('UNMARKED');
+      await expectSectorStatus(importPage, 'Household', 'unmarked');
     } finally {
       await importContext.close();
     }
