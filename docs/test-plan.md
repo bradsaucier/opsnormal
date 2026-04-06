@@ -17,7 +17,7 @@ Prove that the app:
 - trailing 30-day range generation
 - export formatting
 - shared import validation under native SubtleCrypto in a node-environment unit path
-- export checksum verification
+- export checksum verification, including crash-state diagnostics when present
 - legacy import warning path
 - destructive replace arm-disarm path without a timer
 - verified save path before full replace when the browser exposes a save picker
@@ -25,6 +25,7 @@ Prove that the app:
 - replace checkpoint resets if the operator leaves replace mode and comes back
 - live status and alert regions stay mounted with aria-atomic set
 - stalled service worker update handoff surfaces manual recovery guidance and a direct reload path
+- unrecoverable IndexedDB reopen failure schedules a full page reload instead of trusting a poisoned handle
 - service worker revalidation survives React Strict Mode effect replay after registration is captured
 - worker-backed preview path aborts cleanly on replacement selection or component teardown
 - export to import round-trip validation
@@ -44,6 +45,8 @@ Prove that the app:
 - Dexie persistence behavior
 - compound key uniqueness
 - cycle sequence correctness
+- bounded reopen recovery after forced close
+- post-write verification on the daily check-in write path
 
 ### End-to-end tests
 - daily check-in persists through reload
