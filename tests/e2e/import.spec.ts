@@ -152,6 +152,21 @@ async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise
   expect(payload.checksum).toBe(recomputedChecksum);
 }
 
+
+function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+  return page.getByRole('radio', {
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+  });
+}
+
+async function expectSectorStatus(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+) {
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+}
+
 async function exportCurrentJson(page: Page): Promise<JsonExportPayload> {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
@@ -247,13 +262,8 @@ test.describe('OpsNormal import workflow', () => {
     await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
     await confirmMergeImport(page);
 
-    await expect(
-      page.getByRole('button', { name: /^Body\. Current state/i })
-    ).toContainText('DEGRADED');
-
-    await expect(
-      page.getByRole('button', { name: /^Rest\. Current state/i })
-    ).toContainText('NOMINAL');
+    await expectSectorStatus(page, 'Body', 'degraded');
+    await expectSectorStatus(page, 'Rest', 'nominal');
   });
 
   test('rejects invalid json payloads before write', async ({ page }) => {
@@ -327,11 +337,8 @@ test.describe('OpsNormal import workflow', () => {
     await expect(page.getByText(/integrity verified/i)).toBeVisible();
     await confirmMergeImport(page);
 
-    const bodyButton = page.getByRole('button', { name: /^Body\. Current state/i });
-    const restButton = page.getByRole('button', { name: /^Rest\. Current state/i });
-
-    await expect(bodyButton).toContainText('NOMINAL');
-    await expect(restButton).toContainText('UNMARKED');
+    await expectSectorStatus(page, 'Body', 'nominal');
+    await expectSectorStatus(page, 'Rest', 'unmarked');
 
     await stageImportPreview(page, 'opsnormal-replace-staged.json', replacePayload);
     await expect(page.getByRole('heading', { name: /import preview/i })).toBeVisible();
@@ -344,15 +351,15 @@ test.describe('OpsNormal import workflow', () => {
     await expect(
       page.getByRole('button', { name: /execute replace all \d+ rows/i })
     ).toBeVisible();
-    await expect(bodyButton).toContainText('NOMINAL');
-    await expect(restButton).toContainText('UNMARKED');
+    await expectSectorStatus(page, 'Body', 'nominal');
+    await expectSectorStatus(page, 'Rest', 'unmarked');
 
     await page.getByRole('button', { name: /disarm replace/i }).click();
 
     await expect(page.getByText(/replace disarmed\. local data unchanged\./i)).toBeVisible();
     await expect(page.getByRole('button', { name: /arm replace all data/i })).toBeVisible();
-    await expect(bodyButton).toContainText('NOMINAL');
-    await expect(restButton).toContainText('UNMARKED');
+    await expectSectorStatus(page, 'Body', 'nominal');
+    await expectSectorStatus(page, 'Rest', 'unmarked');
   });
 
   test('replaces all local rows with the imported snapshot and supports undo restore', async ({
@@ -413,13 +420,9 @@ test.describe('OpsNormal import workflow', () => {
     await page.getByRole('button', { name: /execute replace all \d+ rows/i }).click();
 
     await expect(page.getByText(/replace import complete\. 2 rows restored\./i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Body\. Current state/i })).toContainText('UNMARKED');
-    await expect(page.getByRole('button', { name: /^Household\. Current state/i })).toContainText(
-      'NOMINAL'
-    );
-    await expect(
-      page.getByRole('button', { name: /^Relationships\. Current state/i })
-    ).toContainText('UNMARKED');
+    await expectSectorStatus(page, 'Body', 'unmarked');
+    await expectSectorStatus(page, 'Household', 'nominal');
+    await expectSectorStatus(page, 'Relationships', 'unmarked');
 
     const afterReplaceExport = await exportCurrentJson(page);
 
@@ -437,12 +440,8 @@ test.describe('OpsNormal import workflow', () => {
 
     await expectExportPayloadIntegrity(afterUndoExport);
     expect(normalizeEntries(afterUndoExport.entries)).toEqual(normalizeEntries(seedPayload.entries));
-    await expect(page.getByRole('button', { name: /^Body\. Current state/i })).toContainText('NOMINAL');
-    await expect(
-      page.getByRole('button', { name: /^Relationships\. Current state/i })
-    ).toContainText('DEGRADED');
-    await expect(page.getByRole('button', { name: /^Household\. Current state/i })).toContainText(
-      'UNMARKED'
-    );
+    await expectSectorStatus(page, 'Body', 'nominal');
+    await expectSectorStatus(page, 'Relationships', 'degraded');
+    await expectSectorStatus(page, 'Household', 'unmarked');
   });
 });
