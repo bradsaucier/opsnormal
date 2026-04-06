@@ -4,63 +4,216 @@
 
 OpsNormal exists to provide a sub-10-second daily readiness check that remains usable when the operator is overloaded.
 
-## Design constraints
+## Product boundary
 
-- local-first only
-- deterministic state model
-- no backend
-- no third-party APIs
-- no account system
-- minimal cognitive load
-- strong verification story
+OpsNormal is intentionally narrow.
 
-## Runtime shape
+- Local-only by design
+- Static PWA deployment
+- No backend
+- No account system
+- No cloud sync
+- No analytics or telemetry path
+- Five fixed sectors
+- Three states per sector
+- 30-day trailing history window
 
-1. The Today panel issues writes through `setDailyStatus()` via direct-select status controls.
-2. Dexie persists rows in IndexedDB under a compound unique key.
-3. `useLiveQuery()` reacts to database changes without separate client-side state orchestration.
-4. History and export views consume the same persistence layer.
-5. The historical telemetry surface uses a bifurcated render path: wider viewports keep the full 30-column grid, while narrow viewports shift into week-paginated 7-day windows with a daily brief.
-6. The PWA service worker is registered through the Vite PWA virtual module path already used by the app.
-7. The deployed app performs a guarded low-frequency service worker revalidation loop so long-lived sessions can discover newer builds without noisy churn. The loop pauses while the browser reports the device offline so it does not burn battery or radio work when update checks cannot succeed.
-8. The update path must fail closed. If the waiting worker handoff stalls, the UI surfaces explicit manual recovery guidance instead of silently pretending the update completed.
+The point is not feature count. The point is a stable daily signal with a recovery path the operator can understand.
 
-## Storage durability layer
+## Core runtime shape
 
-OpsNormal now treats storage durability as a first-class operational concern.
-The `src/lib/storage.ts` module requests persistent storage when the platform supports it,
-checks browser quota telemetry, distinguishes installed iPhone and iPad Home Screen mode from ordinary Safari tabs, records reconnect and write-verification diagnostics, and formats operator-facing durability status.
-The `src/hooks/useStorageHealth.ts` hook checks current posture on launch, refreshes on focus,
-and uses a low-frequency interval so the UI reflects current browser conditions without noisy churn.
-Persistent storage is requested after a meaningful local save instead of at cold start so the request lands in a clearer user-action context.
-On Chromium-family browsers, Dexie now pins transaction durability to strict so successful write completion waits on the stronger commit path instead of the relaxed default.
+1. The Today panel writes directly to IndexedDB through `setDailyStatus()`.
+2. Dexie persists rows under a compound unique key on `[date+sectorId]`.
+3. `useLiveQuery()` drives reactive reads without a separate sync layer.
+4. The app shell recalculates the local day and trailing 30-day window on visibility change, focus, and a low-frequency interval.
+5. History and export read from the same persistence layer the Today panel writes to.
+6. The app ships as a Vite-built PWA and registers its service worker through `vite-plugin-pwa`.
 
-The database layer now watches Dexie close events and version-change events.
-If the IndexedDB connection drops, `reopenIfClosed()` uses bounded retry with operator-visible diagnostics before the next read or write. If Safari leaves the connection unrecoverable, the app schedules a full reload instead of trusting a poisoned handle.
-The daily check-in write path now performs a post-commit read-back before it reports success to the UI so silent local write loss becomes explicit.
-If another tab advances the schema, the current tab closes its handle and reloads so the upgrade does not sit blocked behind stale code. A reload guard prevents tight version-change loops from thrashing the browser if the handoff is unstable.
-Write paths route through guarded operations so quota failures and interrupted database connections surface as explicit user-facing errors instead of opaque transaction aborts.
+## Data model
 
-React error boundaries now provide render-fault containment at two levels.
-A root boundary keeps the app from collapsing into a white screen and preserves direct export actions on the crash fallback.
-A second boundary isolates the 30-day history grid so a panel fault does not take Today, backup, or install controls offline.
+Each persisted entry carries four business fields plus the database id.
 
-The app shell also keeps a persistent status live region for announced state changes without timer-based clearing and exposes a skip link that lands directly on the main operational surface. Notched interactive controls use inset focus rings so the tactical clip geometry does not shear off the visible keyboard indicator.
+- `date` - local day stored as `YYYY-MM-DD`
+- `sectorId` - one of the five fixed sectors
+- `status` - `nominal` or `degraded`
+- `updatedAt` - ISO timestamp of the last write
+- `id` - IndexedDB primary key
 
-The app shell now uses dynamic viewport height plus safe-area inset padding so installed mobile mode keeps the first and last controls clear of the status bar, home indicator, and toolbar transitions. The history shell applies client-side week pagination without duplicating Dexie queries or index work, and narrow-screen history uses native day selection controls instead of desktop grid semantics so dense historical data remains readable without shrinking the interaction model into noise.
+`unmarked` is a UI state, not a persisted readiness value. Clearing a sector removes the row for that `[date+sectorId]` pair.
 
-## Why this matters
+The system records local dates as `YYYY-MM-DD` to avoid timezone drift around midnight and cross-zone interpretation.
 
-The architecture is intentionally narrow.
-The point is not feature count.
-The point is reliable daily use under stress.
+## UI composition
 
-## Deployment hardening
+The main shell is built from a small set of bounded surfaces.
 
-The Vite build now emits all static assets as files instead of inlining small assets into application bundles. This keeps cache behavior on static hosting explicit and avoids needless bundle churn when a small asset changes.
+- Header with product boundary and storage posture summary
+- Install banner for supported browsers
+- PWA update banner with manual recovery path if worker handoff stalls
+- Today panel for direct daily entry
+- History panel with desktop and mobile render paths
+- Export panel for backup, recovery, preview, merge, replace, and undo flows
+- Footer boundary statement
 
-The Dexie schema now advances through Version 2. The runtime keeps the unique compound key on `[date+sectorId]`, removes redundant standalone indexes that did not provide query coverage, and routes live queries through compound-key prefix scans so the data path matches the actual index layout instead of relying on removed secondary indexes.
+The visual system uses a clipped cockpit silhouette, tokenized structural colors, and fixed readiness colors. The goal is clarity under load, not decorative branding.
 
-JSON export computes its checksum before any database write transaction is involved. Crash-state JSON export uses the same checksum envelope and now covers embedded crash diagnostics as part of the verified payload. The backup panel is organized as an ARIA accordion so safe export stays forward while destructive restore paths stay collapsed until deliberately opened. Import preview parsing stays off the main UI thread for larger files and the import service still validates structure and checksum before any write can stage. For worker-backed preview, the main thread transfers the file ArrayBuffer into the worker so large payloads do not pay a structured-clone penalty before parsing begins, and the preview worker is explicitly terminated on completion, error, cancel, or component teardown. The preview remains bounded by the existing 5 MB file cap and the schema-level 10,000 entry ceiling. Import computes the expected final state in memory, writes inside one Dexie transaction in bounded bulkPut batches, then verifies the written rows before that transaction can commit. If verification fails, the transaction aborts and IndexedDB keeps the pre-import state intact. Replace import now uses a two-stage destructive flow. First, the operator must complete a pre-replace backup checkpoint. When the browser exposes a verified file save path from a secure context, the app waits for the save picker writer to close before replace can unlock. The export helper reports explicit checkpoint result states so the panel can distinguish verified save success, fallback download trigger, user cancellation, and hard failure without guessing from a boolean. When that browser capability is unavailable, the app falls back to a manual acknowledgment step after a standard export trigger and requires the operator to confirm the backup file exists on local disk before replace can arm. Second, the operator must arm replace and then execute it through a separate click with no timer-based expiry. Session-scoped undo remains available after a successful import, but it is not a durable backup boundary.
+## History behavior
 
-The automated verification posture is split cleanly. Playwright proves Chromium service worker registration. Vitest proves the update banner contract, including the always-mounted status region and the stalled-handoff recovery path. Real deployed update behavior remains a manual release check.
+History uses one data source with two presentation paths.
+
+- Desktop keeps the full 30-day grid with keyboard traversal
+- Narrow screens switch to week-paginated 7-day windows with a daily brief
+- The mobile path avoids shrinking the desktop matrix into unreadable noise
+
+This keeps the data model stable while changing the operator interface to match the device.
+
+## Persistence model
+
+IndexedDB through Dexie is the system of record.
+
+Important persistence characteristics:
+
+- Compound uniqueness is enforced on `[date+sectorId]`
+- Reads and writes route through guarded database operations
+- Closed or interrupted handles trigger bounded reopen attempts
+- Schema version changes close stale handles and force reload so upgrades do not sit blocked behind old tabs
+- Connection-drop and write-verification diagnostics are surfaced through the storage health model
+
+The app does not maintain a parallel client-state shadow store. Dexie is the persistence layer and the source of truth.
+
+## Daily write path
+
+The daily check-in path is designed to fail loudly instead of silently dropping state.
+
+1. `setDailyStatus()` opens a read-write Dexie transaction.
+2. The existing `[date+sectorId]` row is read.
+3. A new row is written or the existing row is deleted when the operator clears the state.
+4. After the transaction completes, the app performs a read-back verification against the expected state.
+5. If verification fails, the operator gets an explicit recovery message rather than a false success signal.
+
+This is not a claim of perfect durability. It is a claim that silent local write loss is treated as a defect surface and exposed to the operator.
+
+## Export, import, and recovery model
+
+Export and import are integrity-sensitive paths. The implementation is intentionally conservative.
+
+### Export
+
+- JSON export writes a versioned payload with metadata, entries, and a SHA-256 checksum
+- CSV export writes a flat record for review or spreadsheet use
+- Crash-state JSON export uses the same checksum envelope and can include crash diagnostics
+- The app records the last successful external backup timestamp in local storage for operator awareness
+
+### Import
+
+- Import preview validates structure before any write can stage
+- Large-file preview can move parsing to a worker to keep the main UI responsive
+- File size is capped and entry count is bounded
+- Legacy checksum-free payloads are allowed but flagged as unverified during preview
+- Merge and replace both compute the expected final state before commit
+- Replace requires a pre-replace backup checkpoint plus separate arm and execute actions
+
+### Commit verification
+
+Import writes are verified before the transaction is allowed to commit.
+
+1. The app builds the expected final entry set in memory
+2. The write transaction stages the replace or merge operation
+3. The transaction reads the resulting entry set back from IndexedDB
+4. If any mismatch exists, the transaction throws and IndexedDB keeps the pre-import state intact
+
+This is the repo's strongest integrity proof surface. It should be described precisely and without exaggeration.
+
+### Undo
+
+A successful import returns a session-scoped undo closure that restores the pre-import snapshot. This is a convenience recovery path for the current browser session. It is not a durable backup boundary.
+
+## Crash containment
+
+OpsNormal uses layered fault containment.
+
+- A root error boundary keeps the app from collapsing into a blank screen and preserves export access on the crash fallback
+- A section-level boundary isolates the history grid so a panel fault does not take Today, install, or export controls offline
+- The crash fallback includes a gated database reset path for malformed persistent data that causes repeat render faults
+
+The design goal is graceful degradation with user-visible recovery actions.
+
+## Storage durability model
+
+Browser-managed storage is treated as an operational risk, especially on Safari-family platforms.
+
+The storage layer currently:
+
+- Requests persistent storage when supported
+- Checks quota posture and persistence status
+- Distinguishes installed iPhone and iPad Home Screen mode from ordinary Safari tabs
+- Tracks connection drops, reconnect attempts, and write-verification results
+- Pins Chromium-family transactions to strict durability
+- Surfaces operator-facing durability messages in the UI
+
+This is mitigation, not a guarantee. Browser eviction, manual site-data clearing, profile deletion, quota pressure, or device loss can still destroy local records.
+
+## PWA and deployment truth
+
+OpsNormal is built with Vite, React 19, TypeScript, Tailwind CSS 4, Dexie 4, and `vite-plugin-pwa`.
+
+Deployment posture:
+
+- Static hosting on GitHub Pages
+- PWA manifest and service worker generated at build time
+- App shell cached for offline reopen after first successful load
+- Service worker update checks performed during long-lived sessions
+- Offline guard prevents pointless update checks while the browser reports the device offline
+- Update banner escalates to manual recovery guidance if waiting-worker handoff stalls
+
+The app is local-only, but it is not network-absent. Same-origin static hosting and service worker update traffic still exist.
+
+## Security posture
+
+The repo ships with a restrictive Content Security Policy in `index.html`.
+
+Current policy highlights:
+
+- `default-src 'none'`
+- `script-src 'self'`
+- `style-src 'self'`
+- `img-src 'self' data:`
+- `worker-src 'self'`
+- `connect-src 'self'`
+- `form-action 'none'`
+- `object-src 'none'`
+
+This supports the local-only trust boundary while still allowing same-origin PWA behavior.
+
+## Accessibility posture
+
+Accessibility is built into the UI contract.
+
+- Skip link to main content
+- Live regions that stay mounted with `aria-atomic`
+- Direct-select status controls with programmatic checked state
+- Desktop history keyboard navigation
+- Mobile history day selection and daily brief
+- Focus indicators designed to survive clipped control geometry
+- State encoding that does not rely on color alone
+
+## Verification posture
+
+The repo carries a stronger proof layer than most projects of this size.
+
+- CI runs lint, typecheck, unit and integration tests, Playwright end-to-end tests, and build validation
+- Current test inventory includes 19 unit suites, 2 integration suites, and 7 end-to-end specs
+- ADRs document architecture and trust-boundary decisions
+- The docs set includes a risk register, test plan, release checklist, and design token guide
+- CSP-sensitive runtime paths, crash export, import round-trip, PWA registration, mobile history, and storage behavior all have direct test coverage or explicit manual release checks
+
+## Known limits
+
+These are real limits, not marketing omissions.
+
+- Browser-local storage is not a backup system
+- Exported JSON and CSV files are user-managed files and should be treated as sensitive
+- The five-sector model is fixed in current scope
+- The history window is intentionally limited to the trailing 30 days
+- There is no cross-device sync
+- The app is not a medical device and does not provide medical or psychological advice
