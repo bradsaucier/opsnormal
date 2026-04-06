@@ -18,6 +18,9 @@ Before tagging a release:
 - [ ] README reflects current behavior
 - [ ] ADR index reflects current architecture
 - [ ] persistent storage request verified after a meaningful local save
+- [ ] storage durability indicator verified for install path, reconnect state, and write verification state
+- [ ] forced close recovery verified with bounded reopen and operator-visible guidance
+- [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
 - [ ] JSON and CSV export verified on live build
 - [ ] replace import verified with pre-import undo restore
 - [ ] replace import verified with transactional post-write validation and pre-import state preserved on forced failure
@@ -28,3 +31,4 @@ Before tagging a release:
 - [ ] sectional boundary shows fallback when history grid is artificially faulted
 - [ ] retry from crash fallback recovers cleanly
 - [ ] reload from crash fallback performs a full page reload
+- [ ] unrecoverable storage reconnect failure schedules a full page reload after diagnostics are surfaced
