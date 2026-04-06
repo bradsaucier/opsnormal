@@ -398,7 +398,6 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
                 setManualDeleteAcknowledged(event.currentTarget.checked);
               }}
               disabled={recoveryControlsDisabled || hasExported}
-              aria-label="Acknowledge local data will be permanently deleted"
               style={{ marginTop: '0.2rem' }}
             />
             <span>
