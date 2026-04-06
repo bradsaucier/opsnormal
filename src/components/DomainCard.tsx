@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
+import { type KeyboardEvent, useId, useRef, useState } from 'react';
 
 import { getStatusContent, getStatusLabel } from '../lib/status';
 import type { Sector, UiStatus } from '../types';
@@ -19,11 +19,6 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
   const radioRefs = useRef(new Map<UiStatus, HTMLButtonElement>());
   const [optimisticStatus, setOptimisticStatus] = useState<UiStatus | null>(null);
 
-  useEffect(() => {
-    if (!busy) {
-      setOptimisticStatus(null);
-    }
-  }, [busy]);
 
   const resolvedStatus = busy ? (optimisticStatus ?? status) : status;
   const statusLabel = getStatusLabel(resolvedStatus);
