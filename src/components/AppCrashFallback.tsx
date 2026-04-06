@@ -55,9 +55,13 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   async function handleJsonExport() {
     try {
       setBusyAction('json');
-      const { entries, skippedCount, storageDiagnostics } = await readCrashExportSnapshot();
+      const snapshot: CrashExportSnapshot = await readCrashExportSnapshot();
       const exportedAt = new Date().toISOString();
-      const payload = await createCrashJsonExport(entries, storageDiagnostics, exportedAt);
+      const payload: string = await createCrashJsonExport(
+        snapshot.entries,
+        snapshot.storageDiagnostics,
+        exportedAt
+      );
       downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
       setMessage(formatCrashExportMessage('JSON', snapshot.entries.length, snapshot.skippedCount));
@@ -243,18 +247,6 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
             Reload page
           </button>
         </div>
-
-        <p
-          style={{
-            marginTop: '2rem',
-            fontSize: '0.75rem',
-            lineHeight: '1.75',
-            color: '#52525b'
-          }}
-        >
-          If this fault survives retry and reload, export first, then clear the site data through
-          your browser settings before restoring from backup.
-        </p>
       </div>
     </div>
   );
