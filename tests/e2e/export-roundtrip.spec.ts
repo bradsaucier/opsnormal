@@ -1,10 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
-import { parseExportPayload } from '../helpers/exportPayload';
+import { parseExportPayloadDetails } from '../helpers/exportPayload';
 import type { JsonExportPayload } from '../../src/types';
 
-type ChecksumPayload = Parameters<typeof computeJsonExportChecksum>[0];
 type ExportPayload = JsonExportPayload;
 
 function requireDownloadPath(path: string | null): string {
@@ -13,15 +12,6 @@ function requireDownloadPath(path: string | null): string {
   }
 
   return path;
-}
-
-function toChecksumPayload(payload: ExportPayload): ChecksumPayload {
-  return {
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
-    entries: payload.entries
-  };
 }
 
 function normalizeExportPayload(payload: ExportPayload) {
@@ -107,7 +97,8 @@ test.describe('OpsNormal export recovery', () => {
 
     const firstDownloadPath = requireDownloadPath(await firstDownload.path());
     const firstRawText = await readLocalFileText(page, firstDownloadPath);
-    const firstPayload = parseExportPayload(firstRawText);
+    const firstParsed = parseExportPayloadDetails(firstRawText);
+    const firstPayload = firstParsed.payload;
 
     expect(firstPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
     expect(normalizeExportPayload(firstPayload).entries).toHaveLength(2);
@@ -137,15 +128,16 @@ test.describe('OpsNormal export recovery', () => {
 
       const secondDownloadPath = requireDownloadPath(await secondDownload.path());
       const secondRawText = await readLocalFileText(recoveryPage, secondDownloadPath);
-      const secondPayload = parseExportPayload(secondRawText);
+      const secondParsed = parseExportPayloadDetails(secondRawText);
+      const secondPayload = secondParsed.payload;
 
       expect(secondPayload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
       const firstRecomputedChecksum = await computeJsonExportChecksum(
-        toChecksumPayload(firstPayload)
+        firstParsed.rawChecksumPayload
       );
       const secondRecomputedChecksum = await computeJsonExportChecksum(
-        toChecksumPayload(secondPayload)
+        secondParsed.rawChecksumPayload
       );
 
       expect(firstPayload.checksum).toBe(firstRecomputedChecksum);
