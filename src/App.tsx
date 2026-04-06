@@ -15,6 +15,7 @@ import { formatStorageSummary } from './lib/storage';
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
+  const [announcement, setAnnouncement] = useState('');
   const { storageHealth, refreshStorageHealth } = useStorageHealth();
   const {
     needRefresh,
@@ -56,6 +57,16 @@ function App() {
     };
   }, [refreshCalendarWindow]);
 
+  const handleAnnouncement = useCallback((message: string) => {
+    setAnnouncement((currentMessage) => {
+      if (currentMessage.trimEnd() !== message) {
+        return message;
+      }
+
+      return currentMessage.endsWith(' ') ? message : `${message} `;
+    });
+  }, []);
+
   function reinforceLocalStorageDurability() {
     void refreshStorageHealth({ requestPersistence: true });
   }
@@ -64,34 +75,42 @@ function App() {
 
   return (
     <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
-      <main className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
+      <a className="ops-skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </div>
+
+      <main id="main-content" tabIndex={-1} className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
         <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
           <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.28em] text-emerald-300/90 uppercase">
-                Personal Readiness Tracker
-              </p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-white uppercase sm:text-4xl">
-                OpsNormal
-              </h1>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
-                A local-only mirror for daily balance across work or school, household,
-                relationships, body, and rest. No account. No cloud sync. No analytics layer.
-              </p>
-            </div>
-            <div className="clip-notched ops-notch-panel-outer bg-white/10 p-px text-right">
-              <div className="clip-notched ops-notch-panel-inner bg-black/25 px-4 py-3">
-              <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
-              <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
-                Local only
+              <div>
+                <p className="text-xs font-semibold tracking-[0.28em] text-emerald-300/90 uppercase">
+                  Personal Readiness Tracker
+                </p>
+                <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-white uppercase sm:text-4xl">
+                  OpsNormal
+                </h1>
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
+                  A local-only mirror for daily balance across work or school, household,
+                  relationships, body, and rest. No account. No cloud sync. No analytics layer.
+                </p>
               </div>
+              <div className="clip-notched ops-notch-panel-outer bg-white/10 p-px text-right">
+                <div className="clip-notched ops-notch-panel-inner bg-black/25 px-4 py-3">
+                  <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
+                  <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
+                    Local only
+                  </div>
                   <div className="mt-2 text-xs leading-5 text-zinc-400">
-                  {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+                    {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
           </header>
         </div>
 
@@ -110,6 +129,7 @@ function App() {
           todayKey={todayKey}
           onDateRollover={refreshCalendarWindow}
           onMeaningfulSave={reinforceLocalStorageDurability}
+          onAnnounce={handleAnnouncement}
         />
         <ErrorBoundary
           resetKeys={[historyKey, todayKey]}

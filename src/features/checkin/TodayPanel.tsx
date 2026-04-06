@@ -1,53 +1,60 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
 import { useEntriesForDate } from '../../db/hooks';
-import { cycleDailyStatus } from '../../db/appDb';
+import { setDailyStatus } from '../../db/appDb';
 import { formatDateKey, formatLongDate } from '../../lib/date';
 import { computeCompletionState, createEntryLookup, getUiStatus } from '../../lib/history';
 import { getStatusLabel } from '../../lib/status';
-import { SECTORS, type SectorId } from '../../types';
+import { SECTORS, type SectorId, type UiStatus } from '../../types';
 
 interface TodayPanelProps {
   todayKey: string;
   onDateRollover?: () => void;
   onMeaningfulSave?: () => void;
+  onAnnounce?: (message: string) => void;
 }
 
-export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: TodayPanelProps) {
+export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnounce }: TodayPanelProps) {
   const entries = useEntriesForDate(todayKey);
   const [busySectorId, setBusySectorId] = useState<SectorId | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState<string>('');
+  const [fallbackAnnouncement, setFallbackAnnouncement] = useState<string>('');
   const persistRequestedRef = useRef(false);
 
   const entryLookup = useMemo(() => createEntryLookup(entries), [entries]);
   const completion = useMemo(() => computeCompletionState(entries, todayKey), [entries, todayKey]);
 
-  useEffect(() => {
-    if (!announcement) {
-      return;
+  function announce(message: string) {
+    onAnnounce?.(message);
+
+    if (!onAnnounce) {
+      setFallbackAnnouncement((currentMessage) => {
+        if (currentMessage.trimEnd() !== message) {
+          return message;
+        }
+
+        return currentMessage.endsWith(' ') ? message : `${message} `;
+      });
     }
+  }
 
-    const timerId = window.setTimeout(() => setAnnouncement(''), 1500);
-    return () => window.clearTimeout(timerId);
-  }, [announcement]);
-
-  async function handleCycle(sectorId: SectorId) {
+  async function handleSelectStatus(sectorId: SectorId, nextStatus: UiStatus) {
     try {
       setErrorMessage(null);
       setBusySectorId(sectorId);
 
       const writeDateKey = formatDateKey();
-      const nextStatus = await cycleDailyStatus(writeDateKey, sectorId);
+      const savedStatus = await setDailyStatus(writeDateKey, sectorId, nextStatus);
 
       if (writeDateKey !== todayKey) {
         onDateRollover?.();
       }
+
       const sector = SECTORS.find((candidate) => candidate.id === sectorId);
       const sectorLabel = sector?.label ?? sectorId;
-      setAnnouncement(`${sectorLabel} set to ${getStatusLabel(nextStatus)}.`);
+      announce(`${sectorLabel} set to ${getStatusLabel(savedStatus)}.`);
 
       if (!persistRequestedRef.current) {
         persistRequestedRef.current = true;
@@ -77,9 +84,11 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: Today
         </div>
       }
     >
-      <p className="sr-only" aria-live="polite" aria-atomic="true" role="status">
-        {announcement}
-      </p>
+      {!onAnnounce ? (
+        <p className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+          {fallbackAnnouncement}
+        </p>
+      ) : null}
 
       {errorMessage ? (
         <div className="mb-4 clip-notched ops-notch-panel-outer bg-orange-500/30 p-px">
@@ -89,6 +98,12 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: Today
         </div>
       ) : null}
 
+      <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
+        <div className="clip-notched ops-notch-panel-inner bg-black/20 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
+          Select the state directly for each sector. Unmarked means no status recorded for the day. Nominal and degraded are deliberate check-ins, not automatic carry-forward.
+        </div>
+      </div>
+
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {SECTORS.map((sector) => (
           <DomainCard
@@ -96,7 +111,7 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave }: Today
             sector={sector}
             status={getUiStatus(entryLookup, todayKey, sector.id)}
             busy={busySectorId === sector.id}
-            onCycle={handleCycle}
+            onSelect={handleSelectStatus}
           />
         ))}
       </div>

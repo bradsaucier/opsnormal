@@ -2,13 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TodayPanel } from '../../src/features/checkin/TodayPanel';
+import type { DailyEntry } from '../../src/types';
 
 type UseEntriesForDate = typeof import('../../src/db/hooks')['useEntriesForDate'];
-type CycleDailyStatus = typeof import('../../src/db/appDb')['cycleDailyStatus'];
+type SetDailyStatus = typeof import('../../src/db/appDb')['setDailyStatus'];
 
-const { mockUseEntriesForDate, mockCycleDailyStatus } = vi.hoisted(() => ({
+const { mockUseEntriesForDate, mockSetDailyStatus } = vi.hoisted(() => ({
   mockUseEntriesForDate: vi.fn<UseEntriesForDate>(),
-  mockCycleDailyStatus: vi.fn<CycleDailyStatus>()
+  mockSetDailyStatus: vi.fn<SetDailyStatus>()
 }));
 
 vi.mock('../../src/db/hooks', () => ({
@@ -16,21 +17,88 @@ vi.mock('../../src/db/hooks', () => ({
 }));
 
 vi.mock('../../src/db/appDb', () => ({
-  cycleDailyStatus: mockCycleDailyStatus
+  setDailyStatus: mockSetDailyStatus
 }));
 
 describe('TodayPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     mockUseEntriesForDate.mockReturnValue([]);
-    mockCycleDailyStatus.mockResolvedValue('nominal');
+    mockSetDailyStatus.mockResolvedValue('nominal');
   });
 
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     mockUseEntriesForDate.mockReset();
-    mockCycleDailyStatus.mockReset();
+    mockSetDailyStatus.mockReset();
+  });
+
+  it('renders direct-select radio controls for each sector', () => {
+    render(<TodayPanel todayKey="2026-03-27" />);
+
+    expect(screen.getAllByRole('radio')).toHaveLength(15);
+    expect(screen.getByRole('radiogroup', { name: /work or school status/i })).toBeInTheDocument();
+  });
+
+  it('keeps the fallback live-region announcement mounted after a save', async () => {
+    render(<TodayPanel todayKey="2026-03-27" />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('radio', { name: /body nominal/i }));
+      await vi.runAllTimersAsync();
+    });
+
+    const liveRegion = screen.getByRole('status');
+    expect(liveRegion).toHaveTextContent(/body set to nominal/i);
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(liveRegion).toHaveTextContent(/body set to nominal/i);
+  });
+
+  it('maintains roving tabindex when arrow keys move between direct-select states', async () => {
+    let entries: DailyEntry[] = [];
+    let resolveWrite: ((status: 'nominal') => void) | null = null;
+
+    mockUseEntriesForDate.mockImplementation(() => entries);
+    mockSetDailyStatus.mockImplementation((dateKey, sectorId) => {
+      entries = [{
+        date: dateKey,
+        sectorId,
+        status: 'nominal',
+        updatedAt: '2026-03-27T12:00:00.000Z'
+      }];
+
+      return new Promise((resolve) => {
+        resolveWrite = resolve;
+      });
+    });
+
+    render(<TodayPanel todayKey="2026-03-27" />);
+
+    const workUnmarked = screen.getByRole('radio', { name: /work or school unmarked/i });
+    expect(workUnmarked).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: /work or school nominal/i })).toHaveAttribute('tabindex', '-1');
+
+    act(() => {
+      fireEvent.keyDown(workUnmarked, { key: 'ArrowRight' });
+    });
+
+    const workNominal = screen.getByRole('radio', { name: /work or school nominal/i });
+    expect(workNominal).toHaveFocus();
+    expect(workNominal).toHaveAttribute('aria-checked', 'true');
+    expect(workNominal).toBeDisabled();
+    expect(workNominal).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: /work or school unmarked/i })).toHaveAttribute('tabindex', '-1');
+
+    await act(async () => {
+      resolveWrite?.('nominal');
+      await Promise.resolve();
+    });
   });
 
   it('derives the write-time date key when the local day has rolled over', async () => {
@@ -43,11 +111,11 @@ describe('TodayPanel', () => {
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /work or school/i }));
+      fireEvent.click(screen.getByRole('radio', { name: /work or school nominal/i }));
       await vi.runAllTimersAsync();
     });
 
-    expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-28', 'work-school');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-28', 'work-school', 'nominal');
     expect(onDateRollover).toHaveBeenCalledTimes(1);
   });
 
@@ -59,11 +127,11 @@ describe('TodayPanel', () => {
     render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /body/i }));
+      fireEvent.click(screen.getByRole('radio', { name: /body nominal/i }));
       await vi.runAllTimersAsync();
     });
 
-    expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-27', 'body');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-27', 'body', 'nominal');
     expect(onDateRollover).not.toHaveBeenCalled();
   });
 
@@ -72,21 +140,21 @@ describe('TodayPanel', () => {
 
     const onDateRollover = vi.fn();
 
-    mockCycleDailyStatus.mockRejectedValue(new Error('Storage quota exceeded'));
+    mockSetDailyStatus.mockRejectedValue(new Error('Storage quota exceeded'));
 
     render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
 
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
-    const bodyButton = screen.getByRole('button', { name: /body/i });
+    const bodyNominalRadio = screen.getByRole('radio', { name: /body nominal/i });
 
     await act(async () => {
-      fireEvent.click(bodyButton);
+      fireEvent.click(bodyNominalRadio);
       await vi.runAllTimersAsync();
     });
 
-    expect(mockCycleDailyStatus).toHaveBeenCalledWith('2026-03-28', 'body');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-28', 'body', 'nominal');
     expect(onDateRollover).not.toHaveBeenCalled();
     expect(screen.getByText('Storage quota exceeded')).toBeInTheDocument();
-    expect(bodyButton).not.toBeDisabled();
+    expect(bodyNominalRadio).not.toBeDisabled();
   });
 });
