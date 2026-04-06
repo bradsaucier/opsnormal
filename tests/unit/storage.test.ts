@@ -8,7 +8,12 @@ import {
   hasAttemptedPersistentStorage,
   isDatabaseClosedError,
   isQuotaExceededError,
-  requestPersistentStorage
+  recordStorageConnectionDrop,
+  recordStorageReconnectFailure,
+  recordStorageReconnectSuccess,
+  recordStorageWriteVerification,
+  requestPersistentStorage,
+  resetStorageDurabilityDiagnostics
 } from '../../src/lib/storage';
 
 function setNavigatorStorage(storage: Partial<StorageManager> | undefined) {
@@ -51,6 +56,7 @@ function setNavigatorStandalone(standalone: boolean | undefined) {
 describe('storage helpers', () => {
   afterEach(() => {
     localStorage.clear();
+    resetStorageDurabilityDiagnostics();
     setNavigatorStorage(undefined);
     setUserAgent('Mozilla/5.0');
     setMatchMedia(false);
@@ -98,6 +104,7 @@ describe('storage helpers', () => {
     expect(health.persisted).toBe(true);
     expect(health.status).toBe('protected');
     expect(hasAttemptedPersistentStorage()).toBe(true);
+    expect(health.safari.persistAttempted).toBe(true);
   });
 
   it('builds protected storage health when persistence is already granted', async () => {
@@ -134,6 +141,7 @@ describe('storage helpers', () => {
 
     expect(health.status).toBe('warning');
     expect(health.message).toContain('Install to Home Screen');
+    expect(health.safari.installRecommended).toBe(true);
   });
 
   it('does not classify installed iPhone and iPad PWA mode as the same inactivity risk', () => {
@@ -145,6 +153,7 @@ describe('storage helpers', () => {
 
     expect(health.status).toBe('monitor');
     expect(health.message).toContain('Home Screen mode reduces Safari inactivity eviction risk');
+    expect(health.safari.standaloneMode).toBe(true);
   });
 
   it('keeps installed iPhone and iPad PWA messaging conservative when protection is granted', () => {
@@ -168,6 +177,38 @@ describe('storage helpers', () => {
     );
 
     expect(summary).toContain('Best-effort protection active');
+  });
+
+  it('surfaces reconnect and write verification diagnostics in storage health', () => {
+    recordStorageConnectionDrop();
+    recordStorageReconnectSuccess();
+    recordStorageWriteVerification('verified');
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+
+    expect(health.safari.connectionDropsDetected).toBe(1);
+    expect(health.safari.reconnectSuccesses).toBe(1);
+    expect(health.safari.lastVerificationResult).toBe('verified');
+    expect(formatStorageSummary(health)).toContain('Session reconnect events: 1.');
+  });
+
+  it('elevates storage health when reconnect recovery fails', () => {
+    recordStorageConnectionDrop();
+    recordStorageReconnectFailure(new Error('Connection to Indexed Database server lost'));
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, true, true);
+
+    expect(health.status).toBe('warning');
+    expect(health.message).toContain('reconnection failed');
+  });
+
+  it('elevates storage health when write verification mismatches', () => {
+    recordStorageWriteVerification('mismatch');
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, true, true);
+
+    expect(health.status).toBe('warning');
+    expect(health.message).toContain('write verification failed');
   });
 
   it('formats byte counts in human-readable form', () => {
