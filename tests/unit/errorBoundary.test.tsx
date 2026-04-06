@@ -10,12 +10,26 @@ import type { CrashExportSnapshot } from '../../src/lib/crashExport';
 
 const emptyCrashExportSnapshot: CrashExportSnapshot = {
   entries: [],
-  skippedCount: 0
+  skippedCount: 0,
+  storageDiagnostics: {
+    connectionDropsDetected: 0,
+    reconnectSuccesses: 0,
+    reconnectFailures: 0,
+    reconnectState: 'steady',
+    lastReconnectError: null,
+    persistAttempted: false,
+    persistGranted: false,
+    standaloneMode: false,
+    installRecommended: false,
+    webKitRisk: false,
+    lastVerificationResult: 'unknown',
+    lastVerifiedAt: null
+  }
 };
 
 const mocks = vi.hoisted(() => ({
-  readCrashExportSnapshot: vi.fn(() => Promise.resolve(emptyCrashExportSnapshot)),
-  createJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
+  readCrashExportSnapshot: vi.fn(),
+  createCrashJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
   createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
   downloadTextFile: vi.fn(),
   recordExportCompleted: vi.fn(),
@@ -27,7 +41,7 @@ vi.mock('../../src/lib/crashExport', () => ({
 }));
 
 vi.mock('../../src/lib/export', () => ({
-  createJsonExport: mocks.createJsonExport,
+  createCrashJsonExport: mocks.createCrashJsonExport,
   createCsvExport: mocks.createCsvExport,
   downloadTextFile: mocks.downloadTextFile,
   recordExportCompleted: mocks.recordExportCompleted
@@ -54,6 +68,7 @@ function CrashOnRender(): ReactElement {
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.readCrashExportSnapshot.mockResolvedValue(emptyCrashExportSnapshot);
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -134,7 +149,8 @@ describe('ErrorBoundary', () => {
   it('exports JSON from the crash fallback through an isolated export path', async () => {
     mocks.readCrashExportSnapshot.mockResolvedValueOnce({
       entries: [],
-      skippedCount: 0
+      skippedCount: 0,
+      storageDiagnostics: emptyCrashExportSnapshot.storageDiagnostics
     });
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
@@ -142,13 +158,13 @@ describe('ErrorBoundary', () => {
     await userEvent.click(screen.getByRole('button', { name: /export json/i }));
 
     expect(mocks.readCrashExportSnapshot).toHaveBeenCalledTimes(1);
-    expect(mocks.createJsonExport).toHaveBeenCalledTimes(1);
+    expect(mocks.createCrashJsonExport).toHaveBeenCalledTimes(1);
     expect(mocks.downloadTextFile).toHaveBeenCalledWith(
       'opsnormal-crash-export.json',
       '{"ok":true}',
       'application/json'
     );
-    expect(screen.getByText('JSON export complete. 0 entries recovered.')).toBeInTheDocument();
+    expect(screen.getByText('JSON export complete. 0 entries recovered. Crash diagnostics captured.')).toBeInTheDocument();
   });
 
   it('locks recovery controls while a crash export is running', async () => {
@@ -178,7 +194,8 @@ describe('ErrorBoundary', () => {
 
     resolveSnapshot?.({
       entries: [],
-      skippedCount: 0
+      skippedCount: 0,
+      storageDiagnostics: emptyCrashExportSnapshot.storageDiagnostics
     });
 
     await waitFor(() => {
@@ -199,7 +216,8 @@ describe('ErrorBoundary', () => {
           updatedAt: '2026-03-28T12:00:00.000Z'
         }
       ],
-      skippedCount: 2
+      skippedCount: 2,
+      storageDiagnostics: emptyCrashExportSnapshot.storageDiagnostics
     });
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
