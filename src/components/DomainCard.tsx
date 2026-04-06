@@ -1,32 +1,94 @@
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
+
+import { getStatusContent, getStatusLabel } from '../lib/status';
 import type { Sector, UiStatus } from '../types';
-import { getNextStatus, getStatusLabel } from '../lib/status';
 import { StatusBadge } from './StatusBadge';
 
 interface DomainCardProps {
   sector: Sector;
   status: UiStatus;
   busy?: boolean;
-  onCycle: (sectorId: Sector['id']) => Promise<void>;
+  onSelect: (sectorId: Sector['id'], status: UiStatus) => Promise<void>;
 }
 
-export function DomainCard({ sector, status, busy = false, onCycle }: DomainCardProps) {
-  const buttonText = busy ? 'SAVING' : 'CYCLE';
-  const statusLabel = getStatusLabel(status);
-  const nextStatusLabel = getStatusLabel(getNextStatus(status));
+const STATUS_OPTIONS: UiStatus[] = ['unmarked', 'nominal', 'degraded'];
+
+export function DomainCard({ sector, status, busy = false, onSelect }: DomainCardProps) {
+  const groupId = useId();
+  const hintId = `${groupId}-hint`;
+  const radioRefs = useRef(new Map<UiStatus, HTMLButtonElement>());
+  const [optimisticStatus, setOptimisticStatus] = useState<UiStatus | null>(null);
+
+  useEffect(() => {
+    if (!busy) {
+      setOptimisticStatus(null);
+    }
+  }, [busy]);
+
+  const resolvedStatus = busy ? (optimisticStatus ?? status) : status;
+  const statusLabel = getStatusLabel(resolvedStatus);
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
     : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-emerald-200/18 focus-within:bg-emerald-200/22 focus-within:ring-1 focus-within:ring-inset focus-within:ring-emerald-300/55';
 
+  function registerRadioRef(option: UiStatus, element: HTMLButtonElement | null) {
+    if (!element) {
+      radioRefs.current.delete(option);
+      return;
+    }
+
+    radioRefs.current.set(option, element);
+  }
+
+  function handleRadioKeyDown(event: KeyboardEvent<HTMLButtonElement>, optionIndex: number) {
+    if (busy) {
+      return;
+    }
+
+    let nextIndex: number | null = null;
+
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        return;
+      case 'ArrowRight':
+      case 'ArrowDown':
+        nextIndex = (optionIndex + 1) % STATUS_OPTIONS.length;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        nextIndex = (optionIndex - 1 + STATUS_OPTIONS.length) % STATUS_OPTIONS.length;
+        break;
+      case 'Home':
+        nextIndex = 0;
+        break;
+      case 'End':
+        nextIndex = STATUS_OPTIONS.length - 1;
+        break;
+      default:
+        break;
+    }
+
+    if (nextIndex === null) {
+      return;
+    }
+
+    event.preventDefault();
+    const nextStatus = STATUS_OPTIONS[nextIndex] ?? resolvedStatus;
+    const nextRadio = radioRefs.current.get(nextStatus);
+    nextRadio?.focus();
+
+    if (nextStatus !== resolvedStatus) {
+      setOptimisticStatus(nextStatus);
+      void onSelect(sector.id, nextStatus);
+    }
+  }
+
   return (
     <div className={shellClassName}>
-      <button
-        type="button"
-        onClick={() => void onCycle(sector.id)}
-        disabled={busy}
-        className="group clip-notched ops-notch-panel-inner flex min-h-[11.5rem] w-full flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%),var(--color-ops-surface-1)] p-5 text-left transition hover:bg-ops-surface-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70 disabled:hover:bg-ops-surface-1"
-        aria-label={`${sector.label}. Current state ${statusLabel}. Activate to change to ${nextStatusLabel}.`}
-      >
+      <div className="clip-notched ops-notch-panel-inner flex min-h-[13rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_28%),var(--color-ops-surface-1)] p-5 text-left">
         <div className="flex items-start justify-between gap-4">
           <div>
             <span className="text-xs font-semibold tracking-[0.24em] text-ops-text-muted uppercase">
@@ -37,14 +99,60 @@ export function DomainCard({ sector, status, busy = false, onCycle }: DomainCard
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">{sector.description}</p>
           </div>
-          <StatusBadge status={status} />
+          <StatusBadge status={resolvedStatus} />
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-ops-border-soft pt-4 text-xs tracking-[0.16em] text-ops-text-secondary uppercase">
-          <span>{buttonText}</span>
-          <span>{statusLabel}</span>
+        <div className="mt-5 border-t border-ops-border-soft pt-4">
+          <div className="flex items-center justify-between gap-3 text-xs tracking-[0.16em] text-ops-text-secondary uppercase">
+            <span>{busy ? 'SAVING' : 'DIRECT SELECT'}</span>
+            <span>{statusLabel}</span>
+          </div>
+
+          <p id={hintId} className="mt-3 text-xs leading-5 text-ops-text-secondary">
+            {busy
+              ? 'Saving local write. Stand by.'
+              : 'Choose a state directly. Arrow keys move inside the control group.'}
+          </p>
+
+          <div
+            role="radiogroup"
+            aria-label={`${sector.label} status`}
+            aria-describedby={hintId}
+            className="mt-3 grid grid-cols-3 gap-2"
+          >
+            {STATUS_OPTIONS.map((option, optionIndex) => {
+              const content = getStatusContent(option);
+              const isSelected = option === resolvedStatus;
+
+              return (
+                <button
+                  key={option}
+                  ref={(element) => registerRadioRef(option, element)}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  aria-label={`${sector.label} ${content.label}`}
+                  tabIndex={isSelected ? 0 : -1}
+                  disabled={busy}
+                  onClick={() => {
+                    setOptimisticStatus(option);
+                    void onSelect(sector.id, option);
+                  }}
+                  onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
+                  className={[
+                    'clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent disabled:cursor-wait disabled:opacity-70',
+                    isSelected
+                      ? `${content.classes} ring-2 ring-inset ring-ops-accent/60`
+                      : 'border-ops-border-soft bg-black/20 text-ops-text-secondary hover:bg-white/6'
+                  ].join(' ')}
+                >
+                  {content.shortLabel}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 }
