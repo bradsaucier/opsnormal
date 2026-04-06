@@ -17,7 +17,7 @@
 ### Uncontained React render fault
 - Risk: an uncaught render error can collapse the full UI into a blank screen at the worst possible moment.
 - Mitigation: root and section-level error boundaries contain faults, keep recovery actions visible, and preserve export access from the crash screen.
-- Residual limitation: if malformed or corrupted IndexedDB data crashes the app again during initial mount, the boundary can only contain the failure. The operator may still need to clear site data manually through browser developer tools before restoring from export.
+- Residual limitation: if malformed or corrupted IndexedDB data crashes the app again during initial mount, the boundary now exposes a self-service reset path. Database deletion can still fail when another tab keeps the store locked, so some cases may still require closing duplicate tabs or using browser site-data controls.
 
 ## Medium severity
 
@@ -39,7 +39,7 @@
 
 ### Render-fault crash loops from malformed persistent data
 - Risk: if IndexedDB contains data that causes a render error on every mount, the error boundary will fire on every retry and keep the app in a crash loop.
-- Mitigation: the crash fallback preserves export and reload. If the loop persists, the operator must clear site data through browser settings before restoring from backup.
+- Mitigation: the crash fallback preserves export, reload, and a gated self-service database reset path. If deletion is blocked by another open tab or browser-level storage failure, the operator may still need browser site-data controls before restoring from backup.
 
 ### Accessibility regressions
 - Risk: visual polish reduces contrast or state clarity.
