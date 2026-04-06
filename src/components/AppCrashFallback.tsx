@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { readCrashExportSnapshot } from '../lib/crashExport';
 import { getErrorMessage } from '../lib/errors';
 import {
+  createCrashJsonExport,
   createCsvExport,
-  createJsonExport,
   downloadTextFile,
   recordExportCompleted
 } from '../lib/export';
@@ -29,12 +29,13 @@ function formatCrashExportMessage(
   skippedCount: number
 ): string {
   const recoveredMessage = formatEntryCount(recoveredCount);
+  const diagnosticsSuffix = formatLabel === 'JSON' ? ' Crash diagnostics captured.' : '';
 
   if (skippedCount === 0) {
-    return `${formatLabel} export complete. ${recoveredMessage}`;
+    return `${formatLabel} export complete. ${recoveredMessage}${diagnosticsSuffix}`;
   }
 
-  return `${formatLabel} export complete. ${recoveredMessage} ${formatSkippedCount(skippedCount)}`;
+  return `${formatLabel} export complete. ${recoveredMessage} ${formatSkippedCount(skippedCount)}${diagnosticsSuffix}`;
 }
 
 export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
@@ -53,9 +54,9 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   async function handleJsonExport() {
     try {
       setBusyAction('json');
-      const { entries, skippedCount } = await readCrashExportSnapshot();
+      const { entries, skippedCount, storageDiagnostics } = await readCrashExportSnapshot();
       const exportedAt = new Date().toISOString();
-      const payload = await createJsonExport(entries, exportedAt);
+      const payload = await createCrashJsonExport(entries, storageDiagnostics, exportedAt);
       downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
       setMessage(formatCrashExportMessage('JSON', entries.length, skippedCount));
