@@ -12,7 +12,10 @@ export function useInstallPrompt() {
   const [standalone, setStandalone] = useState<boolean>(isStandaloneDisplayMode());
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const mediaQuery =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(display-mode: standalone)')
+        : null;
 
     function handlePrompt(event: Event) {
       event.preventDefault();
@@ -25,12 +28,12 @@ export function useInstallPrompt() {
 
     window.addEventListener('beforeinstallprompt', handlePrompt);
     window.addEventListener('appinstalled', handleDisplayModeChange);
-    mediaQuery.addEventListener('change', handleDisplayModeChange);
+    mediaQuery?.addEventListener('change', handleDisplayModeChange);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handlePrompt);
       window.removeEventListener('appinstalled', handleDisplayModeChange);
-      mediaQuery.removeEventListener('change', handleDisplayModeChange);
+      mediaQuery?.removeEventListener('change', handleDisplayModeChange);
     };
   }, []);
 

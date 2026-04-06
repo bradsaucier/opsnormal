@@ -1,6 +1,7 @@
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
+  type CrashStorageDiagnostics,
   type DailyEntry,
   type JsonExportPayload
 } from '../types';
@@ -30,6 +31,7 @@ interface ChecksumPayload {
   schemaVersion: JsonExportPayload['schemaVersion'];
   exportedAt: JsonExportPayload['exportedAt'];
   entries: JsonExportPayload['entries'];
+  crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
 }
 
 interface ExportSnapshotResult {
@@ -42,6 +44,16 @@ export type BackupCheckpointResult =
   | { kind: 'fallback-download-triggered'; fileName: string; exportedAt: string }
   | { kind: 'save-cancelled'; fileName: string; exportedAt: string; message: string }
   | { kind: 'save-failed'; fileName: string; exportedAt: string; message: string };
+
+function buildChecksumPayload(payload: ChecksumPayload): ChecksumPayload {
+  return {
+    app: payload.app,
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    entries: payload.entries,
+    ...(payload.crashDiagnostics ? { crashDiagnostics: payload.crashDiagnostics } : {})
+  };
+}
 
 export async function createJsonExport(
   entries: DailyEntry[],
@@ -56,7 +68,24 @@ export async function createJsonExport(
 
   const checksum = await computeJsonExportChecksum(payload);
 
-  return JSON.stringify({ ...payload, checksum }, null, 2);
+  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
+}
+
+export async function createCrashJsonExport(
+  entries: DailyEntry[],
+  crashDiagnostics: CrashStorageDiagnostics,
+  exportedAt: string = new Date().toISOString()
+): Promise<string> {
+  const payload: ChecksumPayload = {
+    app: OPSNORMAL_APP_NAME,
+    schemaVersion: EXPORT_SCHEMA_VERSION,
+    exportedAt,
+    entries,
+    crashDiagnostics
+  };
+  const checksum = await computeJsonExportChecksum(payload);
+
+  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
 }
 
 export function createCsvExport(entries: DailyEntry[]): string {
@@ -255,12 +284,7 @@ export async function exportCurrentEntriesAsCsv(): Promise<{
 
 export async function computeJsonExportChecksum(payload: ChecksumPayload): Promise<string> {
   const subtleCrypto = getSubtleCrypto();
-  const serialized = JSON.stringify({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
-    entries: payload.entries
-  });
+  const serialized = JSON.stringify(buildChecksumPayload(payload));
   const bytes = encodeChecksumInput(serialized);
   const digestInput = toDigestBuffer(bytes);
   const digest = await subtleCrypto.digest('SHA-256', digestInput);

@@ -1,5 +1,28 @@
 const STORAGE_PERSISTENCE_FLAG = 'opsnormal-storage-persistence-attempted';
+const STORAGE_DIAGNOSTICS_EVENT = 'opsnormal-storage-diagnostics-changed';
 const HIGH_STORAGE_USAGE_THRESHOLD = 0.8;
+
+export type StorageReconnectState = 'steady' | 'recovering' | 'failed';
+export type StorageWriteVerificationResult =
+  | 'unknown'
+  | 'verified'
+  | 'mismatch'
+  | 'failed';
+
+export interface SafariStorageDiagnostics {
+  connectionDropsDetected: number;
+  reconnectSuccesses: number;
+  reconnectFailures: number;
+  reconnectState: StorageReconnectState;
+  lastReconnectError: string | null;
+  persistAttempted: boolean;
+  persistGranted: boolean;
+  standaloneMode: boolean;
+  installRecommended: boolean;
+  webKitRisk: boolean;
+  lastVerificationResult: StorageWriteVerificationResult;
+  lastVerifiedAt: string | null;
+}
 
 export interface StorageHealth {
   persisted: boolean;
@@ -10,6 +33,7 @@ export interface StorageHealth {
   percentUsed: number | null;
   status: 'protected' | 'monitor' | 'warning' | 'unavailable';
   message: string;
+  safari: SafariStorageDiagnostics;
 }
 
 export interface StorageHealthOptions {
@@ -25,12 +49,40 @@ interface ErrorLike {
   cause?: unknown;
 }
 
+const storageDiagnosticsState: Omit<
+  SafariStorageDiagnostics,
+  'standaloneMode' | 'installRecommended' | 'webKitRisk' | 'persistAttempted' | 'persistGranted'
+> = {
+  connectionDropsDetected: 0,
+  reconnectSuccesses: 0,
+  reconnectFailures: 0,
+  reconnectState: 'steady',
+  lastReconnectError: null,
+  lastVerificationResult: 'unknown',
+  lastVerifiedAt: null
+};
+
 function getStorageManager(): StorageManager | null {
   if (typeof navigator === 'undefined' || !('storage' in navigator)) {
     return null;
   }
 
   return navigator.storage;
+}
+
+function emitStorageDiagnosticsChanged(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(STORAGE_DIAGNOSTICS_EVENT));
+}
+
+function updateStorageDiagnosticsState(
+  updater: (current: typeof storageDiagnosticsState) => void
+): void {
+  updater(storageDiagnosticsState);
+  emitStorageDiagnosticsChanged();
 }
 
 function recordPersistentStorageAttempt(): void {
@@ -43,6 +95,18 @@ function recordPersistentStorageAttempt(): void {
   } catch {
     // Ignore localStorage access failures.
   }
+}
+
+function resolveErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error;
+  }
+
+  return null;
 }
 
 function hasErrorMatch(
@@ -91,7 +155,7 @@ function isStandaloneIOSPwa(): boolean {
   return isIOSDevice() && isStandaloneDisplayMode();
 }
 
-function hasWebKitEvictionRisk(): boolean {
+export function hasWebKitEvictionRisk(): boolean {
   return isDesktopSafariBrowser() || (isIOSDevice() && !isStandaloneIOSPwa());
 }
 
@@ -109,6 +173,82 @@ function getProtectionSummary(persisted: boolean): string {
     : 'Protection active';
 }
 
+function buildStorageDiagnostics(persisted = false): SafariStorageDiagnostics {
+  const standaloneMode = isStandaloneDisplayMode();
+  const webKitRisk = hasWebKitEvictionRisk();
+
+  return {
+    ...storageDiagnosticsState,
+    persistAttempted: hasAttemptedPersistentStorage(),
+    persistGranted: persisted,
+    standaloneMode,
+    installRecommended: isIOSDevice() && !standaloneMode,
+    webKitRisk
+  };
+}
+
+export function subscribeToStorageDiagnostics(listener: () => void): () => void {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handler = () => listener();
+  window.addEventListener(STORAGE_DIAGNOSTICS_EVENT, handler);
+
+  return () => {
+    window.removeEventListener(STORAGE_DIAGNOSTICS_EVENT, handler);
+  };
+}
+
+export function getStorageDurabilityDiagnostics(persisted = false): SafariStorageDiagnostics {
+  return buildStorageDiagnostics(persisted);
+}
+
+export function recordStorageConnectionDrop(): void {
+  updateStorageDiagnosticsState((current) => {
+    current.connectionDropsDetected += 1;
+    current.reconnectState = 'recovering';
+    current.lastReconnectError = null;
+  });
+}
+
+export function recordStorageReconnectSuccess(): void {
+  updateStorageDiagnosticsState((current) => {
+    current.reconnectSuccesses += 1;
+    current.reconnectState = 'steady';
+    current.lastReconnectError = null;
+  });
+}
+
+export function recordStorageReconnectFailure(error: unknown): void {
+  updateStorageDiagnosticsState((current) => {
+    current.reconnectFailures += 1;
+    current.reconnectState = 'failed';
+    current.lastReconnectError = resolveErrorMessage(error);
+  });
+}
+
+export function recordStorageWriteVerification(
+  result: Exclude<StorageWriteVerificationResult, 'unknown'>
+): void {
+  updateStorageDiagnosticsState((current) => {
+    current.lastVerificationResult = result;
+    current.lastVerifiedAt = new Date().toISOString();
+  });
+}
+
+export function resetStorageDurabilityDiagnostics(): void {
+  updateStorageDiagnosticsState((current) => {
+    current.connectionDropsDetected = 0;
+    current.reconnectSuccesses = 0;
+    current.reconnectFailures = 0;
+    current.reconnectState = 'steady';
+    current.lastReconnectError = null;
+    current.lastVerificationResult = 'unknown';
+    current.lastVerifiedAt = null;
+  });
+}
+
 export function canUseStorageApi(): boolean {
   return getStorageManager() !== null;
 }
@@ -117,10 +257,12 @@ export async function requestPersistentStorage(): Promise<boolean> {
   const storageManager = getStorageManager();
 
   if (!storageManager?.persist) {
+    emitStorageDiagnosticsChanged();
     return false;
   }
 
   recordPersistentStorageAttempt();
+  emitStorageDiagnosticsChanged();
 
   try {
     return await storageManager.persist();
@@ -199,11 +341,23 @@ export function createStorageHealth(
   const standaloneIOSPwa = isStandaloneIOSPwa();
   const webKitEvictionRisk = hasWebKitEvictionRisk();
   const iOSNotInstalledRisk = isIOSDevice() && !standaloneIOSPwa;
+  const diagnostics = buildStorageDiagnostics(persisted);
 
   let status: StorageHealth['status'];
   let message: string;
 
-  if (persisted) {
+  if (diagnostics.reconnectState === 'failed') {
+    status = 'warning';
+    message =
+      'Local database reconnection failed. Reload the app, confirm the last visible check-in, and export before further edits.';
+  } else if (
+    diagnostics.lastVerificationResult === 'mismatch' ||
+    diagnostics.lastVerificationResult === 'failed'
+  ) {
+    status = 'warning';
+    message =
+      'Recent local write verification failed. Confirm the latest check-in, export now, then reload before continuing.';
+  } else if (persisted) {
     status = 'protected';
 
     if (iOSNotInstalledRisk) {
@@ -253,6 +407,11 @@ export function createStorageHealth(
     }
   }
 
+  if (diagnostics.reconnectState === 'recovering' && status !== 'warning') {
+    status = 'monitor';
+    message = 'Recent local database interruption detected. Recovery is in progress. Confirm the latest check-in and export routinely.';
+  }
+
   return {
     persisted,
     persistenceAvailable,
@@ -261,7 +420,8 @@ export function createStorageHealth(
     quotaBytes,
     percentUsed,
     status,
-    message
+    message,
+    safari: diagnostics
   };
 }
 
@@ -291,12 +451,16 @@ export function formatStorageHint(estimate: StorageEstimate | null, persisted: b
 
 export function formatStorageSummary(storageHealth: StorageHealth): string {
   const protectionSummary = getProtectionSummary(storageHealth.persisted);
+  const reconnectSuffix =
+    storageHealth.safari.connectionDropsDetected > 0
+      ? ` Session reconnect events: ${storageHealth.safari.connectionDropsDetected}.`
+      : '';
 
   if (storageHealth.usageBytes !== null && storageHealth.quotaBytes !== null) {
-    return `${protectionSummary}. ${formatBytes(storageHealth.usageBytes)} used of ${formatBytes(storageHealth.quotaBytes)} quota.`;
+    return `${protectionSummary}. ${formatBytes(storageHealth.usageBytes)} used of ${formatBytes(storageHealth.quotaBytes)} quota.${reconnectSuffix}`;
   }
 
-  return `${protectionSummary}. Quota telemetry unavailable.`;
+  return `${protectionSummary}. Quota telemetry unavailable.${reconnectSuffix}`;
 }
 
 export function isQuotaExceededError(error: unknown): boolean {
@@ -350,8 +514,13 @@ export function isStandaloneDisplayMode(): boolean {
     return false;
   }
 
+  const matchMediaSupported = typeof window.matchMedia === 'function';
+  const displayModeStandalone = matchMediaSupported
+    ? window.matchMedia('(display-mode: standalone)').matches
+    : false;
+
   return (
-    window.matchMedia('(display-mode: standalone)').matches ||
+    displayModeStandalone ||
     (typeof navigator !== 'undefined' &&
       'standalone' in navigator &&
       Boolean((navigator as Navigator & { standalone?: boolean }).standalone))

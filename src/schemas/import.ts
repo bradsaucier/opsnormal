@@ -13,6 +13,22 @@ const EntryStatusSchema = z.enum(['nominal', 'degraded']);
 const ChecksumSchema = z
   .string()
   .regex(/^[a-f0-9]{64}$/, 'Checksum must be a 64-character lowercase SHA-256 hex digest.');
+const CrashDiagnosticsSchema = z
+  .object({
+    connectionDropsDetected: z.number().int().min(0),
+    reconnectSuccesses: z.number().int().min(0),
+    reconnectFailures: z.number().int().min(0),
+    reconnectState: z.enum(['steady', 'recovering', 'failed']),
+    lastReconnectError: z.string().nullable(),
+    persistAttempted: z.boolean(),
+    persistGranted: z.boolean(),
+    standaloneMode: z.boolean(),
+    installRecommended: z.boolean(),
+    webKitRisk: z.boolean(),
+    lastVerificationResult: z.enum(['unknown', 'verified', 'mismatch', 'failed']),
+    lastVerifiedAt: z.string().datetime({ offset: true }).nullable()
+  })
+  .strict();
 
 export const DailyEntrySchema = z
   .object({
@@ -30,7 +46,8 @@ export const JsonImportSchema = z
     schemaVersion: z.literal(EXPORT_SCHEMA_VERSION),
     exportedAt: z.string().datetime({ offset: true }),
     entries: z.array(DailyEntrySchema).max(10000),
-    checksum: ChecksumSchema.optional()
+    checksum: ChecksumSchema.optional(),
+    crashDiagnostics: CrashDiagnosticsSchema.optional()
   })
   .strict()
   .superRefine((value, context) => {

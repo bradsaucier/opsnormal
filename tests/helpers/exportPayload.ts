@@ -16,6 +16,7 @@ function buildRawChecksumPayload(parsed: unknown, payload: JsonExportPayload): C
 
   const parsedRecord = parsed as Record<string, unknown>;
   const rawEntries = parsedRecord.entries;
+  const rawCrashDiagnostics = parsedRecord.crashDiagnostics;
 
   if (!Array.isArray(rawEntries)) {
     throw new Error('Export payload entries must be an array.');
@@ -25,7 +26,12 @@ function buildRawChecksumPayload(parsed: unknown, payload: JsonExportPayload): C
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
-    entries: rawEntries as ChecksumPayload['entries']
+    entries: rawEntries as ChecksumPayload['entries'],
+    ...(rawCrashDiagnostics && typeof rawCrashDiagnostics === 'object'
+      ? {
+          crashDiagnostics: rawCrashDiagnostics as NonNullable<ChecksumPayload['crashDiagnostics']>
+        }
+      : {})
   };
 }
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   getStorageHealth,
+  subscribeToStorageDiagnostics,
   type StorageHealth,
   type StorageHealthOptions
 } from '../lib/storage';
@@ -35,11 +36,13 @@ export function useStorageHealth(): UseStorageHealthResult {
       }
     }
 
+    const unsubscribeDiagnostics = subscribeToStorageDiagnostics(handleForegroundRefresh);
     const intervalId = window.setInterval(handleForegroundRefresh, 5 * 60 * 1000);
     window.addEventListener('focus', handleForegroundRefresh);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      unsubscribeDiagnostics();
       window.clearTimeout(initialRefreshId);
       window.clearInterval(intervalId);
       window.removeEventListener('focus', handleForegroundRefresh);

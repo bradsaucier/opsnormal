@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { readCrashExportSnapshot } from '../lib/crashExport';
 import { getErrorMessage } from '../lib/errors';
 import {
+  createCrashJsonExport,
   createCsvExport,
-  createJsonExport,
   downloadTextFile,
   recordExportCompleted
 } from '../lib/export';
@@ -30,12 +30,13 @@ function formatCrashExportMessage(
   skippedCount: number
 ): string {
   const recoveredMessage = formatEntryCount(recoveredCount);
+  const diagnosticsSuffix = formatLabel === 'JSON' ? ' Crash diagnostics captured.' : '';
 
   if (skippedCount === 0) {
-    return `${formatLabel} export complete. ${recoveredMessage}`;
+    return `${formatLabel} export complete. ${recoveredMessage}${diagnosticsSuffix}`;
   }
 
-  return `${formatLabel} export complete. ${recoveredMessage} ${formatSkippedCount(skippedCount)}`;
+  return `${formatLabel} export complete. ${recoveredMessage} ${formatSkippedCount(skippedCount)}${diagnosticsSuffix}`;
 }
 
 export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
@@ -56,7 +57,11 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       setBusyAction('json');
       const snapshot: CrashExportSnapshot = await readCrashExportSnapshot();
       const exportedAt = new Date().toISOString();
-      const payload: string = await createJsonExport(snapshot.entries, exportedAt);
+      const payload: string = await createCrashJsonExport(
+        snapshot.entries,
+        snapshot.storageDiagnostics,
+        exportedAt
+      );
       downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
       setMessage(formatCrashExportMessage('JSON', snapshot.entries.length, snapshot.skippedCount));
@@ -242,18 +247,6 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
             Reload page
           </button>
         </div>
-
-        <p
-          style={{
-            marginTop: '2rem',
-            fontSize: '0.75rem',
-            lineHeight: '1.75',
-            color: '#52525b'
-          }}
-        >
-          If this fault survives retry and reload, export first, then clear the site data through
-          your browser settings before restoring from backup.
-        </p>
       </div>
     </div>
   );

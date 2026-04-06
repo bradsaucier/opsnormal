@@ -23,7 +23,7 @@
 
 ### Safari IndexedDB connection interruption
 - Risk: browser or WebKit faults can close the IndexedDB connection mid-session.
-- Mitigation: monitor Dexie close events, reopen the database before the next operation, and return a direct recovery message if the connection cannot be restored cleanly.
+- Mitigation: monitor Dexie close events, retry bounded reopen with operator-visible diagnostics, verify the next critical write, and schedule a full reload if the connection cannot be restored cleanly.
 
 ### Multi-tab schema upgrade blocking
 - Risk: one tab can hold an old IndexedDB connection open and block a schema upgrade in a newer tab.

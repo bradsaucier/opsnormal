@@ -88,6 +88,7 @@ interface RawChecksumPayload {
   schemaVersion: JsonExportPayload['schemaVersion'];
   exportedAt: JsonExportPayload['exportedAt'];
   entries: JsonExportPayload['entries'];
+  crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
   checksum?: JsonExportPayload['checksum'];
 }
 
@@ -103,7 +104,8 @@ export async function verifyExportChecksum(
     app: rawPayload.app,
     schemaVersion: rawPayload.schemaVersion,
     exportedAt: rawPayload.exportedAt,
-    entries: rawPayload.entries
+    entries: rawPayload.entries,
+    crashDiagnostics: rawPayload.crashDiagnostics
   });
 
   if (computedChecksum !== validatedPayload.checksum) {

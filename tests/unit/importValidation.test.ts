@@ -134,6 +134,74 @@ describe('shared import validation', () => {
     );
   });
 
+
+  it('accepts a payload with optional crash diagnostics', async () => {
+    const payload = buildPayload({
+      crashDiagnostics: {
+        connectionDropsDetected: 1,
+        reconnectSuccesses: 1,
+        reconnectFailures: 0,
+        reconnectState: 'steady',
+        lastReconnectError: null,
+        persistAttempted: true,
+        persistGranted: false,
+        standaloneMode: false,
+        installRecommended: true,
+        webKitRisk: true,
+        lastVerificationResult: 'verified',
+        lastVerifiedAt: '2026-03-28T12:00:00.000Z'
+      }
+    });
+    payload.checksum = await computeJsonExportChecksum({
+      app: payload.app,
+      schemaVersion: payload.schemaVersion,
+      exportedAt: payload.exportedAt,
+      entries: payload.entries,
+      crashDiagnostics: payload.crashDiagnostics
+    });
+
+    const parsed = await parseImportPayload(JSON.stringify(payload));
+
+    expect(parsed.crashDiagnostics?.connectionDropsDetected).toBe(1);
+    expect(parsed.checksum).toBe(payload.checksum);
+  });
+
+  it('rejects a payload when crash diagnostics are modified after checksum generation', async () => {
+    const payload = buildPayload({
+      crashDiagnostics: {
+        connectionDropsDetected: 1,
+        reconnectSuccesses: 1,
+        reconnectFailures: 0,
+        reconnectState: 'steady',
+        lastReconnectError: null,
+        persistAttempted: true,
+        persistGranted: false,
+        standaloneMode: false,
+        installRecommended: true,
+        webKitRisk: true,
+        lastVerificationResult: 'verified',
+        lastVerifiedAt: '2026-03-28T12:00:00.000Z'
+      }
+    });
+
+    payload.checksum = await computeJsonExportChecksum({
+      app: payload.app,
+      schemaVersion: payload.schemaVersion,
+      exportedAt: payload.exportedAt,
+      entries: payload.entries,
+      crashDiagnostics: payload.crashDiagnostics
+    });
+
+    payload.crashDiagnostics = {
+      ...payload.crashDiagnostics!,
+      reconnectFailures: 1
+    };
+
+    await expect(parseImportPayload(JSON.stringify(payload))).rejects.toThrow(
+      'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
+    );
+  });
+
   it('accepts legacy payloads without a checksum', async () => {
     const legacyPayload = buildPayload();
     delete legacyPayload.checksum;

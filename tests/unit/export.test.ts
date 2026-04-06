@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   computeJsonExportChecksum,
+  createCrashJsonExport,
   createCsvExport,
   createJsonExport,
   formatLastExportCompletedAt
@@ -19,6 +20,21 @@ const sampleEntries: DailyEntry[] = [
     updatedAt: '2026-03-27T12:00:00.000Z'
   }
 ];
+
+const sampleCrashDiagnostics = {
+  connectionDropsDetected: 1,
+  reconnectSuccesses: 1,
+  reconnectFailures: 0,
+  reconnectState: 'steady' as const,
+  lastReconnectError: null,
+  persistAttempted: true,
+  persistGranted: false,
+  standaloneMode: false,
+  installRecommended: true,
+  webKitRisk: true,
+  lastVerificationResult: 'verified' as const,
+  lastVerifiedAt: '2026-03-28T10:11:12.000Z'
+};
 
 describe('export helpers', () => {
   afterEach(() => {
@@ -44,6 +60,18 @@ describe('export helpers', () => {
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
   });
 
+  it('creates a crash json payload with embedded diagnostics', async () => {
+    const exportedAt = '2026-03-28T10:11:12.000Z';
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const parsed = JSON.parse(json) as {
+      app: string;
+      crashDiagnostics: typeof sampleCrashDiagnostics;
+    };
+
+    expect(parsed.app).toBe(OPSNORMAL_APP_NAME);
+    expect(parsed.crashDiagnostics).toEqual(sampleCrashDiagnostics);
+  });
+
   it('produces output that passes import validation', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
     const json = await createJsonExport(sampleEntries, exportedAt);
@@ -51,6 +79,38 @@ describe('export helpers', () => {
 
     expect(parsed.entries).toEqual(sampleEntries);
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('keeps crash export payloads importable by ignoring optional diagnostics', async () => {
+    const exportedAt = '2026-03-28T10:11:12.000Z';
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const parsed = await parseImportPayload(json);
+
+    expect(parsed.entries).toEqual(sampleEntries);
+    expect(parsed.crashDiagnostics).toEqual(sampleCrashDiagnostics);
+  });
+
+  it('covers crash diagnostics in the checksum envelope', async () => {
+    const exportedAt = '2026-03-28T10:11:12.000Z';
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const parsed = JSON.parse(json) as {
+      app: typeof OPSNORMAL_APP_NAME;
+      schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+      exportedAt: string;
+      entries: DailyEntry[];
+      checksum: string;
+      crashDiagnostics: typeof sampleCrashDiagnostics;
+    };
+
+    const recomputedChecksum = await computeJsonExportChecksum({
+      app: parsed.app,
+      schemaVersion: parsed.schemaVersion,
+      exportedAt: parsed.exportedAt,
+      entries: parsed.entries,
+      crashDiagnostics: parsed.crashDiagnostics
+    });
+
+    expect(parsed.checksum).toBe(recomputedChecksum);
   });
 
   it('includes a checksum that matches recomputation', async () => {

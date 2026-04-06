@@ -11,17 +11,20 @@ import {
   readCrashExportSnapshot,
   readEntriesForCrashExport
 } from '../../src/lib/crashExport';
+import { resetStorageDurabilityDiagnostics } from '../../src/lib/storage';
 
 const TEST_DATE_KEY = '2026-03-28';
 const TEST_UPDATED_AT = '2026-03-28T12:00:00.000Z';
 
 describe('crash export isolation', () => {
   beforeEach(async () => {
+    resetStorageDurabilityDiagnostics();
     db.close();
     await Dexie.delete(OPSNORMAL_DB_NAME);
   });
 
   afterEach(async () => {
+    resetStorageDurabilityDiagnostics();
     db.close();
     await Dexie.delete(OPSNORMAL_DB_NAME);
   });
@@ -34,6 +37,7 @@ describe('crash export isolation', () => {
 
     expect(snapshot.skippedCount).toBe(0);
     expect(snapshot.entries).toHaveLength(2);
+    expect(snapshot.storageDiagnostics.lastVerificationResult).toBe('verified');
     expect(
       snapshot.entries.map((entry) => ({
         date: entry.date,
