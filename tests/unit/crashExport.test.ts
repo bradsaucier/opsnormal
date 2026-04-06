@@ -19,7 +19,7 @@ const TEST_UPDATED_AT = '2026-03-28T12:00:00.000Z';
 
 describe('crash export isolation', () => {
   beforeEach(async () => {
-    vi.useFakeTimers();
+    vi.useRealTimers();
     resetStorageDurabilityDiagnostics();
     db.close();
     await Dexie.delete(OPSNORMAL_DB_NAME);
@@ -27,7 +27,6 @@ describe('crash export isolation', () => {
 
   afterEach(async () => {
     vi.restoreAllMocks();
-    vi.runOnlyPendingTimers();
     vi.useRealTimers();
     resetStorageDurabilityDiagnostics();
     db.close();
@@ -125,6 +124,7 @@ describe('crash export isolation', () => {
 
 
   it('fails deterministically when database deletion stays blocked past the timeout window', async () => {
+    vi.useFakeTimers();
     vi.spyOn(Dexie, 'delete').mockImplementationOnce(
       () => new Promise<void>(() => undefined)
     );
