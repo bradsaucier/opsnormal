@@ -37,6 +37,21 @@ function normalizeExportPayload(payload: ExportPayload) {
   };
 }
 
+
+function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+  return page.getByRole('radio', {
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+  });
+}
+
+async function expectSectorStatus(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+) {
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+}
+
 async function readLocalFileText(page: Page, filePath: string): Promise<string> {
   await page.evaluate(() => {
     if (document.querySelector('[data-testid="playwright-local-file-reader"]')) {
@@ -74,15 +89,16 @@ test.describe('OpsNormal export recovery', () => {
   }) => {
     await page.goto('/');
 
-    const workButton = page.getByRole('button', { name: /^Work or School\. Current state/i });
-    const bodyButton = page.getByRole('button', { name: /^Body\. Current state/i });
+    const workNominal = sectorRadio(page, 'Work or School', 'nominal');
+    const workDegraded = sectorRadio(page, 'Work or School', 'degraded');
+    const bodyNominal = sectorRadio(page, 'Body', 'nominal');
 
-    await workButton.click();
-    await workButton.click();
-    await bodyButton.click();
-
-    await expect(workButton).toContainText('DEGRADED');
-    await expect(bodyButton).toContainText('NOMINAL');
+    await workNominal.click();
+    await expectSectorStatus(page, 'Work or School', 'nominal');
+    await workDegraded.click();
+    await expectSectorStatus(page, 'Work or School', 'degraded');
+    await bodyNominal.click();
+    await expectSectorStatus(page, 'Body', 'nominal');
 
     const firstDownloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export JSON' }).click();
@@ -113,12 +129,8 @@ test.describe('OpsNormal export recovery', () => {
       await expect(recoveryPage.getByText(/integrity verified/i)).toBeVisible();
       await recoveryPage.getByRole('button', { name: /confirm merge import/i }).click();
 
-      await expect(
-        recoveryPage.getByRole('button', { name: /^Work or School\. Current state/i })
-      ).toContainText('DEGRADED');
-      await expect(
-        recoveryPage.getByRole('button', { name: /^Body\. Current state/i })
-      ).toContainText('NOMINAL');
+      await expectSectorStatus(recoveryPage, 'Work or School', 'degraded');
+      await expectSectorStatus(recoveryPage, 'Body', 'nominal');
 
       const secondDownloadPromise = recoveryPage.waitForEvent('download');
       await recoveryPage.getByRole('button', { name: 'Export JSON' }).click();
