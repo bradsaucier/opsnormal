@@ -13,3 +13,9 @@ test-results/
 Thumbs.db
 *.tsbuildinfo
 vite.config.js.timestamp-*
+/playwright.config.js
+/playwright.config.d.ts
+/vite.config.js
+/vite.config.d.ts
+/vitest.config.js
+/vitest.config.d.ts
