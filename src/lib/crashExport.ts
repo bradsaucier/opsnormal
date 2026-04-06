@@ -2,11 +2,13 @@ import Dexie from 'dexie';
 
 import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from '../db/schema';
 import { DailyEntrySchema } from '../schemas/import';
-import type { DailyEntry } from '../types';
+import type { CrashStorageDiagnostics, DailyEntry } from '../types';
+import { getStorageDurabilityDiagnostics, isPersistentStorageGranted } from './storage';
 
 export interface CrashExportSnapshot {
   entries: DailyEntry[];
   skippedCount: number;
+  storageDiagnostics: CrashStorageDiagnostics;
 }
 
 function compareEntries(left: DailyEntry, right: DailyEntry): number {
@@ -15,7 +17,7 @@ function compareEntries(left: DailyEntry, right: DailyEntry): number {
   return leftKey.localeCompare(rightKey);
 }
 
-function sanitizeCrashExportEntries(rawEntries: unknown[]): CrashExportSnapshot {
+function sanitizeCrashExportEntries(rawEntries: unknown[]): Pick<CrashExportSnapshot, 'entries' | 'skippedCount'> {
   const entries: DailyEntry[] = [];
   let skippedCount = 0;
 
@@ -44,22 +46,24 @@ function sanitizeCrashExportEntries(rawEntries: unknown[]): CrashExportSnapshot 
   };
 }
 
-/**
- * Read all crash-recoverable entries using a fresh, isolated Dexie connection.
- *
- * This function is used only by the crash fallback to export data
- * when the app has faulted. It avoids the main db singleton because
- * that instance may have tainted connection state from the crash.
- *
- * Malformed rows are skipped so recoverable records can still be exported.
- */
+async function readCrashStorageDiagnostics(): Promise<CrashStorageDiagnostics> {
+  const persisted = await isPersistentStorageGranted();
+  return getStorageDurabilityDiagnostics(persisted);
+}
+
 export async function readCrashExportSnapshot(): Promise<CrashExportSnapshot> {
   const tempDb = new Dexie(OPSNORMAL_DB_NAME);
   applyOpsNormalDbSchema(tempDb);
 
   try {
     const rawEntries = (await tempDb.table('dailyEntries').toArray()) as unknown[];
-    return sanitizeCrashExportEntries(rawEntries);
+    const snapshot = sanitizeCrashExportEntries(rawEntries);
+    const storageDiagnostics = await readCrashStorageDiagnostics();
+
+    return {
+      ...snapshot,
+      storageDiagnostics
+    };
   } finally {
     tempDb.close();
   }
