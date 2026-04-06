@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
+import { parseExportPayload } from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
@@ -80,7 +81,7 @@ async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum = await computeJsonExportChecksum({
+  const recomputedChecksum: string = await computeJsonExportChecksum({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
@@ -171,9 +172,7 @@ async function exportCrashJson(page: Page): Promise<ImportPayload> {
   const download = await downloadPromise;
   const downloadPath = requireDownloadPath(await download.path());
   const rawText = await readLocalFileText(downloadPath);
-  const payload = JSON.parse(rawText) as ImportPayload;
-
-  return payload;
+  return parseExportPayload(rawText);
 }
 
 async function exportCrashCsv(page: Page): Promise<string> {
