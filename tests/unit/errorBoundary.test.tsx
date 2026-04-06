@@ -236,7 +236,6 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText('CSV export complete. 1 entry recovered. 2 malformed rows skipped.')).toBeInTheDocument();
   });
 
-
   it('keeps clear-data reset locked until export or explicit acknowledgment unlocks it', async () => {
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
@@ -258,6 +257,7 @@ describe('ErrorBoundary', () => {
     const acknowledgment = screen.getByRole('checkbox', {
       name: /i understand this will permanently delete local data/i
     });
+
     await user.click(acknowledgment);
 
     const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
@@ -404,6 +404,7 @@ describe('SectionCrashFallback', () => {
 
   it('calls onRetry when retry is clicked', async () => {
     const onRetry = vi.fn();
+    const user = userEvent.setup();
 
     render(
       <SectionCrashFallback
