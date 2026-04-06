@@ -49,6 +49,21 @@ async function readLocalFileText(filePath: string): Promise<string> {
   return await readFile(filePath, 'utf8');
 }
 
+
+function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+  return page.getByRole('radio', {
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+  });
+}
+
+async function expectSectorStatus(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+) {
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+}
+
 function normalizeEntries(entries: JsonExportPayload['entries']): CrashEntry[] {
   return [...entries]
     .map((entry) => ({
@@ -78,16 +93,17 @@ async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise
 async function seedCrashExportEntries(page: Page): Promise<void> {
   await page.goto('/');
 
-  const workButton = page.getByRole('button', { name: /work or school/i });
-  const restButton = page.getByRole('button', { name: /^rest/i });
+  const workNominal = sectorRadio(page, 'Work or School', 'nominal');
+  const restNominal = sectorRadio(page, 'Rest', 'nominal');
+  const restDegraded = sectorRadio(page, 'Rest', 'degraded');
 
-  await workButton.click();
-  await expect(workButton).toContainText('NOMINAL');
+  await workNominal.click();
+  await expectSectorStatus(page, 'Work or School', 'nominal');
 
-  await restButton.click();
-  await expect(restButton).toContainText('NOMINAL');
-  await restButton.click();
-  await expect(restButton).toContainText('DEGRADED');
+  await restNominal.click();
+  await expectSectorStatus(page, 'Rest', 'nominal');
+  await restDegraded.click();
+  await expectSectorStatus(page, 'Rest', 'degraded');
 }
 
 async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
@@ -218,12 +234,8 @@ test.describe('OpsNormal crash export recovery', () => {
       await importPage.goto('/');
       await importCrashJsonPayload(importPage, JSON.stringify(payload));
 
-      await expect(
-        importPage.getByRole('button', { name: /^Work or School\. Current state/i })
-      ).toContainText('NOMINAL');
-      await expect(
-        importPage.getByRole('button', { name: /^Rest\. Current state/i })
-      ).toContainText('DEGRADED');
+      await expectSectorStatus(importPage, 'Work or School', 'nominal');
+      await expectSectorStatus(importPage, 'Rest', 'degraded');
     } finally {
       await importContext.close();
     }
@@ -253,12 +265,8 @@ test.describe('OpsNormal crash export recovery', () => {
       await importPage.goto('/');
       await importCrashJsonPayload(importPage, JSON.stringify(payload));
 
-      await expect(
-        importPage.getByRole('button', { name: /^Work or School\. Current state/i })
-      ).toContainText('NOMINAL');
-      await expect(
-        importPage.getByRole('button', { name: /^Rest\. Current state/i })
-      ).toContainText('DEGRADED');
+      await expectSectorStatus(importPage, 'Work or School', 'nominal');
+      await expectSectorStatus(importPage, 'Rest', 'degraded');
       await expect(
         importPage.getByRole('button', { name: /^Household\. Current state/i })
       ).toContainText('UNMARKED');
