@@ -4,7 +4,6 @@ import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
 import type { DailyEntry, ImportIntegrityStatus, ImportPreview, JsonExportPayload } from '../types';
 
-
 export interface ParsedImportSummary {
   payload: JsonExportPayload;
   integrityStatus: ImportIntegrityStatus;
@@ -84,17 +83,29 @@ export function summarizeParsedPayload(payload: JsonExportPayload): ParsedImport
   };
 }
 
-export async function verifyExportChecksum(payload: JsonExportPayload): Promise<void> {
-  if (!payload.checksum) {
+interface RawChecksumPayload {
+  app: JsonExportPayload['app'];
+  schemaVersion: JsonExportPayload['schemaVersion'];
+  exportedAt: JsonExportPayload['exportedAt'];
+  entries: JsonExportPayload['entries'];
+  crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
+  checksum?: JsonExportPayload['checksum'];
+}
+
+export async function verifyExportChecksum(
+  rawPayload: RawChecksumPayload,
+  validatedPayload: JsonExportPayload
+): Promise<void> {
+  if (!validatedPayload.checksum) {
     return;
   }
 
   const computedChecksum = await computeJsonExportChecksum({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
-    entries: payload.entries,
-    crashDiagnostics: payload.crashDiagnostics
+    app: rawPayload.app,
+    schemaVersion: rawPayload.schemaVersion,
+    exportedAt: rawPayload.exportedAt,
+    entries: rawPayload.entries,
+    crashDiagnostics: rawPayload.crashDiagnostics
   });
 
   if (computedChecksum !== validatedPayload.checksum) {
@@ -112,7 +123,7 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
     throw new Error(formatValidationError(validated.error));
   }
 
-  await verifyExportChecksum(validated.data);
+  await verifyExportChecksum(parsed as RawChecksumPayload, validated.data);
 
   return validated.data;
 }
