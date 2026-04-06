@@ -1,5 +1,5 @@
 import Dexie from 'dexie';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { db, setDailyStatus } from '../../src/db/appDb';
 import {
@@ -8,6 +8,7 @@ import {
   OPSNORMAL_DB_SCHEMA_VERSIONS
 } from '../../src/db/schema';
 import {
+  deleteOpsNormalDatabase,
   readCrashExportSnapshot,
   readEntriesForCrashExport
 } from '../../src/lib/crashExport';
@@ -18,12 +19,15 @@ const TEST_UPDATED_AT = '2026-03-28T12:00:00.000Z';
 
 describe('crash export isolation', () => {
   beforeEach(async () => {
+    vi.useRealTimers();
     resetStorageDurabilityDiagnostics();
     db.close();
     await Dexie.delete(OPSNORMAL_DB_NAME);
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
     resetStorageDurabilityDiagnostics();
     db.close();
     await Dexie.delete(OPSNORMAL_DB_NAME);
@@ -93,6 +97,52 @@ describe('crash export isolation', () => {
       }
     ]);
     await expect(readEntriesForCrashExport()).resolves.toEqual(snapshot.entries);
+  });
+
+  it('deletes the OpsNormal database through the isolated crash-recovery helper', async () => {
+    await setDailyStatus(TEST_DATE_KEY, 'body', 'nominal');
+    await setDailyStatus(TEST_DATE_KEY, 'rest', 'degraded');
+
+    db.close();
+    await deleteOpsNormalDatabase();
+
+    const tempDb = new Dexie(OPSNORMAL_DB_NAME);
+    applyOpsNormalDbSchema(tempDb);
+
+    try {
+      const entries = await tempDb.table('dailyEntries').toArray();
+      expect(entries).toEqual([]);
+    } finally {
+      tempDb.close();
+    }
+  });
+
+  it('treats deleting a missing OpsNormal database as a clean no-op', async () => {
+    await expect(deleteOpsNormalDatabase()).resolves.toBeUndefined();
+  });
+
+  it('fails deterministically when database deletion stays blocked past the timeout window', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Dexie, 'delete').mockImplementationOnce(
+      () => new Promise<void>(() => undefined)
+    );
+
+    const deletionOutcome = deleteOpsNormalDatabase().then(
+      () => ({ status: 'resolved' as const }),
+      (error: unknown) => ({ status: 'rejected' as const, error })
+    );
+
+    await vi.advanceTimersByTimeAsync(3000);
+
+    const result = await deletionOutcome;
+
+    expect(result.status).toBe('rejected');
+    if (result.status === 'rejected') {
+      expect(result.error).toBeInstanceOf(Error);
+      expect((result.error as Error).message).toBe(
+        'Local data reset timed out. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.'
+      );
+    }
   });
 
   it('applies the shared schema versions to isolated Dexie connections', async () => {

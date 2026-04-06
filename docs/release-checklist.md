@@ -31,4 +31,6 @@ Before tagging a release:
 - [ ] sectional boundary shows fallback when history grid is artificially faulted
 - [ ] retry from crash fallback recovers cleanly
 - [ ] reload from crash fallback performs a full page reload
+- [ ] clear-data reset remains locked until export or explicit destructive acknowledgment
+- [ ] clear-data reset deletes IndexedDB and reboots cleanly after a forced crash-state recovery drill
 - [ ] unrecoverable storage reconnect failure schedules a full page reload after diagnostics are surfaced

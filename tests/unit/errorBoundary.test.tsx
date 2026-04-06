@@ -28,6 +28,7 @@ const emptyCrashExportSnapshot: CrashExportSnapshot = {
 };
 
 const mocks = vi.hoisted(() => ({
+  deleteOpsNormalDatabase: vi.fn(() => Promise.resolve()),
   readCrashExportSnapshot: vi.fn(),
   createCrashJsonExport: vi.fn(() => Promise.resolve('{"ok":true}')),
   createCsvExport: vi.fn(() => 'date,sectorId,status,updatedAt'),
@@ -37,6 +38,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/lib/crashExport', () => ({
+  deleteOpsNormalDatabase: mocks.deleteOpsNormalDatabase,
   readCrashExportSnapshot: mocks.readCrashExportSnapshot
 }));
 
@@ -66,9 +68,12 @@ function CrashOnRender(): ReactElement {
 }
 
 describe('ErrorBoundary', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.readCrashExportSnapshot.mockResolvedValue(emptyCrashExportSnapshot);
+    user = userEvent.setup();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -141,7 +146,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByRole('button', { name: /retry boundary/i })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: /retry boundary/i }));
+    await user.click(screen.getByRole('button', { name: /retry boundary/i }));
 
     expect(screen.getByText('Recovered after retry')).toBeInTheDocument();
   });
@@ -155,7 +160,7 @@ describe('ErrorBoundary', () => {
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /export json/i }));
+    await user.click(screen.getByRole('button', { name: /export json/i }));
 
     expect(mocks.readCrashExportSnapshot).toHaveBeenCalledTimes(1);
     expect(mocks.createCrashJsonExport).toHaveBeenCalledTimes(1);
@@ -183,7 +188,7 @@ describe('ErrorBoundary', () => {
     const retryButton = screen.getByRole('button', { name: /retry app/i });
     const reloadButton = screen.getByRole('button', { name: /reload page/i });
 
-    await userEvent.click(exportJsonButton);
+    await user.click(exportJsonButton);
 
     await waitFor(() => {
       expect(exportJsonButton).toBeDisabled();
@@ -222,15 +227,163 @@ describe('ErrorBoundary', () => {
 
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /export csv/i }));
+    await user.click(screen.getByRole('button', { name: /export csv/i }));
 
     expect(screen.getByText('CSV export complete. 1 entry recovered. 2 malformed rows skipped.')).toBeInTheDocument();
+  });
+
+  it('keeps clear-data reset locked until export or explicit acknowledgment unlocks it', async () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+
+    expect(clearDataButton).toBeDisabled();
+
+    await user.click(acknowledgment);
+
+    expect(clearDataButton).not.toBeDisabled();
+  });
+
+  it('arms then clears local data and reloads the page', async () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+    await user.click(acknowledgment);
+
+    const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
+    await user.click(clearDataButton);
+
+    expect(
+      screen.getByRole('button', { name: /confirm delete all local data and reload/i })
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /confirm delete all local data and reload/i })
+    );
+
+    expect(mocks.deleteOpsNormalDatabase).toHaveBeenCalledTimes(1);
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('disarms the clear-data reset when Escape is pressed', async () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+    await user.click(acknowledgment);
+
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /confirm delete all local data and reload/i })
+      ).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Clear-data reset disarmed. Local data remains untouched.')).toBeInTheDocument();
+  });
+
+  it('restores focus to the clear-data button when the destructive path is disarmed', async () => {
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback): number => {
+        callback(0);
+        return 1;
+      });
+
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+    await user.click(acknowledgment);
+
+    const clearDataButton = screen.getByRole('button', { name: /clear local data and reload/i });
+    await user.click(clearDataButton);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    await waitFor(() => {
+      expect(clearDataButton).toHaveFocus();
+    });
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
+  });
+
+  it('ignores Escape disarm input while local data deletion is already running', async () => {
+    let resolveDelete: (() => void) | undefined;
+    mocks.deleteOpsNormalDatabase.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveDelete = resolve;
+      })
+    );
+
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+    await user.click(acknowledgment);
+
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    await user.click(
+      screen.getByRole('button', { name: /confirm delete all local data and reload/i })
+    );
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(
+      screen.getByText('Deleting all local OpsNormal data now. The page will reload after the reset completes.')
+    ).toBeInTheDocument();
+
+    resolveDelete?.();
+
+    await waitFor(() => {
+      expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      screen.queryByText('Clear-data reset disarmed. Local data remains untouched.')
+    ).not.toBeInTheDocument();
+  });
+
+  it('announces fallback status updates and the render fault to assistive technology', () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('render failure');
+  });
+
+  it('surfaces local reset failures without reloading', async () => {
+    mocks.deleteOpsNormalDatabase.mockRejectedValueOnce(new Error('Database is blocked by another open tab.'));
+
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i understand this will permanently delete local data/i
+    });
+    await user.click(acknowledgment);
+
+    await user.click(screen.getByRole('button', { name: /clear local data and reload/i }));
+    await user.click(
+      screen.getByRole('button', { name: /confirm delete all local data and reload/i })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Database is blocked by another open tab.')).toBeInTheDocument();
+    });
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
   });
 
   it('reloads the page from the crash fallback', async () => {
     render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /reload page/i }));
+    await user.click(screen.getByRole('button', { name: /reload page/i }));
 
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
   });
@@ -252,6 +405,7 @@ describe('SectionCrashFallback', () => {
 
   it('calls onRetry when retry is clicked', async () => {
     const onRetry = vi.fn();
+    const user = userEvent.setup();
 
     render(
       <SectionCrashFallback
@@ -261,7 +415,7 @@ describe('SectionCrashFallback', () => {
       />
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /retry/i }));
+    await user.click(screen.getByRole('button', { name: /retry/i }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
