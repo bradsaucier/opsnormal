@@ -1,8 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+
 import { computeJsonExportChecksum } from '../../src/lib/export';
+import { parseExportPayload } from '../helpers/exportPayload';
+import type { JsonExportPayload } from '../../src/types';
 
 type ChecksumPayload = Parameters<typeof computeJsonExportChecksum>[0];
-type ExportPayload = ChecksumPayload & { checksum?: string };
+type ExportPayload = JsonExportPayload;
 
 function requireDownloadPath(path: string | null): string {
   if (!path) {
@@ -10,10 +13,6 @@ function requireDownloadPath(path: string | null): string {
   }
 
   return path;
-}
-
-function parseExportPayload(rawText: string): ExportPayload {
-  return JSON.parse(rawText) as ExportPayload;
 }
 
 function toChecksumPayload(payload: ExportPayload): ChecksumPayload {
