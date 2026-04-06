@@ -121,10 +121,6 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
     throw new Error(formatValidationError(validated.error));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Checksum must be computed
-  // from raw parsed entries to preserve byte-identical JSON.stringify symmetry with the export
-  // path. Zod rebuilds objects in schema-definition property order, which would silently break
-  // integrity verification for valid backups.
   await verifyExportChecksum(parsed as RawChecksumPayload, validated.data);
 
   return validated.data;
