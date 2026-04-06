@@ -50,12 +50,29 @@ export interface DailyEntry {
   updatedAt: string;
 }
 
+
+export interface CrashStorageDiagnostics {
+  connectionDropsDetected: number;
+  reconnectSuccesses: number;
+  reconnectFailures: number;
+  reconnectState: 'steady' | 'recovering' | 'failed';
+  lastReconnectError: string | null;
+  persistAttempted: boolean;
+  persistGranted: boolean;
+  standaloneMode: boolean;
+  installRecommended: boolean;
+  webKitRisk: boolean;
+  lastVerificationResult: 'unknown' | 'verified' | 'mismatch' | 'failed';
+  lastVerifiedAt: string | null;
+}
+
 export interface JsonExportPayload {
   app: typeof OPSNORMAL_APP_NAME;
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
   exportedAt: string;
   entries: DailyEntry[];
   checksum?: string;
+  crashDiagnostics?: CrashStorageDiagnostics;
 }
 
 export interface ImportPreview {
