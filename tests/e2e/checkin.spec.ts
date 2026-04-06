@@ -1,6 +1,15 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('OpsNormal', () => {
+  test('skip link targets main content', async ({ page }) => {
+    await page.goto('/');
+
+    const skipLink = page.locator('.ops-skip-link');
+    await expect(skipLink).toHaveAttribute('href', '#main-content');
+    await skipLink.focus();
+    await expect(skipLink).toBeVisible();
+  });
+
   test('persists a check-in across reloads', async ({ page }) => {
     await page.goto('/');
 
@@ -9,16 +18,47 @@ test.describe('OpsNormal', () => {
     await storageHealthToggle.click();
     await expect(page.getByText(/storage durability/i)).toBeVisible();
 
-    const workButton = page.getByRole('button', { name: /work or school/i });
+    const workNominal = page.getByRole('radio', { name: /work or school nominal/i });
+    const workDegraded = page.getByRole('radio', { name: /work or school degraded/i });
 
-    await workButton.click();
-    await expect(workButton).toContainText('NOMINAL');
+    await workNominal.click();
+    await expect(workNominal).toHaveAttribute('aria-checked', 'true');
 
-    await workButton.click();
-    await expect(workButton).toContainText('DEGRADED');
+    await workDegraded.click();
+    await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
 
     await page.reload();
-    await expect(workButton).toContainText('DEGRADED');
+    await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
+  });
+
+
+  test('keeps inset focus styling and prevents page scroll on keyboard selection', async ({ page }) => {
+    await page.goto('/');
+
+    const workUnmarked = page.getByRole('radio', { name: /work or school unmarked/i });
+    const workNominal = page.getByRole('radio', { name: /work or school nominal/i });
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (await workUnmarked.evaluate((element) => document.activeElement === element)) {
+        break;
+      }
+
+      await page.keyboard.press('Tab');
+    }
+
+    await expect(workUnmarked).toBeFocused();
+
+    const focusShadow = await workUnmarked.evaluate(
+      (element) => window.getComputedStyle(element).boxShadow
+    );
+    expect(focusShadow.toLowerCase()).toContain('inset');
+
+    const initialScrollY = await page.evaluate(() => window.scrollY);
+    await page.keyboard.press('ArrowRight');
+    await expect(workNominal).toHaveAttribute('aria-checked', 'true');
+    await page.keyboard.press('Space');
+    await expect(workNominal).toHaveAttribute('aria-checked', 'true');
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(initialScrollY);
   });
 
   test('can reopen offline after first load', async ({ page, context }) => {
