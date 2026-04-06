@@ -22,7 +22,9 @@ Add a storage durability layer that:
 - checks quota and usage telemetry when supported
 - surfaces storage posture in both the header and backup panel
 - guards write paths so quota failures and dropped IndexedDB connections return direct recovery messages
-- reopens the Dexie database after closure before the next operation
+- reopens the Dexie database after closure with bounded retry and operator-visible diagnostics before the next operation, then schedules a full reload if the handle remains unrecoverable
+- verifies the daily check-in write path with a post-commit read-back so silent local write loss becomes explicit
+- carries storage durability diagnostics into crash-state JSON exports without changing the local-only product boundary, while keeping those diagnostics inside the checksum envelope
 
 ## Consequences
 
