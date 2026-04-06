@@ -81,12 +81,13 @@ describe('shared import validation', () => {
 
   it('accepts a payload with a valid checksum', async () => {
     const payload = buildPayload();
-    payload.checksum = await computeJsonExportChecksum({
+    const checksum: string = await computeJsonExportChecksum({
       app: payload.app,
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
       entries: payload.entries
     });
+    payload.checksum = checksum;
 
     const parsed = await parseImportPayload(JSON.stringify(payload));
 
@@ -116,12 +117,13 @@ describe('shared import validation', () => {
 
   it('rejects a payload with a mismatched checksum', async () => {
     const payload = buildPayload();
-    payload.checksum = await computeJsonExportChecksum({
+    const checksum: string = await computeJsonExportChecksum({
       app: payload.app,
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
       entries: payload.entries
     });
+    payload.checksum = checksum;
     payload.entries[0] = {
       ...payload.entries[0]!,
       status: 'degraded'
