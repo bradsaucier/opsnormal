@@ -97,7 +97,7 @@ export async function verifyExportChecksum(payload: JsonExportPayload): Promise<
     crashDiagnostics: payload.crashDiagnostics
   });
 
-  if (computedChecksum !== payload.checksum) {
+  if (computedChecksum !== validatedPayload.checksum) {
     throw new Error(
       'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
     );

@@ -1,31 +1,40 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../src/lib/export', () => ({
-  downloadTextFile: vi.fn(),
-  exportCurrentEntriesAsCsv: vi.fn(),
-  exportCurrentEntriesAsJson: vi.fn(),
-  formatLastExportCompletedAt: vi.fn((value: string | null) =>
+type ExportModule = typeof import('../../src/lib/export');
+type DownloadTextFile = ExportModule['downloadTextFile'];
+type ExportCurrentEntriesAsCsv = ExportModule['exportCurrentEntriesAsCsv'];
+type ExportCurrentEntriesAsJson = ExportModule['exportCurrentEntriesAsJson'];
+type GetLastExportCompletedAt = ExportModule['getLastExportCompletedAt'];
+type RecordExportCompleted = ExportModule['recordExportCompleted'];
+
+const exportMocks = vi.hoisted(() => ({
+  downloadTextFile: vi.fn<DownloadTextFile>(),
+  exportCurrentEntriesAsCsv: vi.fn<ExportCurrentEntriesAsCsv>(),
+  exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>(),
+  formatLastExportCompletedAt: vi.fn<(value: string | null) => string>((value) =>
     value ? `formatted:${value}` : 'formatted:none'
   ),
-  getLastExportCompletedAt: vi.fn(),
-  recordExportCompleted: vi.fn()
+  getLastExportCompletedAt: vi.fn<GetLastExportCompletedAt>(),
+  recordExportCompleted: vi.fn<RecordExportCompleted>()
 }));
 
-import {
-  downloadTextFile,
-  exportCurrentEntriesAsCsv,
-  exportCurrentEntriesAsJson,
-  getLastExportCompletedAt,
-  recordExportCompleted
-} from '../../src/lib/export';
+vi.mock('../../src/lib/export', () => ({
+  downloadTextFile: exportMocks.downloadTextFile,
+  exportCurrentEntriesAsCsv: exportMocks.exportCurrentEntriesAsCsv,
+  exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson,
+  formatLastExportCompletedAt: exportMocks.formatLastExportCompletedAt,
+  getLastExportCompletedAt: exportMocks.getLastExportCompletedAt,
+  recordExportCompleted: exportMocks.recordExportCompleted
+}));
+
 import { useExportWorkflow } from '../../src/features/export/useExportWorkflow';
 
-const downloadTextFileMock = vi.mocked(downloadTextFile);
-const exportCurrentEntriesAsCsvMock = vi.mocked(exportCurrentEntriesAsCsv);
-const exportCurrentEntriesAsJsonMock = vi.mocked(exportCurrentEntriesAsJson);
-const getLastExportCompletedAtMock = vi.mocked(getLastExportCompletedAt);
-const recordExportCompletedMock = vi.mocked(recordExportCompleted);
+const downloadTextFileMock = exportMocks.downloadTextFile;
+const exportCurrentEntriesAsCsvMock = exportMocks.exportCurrentEntriesAsCsv;
+const exportCurrentEntriesAsJsonMock = exportMocks.exportCurrentEntriesAsJson;
+const getLastExportCompletedAtMock = exportMocks.getLastExportCompletedAt;
+const recordExportCompletedMock = exportMocks.recordExportCompleted;
 
 describe('useExportWorkflow', () => {
   beforeEach(() => {
@@ -34,6 +43,7 @@ describe('useExportWorkflow', () => {
     exportCurrentEntriesAsJsonMock.mockReset();
     getLastExportCompletedAtMock.mockReset();
     recordExportCompletedMock.mockReset();
+    exportMocks.formatLastExportCompletedAt.mockClear();
   });
 
   it('hydrates backup posture from the persisted export timestamp', () => {

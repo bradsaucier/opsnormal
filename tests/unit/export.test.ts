@@ -8,6 +8,7 @@ import {
   formatLastExportCompletedAt
 } from '../../src/lib/export';
 import { parseImportPayload } from '../../src/services/importValidation';
+import { parseExportPayload } from '../helpers/exportPayload';
 import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, type DailyEntry } from '../../src/types';
 
 const sampleEntries: DailyEntry[] = [
@@ -50,13 +51,7 @@ describe('export helpers', () => {
   it('creates versioned json payload with entries and checksum', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
     const json = await createJsonExport(sampleEntries, exportedAt);
-    const parsed = JSON.parse(json) as {
-      app: string;
-      schemaVersion: number;
-      exportedAt: string;
-      entries: DailyEntry[];
-      checksum: string;
-    };
+    const parsed = parseExportPayload(json);
 
     expect(parsed.app).toBe(OPSNORMAL_APP_NAME);
     expect(parsed.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
@@ -121,15 +116,9 @@ describe('export helpers', () => {
   it('includes a checksum that matches recomputation', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
     const json = await createJsonExport(sampleEntries, exportedAt);
-    const parsed = JSON.parse(json) as {
-      app: typeof OPSNORMAL_APP_NAME;
-      schemaVersion: typeof EXPORT_SCHEMA_VERSION;
-      exportedAt: string;
-      entries: DailyEntry[];
-      checksum: string;
-    };
+    const parsed = parseExportPayload(json);
 
-    const recomputedChecksum = await computeJsonExportChecksum({
+    const recomputedChecksum: string = await computeJsonExportChecksum({
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,

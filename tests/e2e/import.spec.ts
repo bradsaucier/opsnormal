@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
+import { parseExportPayloadDetails, type ParsedExportPayloadDetails } from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
@@ -84,12 +85,14 @@ async function buildVerifiedImportPayload(entries: ImportEntry[]): Promise<Impor
     entries
   };
 
-  payload.checksum = await computeJsonExportChecksum({
+  const checksum: string = await computeJsonExportChecksum({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
     entries: payload.entries
   });
+
+  payload.checksum = checksum;
 
   return payload;
 }
@@ -137,17 +140,14 @@ async function readLocalFileText(filePath: string): Promise<string> {
   return await readFile(filePath, 'utf8');
 }
 
-async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise<void> {
+async function expectExportPayloadIntegrity(parsedPayload: ParsedExportPayloadDetails): Promise<void> {
+  const { payload, rawChecksumPayload } = parsedPayload;
+
   expect(payload.app).toBe(OPSNORMAL_APP_NAME);
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum = await computeJsonExportChecksum({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
-    entries: payload.entries
-  });
+  const recomputedChecksum: string = await computeJsonExportChecksum(rawChecksumPayload);
 
   expect(payload.checksum).toBe(recomputedChecksum);
 }
@@ -167,14 +167,14 @@ async function expectSectorStatus(
   await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
 }
 
-async function exportCurrentJson(page: Page): Promise<JsonExportPayload> {
+async function exportCurrentJson(page: Page): Promise<ParsedExportPayloadDetails> {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
   const download = await downloadPromise;
   const downloadPath = requireDownloadPath(await download.path());
   const rawText = await readLocalFileText(downloadPath);
 
-  return JSON.parse(rawText) as JsonExportPayload;
+  return parseExportPayloadDetails(rawText);
 }
 
 async function ensureImportPanelOpen(page: Page): Promise<void> {
@@ -411,7 +411,7 @@ test.describe('OpsNormal import workflow', () => {
     const beforeReplaceExport = await exportCurrentJson(page);
 
     await expectExportPayloadIntegrity(beforeReplaceExport);
-    expect(normalizeEntries(beforeReplaceExport.entries)).toEqual(normalizeEntries(seedPayload.entries));
+    expect(normalizeEntries(beforeReplaceExport.payload.entries)).toEqual(normalizeEntries(seedPayload.entries));
 
     await stageImportPreview(page, 'opsnormal-replace-snapshot.json', replacePayload);
     await switchToReplaceMode(page);
@@ -427,7 +427,7 @@ test.describe('OpsNormal import workflow', () => {
     const afterReplaceExport = await exportCurrentJson(page);
 
     await expectExportPayloadIntegrity(afterReplaceExport);
-    expect(normalizeEntries(afterReplaceExport.entries)).toEqual(
+    expect(normalizeEntries(afterReplaceExport.payload.entries)).toEqual(
       normalizeEntries(replacePayload.entries)
     );
 
@@ -439,7 +439,7 @@ test.describe('OpsNormal import workflow', () => {
     const afterUndoExport = await exportCurrentJson(page);
 
     await expectExportPayloadIntegrity(afterUndoExport);
-    expect(normalizeEntries(afterUndoExport.entries)).toEqual(normalizeEntries(seedPayload.entries));
+    expect(normalizeEntries(afterUndoExport.payload.entries)).toEqual(normalizeEntries(seedPayload.entries));
     await expectSectorStatus(page, 'Body', 'nominal');
     await expectSectorStatus(page, 'Relationships', 'degraded');
     await expectSectorStatus(page, 'Household', 'unmarked');

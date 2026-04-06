@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { getErrorMessage } from '../../lib/errors';
 import {
   canUseVerifiedFileSave,
   checkpointJsonBackupToDisk,
@@ -119,26 +120,28 @@ export function useReplaceCheckpoint({
 
     try {
       setReplaceBackupState({ phase: 'saving' });
-      const { entryCount, exportedAt, payload } = await exportCurrentEntriesAsJson();
-      const fileName = buildPreReplaceBackupFileName(exportedAt);
-      const checkpointResult = await checkpointJsonBackupToDisk({
+      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsJson>> =
+        await exportCurrentEntriesAsJson();
+      const fileName = buildPreReplaceBackupFileName(exportResult.exportedAt);
+      const checkpointResult: Awaited<ReturnType<typeof checkpointJsonBackupToDisk>> =
+        await checkpointJsonBackupToDisk({
         fileName,
-        exportedAt,
-        payload
+        exportedAt: exportResult.exportedAt,
+        payload: exportResult.payload
       });
 
       if (checkpointResult.kind === 'verified-save-succeeded') {
-        onBackupCompleted(exportedAt);
+        onBackupCompleted(exportResult.exportedAt);
         setReplaceBackupState({ phase: 'ready', fileName, verification: 'verified' });
         onStatusMessage({
           tone: 'success',
-          text: `Verified pre-replace backup saved as ${fileName}. ${entryCount} current rows secured before restore.`
+          text: `Verified pre-replace backup saved as ${fileName}. ${exportResult.entryCount} current rows secured before restore.`
         });
         return;
       }
 
       if (checkpointResult.kind === 'fallback-download-triggered') {
-        onBackupCompleted(exportedAt);
+        onBackupCompleted(exportResult.exportedAt);
         setReplaceBackupState({ phase: 'manual-awaiting-ack', fileName });
         onStatusMessage({
           tone: 'warning',
@@ -152,14 +155,12 @@ export function useReplaceCheckpoint({
         tone: checkpointResult.kind === 'save-cancelled' ? 'warning' : 'error',
         text: checkpointResult.message
       });
-    } catch (error) {
+    } catch (error: unknown) {
       setReplaceBackupState({ phase: 'idle' });
       onStatusMessage({
         tone: 'error',
         text:
-          error instanceof Error
-            ? error.message
-            : 'Pre-replace backup failed. Local data remains untouched.'
+          getErrorMessage(error, 'Pre-replace backup failed. Local data remains untouched.')
       });
     }
   }, [onBackupCompleted, onStatusMessage, pendingImport]);

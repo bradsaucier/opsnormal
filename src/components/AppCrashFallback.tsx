@@ -9,6 +9,7 @@ import {
   recordExportCompleted
 } from '../lib/export';
 import { reloadCurrentPage } from '../lib/runtime';
+import type { CrashExportSnapshot } from '../lib/crashExport';
 
 interface AppCrashFallbackProps {
   error: Error;
@@ -59,9 +60,9 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       const payload = await createCrashJsonExport(entries, storageDiagnostics, exportedAt);
       downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
       recordExportCompleted(exportedAt);
-      setMessage(formatCrashExportMessage('JSON', entries.length, skippedCount));
-    } catch {
-      setMessage('JSON export failed. Try reloading first.');
+      setMessage(formatCrashExportMessage('JSON', snapshot.entries.length, snapshot.skippedCount));
+    } catch (error: unknown) {
+      setMessage(getErrorMessage(error, 'JSON export failed. Try reloading first.'));
     } finally {
       setBusyAction(null);
     }
@@ -70,14 +71,14 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   async function handleCsvExport() {
     try {
       setBusyAction('csv');
-      const { entries, skippedCount } = await readCrashExportSnapshot();
-      const payload = createCsvExport(entries);
+      const snapshot: CrashExportSnapshot = await readCrashExportSnapshot();
+      const payload: string = createCsvExport(snapshot.entries);
       const exportedAt = new Date().toISOString();
       downloadTextFile('opsnormal-crash-export.csv', payload, 'text/csv;charset=utf-8');
       recordExportCompleted(exportedAt);
-      setMessage(formatCrashExportMessage('CSV', entries.length, skippedCount));
-    } catch {
-      setMessage('CSV export failed. Try reloading first.');
+      setMessage(formatCrashExportMessage('CSV', snapshot.entries.length, snapshot.skippedCount));
+    } catch (error: unknown) {
+      setMessage(getErrorMessage(error, 'CSV export failed. Try reloading first.'));
     } finally {
       setBusyAction(null);
     }
