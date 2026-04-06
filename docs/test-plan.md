@@ -31,10 +31,13 @@ Prove that the app:
 - boot-failure fallback renders without inline handlers or style attributes
 - streak computation
 - status cycle helpers
+- direct-select radio controls expose programmatic checked state
+- live-region announcements stay mounted long enough for assistive-technology queues to complete
+- notched controls keep visible inset focus indicators instead of clipped external outlines
 - desktop history grid keyboard navigation
 - mobile history daily brief selection
 - viewport-driven history render-path changes
-- today-panel write path uses the live local date if a click lands after midnight before the shell refreshes
+- today-panel write path uses the live local date if a direct selection lands after midnight before the shell refreshes
 - today-panel save failures surface an operator-visible error and clear the sector busy state
 
 ### Integration tests
