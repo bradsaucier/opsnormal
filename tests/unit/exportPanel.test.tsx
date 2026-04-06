@@ -2,13 +2,39 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+type ExportModule = typeof import('../../src/lib/export');
+type ImportServiceModule = typeof import('../../src/services/importService');
+
+type CanUseVerifiedFileSave = ExportModule['canUseVerifiedFileSave'];
+type CheckpointJsonBackupToDisk = ExportModule['checkpointJsonBackupToDisk'];
+type DownloadTextFile = ExportModule['downloadTextFile'];
+type ExportCurrentEntriesAsJson = ExportModule['exportCurrentEntriesAsJson'];
+type ExportCurrentEntriesAsCsv = ExportModule['exportCurrentEntriesAsCsv'];
+type RecordExportCompleted = ExportModule['recordExportCompleted'];
+type ApplyImport = ImportServiceModule['applyImport'];
+type PreviewImportFile = ImportServiceModule['previewImportFile'];
+
+const importServiceMocks = vi.hoisted(() => ({
+  applyImport: vi.fn<ApplyImport>(),
+  previewImportFile: vi.fn<PreviewImportFile>()
+}));
+
+const exportMocks = vi.hoisted(() => ({
+  canUseVerifiedFileSave: vi.fn<CanUseVerifiedFileSave>(() => false),
+  checkpointJsonBackupToDisk: vi.fn<CheckpointJsonBackupToDisk>(),
+  downloadTextFile: vi.fn<DownloadTextFile>(),
+  exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>(),
+  exportCurrentEntriesAsCsv: vi.fn<ExportCurrentEntriesAsCsv>(),
+  recordExportCompleted: vi.fn<RecordExportCompleted>()
+}));
+
 vi.mock('../../src/db/appDb', () => ({
   getAllEntries: vi.fn(() => Promise.resolve([]))
 }));
 
 vi.mock('../../src/services/importService', () => ({
-  applyImport: vi.fn(),
-  previewImportFile: vi.fn()
+  applyImport: importServiceMocks.applyImport,
+  previewImportFile: importServiceMocks.previewImportFile
 }));
 
 vi.mock('../../src/lib/export', async () => {
@@ -16,37 +42,55 @@ vi.mock('../../src/lib/export', async () => {
 
   return {
     ...actual,
-    canUseVerifiedFileSave: vi.fn(() => false),
-    checkpointJsonBackupToDisk: vi.fn(),
-    downloadTextFile: vi.fn(),
-    exportCurrentEntriesAsJson: vi.fn(),
-    exportCurrentEntriesAsCsv: vi.fn(),
-    recordExportCompleted: vi.fn()
+    canUseVerifiedFileSave: exportMocks.canUseVerifiedFileSave,
+    checkpointJsonBackupToDisk: exportMocks.checkpointJsonBackupToDisk,
+    downloadTextFile: exportMocks.downloadTextFile,
+    exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson,
+    exportCurrentEntriesAsCsv: exportMocks.exportCurrentEntriesAsCsv,
+    recordExportCompleted: exportMocks.recordExportCompleted
   };
 });
 
 import { ExportPanel } from '../../src/features/export/ExportPanel';
-import {
-  canUseVerifiedFileSave,
-  checkpointJsonBackupToDisk,
-  downloadTextFile,
-  exportCurrentEntriesAsJson,
-  recordExportCompleted,
-  type BackupCheckpointResult
-} from '../../src/lib/export';
-import { applyImport, previewImportFile } from '../../src/services/importService';
+import { type BackupCheckpointResult } from '../../src/lib/export';
 import type { ImportPreview, JsonExportPayload } from '../../src/types';
 
-const previewImportFileMock = vi.mocked(previewImportFile);
-const applyImportMock = vi.mocked(applyImport);
-const canUseVerifiedFileSaveMock = vi.mocked(canUseVerifiedFileSave);
-const exportCurrentEntriesAsJsonMock = vi.mocked(exportCurrentEntriesAsJson);
-const checkpointJsonBackupToDiskMock = vi.mocked(checkpointJsonBackupToDisk);
-const downloadTextFileMock = vi.mocked(downloadTextFile);
-const recordExportCompletedMock = vi.mocked(recordExportCompleted);
+const previewImportFileMock = importServiceMocks.previewImportFile;
+const applyImportMock = importServiceMocks.applyImport;
+const canUseVerifiedFileSaveMock = exportMocks.canUseVerifiedFileSave;
+const exportCurrentEntriesAsJsonMock = exportMocks.exportCurrentEntriesAsJson;
+const checkpointJsonBackupToDiskMock = exportMocks.checkpointJsonBackupToDisk;
+const downloadTextFileMock = exportMocks.downloadTextFile;
+const recordExportCompletedMock = exportMocks.recordExportCompleted;
 
 const EXPORTED_AT = '2026-04-02T21:00:00.000Z';
 const FILE_NAME = 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json';
+
+
+type BackupPreparationFailureCase = {
+  name: string;
+  expectedText: string;
+  result: BackupCheckpointResult | Error;
+};
+
+const backupPreparationFailureCases: BackupPreparationFailureCase[] = [
+  {
+    name: 'save-failed',
+    result: {
+      kind: 'save-failed',
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT,
+      message: 'Disk write failed hard.'
+    },
+    expectedText: 'Disk write failed hard.'
+  },
+  {
+    name: 'unexpected exception',
+    result: new Error('Pre-replace backup exploded.'),
+    expectedText: 'Pre-replace backup exploded.'
+  }
+];
+
 
 function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview {
   return {
@@ -303,23 +347,7 @@ describe('ExportPanel import warnings', () => {
     expect(recordExportCompletedMock).not.toHaveBeenCalled();
   });
 
-  it.each([
-    {
-      name: 'save-failed',
-      result: {
-        kind: 'save-failed',
-        fileName: FILE_NAME,
-        exportedAt: EXPORTED_AT,
-        message: 'Disk write failed hard.'
-      } satisfies BackupCheckpointResult,
-      expectedText: 'Disk write failed hard.'
-    },
-    {
-      name: 'unexpected exception',
-      result: new Error('Pre-replace backup exploded.'),
-      expectedText: 'Pre-replace backup exploded.'
-    }
-  ])(
+  it.each(backupPreparationFailureCases)(
     'keeps replace locked and surfaces an error when backup preparation hits $name',
     async ({ expectedText, result }) => {
       primeReplacePreview();

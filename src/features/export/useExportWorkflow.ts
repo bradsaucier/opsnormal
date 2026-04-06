@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { getErrorMessage } from '../../lib/errors';
 import {
   downloadTextFile,
   exportCurrentEntriesAsCsv,
@@ -24,8 +25,7 @@ interface UseExportWorkflowResult {
 export function useExportWorkflow({
   onStatusMessage
 }: UseExportWorkflowOptions): UseExportWorkflowResult {
-  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => getLastExportCompletedAt());
-
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(getLastExportCompletedAt());
 
   const backupStatus = useMemo(() => formatLastExportCompletedAt(lastBackupAt), [lastBackupAt]);
 
@@ -36,33 +36,35 @@ export function useExportWorkflow({
 
   async function handleJsonExport() {
     try {
-      const { entryCount, exportedAt, payload } = await exportCurrentEntriesAsJson();
-      downloadTextFile('opsnormal-export.json', payload, 'application/json');
-      markBackupCompleted(exportedAt);
+      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsJson>> =
+        await exportCurrentEntriesAsJson();
+      downloadTextFile('opsnormal-export.json', exportResult.payload, 'application/json');
+      markBackupCompleted(exportResult.exportedAt);
       onStatusMessage({
         tone: 'success',
-        text: `JSON export complete. ${entryCount} entries written to disk.`
+        text: `JSON export complete. ${exportResult.entryCount} entries written to disk.`
       });
-    } catch (error) {
+    } catch (error: unknown) {
       onStatusMessage({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'JSON export failed. Reload the app and try again.'
+        text: getErrorMessage(error, 'JSON export failed. Reload the app and try again.')
       });
     }
   }
 
   async function handleCsvExport() {
     try {
-      const { entryCount, payload } = await exportCurrentEntriesAsCsv();
-      downloadTextFile('opsnormal-export.csv', payload, 'text/csv;charset=utf-8');
+      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsCsv>> =
+        await exportCurrentEntriesAsCsv();
+      downloadTextFile('opsnormal-export.csv', exportResult.payload, 'text/csv;charset=utf-8');
       onStatusMessage({
         tone: 'success',
-        text: `CSV export complete. ${entryCount} entries written to disk.`
+        text: `CSV export complete. ${exportResult.entryCount} entries written to disk.`
       });
-    } catch (error) {
+    } catch (error: unknown) {
       onStatusMessage({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'CSV export failed. Reload the app and try again.'
+        text: getErrorMessage(error, 'CSV export failed. Reload the app and try again.')
       });
     }
   }

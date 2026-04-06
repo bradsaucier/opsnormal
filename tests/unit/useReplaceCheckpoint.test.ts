@@ -1,28 +1,34 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+type ExportModule = typeof import('../../src/lib/export');
+type CheckpointJsonBackupToDisk = ExportModule['checkpointJsonBackupToDisk'];
+type ExportCurrentEntriesAsJson = ExportModule['exportCurrentEntriesAsJson'];
+
+const exportMocks = vi.hoisted(() => ({
+  canUseVerifiedFileSave: vi.fn<() => boolean>(() => false),
+  checkpointJsonBackupToDisk: vi.fn<CheckpointJsonBackupToDisk>(),
+  exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>()
+}));
+
 vi.mock('../../src/lib/export', async () => {
   const actual = await vi.importActual<typeof import('../../src/lib/export')>('../../src/lib/export');
 
   return {
     ...actual,
-    canUseVerifiedFileSave: vi.fn(() => false),
-    checkpointJsonBackupToDisk: vi.fn(),
-    exportCurrentEntriesAsJson: vi.fn()
+    canUseVerifiedFileSave: exportMocks.canUseVerifiedFileSave,
+    checkpointJsonBackupToDisk: exportMocks.checkpointJsonBackupToDisk,
+    exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson
   };
 });
 
-import {
-  checkpointJsonBackupToDisk,
-  exportCurrentEntriesAsJson,
-  type BackupCheckpointResult
-} from '../../src/lib/export';
+import { type BackupCheckpointResult } from '../../src/lib/export';
 import { useReplaceCheckpoint } from '../../src/features/export/useReplaceCheckpoint';
 import type { StatusMessage } from '../../src/features/export/workflowTypes';
 import type { ImportPreview, JsonExportPayload } from '../../src/types';
 
-const exportCurrentEntriesAsJsonMock = vi.mocked(exportCurrentEntriesAsJson);
-const checkpointJsonBackupToDiskMock = vi.mocked(checkpointJsonBackupToDisk);
+const exportCurrentEntriesAsJsonMock = exportMocks.exportCurrentEntriesAsJson;
+const checkpointJsonBackupToDiskMock = exportMocks.checkpointJsonBackupToDisk;
 
 const EXPORTED_AT = '2026-04-02T21:00:00.000Z';
 const FILE_NAME = 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json';

@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
+import { parseExportPayloadDetails, type ParsedExportPayloadDetails } from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
@@ -14,7 +15,6 @@ import {
 const FIXED_TEST_TIME_ISO = '2026-03-28T12:00:00.000Z';
 const FIXED_TEST_DATE_KEY = FIXED_TEST_TIME_ISO.slice(0, 10);
 
-type ImportPayload = JsonExportPayload;
 type CrashEntry = {
   date: string;
   sectorId: SectorId;
@@ -64,6 +64,48 @@ async function expectSectorStatus(
   await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
 }
 
+async function waitForStoredStatus(
+  page: Page,
+  sectorId: string,
+  expectedStatus: 'nominal' | 'degraded'
+): Promise<void> {
+  await page.waitForFunction(
+    async ({ dateKey, sectorId: expectedSectorId, expectedStatus }) => {
+      return await new Promise<boolean>((resolve) => {
+        const request = window.indexedDB.open('opsnormal');
+
+        request.onerror = () => resolve(false);
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction('dailyEntries', 'readonly');
+          const store = transaction.objectStore('dailyEntries');
+          const getAllRequest = store.getAll();
+
+          getAllRequest.onerror = () => {
+            database.close();
+            resolve(false);
+          };
+
+          getAllRequest.onsuccess = () => {
+            const entries = getAllRequest.result as Array<{
+              date?: string;
+              sectorId?: string;
+              status?: string;
+            }>;
+            const match = entries.find(
+              (entry) => entry.date === dateKey && entry.sectorId === expectedSectorId
+            );
+
+            database.close();
+            resolve(match?.status === expectedStatus);
+          };
+        };
+      });
+    },
+    { dateKey: FIXED_TEST_DATE_KEY, sectorId, expectedStatus }
+  );
+}
+
 function normalizeEntries(entries: JsonExportPayload['entries']): CrashEntry[] {
   return [...entries]
     .map((entry) => ({
@@ -75,17 +117,14 @@ function normalizeEntries(entries: JsonExportPayload['entries']): CrashEntry[] {
     .sort((left, right) => `${left.date}:${left.sectorId}`.localeCompare(`${right.date}:${right.sectorId}`));
 }
 
-async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise<void> {
+async function expectExportPayloadIntegrity(parsedPayload: ParsedExportPayloadDetails): Promise<void> {
+  const { payload, rawChecksumPayload } = parsedPayload;
+
   expect(payload.app).toBe(OPSNORMAL_APP_NAME);
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum = await computeJsonExportChecksum({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
-    entries: payload.entries
-  });
+  const recomputedChecksum: string = await computeJsonExportChecksum(rawChecksumPayload);
 
   expect(payload.checksum).toBe(recomputedChecksum);
 }
@@ -105,6 +144,8 @@ async function seedCrashExportEntries(page: Page): Promise<void> {
   await expect(restDegraded).toBeEnabled();
   await restDegraded.click();
   await expectSectorStatus(page, 'Rest', 'degraded');
+  await waitForStoredStatus(page, 'work-school', 'nominal');
+  await waitForStoredStatus(page, 'rest', 'degraded');
 }
 
 async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
@@ -165,15 +206,13 @@ async function openCrashFallbackHarness(page: Page): Promise<void> {
   await expect(page.getByText(/crash fallback harness injected render fault/i)).toBeVisible();
 }
 
-async function exportCrashJson(page: Page): Promise<ImportPayload> {
+async function exportCrashJson(page: Page): Promise<ParsedExportPayloadDetails> {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
   const download = await downloadPromise;
   const downloadPath = requireDownloadPath(await download.path());
   const rawText = await readLocalFileText(downloadPath);
-  const payload = JSON.parse(rawText) as ImportPayload;
-
-  return payload;
+  return parseExportPayloadDetails(rawText);
 }
 
 async function exportCrashCsv(page: Page): Promise<string> {
@@ -221,10 +260,10 @@ test.describe('OpsNormal crash export recovery', () => {
     await seedCrashExportEntries(page);
     await openCrashFallbackHarness(page);
 
-    const payload = await exportCrashJson(page);
+    const exported = await exportCrashJson(page);
 
-    await expectExportPayloadIntegrity(payload);
-    expect(normalizeEntries(payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    await expectExportPayloadIntegrity(exported);
+    expect(normalizeEntries(exported.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
     await expect(page.getByText('JSON export complete. 2 entries recovered.')).toBeVisible();
 
     const importContext = await createCleanImportContext(browser);
@@ -233,7 +272,7 @@ test.describe('OpsNormal crash export recovery', () => {
       const importPage = await importContext.newPage();
       await importPage.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
       await importPage.goto('/');
-      await importCrashJsonPayload(importPage, JSON.stringify(payload));
+      await importCrashJsonPayload(importPage, JSON.stringify(exported.payload));
 
       await expectSectorStatus(importPage, 'Work or School', 'nominal');
       await expectSectorStatus(importPage, 'Rest', 'degraded');
@@ -250,10 +289,10 @@ test.describe('OpsNormal crash export recovery', () => {
     await seedMalformedCrashExportEntry(page);
     await openCrashFallbackHarness(page);
 
-    const payload = await exportCrashJson(page);
+    const exported = await exportCrashJson(page);
 
-    await expectExportPayloadIntegrity(payload);
-    expect(normalizeEntries(payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    await expectExportPayloadIntegrity(exported);
+    expect(normalizeEntries(exported.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
     await expect(
       page.getByText('JSON export complete. 2 entries recovered. 1 malformed row skipped.')
     ).toBeVisible();
@@ -264,7 +303,7 @@ test.describe('OpsNormal crash export recovery', () => {
       const importPage = await importContext.newPage();
       await importPage.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
       await importPage.goto('/');
-      await importCrashJsonPayload(importPage, JSON.stringify(payload));
+      await importCrashJsonPayload(importPage, JSON.stringify(exported.payload));
 
       await expectSectorStatus(importPage, 'Work or School', 'nominal');
       await expectSectorStatus(importPage, 'Rest', 'degraded');

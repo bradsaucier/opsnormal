@@ -4,13 +4,6 @@ import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
 import type { DailyEntry, ImportIntegrityStatus, ImportPreview, JsonExportPayload } from '../types';
 
-export type RawChecksumPayload = Pick<
-  JsonExportPayload,
-  'app' | 'schemaVersion' | 'exportedAt' | 'checksum'
-> & {
-  entries: JsonExportPayload['entries'];
-};
-
 export interface ParsedImportSummary {
   payload: JsonExportPayload;
   integrityStatus: ImportIntegrityStatus;
@@ -90,22 +83,30 @@ export function summarizeParsedPayload(payload: JsonExportPayload): ParsedImport
   };
 }
 
+interface RawChecksumPayload {
+  app: JsonExportPayload['app'];
+  schemaVersion: JsonExportPayload['schemaVersion'];
+  exportedAt: JsonExportPayload['exportedAt'];
+  entries: JsonExportPayload['entries'];
+  checksum?: JsonExportPayload['checksum'];
+}
+
 export async function verifyExportChecksum(
   rawPayload: RawChecksumPayload,
-  payload: JsonExportPayload
+  validatedPayload: JsonExportPayload
 ): Promise<void> {
-  if (!payload.checksum) {
+  if (!validatedPayload.checksum) {
     return;
   }
 
   const computedChecksum = await computeJsonExportChecksum({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
+    app: rawPayload.app,
+    schemaVersion: rawPayload.schemaVersion,
+    exportedAt: rawPayload.exportedAt,
     entries: rawPayload.entries
   });
 
-  if (computedChecksum !== payload.checksum) {
+  if (computedChecksum !== validatedPayload.checksum) {
     throw new Error(
       'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
     );
