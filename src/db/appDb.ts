@@ -1,11 +1,24 @@
 import Dexie, { type EntityTable } from 'dexie';
 
-import { createStorageOperationError, isDatabaseClosedError } from '../lib/storage';
+import {
+  createStorageOperationError,
+  isDatabaseClosedError,
+  recordStorageConnectionDrop,
+  recordStorageReconnectFailure,
+  recordStorageReconnectSuccess,
+  recordStorageWriteVerification
+} from '../lib/storage';
+import { reloadCurrentPage } from '../lib/runtime';
 import type { DailyEntry, SectorId, UiStatus } from '../types';
 import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from './schema';
 
 const SCHEMA_RELOAD_GUARD_KEY = 'opsnormal-schema-reload-guard';
 const SCHEMA_RELOAD_GUARD_WINDOW_MS = 5000;
+const DATABASE_REOPEN_MAX_ATTEMPTS = 3;
+const DATABASE_REOPEN_BACKOFF_MS = 150;
+const DATABASE_OPEN_TIMEOUT_MS = 1000;
+const DATABASE_RELOAD_DELAY_MS = 2000;
+const WRITE_VERIFICATION_TIMEOUT_MS = 500;
 
 class OpsNormalDb extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
@@ -20,6 +33,60 @@ export const db = new OpsNormalDb();
 
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
+let databaseRecoveryReloadScheduled = false;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      reject(new Error(message));
+    }, ms);
+
+    promise.then(
+      (value) => {
+        globalThis.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error: unknown) => {
+        globalThis.clearTimeout(timeoutId);
+        reject(
+          error instanceof Error
+            ? error
+            : new Error('Local database operation timed out before a valid failure reason was returned.')
+        );
+      }
+    );
+  });
+}
+
+function scheduleDatabaseRecoveryReload(): void {
+  if (databaseRecoveryReloadScheduled || typeof window === 'undefined') {
+    return;
+  }
+
+  databaseRecoveryReloadScheduled = true;
+
+  globalThis.setTimeout(() => {
+    reloadCurrentPage();
+  }, DATABASE_RELOAD_DELAY_MS);
+}
+
+function clearDatabaseRecoveryReload(): void {
+  databaseRecoveryReloadScheduled = false;
+}
+
+async function openDatabaseWithTimeout(): Promise<void> {
+  await withTimeout(
+    db.open(),
+    DATABASE_OPEN_TIMEOUT_MS,
+    'Local database reopen stalled. Reload initiated to recover the browser storage connection.'
+  );
+}
 
 export function shouldBlockVersionChangeReload(
   now: number,
@@ -72,14 +139,72 @@ function clearSchemaReloadGuard(): void {
   }
 }
 
+function clearDatabaseRecoveryRequirement(): void {
+  databaseRecoveryRequired = false;
+}
+
+async function verifyPersistedDailyStatus(
+  date: string,
+  sectorId: SectorId,
+  expectedStatus: UiStatus,
+  expectedUpdatedAt: string | null
+): Promise<void> {
+  let persistedEntry: DailyEntry | undefined;
+
+  try {
+    persistedEntry = await withTimeout(
+      db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first(),
+      WRITE_VERIFICATION_TIMEOUT_MS,
+      'Local write verification stalled. Confirm the latest check-in, export now, then reload before continuing.'
+    );
+  } catch (error) {
+    recordStorageWriteVerification('failed');
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+    );
+  }
+
+  if (expectedStatus === 'unmarked') {
+    if (persistedEntry) {
+      recordStorageWriteVerification('mismatch');
+      throw new Error(
+        'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+      );
+    }
+
+    recordStorageWriteVerification('verified');
+    return;
+  }
+
+  const matchesExpectedWrite =
+    persistedEntry?.status === expectedStatus &&
+    persistedEntry.updatedAt === expectedUpdatedAt;
+
+  if (!matchesExpectedWrite) {
+    recordStorageWriteVerification('mismatch');
+    throw new Error(
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+    );
+  }
+
+  recordStorageWriteVerification('verified');
+}
+
 db.on('close', () => {
   databaseRecoveryRequired = true;
+  recordStorageConnectionDrop();
 });
 
 db.on('ready', () => {
-  databaseRecoveryRequired = false;
+  clearDatabaseRecoveryRequirement();
   schemaReloadLoopDetected = false;
   clearSchemaReloadGuard();
+  clearDatabaseRecoveryReload();
 });
 
 db.on('versionchange', () => {
@@ -118,11 +243,56 @@ export async function reopenIfClosed(): Promise<void> {
     );
   }
 
-  if (!db.isOpen()) {
-    await db.open();
+  if (db.isOpen() && !databaseRecoveryRequired) {
+    return;
   }
 
-  databaseRecoveryRequired = false;
+  let lastError: unknown;
+  const recovering = databaseRecoveryRequired;
+
+  for (let attempt = 0; attempt < DATABASE_REOPEN_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      if (databaseRecoveryRequired && db.isOpen()) {
+        try {
+          db.close();
+        } catch {
+          // Ignore redundant close failures during recovery retry.
+        }
+      }
+
+      if (!db.isOpen() || databaseRecoveryRequired) {
+        await openDatabaseWithTimeout();
+      }
+
+      clearDatabaseRecoveryRequirement();
+      clearDatabaseRecoveryReload();
+
+      if (recovering) {
+        recordStorageReconnectSuccess();
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+      databaseRecoveryRequired = true;
+
+      try {
+        db.close();
+      } catch {
+        // Ignore redundant close failures during recovery retry.
+      }
+
+      if (attempt < DATABASE_REOPEN_MAX_ATTEMPTS - 1) {
+        await delay(DATABASE_REOPEN_BACKOFF_MS * (attempt + 1));
+      }
+    }
+  }
+
+  recordStorageReconnectFailure(lastError);
+  scheduleDatabaseRecoveryReload();
+  throw new Error(
+    'Local database connection was interrupted. Recovery reload initiated. Confirm the data view after reload, then export before more edits.'
+  );
 }
 
 async function runDatabaseOperation<T>(operation: () => Promise<T>): Promise<T> {
@@ -157,27 +327,38 @@ export async function setDailyStatus(
   status: UiStatus
 ): Promise<UiStatus> {
   return runDatabaseWrite(async () => {
-    const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+    let savedStatus: UiStatus = status;
+    let expectedUpdatedAt: string | null = null;
 
-    if (status === 'unmarked') {
-      if (existing?.id !== undefined) {
-        await db.dailyEntries.delete(existing.id);
+    await db.transaction('rw', db.dailyEntries, async () => {
+      const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+
+      if (status === 'unmarked') {
+        if (existing?.id !== undefined) {
+          await db.dailyEntries.delete(existing.id);
+        }
+
+        savedStatus = 'unmarked';
+        expectedUpdatedAt = null;
+        return;
       }
 
-      return 'unmarked';
-    }
+      expectedUpdatedAt = new Date().toISOString();
+      const payload: DailyEntry = {
+        id: existing?.id,
+        date,
+        sectorId,
+        status,
+        updatedAt: expectedUpdatedAt
+      };
 
-    const payload: DailyEntry = {
-      id: existing?.id,
-      date,
-      sectorId,
-      status,
-      updatedAt: new Date().toISOString()
-    };
+      await db.dailyEntries.put(payload);
+      savedStatus = payload.status;
+    });
 
-    await db.dailyEntries.put(payload);
+    await verifyPersistedDailyStatus(date, sectorId, savedStatus, expectedUpdatedAt);
 
-    return payload.status;
+    return savedStatus;
   });
 }
 
