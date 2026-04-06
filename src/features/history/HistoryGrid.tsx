@@ -470,6 +470,8 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                 role="grid"
                 aria-readonly="true"
                 aria-describedby={`${instructionsId} ${statusSummaryId}`}
+                aria-colcount={dateKeys.length + 1}
+                aria-rowcount={SECTORS.length + 1}
               >
                 <caption id={captionId} className="sr-only">
                   Thirty-day readiness grid with one row per sector and one column per day. Cell labels use OK for nominal, DG for degraded, and UN for unmarked.
@@ -742,7 +744,7 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                             aria-pressed={isSelectedDay}
                             aria-current={isToday ? 'date' : undefined}
                             className={[
-                              'ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition',
+                              'ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent',
                               isSelectedDay
                                 ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                                 : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
@@ -842,6 +844,9 @@ export function HistoryGrid({ dateKeys, todayKey }: HistoryGridProps) {
                     </p>
                     <p className="mt-1 text-xs leading-5 text-ops-text-secondary">
                       {sector.description}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-ops-text-secondary">
+                      State: <span className="text-ops-text-primary">{getStatusLabel(status)}</span>
                     </p>
                   </div>
                   <StatusBadge status={status} />
