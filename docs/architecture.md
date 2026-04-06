@@ -16,7 +16,7 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 
 ## Runtime shape
 
-1. The Today panel issues writes through `cycleDailyStatus()`.
+1. The Today panel issues writes through `setDailyStatus()` via direct-select status controls.
 2. Dexie persists rows in IndexedDB under a compound unique key.
 3. `useLiveQuery()` reacts to database changes without separate client-side state orchestration.
 4. History and export views consume the same persistence layer.
@@ -43,6 +43,8 @@ Write paths route through guarded operations so quota failures and interrupted d
 React error boundaries now provide render-fault containment at two levels.
 A root boundary keeps the app from collapsing into a white screen and preserves direct export actions on the crash fallback.
 A second boundary isolates the 30-day history grid so a panel fault does not take Today, backup, or install controls offline.
+
+The app shell also keeps a persistent status live region for announced state changes without timer-based clearing and exposes a skip link that lands directly on the main operational surface. Notched interactive controls use inset focus rings so the tactical clip geometry does not shear off the visible keyboard indicator.
 
 The app shell now uses dynamic viewport height plus safe-area inset padding so installed mobile mode keeps the first and last controls clear of the status bar, home indicator, and toolbar transitions. The history shell applies client-side week pagination without duplicating Dexie queries or index work, and narrow-screen history uses native day selection controls instead of desktop grid semantics so dense historical data remains readable without shrinking the interaction model into noise.
 
