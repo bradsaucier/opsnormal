@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
+import { parseExportPayload } from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
@@ -84,12 +85,14 @@ async function buildVerifiedImportPayload(entries: ImportEntry[]): Promise<Impor
     entries
   };
 
-  payload.checksum = await computeJsonExportChecksum({
+  const checksum: string = await computeJsonExportChecksum({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
     entries: payload.entries
   });
+
+  payload.checksum = checksum;
 
   return payload;
 }
@@ -142,7 +145,7 @@ async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum = await computeJsonExportChecksum({
+  const recomputedChecksum: string = await computeJsonExportChecksum({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
@@ -174,7 +177,7 @@ async function exportCurrentJson(page: Page): Promise<JsonExportPayload> {
   const downloadPath = requireDownloadPath(await download.path());
   const rawText = await readLocalFileText(downloadPath);
 
-  return JSON.parse(rawText) as JsonExportPayload;
+  return parseExportPayload(rawText);
 }
 
 async function ensureImportPanelOpen(page: Page): Promise<void> {
