@@ -1,4 +1,10 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+  return page.getByRole('radio', {
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+  });
+}
 
 test.describe('OpsNormal', () => {
   test('skip link targets main content', async ({ page }) => {
@@ -18,25 +24,26 @@ test.describe('OpsNormal', () => {
     await storageHealthToggle.click();
     await expect(page.getByText(/storage durability/i)).toBeVisible();
 
-    const workNominal = page.getByRole('radio', { name: /work or school nominal/i });
-    const workDegraded = page.getByRole('radio', { name: /work or school degraded/i });
+    const workNominal = sectorRadio(page, 'Work or School', 'nominal');
+    const workDegraded = sectorRadio(page, 'Work or School', 'degraded');
 
     await workNominal.click();
     await expect(workNominal).toHaveAttribute('aria-checked', 'true');
+    await expect(workNominal).toBeEnabled();
 
     await workDegraded.click();
     await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
+    await expect(workDegraded).toBeEnabled();
 
     await page.reload();
     await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
   });
 
-
   test('keeps inset focus styling and prevents page scroll on keyboard selection', async ({ page }) => {
     await page.goto('/');
 
-    const workUnmarked = page.getByRole('radio', { name: /work or school unmarked/i });
-    const workNominal = page.getByRole('radio', { name: /work or school nominal/i });
+    const workUnmarked = sectorRadio(page, 'Work or School', 'unmarked');
+    const workNominal = sectorRadio(page, 'Work or School', 'nominal');
 
     for (let attempt = 0; attempt < 20; attempt += 1) {
       if (await workUnmarked.evaluate((element) => document.activeElement === element)) {
