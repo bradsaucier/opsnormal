@@ -4,13 +4,6 @@ import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
 import type { DailyEntry, ImportIntegrityStatus, ImportPreview, JsonExportPayload } from '../types';
 
-export type RawChecksumPayload = Pick<
-  JsonExportPayload,
-  'app' | 'schemaVersion' | 'exportedAt' | 'checksum'
-> & {
-  entries: JsonExportPayload['entries'];
-};
-
 export interface ParsedImportSummary {
   payload: JsonExportPayload;
   integrityStatus: ImportIntegrityStatus;
@@ -90,22 +83,30 @@ export function summarizeParsedPayload(payload: JsonExportPayload): ParsedImport
   };
 }
 
+interface RawChecksumPayload {
+  app: JsonExportPayload['app'];
+  schemaVersion: JsonExportPayload['schemaVersion'];
+  exportedAt: JsonExportPayload['exportedAt'];
+  entries: JsonExportPayload['entries'];
+  checksum?: JsonExportPayload['checksum'];
+}
+
 export async function verifyExportChecksum(
   rawPayload: RawChecksumPayload,
-  payload: JsonExportPayload
+  validatedPayload: JsonExportPayload
 ): Promise<void> {
-  if (!payload.checksum) {
+  if (!validatedPayload.checksum) {
     return;
   }
 
   const computedChecksum = await computeJsonExportChecksum({
-    app: payload.app,
-    schemaVersion: payload.schemaVersion,
-    exportedAt: payload.exportedAt,
+    app: rawPayload.app,
+    schemaVersion: rawPayload.schemaVersion,
+    exportedAt: rawPayload.exportedAt,
     entries: rawPayload.entries
   });
 
-  if (computedChecksum !== payload.checksum) {
+  if (computedChecksum !== validatedPayload.checksum) {
     throw new Error(
       'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
     );
@@ -120,6 +121,10 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
     throw new Error(formatValidationError(validated.error));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- Checksum must be computed
+  // from raw parsed entries to preserve byte-identical JSON.stringify symmetry with the export
+  // path. Zod rebuilds objects in schema-definition property order, which would silently break
+  // integrity verification for valid backups.
   await verifyExportChecksum(parsed as RawChecksumPayload, validated.data);
 
   return validated.data;
