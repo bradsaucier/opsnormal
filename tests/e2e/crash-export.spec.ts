@@ -84,7 +84,8 @@ async function expectExportPayloadIntegrity(payload: JsonExportPayload): Promise
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
-    entries: payload.entries
+    entries: payload.entries,
+    crashDiagnostics: payload.crashDiagnostics
   });
 
   expect(payload.checksum).toBe(recomputedChecksum);
