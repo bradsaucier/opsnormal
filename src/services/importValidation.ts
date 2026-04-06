@@ -4,12 +4,6 @@ import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
 import type { DailyEntry, ImportIntegrityStatus, ImportPreview, JsonExportPayload } from '../types';
 
-export type RawChecksumPayload = Pick<
-  JsonExportPayload,
-  'app' | 'schemaVersion' | 'exportedAt' | 'checksum'
-> & {
-  entries: JsonExportPayload['entries'];
-};
 
 export interface ParsedImportSummary {
   payload: JsonExportPayload;
@@ -90,10 +84,7 @@ export function summarizeParsedPayload(payload: JsonExportPayload): ParsedImport
   };
 }
 
-export async function verifyExportChecksum(
-  rawPayload: RawChecksumPayload,
-  payload: JsonExportPayload
-): Promise<void> {
+export async function verifyExportChecksum(payload: JsonExportPayload): Promise<void> {
   if (!payload.checksum) {
     return;
   }
@@ -102,7 +93,8 @@ export async function verifyExportChecksum(
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
-    entries: rawPayload.entries
+    entries: payload.entries,
+    crashDiagnostics: payload.crashDiagnostics
   });
 
   if (computedChecksum !== payload.checksum) {
@@ -120,7 +112,7 @@ export async function parseImportPayload(rawText: string): Promise<JsonExportPay
     throw new Error(formatValidationError(validated.error));
   }
 
-  await verifyExportChecksum(parsed as RawChecksumPayload, validated.data);
+  await verifyExportChecksum(validated.data);
 
   return validated.data;
 }
