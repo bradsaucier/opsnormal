@@ -22,6 +22,11 @@ type CrashEntry = {
   updatedAt: string;
 };
 
+type CrashJsonExportResult = {
+  rawText: string;
+  parsed: ParsedExportPayloadDetails;
+};
+
 const EXPECTED_CRASH_EXPORT_ENTRIES: CrashEntry[] = [
   {
     date: FIXED_TEST_DATE_KEY,
@@ -205,13 +210,17 @@ async function openCrashFallbackHarness(page: Page): Promise<void> {
   await expect(page.getByText(/crash fallback harness injected render fault/i)).toBeVisible();
 }
 
-async function exportCrashJson(page: Page): Promise<ParsedExportPayloadDetails> {
+async function exportCrashJson(page: Page): Promise<CrashJsonExportResult> {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
   const download = await downloadPromise;
   const downloadPath = requireDownloadPath(await download.path());
   const rawText = await readLocalFileText(downloadPath);
-  return parseExportPayloadDetails(rawText);
+
+  return {
+    rawText,
+    parsed: parseExportPayloadDetails(rawText)
+  };
 }
 
 async function exportCrashCsv(page: Page): Promise<string> {
@@ -256,13 +265,15 @@ test.describe('OpsNormal crash export recovery', () => {
     browser,
     page
   }) => {
+    test.slow();
+
     await seedCrashExportEntries(page);
     await openCrashFallbackHarness(page);
 
     const exported = await exportCrashJson(page);
 
-    await expectExportPayloadIntegrity(exported);
-    expect(normalizeEntries(exported.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    await expectExportPayloadIntegrity(exported.parsed);
+    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
     await expect(page.getByText('JSON export complete. 2 entries recovered.')).toBeVisible();
 
     const importContext = await createCleanImportContext(browser);
@@ -271,12 +282,13 @@ test.describe('OpsNormal crash export recovery', () => {
       const importPage = await importContext.newPage();
       await importPage.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
       await importPage.goto('/');
-      await importCrashJsonPayload(importPage, JSON.stringify(exported.payload));
+
+      await importCrashJsonPayload(importPage, exported.rawText);
 
       await expectSectorStatus(importPage, 'Work or School', 'nominal');
       await expectSectorStatus(importPage, 'Rest', 'degraded');
     } finally {
-      await importContext.close();
+      await importContext.close().catch(() => {});
     }
   });
 
@@ -284,14 +296,16 @@ test.describe('OpsNormal crash export recovery', () => {
     browser,
     page
   }) => {
+    test.slow();
+
     await seedCrashExportEntries(page);
     await seedMalformedCrashExportEntry(page);
     await openCrashFallbackHarness(page);
 
     const exported = await exportCrashJson(page);
 
-    await expectExportPayloadIntegrity(exported);
-    expect(normalizeEntries(exported.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    await expectExportPayloadIntegrity(exported.parsed);
+    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
     await expect(
       page.getByText('JSON export complete. 2 entries recovered. 1 malformed row skipped.')
     ).toBeVisible();
@@ -302,13 +316,14 @@ test.describe('OpsNormal crash export recovery', () => {
       const importPage = await importContext.newPage();
       await importPage.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
       await importPage.goto('/');
-      await importCrashJsonPayload(importPage, JSON.stringify(exported.payload));
+
+      await importCrashJsonPayload(importPage, exported.rawText);
 
       await expectSectorStatus(importPage, 'Work or School', 'nominal');
       await expectSectorStatus(importPage, 'Rest', 'degraded');
       await expectSectorStatus(importPage, 'Household', 'unmarked');
     } finally {
-      await importContext.close();
+      await importContext.close().catch(() => {});
     }
   });
 
