@@ -32,7 +32,7 @@ OpsNormal takes the opposite path. The interaction is intentionally coarse, inte
 
 | Capability | What it does |
 | --- | --- |
-| Fast daily check-in | Records a daily state across five fixed sectors with one-click cycling. |
+| Fast daily check-in | Records a daily state across five fixed sectors with direct selection controls. |
 | Clear historical picture | Shows a trailing 30-day readiness view for rapid pattern recognition. |
 | Mobile-ready history | Shifts narrow screens into week-paginated history with a daily brief instead of forcing a 30-column wall onto a phone. |
 | Local-only persistence | Stores working data in IndexedDB through Dexie with no account model and no backend service. |
