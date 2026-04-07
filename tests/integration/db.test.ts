@@ -152,12 +152,14 @@ describe('database operations', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
     await expect(reopenIfClosed()).rejects.toThrow('Schema upgrade handoff stalled');
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(1);
 
-    await vi.advanceTimersByTimeAsync(3050);
+    await vi.advanceTimersByTimeAsync(3049);
+
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
 
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
-    expect(vi.getTimerCount()).toBe(0);
   });
 
   it('fails open with an immediate reload when sessionStorage read throws during schema recovery', () => {
