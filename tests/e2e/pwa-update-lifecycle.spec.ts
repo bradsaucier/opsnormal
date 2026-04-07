@@ -14,6 +14,10 @@ async function dispatchControllerChange(page: import('@playwright/test').Page) {
   });
 }
 
+function getPwaUpdateBanner(page: import('@playwright/test').Page) {
+  return page.locator('section[role="status"]').filter({ hasText: /update ready|update handoff did not complete/i });
+}
+
 test.describe('OpsNormal PWA update lifecycle', () => {
   test('reloads both tabs through the synthetic controller handoff without losing the visible check-in state', async ({ browser }) => {
     const context = await browser.newContext({ serviceWorkers: 'block' });
@@ -33,8 +37,10 @@ test.describe('OpsNormal PWA update lifecycle', () => {
 
     await pageA.getByRole('button', { name: /apply update/i }).click();
 
-    await expect.poll(() => pageB.evaluate(() => window.__opsNormalDbTestApi__?.simulateVersionChange() ?? 'noop')).toBe('reloading');
-    await expect.poll(() => pageB.evaluate(() => window.__opsNormalDbTestApi__?.isRecoveryRequired() ?? false)).toBe(true);
+    const pageBReloadPromise = pageB.waitForLoadState('domcontentloaded');
+    const versionChangeResult = await pageB.evaluate(() => window.__opsNormalDbTestApi__?.simulateVersionChange() ?? 'noop');
+    expect(versionChangeResult).toBe('reloading');
+    await pageBReloadPromise;
 
     await dispatchControllerChange(pageA);
 
@@ -74,8 +80,10 @@ test.describe('OpsNormal PWA update lifecycle', () => {
     await markUpdateReady(page);
     await page.getByRole('button', { name: /apply update/i }).click();
 
-    await expect(page.getByText(/update handoff did not complete/i)).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('button', { name: /reload tab/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /dismiss/i })).toHaveCount(0);
+    const updateBanner = getPwaUpdateBanner(page);
+
+    await expect(updateBanner.getByText(/update handoff did not complete/i)).toBeVisible({ timeout: 5000 });
+    await expect(updateBanner.getByRole('button', { name: /reload tab/i })).toBeVisible();
+    await expect(updateBanner.getByRole('button', { name: /dismiss/i })).toHaveCount(0);
   });
 });
