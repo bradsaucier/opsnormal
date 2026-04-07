@@ -138,8 +138,13 @@ describe('database operations', () => {
     expect(isDatabaseRecoveryRequired()).toBe(true);
     expect(db.isOpen()).toBe(false);
     expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe('10000');
-    expect(closeSpy.mock.invocationCallOrder[0]).toBeLessThan(mocks.reloadCurrentPage.mock.invocationCallOrder[0]);
+    expect(closeSpy).toHaveBeenCalledTimes(1);
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+
+    const closeCallOrder = closeSpy.mock.invocationCallOrder[0]!;
+    const reloadCallOrder = mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
+
+    expect(closeCallOrder).toBeLessThan(reloadCallOrder);
   });
 
   it('schedules one bounded schema-reload retry when the guard blocks an immediate reload', async () => {
