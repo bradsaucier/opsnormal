@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +13,7 @@ describe('PwaUpdateBanner', () => {
         offlineReady: false,
         isApplyingUpdate: false,
         updateStalled: false,
+        reloadRecoveryRequired: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
@@ -33,6 +34,7 @@ describe('PwaUpdateBanner', () => {
         offlineReady: false,
         isApplyingUpdate: false,
         updateStalled: false,
+        reloadRecoveryRequired: false,
         onReload,
         onDismiss,
         onReloadPage: vi.fn()
@@ -56,6 +58,7 @@ describe('PwaUpdateBanner', () => {
         offlineReady: true,
         isApplyingUpdate: false,
         updateStalled: false,
+        reloadRecoveryRequired: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
@@ -76,6 +79,7 @@ describe('PwaUpdateBanner', () => {
         offlineReady: false,
         isApplyingUpdate: false,
         updateStalled: true,
+        reloadRecoveryRequired: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage
@@ -92,6 +96,44 @@ describe('PwaUpdateBanner', () => {
     expect(onReloadPage).toHaveBeenCalledTimes(1);
   });
 
+  it('announces loop-breaker recovery guidance after mount and pins the banner until manual reload', () => {
+    vi.useFakeTimers();
+    const onReloadPage = vi.fn();
+
+    render(
+      createElement(PwaUpdateBanner, {
+        needRefresh: true,
+        offlineReady: false,
+        isApplyingUpdate: false,
+        updateStalled: false,
+        reloadRecoveryRequired: true,
+        onReload: vi.fn(),
+        onDismiss: vi.fn(),
+        onReloadPage
+      })
+    );
+
+    expect(screen.getByRole('heading', { name: 'Update Recovery Required' })).toBeInTheDocument();
+    expect(screen.getByText(/update loop intercepted/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reload tab/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /apply update/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    expect(screen.getByRole('alert')).toBeEmptyDOMElement();
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/update loop intercepted/i);
+
+    act(() => {
+      screen.getByRole('button', { name: /reload tab/i }).click();
+    });
+
+    expect(onReloadPage).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   it('shows the applying state while the update handoff is in progress', () => {
     render(
       createElement(PwaUpdateBanner, {
@@ -99,6 +141,7 @@ describe('PwaUpdateBanner', () => {
         offlineReady: false,
         isApplyingUpdate: true,
         updateStalled: false,
+        reloadRecoveryRequired: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
