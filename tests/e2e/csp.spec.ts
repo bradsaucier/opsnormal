@@ -49,4 +49,21 @@ test.describe('OpsNormal CSP posture', () => {
 
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
+
+  test('renders the root crash fallback surface without CSP violations in Chromium', async ({ page }) => {
+    await installCspViolationCollector(page);
+
+    await page.goto('/crash-fallback-harness.html');
+
+    await expect(page.getByRole('heading', { name: 'OpsNormal stopped rendering' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Export JSON' })).toBeVisible();
+    await expect(page.locator('[data-testid="app-crash-fallback"]')).toHaveCSS(
+      'background-color',
+      'rgb(10, 15, 13)'
+    );
+    await expect(page.locator('.ops-crash-fallback-title')).toHaveCSS('text-transform', 'uppercase');
+
+    await expect.poll(() => getCspViolations(page)).toEqual([]);
+  });
+
 });
