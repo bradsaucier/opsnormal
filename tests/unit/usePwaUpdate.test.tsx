@@ -113,9 +113,11 @@ describe('usePwaUpdate', () => {
 
     expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
-    expect(mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.reloadCurrentPage.mock.invocationCallOrder[0]
-    );
+
+    const closeCallOrder = mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder[0]!;
+    const reloadCallOrder = mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
+
+    expect(closeCallOrder).toBeLessThan(reloadCallOrder);
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
     expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
     expect(result.current.updateStalled).toBe(false);
