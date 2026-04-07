@@ -26,6 +26,10 @@ Prove that the app:
 - live status and alert regions stay mounted with aria-atomic set
 - stalled service worker update handoff surfaces pinned recovery guidance and a direct reload path
 - synthetic controllerchange Playwright drill proves the application-managed portion of the prompt-mode update handoff across duplicate tabs
+- repeated automatic controllerchange reload bookkeeping escalates to a pinned manual recovery banner instead of continuing the loop
+- loop-breaker bookkeeping resets cleanly when the last automatic reload attempt falls outside the active session window
+- manual recovery broadcasts a duplicate-tab clear signal so another open tab does not stay pinned on stale loop-breaker state
+- recovery alert-region content mutates after mount so assistive technology receives the manual recovery instruction after a hard reload
 - unrecoverable IndexedDB reopen failure schedules a full page reload instead of trusting a poisoned handle
 - service worker revalidation survives React Strict Mode effect replay after registration is captured
 - worker-backed preview path aborts cleanly on replacement selection or component teardown
@@ -58,7 +62,7 @@ Prove that the app:
 - mobile history week pagination and daily brief selection hold under a narrow viewport
 - CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium
 - root crash fallback exports valid JSON and CSV after a controlled render fault, the crash-state JSON remains importable in a clean browser context, and the fallback does not emit CSP violations in Chromium
-- synthetic PWA update handoff proof covers update prompt application, controller handoff, and second-tab schema reload recovery in Chromium
+- synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
 
 ## Coverage posture
@@ -80,6 +84,9 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify the installed PWA on physical Android hardware keeps the shell stable through address-bar collapse and software-keyboard transitions
 - verify the mobile history surface snaps cleanly to week boundaries, updates the daily brief after day selection, and does not leak horizontal overscroll into document navigation
 - verify a deployed service worker update either hands off cleanly or escalates to the pinned manual recovery path when another OpsNormal tab holds the active worker
+- verify repeated controllerchange churn in one tab pins the loop-breaker banner instead of continuing automatic reloads
+- verify manual recovery in one tab clears stale loop-breaker state in another open tab
+- verify the recovery announcement is spoken after a hard reload into the pinned manual recovery state with at least one screen reader and browser pair
 - verify Chrome DevTools "Update on reload" is disabled before manual service-worker handoff checks so the smoke test reflects normal operator behavior
 - expect up to a 5000 millisecond guard-window delay before a blocked duplicate tab finishes schema-recovery reload
 

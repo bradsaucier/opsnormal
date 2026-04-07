@@ -23,6 +23,40 @@ const mocks = vi.hoisted(() => ({
 
 let mockServiceWorkerContainer: EventTarget & { controller: ServiceWorker | null };
 
+class MockBroadcastChannel extends EventTarget {
+  static instances: MockBroadcastChannel[] = [];
+
+  readonly name: string;
+  closed = false;
+
+  constructor(name: string) {
+    super();
+    this.name = name;
+    MockBroadcastChannel.instances.push(this);
+  }
+
+  postMessage(message: unknown) {
+    for (const instance of MockBroadcastChannel.instances) {
+      if (instance === this || instance.closed || instance.name !== this.name) {
+        continue;
+      }
+
+      const event = new Event('message') as MessageEvent<unknown>;
+      Object.defineProperty(event, 'data', { value: message });
+      instance.dispatchEvent(event);
+    }
+  }
+
+  close() {
+    if (this.closed) {
+      return;
+    }
+
+    this.closed = true;
+    MockBroadcastChannel.instances = MockBroadcastChannel.instances.filter((instance) => instance !== this);
+  }
+}
+
 vi.mock('../../src/features/pwa/registerSw', async () => {
   const React = await import('react');
 
@@ -55,7 +89,8 @@ vi.mock('../../src/lib/runtime', async (importOriginal) => {
 
 import { usePwaUpdate } from '../../src/features/pwa/usePwaUpdate';
 
-const strictWrapper = ({ children }: { children: React.ReactNode }) => React.createElement(React.StrictMode, null, children);
+const strictWrapper = ({ children }: { children: React.ReactNode }) =>
+  React.createElement(React.StrictMode, null, children);
 
 describe('usePwaUpdate', () => {
   beforeEach(() => {
@@ -68,8 +103,15 @@ describe('usePwaUpdate', () => {
       value: mockServiceWorkerContainer
     });
 
+    Object.defineProperty(window, 'BroadcastChannel', {
+      configurable: true,
+      value: MockBroadcastChannel
+    });
+
+    MockBroadcastChannel.instances = [];
     window.sessionStorage.clear();
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-07T12:00:00.000Z'));
     vi.clearAllMocks();
     mocks.state.needRefresh = true;
     mocks.state.offlineReady = false;
@@ -109,6 +151,7 @@ describe('usePwaUpdate', () => {
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
+      vi.advanceTimersByTime(50);
     });
 
     expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
@@ -131,10 +174,90 @@ describe('usePwaUpdate', () => {
     act(() => {
       result.current.handleApplyUpdate();
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
+      vi.advanceTimersByTime(50);
     });
 
     expect(mocks.closeDatabaseForServiceWorkerHandoff).not.toHaveBeenCalled();
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+  });
+
+  it('pins manual recovery when the session shows repeated automatic update reloads', () => {
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(result.current.reloadRecoveryRequired).toBe(true);
+    expect(result.current.needRefresh).toBe(true);
+    expect(result.current.offlineReady).toBe(false);
+  });
+
+  it('clears the loop-breaker session state before the operator-triggered reload path', () => {
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    act(() => {
+      result.current.handleReloadPage();
+    });
+
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBeNull();
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at')).toBeNull();
+    expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+    expect(mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder.at(-1)).toBeLessThan(
+      mocks.reloadCurrentPage.mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY
+    );
+  });
+
+  it('resets expired loop-breaker state instead of pinning recovery outside the active window', () => {
+    const now = Date.now();
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(now - 15001));
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(result.current.reloadRecoveryRequired).toBe(false);
+
+    act(() => {
+      mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
+    });
+
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBe('1');
+    expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('broadcasts recovery clear so a second tab does not stay pinned after manual recovery starts', () => {
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+
+    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(primaryTab.result.current.reloadRecoveryRequired).toBe(true);
+    expect(secondaryTab.result.current.reloadRecoveryRequired).toBe(true);
+
+    act(() => {
+      primaryTab.result.current.handleReloadPage();
+    });
+
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBeNull();
+    expect(secondaryTab.result.current.reloadRecoveryRequired).toBe(false);
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
+    expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
   });
 
   it('re-establishes background revalidation across unmount and remount', () => {
@@ -171,6 +294,20 @@ describe('usePwaUpdate', () => {
     expect(result.current.isApplyingUpdate).toBe(false);
   });
 
+  it('ignores dismiss while loop-breaker recovery is pinned', () => {
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    act(() => {
+      result.current.handleDismissBanner();
+    });
+
+    expect(result.current.reloadRecoveryRequired).toBe(true);
+    expect(result.current.needRefresh).toBe(true);
+  });
+
   it('resets the transient state when the banner is dismissed before the handoff stalls', () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
@@ -182,19 +319,5 @@ describe('usePwaUpdate', () => {
     expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
     expect(result.current.updateStalled).toBe(false);
     expect(result.current.isApplyingUpdate).toBe(false);
-  });
-
-  it('closes Dexie before the operator-triggered reload path', () => {
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-
-    act(() => {
-      result.current.handleReloadPage();
-    });
-
-    expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
-    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
-    expect(mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder.at(-1)).toBeLessThan(
-      mocks.reloadCurrentPage.mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY
-    );
   });
 });

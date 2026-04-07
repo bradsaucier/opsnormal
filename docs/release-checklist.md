@@ -11,6 +11,8 @@ Before tagging a release:
 - [ ] synthetic service worker update lifecycle Playwright proof passes in Chromium
 - [ ] deployed service worker update smoke check verified manually after a worker change with Chrome DevTools "Update on reload" disabled
 - [ ] stalled multi-tab update handoff escalates to pinned recovery guidance instead of silently failing
+- [ ] repeated automatic controllerchange reloads escalate to pinned loop-breaker guidance instead of continuing reload churn
+- [ ] manual recovery in one tab clears stale loop-breaker state in another open tab
 - [ ] blocked duplicate-tab schema recovery completes after the 5000 millisecond guard window without entering a reload loop
 - [ ] offline reopen verified manually
 - [ ] export verified manually
