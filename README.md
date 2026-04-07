@@ -154,7 +154,7 @@ Current repo surfaces include:
 The repo backs its claims with process and verification, not slogans.
 
 - GitHub Actions CI runs lint, typecheck, unit and integration tests, and Playwright end-to-end tests
-- The current test tree contains 19 unit suites, 2 integration suites, and 7 end-to-end specs
+- The current test tree contains 19 unit suites, 2 integration suites, and 9 end-to-end specs
 - Architecture Decision Records lock in trust boundaries, data model choices, storage durability hardening, export checksum rules, error containment, and mobile history behavior
 - The repo carries a risk register, test plan, release checklist, and design token document alongside the source
 - The app ships with a restrictive Content Security Policy and same-origin static hosting posture
