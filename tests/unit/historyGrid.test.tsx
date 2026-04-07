@@ -1,9 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HistoryGrid } from '../../src/features/history/HistoryGrid';
-import { getTrailingDateKeys } from '../../src/lib/date';
+import { formatLongDate, getTrailingDateKeys } from '../../src/lib/date';
 import {
   computeCheckInStreak,
   computeCompletionState,
@@ -13,6 +13,10 @@ import {
 import type { DailyEntry } from '../../src/types';
 
 type HooksModule = typeof import('../../src/db/hooks');
+
+type MediaQueryListener = (event: MediaQueryListEvent) => void;
+
+const DESKTOP_HISTORY_QUERY = '(min-width: 768px)';
 
 const { mockUseEntriesForDateRange } = vi.hoisted(() => ({
   mockUseEntriesForDateRange: vi.fn<HooksModule['useEntriesForDateRange']>()
@@ -71,23 +75,79 @@ class MockIntersectionObserver implements IntersectionObserver {
   }
 }
 
+function installMatchMediaController(initialMatches: boolean) {
+  let matches = initialMatches;
+  const listeners = new Set<MediaQueryListener>();
+
+  const mediaQueryList: MediaQueryList = {
+    get matches() {
+      return matches;
+    },
+    media: DESKTOP_HISTORY_QUERY,
+    onchange: null,
+    addEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
+      if (eventName !== 'change') {
+        return;
+      }
+
+      if (typeof listener === 'function') {
+        listeners.add(listener as MediaQueryListener);
+      }
+    }),
+    removeEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
+      if (eventName !== 'change') {
+        return;
+      }
+
+      if (typeof listener === 'function') {
+        listeners.delete(listener as MediaQueryListener);
+      }
+    }),
+    addListener: vi.fn((listener: MediaQueryListener) => {
+      listeners.add(listener);
+    }),
+    removeListener: vi.fn((listener: MediaQueryListener) => {
+      listeners.delete(listener);
+    }),
+    dispatchEvent: vi.fn()
+  };
+
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      ...mediaQueryList,
+      media: query
+    }))
+  });
+
+  return {
+    setMatches(nextMatches: boolean) {
+      matches = nextMatches;
+      const event = {
+        matches,
+        media: DESKTOP_HISTORY_QUERY
+      } as MediaQueryListEvent;
+
+      listeners.forEach((listener) => listener(event));
+      mediaQueryList.onchange?.(event);
+    }
+  };
+}
+
+function getSelectedGridCell(): HTMLElement {
+  const selectedCells = screen
+    .queryAllByRole('gridcell')
+    .filter((cell) => cell.getAttribute('aria-selected') === 'true');
+
+  expect(selectedCells).toHaveLength(1);
+  return selectedCells[0] as HTMLElement;
+}
+
 describe('history helpers and grid behavior', () => {
   beforeEach(() => {
     mockUseEntriesForDateRange.mockReturnValue([]);
-
-    Object.defineProperty(window, 'matchMedia', {
-      writable: true,
-      value: vi.fn().mockImplementation(() => ({
-        matches: false,
-        media: '(min-width: 768px)',
-        onchange: null,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
-        dispatchEvent: vi.fn()
-      }))
-    });
+    installMatchMediaController(false);
 
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
@@ -161,7 +221,7 @@ describe('history helpers and grid behavior', () => {
   });
 
   it('keeps the daily brief aligned to the visible week when explicit controls are used', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
 
     render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
@@ -188,5 +248,120 @@ describe('history helpers and grid behavior', () => {
 
     expect(weekStatus).toHaveTextContent('Week 5 of 5');
     expect(screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i })).toBeVisible();
+  });
+
+  it('keeps a single tabbable desktop gridcell and updates the selected-cell brief during keyboard traversal', async () => {
+    const user = userEvent.setup({ delay: null });
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    const matchMediaController = installMatchMediaController(true);
+    const firstDateLabel = formatLongDate(dateKeys[0] ?? '2026-02-27');
+    const oneWeekBackDateLabel = formatLongDate(dateKeys[dateKeys.length - 8] ?? '2026-03-21');
+    const todayLabel = formatLongDate('2026-03-28');
+
+    void matchMediaController;
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    const grid = screen.getByRole('grid');
+    expect(grid).toHaveAttribute('aria-colcount', '31');
+    expect(grid).toHaveAttribute('aria-rowcount', '6');
+    expect(screen.queryByRole('button', { name: /previous week/i })).not.toBeInTheDocument();
+
+    const initialSelectedCell = getSelectedGridCell();
+    expect(initialSelectedCell).toHaveAttribute('aria-label', `Work or School on ${todayLabel}: UNMARKED.`);
+    expect(initialSelectedCell).toHaveAttribute('tabindex', '0');
+    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
+
+    act(() => {
+      initialSelectedCell.focus();
+    });
+    expect(initialSelectedCell).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute('aria-label', `Household on ${todayLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveFocus();
+    });
+    expect(screen.getByText(`Household on ${todayLabel} is UNMARKED.`)).toBeVisible();
+
+    await user.keyboard('{PageUp}');
+    await waitFor(() => {
+      expect(getSelectedGridCell()).toHaveAttribute('aria-label', `Household on ${oneWeekBackDateLabel}: UNMARKED.`);
+    });
+    expect(screen.getByText(`Household on ${oneWeekBackDateLabel} is UNMARKED.`)).toBeVisible();
+
+    await user.keyboard('{Home}');
+    await waitFor(() => {
+      expect(getSelectedGridCell()).toHaveAttribute('aria-label', `Household on ${firstDateLabel}: UNMARKED.`);
+    });
+
+    await user.keyboard('{Control>}{End}{/Control}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute('aria-label', `Rest on ${todayLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveAttribute('tabindex', '0');
+    });
+    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
+    expect(screen.getByText(`Rest on ${todayLabel} is UNMARKED.`)).toBeVisible();
+  });
+
+  it('holds selection at the desktop grid boundary when traversal would move past the first cell', async () => {
+    const user = userEvent.setup({ delay: null });
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    const firstDateLabel = formatLongDate(dateKeys[0] ?? '2026-02-27');
+
+    installMatchMediaController(true);
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    const initialSelectedCell = getSelectedGridCell();
+
+    act(() => {
+      initialSelectedCell.focus();
+    });
+
+    await user.keyboard('{Control>}{Home}{/Control}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute('aria-label', `Work or School on ${firstDateLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveFocus();
+    });
+
+    await user.keyboard('{ArrowUp}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute('aria-label', `Work or School on ${firstDateLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveFocus();
+      expect(selectedCell).toHaveAttribute('tabindex', '0');
+    });
+    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
+    expect(screen.getByText(`Work or School on ${firstDateLabel} is UNMARKED.`)).toBeVisible();
+  });
+
+  it('switches between mobile and desktop history render paths when the viewport query changes', async () => {
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    const matchMediaController = installMatchMediaController(false);
+
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    expect(screen.getByRole('button', { name: /previous week/i })).toBeVisible();
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
+
+    act(() => {
+      matchMediaController.setMatches(true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('grid')).toBeVisible();
+    });
+    expect(screen.queryByRole('button', { name: /previous week/i })).not.toBeInTheDocument();
+
+    act(() => {
+      matchMediaController.setMatches(false);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /previous week/i })).toBeVisible();
+    });
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 });
