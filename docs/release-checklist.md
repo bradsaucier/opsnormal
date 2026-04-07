@@ -8,8 +8,10 @@ Before tagging a release:
 - [ ] Playwright tests pass
 - [ ] production build passes
 - [ ] service worker registration smoke test passes in Chromium
-- [ ] service worker update banner verified manually after a deployed worker change
-- [ ] stalled multi-tab update handoff surfaces manual recovery guidance instead of silently failing
+- [ ] synthetic service worker update lifecycle Playwright proof passes in Chromium
+- [ ] deployed service worker update smoke check verified manually after a worker change with Chrome DevTools "Update on reload" disabled
+- [ ] stalled multi-tab update handoff escalates to pinned recovery guidance instead of silently failing
+- [ ] blocked duplicate-tab schema recovery completes after the 5000 millisecond guard window without entering a reload loop
 - [ ] offline reopen verified manually
 - [ ] export verified manually
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
