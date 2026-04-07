@@ -1,0 +1,193 @@
+:root {
+  color-scheme: dark;
+}
+
+.ops-boot-fallback-shell,
+.ops-crash-fallback-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 2rem;
+  background-color: #0a0f0d;
+  color: #e4e4e7;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.ops-boot-fallback-container,
+.ops-crash-fallback-container {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.ops-boot-fallback-eyebrow,
+.ops-crash-fallback-eyebrow,
+.ops-crash-fallback-detail-label,
+.ops-crash-fallback-danger-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ops-boot-fallback-eyebrow,
+.ops-crash-fallback-eyebrow {
+  letter-spacing: 0.28em;
+  color: #fca5a5;
+}
+
+.ops-boot-fallback-title,
+.ops-crash-fallback-title {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ops-boot-fallback-copy,
+.ops-crash-fallback-status {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  color: #a1a1aa;
+}
+
+.ops-boot-fallback-actions,
+.ops-crash-fallback-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ops-boot-fallback-button,
+.ops-crash-fallback-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.ops-boot-fallback-button:focus-visible,
+.ops-crash-fallback-button:focus-visible,
+.ops-crash-fallback-checkbox:focus-visible {
+  outline: 2px solid rgba(183, 247, 218, 0.72);
+  outline-offset: 2px;
+}
+
+.ops-boot-fallback-button {
+  color: #fdba74;
+  background: rgba(251, 146, 60, 0.1);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.ops-crash-fallback-detail-card,
+.ops-crash-fallback-danger-zone {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+}
+
+.ops-crash-fallback-detail-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.ops-crash-fallback-detail-label {
+  letter-spacing: 0.16em;
+  color: #71717a;
+}
+
+.ops-crash-fallback-detail {
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  font-family: monospace;
+  color: #fca5a5;
+  word-break: break-word;
+}
+
+.ops-crash-fallback-button-primary {
+  color: #a7f3d0;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.ops-crash-fallback-button-muted {
+  color: #e4e4e7;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ops-crash-fallback-button-retry {
+  color: #93c5fd;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+.ops-crash-fallback-button-reload {
+  color: #fdba74;
+  background-color: rgba(251, 146, 60, 0.1);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.ops-crash-fallback-danger-zone {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  background-color: rgba(127, 29, 29, 0.18);
+}
+
+.ops-crash-fallback-danger-label {
+  letter-spacing: 0.16em;
+  color: #fca5a5;
+}
+
+.ops-crash-fallback-danger-copy {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #d4d4d8;
+}
+
+.ops-crash-fallback-checkbox-row {
+  margin-top: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #e4e4e7;
+}
+
+.ops-crash-fallback-checkbox {
+  margin-top: 0.2rem;
+}
+
+.ops-crash-fallback-button-danger {
+  color: #fee2e2;
+  background-color: rgba(220, 38, 38, 0.12);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+.ops-crash-fallback-button-danger.is-armed {
+  background-color: rgba(220, 38, 38, 0.32);
+}
+
+.ops-crash-fallback-danger-note {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #fecaca;
+}
+
+.ops-boot-fallback-button:disabled,
+.ops-crash-fallback-button:disabled,
+.ops-crash-fallback-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
