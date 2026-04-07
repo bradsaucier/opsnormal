@@ -164,7 +164,9 @@ Deployment posture:
 - App shell cached for offline reopen after first successful load
 - Service worker update checks performed during long-lived sessions
 - Offline guard prevents pointless update checks while the browser reports the device offline
-- Update banner escalates to manual recovery guidance if waiting-worker handoff stalls
+- Update banner escalates to pinned manual recovery guidance if waiting-worker handoff stalls
+- Service worker controller handoff closes the Dexie handle before reload so schema upgrades do not compete with stale connections
+- Session-scoped reload guard suppresses tight repeat reloads for both schema recovery and immediate post-handoff controllerchange churn
 
 The app is local-only, but it is not network-absent. Same-origin static hosting and service worker update traffic still exist.
 
@@ -202,7 +204,7 @@ Accessibility is built into the UI contract.
 The repo carries a stronger proof layer than most projects of this size.
 
 - CI runs lint, typecheck, unit and integration tests, Playwright end-to-end tests, and build validation
-- Current test inventory includes 19 unit suites, 2 integration suites, and 7 end-to-end specs
+- Current test inventory includes 19 unit suites, 2 integration suites, and 9 end-to-end specs
 - ADRs document architecture and trust-boundary decisions
 - The docs set includes a risk register, test plan, release checklist, and design token guide
 - CSP-sensitive runtime paths, crash export, import round-trip, PWA registration, mobile history, and storage behavior all have direct test coverage or explicit manual release checks
