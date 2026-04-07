@@ -18,6 +18,7 @@ export function PwaUpdateBanner({
   onReloadPage
 }: PwaUpdateBannerProps) {
   const isBannerActive = needRefresh || offlineReady;
+  const showDismissButton = !needRefresh || !updateStalled;
 
   return (
     <section
@@ -41,7 +42,7 @@ export function PwaUpdateBanner({
             </p>
             {needRefresh && updateStalled ? (
               <p className="mt-2 text-sky-50">
-                Update handoff did not complete. Another OpsNormal tab may still be holding the active worker. Close the other OpsNormal tabs, reload this tab, then apply the update again.
+                Update handoff did not complete. Another OpsNormal tab may still be holding the active worker. Close the other OpsNormal tabs, reload this tab, confirm the last visible check-in, then apply the update again.
               </p>
             ) : null}
           </div>
@@ -65,13 +66,15 @@ export function PwaUpdateBanner({
                 Reload tab
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="min-h-11 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-zinc-200 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200"
-            >
-              Dismiss
-            </button>
+            {showDismissButton ? (
+              <button
+                type="button"
+                onClick={onDismiss}
+                className="min-h-11 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-zinc-200 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200"
+              >
+                Dismiss
+              </button>
+            ) : null}
           </div>
         </div>
       ) : null}
