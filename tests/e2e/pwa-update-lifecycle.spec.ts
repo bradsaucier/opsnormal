@@ -37,33 +37,34 @@ test.describe('OpsNormal PWA update lifecycle', () => {
 
     await pageA.getByRole('button', { name: /apply update/i }).click();
 
-    const pageBReloadPromise = pageB.waitForLoadState('domcontentloaded');
+    const pageBReloadPromise = pageB.waitForNavigation({ waitUntil: 'domcontentloaded' });
     const versionChangeResult = await pageB.evaluate(() => window.__opsNormalDbTestApi__?.simulateVersionChange() ?? 'noop');
     expect(versionChangeResult).toBe('reloading');
     await pageBReloadPromise;
 
+    const pageAReloadPromise = pageA.waitForNavigation({ waitUntil: 'domcontentloaded' });
     await dispatchControllerChange(pageA);
+    await pageAReloadPromise;
 
-    await expect.poll(() =>
-      pageA.evaluate((): string => {
-        const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
-        if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
-          return 'navigate';
-        }
+    const pageANavigationType = await pageA.evaluate((): string => {
+      const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
+      if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
+        return 'navigate';
+      }
 
-        return lastNavigationEntry.type;
-      })
-    ).toBe('reload');
-    await expect.poll(() =>
-      pageB.evaluate((): string => {
-        const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
-        if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
-          return 'navigate';
-        }
+      return lastNavigationEntry.type;
+    });
+    expect(pageANavigationType).toBe('reload');
 
-        return lastNavigationEntry.type;
-      })
-    ).toBe('reload');
+    const pageBNavigationType = await pageB.evaluate((): string => {
+      const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
+      if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
+        return 'navigate';
+      }
+
+      return lastNavigationEntry.type;
+    });
+    expect(pageBNavigationType).toBe('reload');
 
     await expect(pageA.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
     await expect(pageB.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
