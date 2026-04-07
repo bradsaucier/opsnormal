@@ -10,6 +10,8 @@ IndexedDB is the only working system of record, and schema upgrades must survive
 
 The repository already carried a 4000 millisecond update-handoff timeout in the PWA hook and a 5000 millisecond schema reload guard in the Dexie layer. Those controls were real, but the proof posture lagged behind the risk register. The app needed a clearer ownership boundary for `controllerchange`, a direct waiting-worker `SKIP_WAITING` message path that does not pretend vite-plugin-pwa will defer reload ownership for us, and a bounded retry when a tab blocks an immediate schema reload inside the guard window.
 
+The repository also needed explicit containment for repeat `controllerchange` churn in one tab and a way to keep background tabs from staying pinned after another tab starts the manual recovery path.
+
 ## Decision
 
 OpsNormal will keep the Vite PWA plugin in prompt mode and will not switch to automatic update application.
@@ -19,10 +21,14 @@ The application will:
 - send `SKIP_WAITING` directly to the waiting worker when the operator applies an update
 - treat `controllerchange` as the decisive handoff event after an operator applies an update
 - close the current Dexie handle before the `controllerchange` reload path runs
+- insert a short reload buffer after the close request so the forced navigation does not fire in the same execution turn as the handoff close
 - keep stalled update guidance pinned until the operator reloads the affected tab
 - close the stale Dexie connection immediately on `versionchange`
 - return `false` from the custom Dexie `versionchange` handler, which transfers full responsibility for `db.close()` to the application layer
 - block tight reload loops with the existing 5000 millisecond session-scoped guard
+- pin a manual recovery banner when the same tab records repeated automatic controllerchange reloads inside a short session window
+- announce the recovery state through a persistent alert region that mutates after mount so screen readers receive the recovery instruction after a hard reload
+- broadcast a same-origin manual-recovery clear signal so other open tabs can clear stale loop-breaker state when one tab starts the recovery reload
 - schedule one bounded schema-reload retry after the guard window when an immediate reload is blocked
 - prove the application-layer handoff in Chromium Playwright with a synthetic lifecycle drill rather than pretending the toolchain can deterministically force a real byte-diff worker replacement in CI
 
@@ -32,12 +38,15 @@ Positive:
 
 - reduces the chance that a tab keeps running stale UI against a newer schema
 - keeps recovery guidance visible during the most integrity-sensitive update failure mode
+- keeps duplicate tabs from staying pinned on stale loop-breaker state after another tab starts manual recovery
 - replaces a critical manual release step with automated proof for the application-controlled portion of the lifecycle
 
 Negative:
 
 - adds small test-only hooks in e2e mode so Playwright can drive the synthetic handoff proof
 - still does not claim that CI can fully emulate every browser-level service worker update edge case
+- accepts one more operator-visible recovery branch so repeat controllerchange churn fails closed instead of reloading indefinitely
+- relies on `BroadcastChannel` support for the best duplicate-tab cleanup path; tabs in environments without that primitive may still require manual reload
 - future storage refactors must preserve the explicit `versionchange` close path or risk origin-wide schema deadlock
 
 ## Guardrails
