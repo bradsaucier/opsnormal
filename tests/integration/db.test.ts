@@ -1,12 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const mocks = vi.hoisted(() => ({
+  reloadCurrentPage: vi.fn()
+}));
+
+vi.mock('../../src/lib/runtime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
+  return {
+    ...actual,
+    reloadCurrentPage: mocks.reloadCurrentPage
+  };
+});
+
 import {
+  closeDatabaseForServiceWorkerHandoff,
   cycleDailyStatus,
   db,
+  handleDatabaseVersionChange,
   isDatabaseRecoveryRequired,
   reopenIfClosed,
   setDailyStatus,
-  shouldBlockVersionChangeReload
+  shouldBlockVersionChangeReload,
+  shouldSuppressControllerReload
 } from '../../src/db/appDb';
 import {
   getStorageDurabilityDiagnostics,
@@ -20,6 +35,8 @@ describe('database operations', () => {
   });
 
   beforeEach(async () => {
+    mocks.reloadCurrentPage.mockReset();
+    window.sessionStorage.clear();
     resetStorageDurabilityDiagnostics();
 
     if (!db.isOpen()) {
@@ -96,6 +113,68 @@ describe('database operations', () => {
     expect(shouldBlockVersionChangeReload(10_000, null)).toBe(false);
     expect(shouldBlockVersionChangeReload(10_000, 4_500)).toBe(false);
     expect(shouldBlockVersionChangeReload(10_000, 9_500)).toBe(true);
+  });
+
+  it('reports the controller reload guard when a recent schema handoff was recorded', () => {
+    window.sessionStorage.setItem('opsnormal-schema-reload-guard', '10000');
+
+    expect(shouldSuppressControllerReload(12_000)).toBe(true);
+    expect(shouldSuppressControllerReload(15_001)).toBe(false);
+  });
+
+  it('records the controller handoff before the page reload path runs', () => {
+    closeDatabaseForServiceWorkerHandoff(10_000);
+
+    expect(isDatabaseRecoveryRequired()).toBe(true);
+    expect(db.isOpen()).toBe(false);
+    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe('10000');
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+  });
+
+  it('records the schema handoff and reloads immediately when the guard is clear', () => {
+    const closeSpy = vi.spyOn(db, 'close');
+
+    expect(handleDatabaseVersionChange(10_000)).toBe('reloading');
+    expect(isDatabaseRecoveryRequired()).toBe(true);
+    expect(db.isOpen()).toBe(false);
+    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe('10000');
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+
+    const closeCallOrder = closeSpy.mock.invocationCallOrder[0]!;
+    const reloadCallOrder = mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
+
+    expect(closeCallOrder).toBeLessThan(reloadCallOrder);
+  });
+
+  it('schedules one bounded schema-reload retry when the guard blocks an immediate reload', async () => {
+    vi.useFakeTimers();
+    const closeSpy = vi.spyOn(db, 'close');
+
+    window.sessionStorage.setItem('opsnormal-schema-reload-guard', '10000');
+
+    expect(handleDatabaseVersionChange(12_000)).toBe('blocked');
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    await expect(reopenIfClosed()).rejects.toThrow('Schema upgrade handoff stalled');
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(3049);
+
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails open with an immediate reload when sessionStorage read throws during schema recovery', () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Blocked', 'SecurityError');
+    });
+
+    expect(handleDatabaseVersionChange(10_000)).toBe('reloading');
+    expect(getItemSpy).toHaveBeenCalled();
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
   });
 
   it('pins Chromium transaction durability to strict where supported', () => {

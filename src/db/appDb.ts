@@ -19,6 +19,16 @@ const DATABASE_REOPEN_BACKOFF_MS = 150;
 const DATABASE_OPEN_TIMEOUT_MS = 1000;
 const DATABASE_RELOAD_DELAY_MS = 2000;
 const WRITE_VERIFICATION_TIMEOUT_MS = 500;
+const SCHEMA_RELOAD_RETRY_BUFFER_MS = 50;
+
+declare global {
+  interface Window {
+    __opsNormalDbTestApi__?: {
+      simulateVersionChange: () => 'reloading' | 'blocked' | 'noop';
+      isRecoveryRequired: () => boolean;
+    };
+  }
+}
 
 class OpsNormalDb extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
@@ -34,6 +44,7 @@ export const db = new OpsNormalDb();
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
 let databaseRecoveryReloadScheduled = false;
+let schemaReloadRetryTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -80,6 +91,25 @@ function clearDatabaseRecoveryReload(): void {
   databaseRecoveryReloadScheduled = false;
 }
 
+function scheduleSchemaReloadRetry(delayMs: number): void {
+  if (typeof window === 'undefined' || schemaReloadRetryTimeoutId !== null) {
+    return;
+  }
+
+  schemaReloadRetryTimeoutId = globalThis.setTimeout(() => {
+    schemaReloadRetryTimeoutId = null;
+    recordSchemaReloadAt(Date.now());
+    reloadCurrentPage();
+  }, delayMs);
+}
+
+function clearSchemaReloadRetry(): void {
+  if (schemaReloadRetryTimeoutId !== null) {
+    globalThis.clearTimeout(schemaReloadRetryTimeoutId);
+    schemaReloadRetryTimeoutId = null;
+  }
+}
+
 async function openDatabaseWithTimeout(): Promise<void> {
   await withTimeout(
     db.open(),
@@ -115,15 +145,16 @@ function readLastSchemaReloadAt(): number | null {
   }
 }
 
-function recordSchemaReloadAt(timestamp: number): void {
+function recordSchemaReloadAt(timestamp: number): boolean {
   if (typeof window === 'undefined') {
-    return;
+    return false;
   }
 
   try {
     window.sessionStorage.setItem(SCHEMA_RELOAD_GUARD_KEY, String(timestamp));
+    return true;
   } catch {
-    // Ignore sessionStorage access failures during emergency handoff.
+    return false;
   }
 }
 
@@ -141,6 +172,32 @@ function clearSchemaReloadGuard(): void {
 
 function clearDatabaseRecoveryRequirement(): void {
   databaseRecoveryRequired = false;
+}
+
+
+function closeDatabaseConnection(): void {
+  databaseRecoveryRequired = true;
+
+  try {
+    db.close();
+  } catch {
+    // Ignore redundant close failures during update or schema handoff.
+  }
+}
+
+export function closeDatabaseForVersionUpgrade(): void {
+  closeDatabaseConnection();
+}
+
+export function closeDatabaseForServiceWorkerHandoff(now = Date.now()): void {
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadRetry();
+  closeDatabaseConnection();
+  recordSchemaReloadAt(now);
+}
+
+export function shouldSuppressControllerReload(now = Date.now()): boolean {
+  return shouldBlockVersionChangeReload(now, readLastSchemaReloadAt());
 }
 
 async function verifyPersistedDailyStatus(
@@ -205,31 +262,44 @@ db.on('ready', () => {
   schemaReloadLoopDetected = false;
   clearSchemaReloadGuard();
   clearDatabaseRecoveryReload();
+  clearSchemaReloadRetry();
 });
 
-db.on('versionchange', () => {
-  databaseRecoveryRequired = true;
-
-  try {
-    db.close();
-  } catch {
-    // Ignore redundant close failures during version handoff.
-  }
+export function handleDatabaseVersionChange(now = Date.now()): 'reloading' | 'blocked' | 'noop' {
+  closeDatabaseForVersionUpgrade();
 
   if (typeof window === 'undefined') {
-    return;
+    return 'noop';
   }
 
-  const now = Date.now();
   const lastReloadAt = readLastSchemaReloadAt();
 
   if (shouldBlockVersionChangeReload(now, lastReloadAt)) {
     schemaReloadLoopDetected = true;
-    return;
+    clearSchemaReloadRetry();
+
+    if (lastReloadAt !== null) {
+      const remainingWindowMs = Math.max(0, SCHEMA_RELOAD_GUARD_WINDOW_MS - (now - lastReloadAt));
+      scheduleSchemaReloadRetry(remainingWindowMs + SCHEMA_RELOAD_RETRY_BUFFER_MS);
+    } else {
+      recordSchemaReloadAt(now);
+      reloadCurrentPage();
+      return 'reloading';
+    }
+
+    return 'blocked';
   }
 
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadRetry();
   recordSchemaReloadAt(now);
-  window.location.reload();
+  reloadCurrentPage();
+  return 'reloading';
+}
+
+db.on('versionchange', () => {
+  handleDatabaseVersionChange();
+  return false;
 });
 
 export function isDatabaseRecoveryRequired(): boolean {
@@ -380,4 +450,15 @@ export async function cycleDailyStatus(date: string, sectorId: SectorId): Promis
 
 export async function getAllEntries(): Promise<DailyEntry[]> {
   return runDatabaseOperation(async () => db.dailyEntries.orderBy('[date+sectorId]').toArray());
+}
+
+if (typeof window !== 'undefined' && import.meta.env.MODE === 'e2e') {
+  window.__opsNormalDbTestApi__ = {
+    simulateVersionChange() {
+      return handleDatabaseVersionChange();
+    },
+    isRecoveryRequired() {
+      return isDatabaseRecoveryRequired();
+    }
+  };
 }

@@ -20,6 +20,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0012 | Fail-closed import commit verification |
 | 0013 | Week-paginated mobile history grid |
 | 0014 | ExportPanel workflow decomposition |
+| 0015 | PWA update handoff and multi-tab recovery |
 
 ## Operating rule
 

@@ -67,7 +67,7 @@ describe('PwaUpdateBanner', () => {
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
   });
 
-  it('renders stalled update recovery guidance and reload tab action', async () => {
+  it('renders stalled update recovery guidance and pins the banner until reload', async () => {
     const onReloadPage = vi.fn();
 
     render(
@@ -86,6 +86,7 @@ describe('PwaUpdateBanner', () => {
 
     const reloadTabButton = screen.getByRole('button', { name: /reload tab/i });
     expect(reloadTabButton).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
 
     await userEvent.click(reloadTabButton);
     expect(onReloadPage).toHaveBeenCalledTimes(1);
