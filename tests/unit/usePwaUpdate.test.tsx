@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => ({
 let mockServiceWorkerContainer: EventTarget & { controller: ServiceWorker | null };
 
 vi.mock('../../src/features/pwa/registerSw', () => ({
-  useRegisterSW: ({ onRegisteredSW }: { onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration | undefined) => void }) => {
+  useRegisterSW: ({ onRegisteredSW }: { onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
     if (onRegisteredSW) {
       onRegisteredSW('/sw.js', mocks.registration as unknown as ServiceWorkerRegistration);
     }
