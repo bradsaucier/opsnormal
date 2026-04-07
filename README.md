@@ -109,7 +109,7 @@ This repo does not ask for blind trust. It names its safeguards and its limits.
 - Import post-write verification inside the same IndexedDB transaction so mismatches abort before commit
 - Daily check-in read-back verification after write so silent local write loss becomes visible
 - Session-scoped undo after successful import
-- Root crash fallback that preserves JSON and CSV export access if the main React shell faults
+- Root crash fallback that preserves JSON and CSV export access if the main React shell faults, using a same-origin recovery stylesheet that stays compatible with the repo CSP posture
 - Section-level error boundaries so a panel failure does not take the whole app offline
 
 There is no backend recovery path. If you need a durable copy, export it.

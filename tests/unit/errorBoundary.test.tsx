@@ -42,10 +42,16 @@ vi.mock('../../src/lib/crashExport', () => ({
   readCrashExportSnapshot: mocks.readCrashExportSnapshot
 }));
 
-vi.mock('../../src/lib/export', () => ({
+vi.mock('../../src/lib/exportSerialization', () => ({
   createCrashJsonExport: mocks.createCrashJsonExport,
-  createCsvExport: mocks.createCsvExport,
-  downloadTextFile: mocks.downloadTextFile,
+  createCsvExport: mocks.createCsvExport
+}));
+
+vi.mock('../../src/lib/fileDownload', () => ({
+  downloadTextFile: mocks.downloadTextFile
+}));
+
+vi.mock('../../src/lib/exportPersistence', () => ({
   recordExportCompleted: mocks.recordExportCompleted
 }));
 
@@ -357,6 +363,16 @@ describe('ErrorBoundary', () => {
     expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
     expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
     expect(screen.getByRole('alert')).toHaveTextContent('render failure');
+  });
+
+
+  it('renders the root crash fallback without inline style attributes', () => {
+    render(<AppCrashFallback error={new Error('render failure')} onRetry={vi.fn()} />);
+
+    const crashFallback = screen.getByTestId('app-crash-fallback');
+
+    expect(crashFallback.getAttribute('style')).toBeNull();
+    expect(crashFallback.querySelector('[style]')).toBeNull();
   });
 
   it('surfaces local reset failures without reloading', async () => {

@@ -56,7 +56,7 @@ Prove that the app:
 - replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
 - mobile history week pagination and daily brief selection hold under a narrow viewport
 - CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium
-- root crash fallback exports valid JSON and CSV after a controlled render fault, and the crash-state JSON remains importable in a clean browser context
+- root crash fallback exports valid JSON and CSV after a controlled render fault, the crash-state JSON remains importable in a clean browser context, and the fallback does not emit CSP violations in Chromium
 
 ## Coverage posture
 
