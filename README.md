@@ -1,28 +1,52 @@
 # OpsNormal
 
-Local-only daily readiness tracking for fast use under load.
+```yaml
+tagline: "Local-only readiness tracking for fast use under load."
+```
 
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
+[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#local-only-by-design)
+[![Telemetry: None](https://img.shields.io/badge/Telemetry-None-36476F?style=flat-square)](#local-only-by-design)
 
-Live app - https://opsnormal.app
+Live app - [opsnormal.app](https://opsnormal.app)
 
-## BLUF
+---
 
-OpsNormal is a static Progressive Web App for daily readiness tracking across five fixed sectors.
+<p align="center">
+  <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop 30-day readiness grid showing five sectors across recent days with a selected day summary for quick pattern recognition.">
+</p>
+<p align="center"><em>Desktop view - 30-day history kept visible for quick pattern recognition and daily context.</em></p>
 
-It stores working data in browser-managed IndexedDB through Dexie, uses three coarse states to keep daily entry fast under load, and maintains a trailing 30-day view without a backend. Recovery is manual by design. Exports are the durable boundary the operator controls.
+---
+
+OpsNormal is a static Progressive Web App for personal daily readiness tracking across five fixed sectors: Work or School, Household, Relationships, Body, and Rest.
+
+It runs in the browser, stores working data in IndexedDB through Dexie, and keeps the product boundary hard: no backend, no account system, no cloud sync path for readiness data, and no analytics or telemetry pipeline moving personal status off device. After the first successful load, the app can reopen offline. Browser storage is working storage, not backup. Export is the durable boundary the operator controls.
+
+<a id="bluf"></a>
+## Bottom Line Up Front (BLUF)
+
+> [!IMPORTANT]
+> OpsNormal is built for one job: preserve a usable daily readiness signal when life gets noisy.
+>
+> The model is intentionally coarse. Five fixed sectors. Three states. One trailing 30-day picture. The point is fast signal, not endless bookkeeping.
+>
+> Recovery posture, storage limits, import and export controls, crash containment, and update handling are visible in the source and docs.
+
+
+---
 
 ## Quick start
 
 ### Use the deployed app
 
 1. Open `https://opsnormal.app`
-2. Install it from the browser if you want tighter app-like use, better offline reopen behavior, and stronger storage posture on some platforms
+2. Install it from the browser when supported if you want stronger app-like use, better offline reopen behavior, and a better storage posture on some platforms
 3. Record an initial status across the five fixed sectors
 4. Run a test JSON export and keep the file somewhere you control
-5. Export routinely, especially before browser maintenance, profile changes, or device transitions
+5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
 
 ### Run locally
 
@@ -49,20 +73,25 @@ npm run build
 
 </details>
 
-## What it is not
+## Core views
 
-- No backend API
-- No account model
-- No cloud sync
-- No analytics
-- No telemetry
-- No third-party APIs
+The app keeps the workflow narrow on purpose.
 
-The application code contains no network logic that transmits readiness data to a backend, analytics endpoint, telemetry pipeline, or third-party API.
+- Today panel for direct daily entry
+- Desktop 30-day history grid for pattern recognition
+- Week-paginated mobile history with a daily brief on narrow screens
+- Export and import surface for backup, recovery, preview, merge, replace, and undo flows
 
-Static assets and routine service worker update checks are served from the published origin. There is no separate application data plane moving personal readiness data off device.
+---
 
-Independent verification is encouraged. Inspect the source code and monitor the browser Network tab. In a clean browser profile, you should see same-origin asset fetches and service worker lifecycle traffic, not a user-data backend or third-party tracking stack.
+The screenshots in this README show the desktop product. Mobile history uses a different layout so the 30-day grid does not collapse into noise on narrow screens.
+
+<p align="center">
+  <img src="./docs/images/desktop-daily-checkin.png" width="860" alt="Desktop Today panel showing five sector cards with direct-select readiness controls for a fast daily entry.">
+</p>
+<p align="center"><em>Desktop view - Today panel optimized for fast daily entry across the fixed five-sector model.</em></p>
+
+---
 
 ## Operating model
 
@@ -88,98 +117,65 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 | Nominal | Holding together |
 | Degraded | Needs attention |
 
-### Views
+## Local-only by design
 
-- Today panel for direct daily entry
-- Desktop 30-day history grid for pattern recognition
-- Week-paginated mobile history with a daily brief on narrow screens
-- Export and import surface for backup, recovery, and controlled replace operations
+OpsNormal is a static web app with no backend data plane for readiness records.
 
-## Data integrity and manual recovery
+What that means:
 
-This repo does not ask for blind trust. It names its safeguards and its limits.
+- No account required
+- No cloud sync path for readiness data
+- No analytics or telemetry pipeline for personal status
+- No third-party API dependency for core operation
+- Same-origin static hosting and same-origin PWA update behavior only
 
-- Versioned JSON export with SHA-256 checksum
-- CSV export for external review and spreadsheet work
-- Validated JSON import with checksum recomputation when present
-- Legacy checksum-free import allowed, but flagged as unverified during preview
-- Replace import held behind a pre-replace backup checkpoint
-- Verified file save when the browser supports it, with a fallback path when it does not
-- Separate arm and execute steps for destructive replace
-- Import post-write verification inside the same IndexedDB transaction so mismatches abort before commit
-- Daily check-in read-back verification after write so silent local write loss becomes visible
-- Session-scoped undo after successful import
-- Root crash fallback that preserves JSON and CSV export access if the main React shell faults, using a same-origin recovery stylesheet that stays compatible with the repo CSP posture
-- Section-level error boundaries so a panel failure does not take the whole app offline
+What that does not mean:
 
-There is no backend recovery path. If you need a durable copy, export it.
+- The app is not network-absent - same-origin asset fetches and service-worker lifecycle traffic still exist
+- Browser-managed storage is not a backup system
+- Offline reopen is available after the first successful load, not before
 
-## Durability and honest limits
+## Recovery and storage limits
 
 OpsNormal treats browser-managed storage as working storage, not permanent archive storage.
 
-- Storage posture is checked on launch and refreshed over time
-- The app requests persistent storage when the platform supports it
-- Safari-family risk and Home Screen posture are surfaced in the durability summary
-- Dexie connection drops are monitored and bounded reopen is attempted before the app trusts the handle again
-- Schema version changes force stale tabs to close their handle and reload
-- Chromium-family writes are pinned to strict transaction durability
+The repo hardens that posture with versioned JSON export, CSV export, validated import, replace gating, import undo, crash fallback export access, section-level fault containment, storage posture checks, persistent-storage requests where the platform supports them, guarded Dexie reopen logic after connection interruption, and strict Chromium-family transaction durability.
 
-What this does not mean:
+The limits stay real:
 
-- Browser storage is still best-effort, not backup
-- Manual site-data clearing, profile deletion, device loss, quota failure, or browser eviction can still destroy records
-- Safari-family browsers carry higher storage risk, especially when the app is not installed to Home Screen
-- Session undo is a convenience after import, not a durable recovery boundary
+- Manual site-data clearing, profile deletion, quota failure, browser eviction, or device loss can still destroy records
+- Safari-family browsers carry materially higher storage risk, especially when the app is not installed to Home Screen
 - Install can improve posture on some platforms, but it is not a guarantee
+- Session undo after import is a convenience, not a durable recovery boundary
 
-Run a test export early. Export routinely. That is the durable boundary the operator controls.
+Run a test export early. Export routinely. If you need a durable copy, keep the exported file.
 
 ## Accessibility
 
-Accessibility is part of the implementation, not a label added after the fact.
+Accessibility is built into the operational surface.
 
-Current repo surfaces include:
-
-- Skip link to the main operational surface
-- Persistent live regions for announced state changes
+- Skip link to the main surface
+- Persistent live regions for state changes
 - Radio-style direct selection controls with programmatic checked state
-- Desktop history keyboard navigation
-- Mobile history day selection with a daily brief
+- Desktop history keyboard navigation and mobile day selection with a daily brief
 - Focus treatment designed to stay visible on the clipped cockpit geometry
 - State encoding that does not rely on color alone
 
-## Engineering proof
+## Documentation and verification
 
-The repo backs its claims with process and verification, not slogans.
+The README stays short on purpose. Deeper proof, limits, and design constraints live in the repo docs.
 
-- GitHub Actions CI runs lint, typecheck, unit and integration tests, and Playwright end-to-end tests
-- The current test tree contains 19 unit suites, 2 integration suites, and 9 end-to-end specs
-- Architecture Decision Records lock in trust boundaries, data model choices, storage durability hardening, export checksum rules, error containment, and mobile history behavior
-- The repo carries a risk register, test plan, release checklist, and design token document alongside the source
-- The app ships with a restrictive Content Security Policy and same-origin static hosting posture
-
-## Why this exists
-
-Most tracking tools fail one of two tests.
-
-They either ask too much from the operator, or they push routine personal data into infrastructure the operator never asked for.
-
-OpsNormal takes the opposite path. Scope is fixed. Inputs are coarse. Daily use is fast. The app is built to keep a signal available when life gets noisy, not to turn the operator into a full-time bookkeeper.
-
-## Read this next
-
-The README is the executive brief. The deeper proof lives in the repo.
-
-- [Architecture overview](./docs/architecture.md)
-- [Architecture Decision Records](./docs/decisions/README.md)
-- [Risk register](./docs/risk-register.md)
-- [Test plan](./docs/test-plan.md)
-- [Release checklist](./docs/release-checklist.md)
-- [Design tokens](./docs/design-tokens.md)
-- [Contributing guide](./CONTRIBUTING.md)
-- [Security policy and security model](./SECURITY.md)
-- [Code of conduct](./CODE_OF_CONDUCT.md)
+| Document | What it covers |
+| --- | --- |
+| [Architecture overview](./docs/architecture.md) | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits |
+| [Risk register](./docs/risk-register.md) | Known operational risks, browser-storage hazards, and current mitigations |
+| [Architecture Decision Records](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
+| [Test plan](./docs/test-plan.md) | Verification strategy, release checks, and coverage priorities |
+| [Release checklist](./docs/release-checklist.md) | Pre-release validation and operator-facing quality gates |
+| [Security policy](./SECURITY.md) | Security model, trust boundaries, and accurate claim limits |
+| [Design tokens](./docs/design-tokens.md) | Visual language, structural colors, state colors, and clipped geometry |
+| [Contributing guide](./CONTRIBUTING.md) | Contribution rules that preserve repo scope |
+| [Code of conduct](./CODE_OF_CONDUCT.md) | Expected project conduct |
 
 ## Boundary
 
