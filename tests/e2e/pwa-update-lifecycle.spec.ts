@@ -15,7 +15,7 @@ async function dispatchControllerChange(page: import('@playwright/test').Page) {
 }
 
 function getPwaUpdateBanner(page: import('@playwright/test').Page) {
-  return page.locator('section[role="status"]').filter({ hasText: /update ready|update handoff did not complete/i });
+  return page.getByTestId('pwa-update-banner');
 }
 
 test.describe('OpsNormal PWA update lifecycle', () => {
@@ -71,6 +71,52 @@ test.describe('OpsNormal PWA update lifecycle', () => {
     await expect(pageA.getByRole('radio', { name: /^Work or School nominal$/i })).toHaveAttribute('aria-checked', 'true');
     await expect.poll(() => pageA.evaluate(() => window.__opsNormalDbTestApi__?.isRecoveryRequired() ?? true)).toBe(false);
     await expect.poll(() => pageB.evaluate(() => window.__opsNormalDbTestApi__?.isRecoveryRequired() ?? true)).toBe(false);
+
+    await context.close();
+  });
+
+  test('pins loop-breaker guidance after repeated automatic reload bookkeeping is detected', async ({ page }) => {
+    await page.goto('http://127.0.0.1:4173/');
+
+    await page.evaluate(() => {
+      window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+      window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+    });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+
+    const updateBanner = getPwaUpdateBanner(page);
+
+    await expect(updateBanner.getByRole('heading', { name: 'Update Recovery Required' })).toBeVisible();
+    await expect(updateBanner.getByText(/update loop intercepted/i)).toBeVisible();
+    await expect(updateBanner.getByRole('button', { name: /reload tab/i })).toBeVisible();
+    await expect(updateBanner.getByRole('button', { name: /dismiss/i })).toHaveCount(0);
+  });
+
+  test('clears stale recovery guidance in a second tab when manual recovery starts', async ({ browser }) => {
+    const context = await browser.newContext({ serviceWorkers: 'block' });
+    const appUrl = 'http://127.0.0.1:4173/';
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+
+    await pageA.goto(appUrl);
+    await pageB.goto(appUrl);
+
+    for (const page of [pageA, pageB]) {
+      await page.evaluate(() => {
+        window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
+        window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+      });
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await expect(getPwaUpdateBanner(page).getByRole('heading', { name: 'Update Recovery Required' })).toBeVisible();
+    }
+
+    const pageAReloadPromise = pageA.waitForNavigation({ waitUntil: 'domcontentloaded' });
+    await pageA.getByRole('button', { name: /reload tab/i }).click();
+    await pageAReloadPromise;
+
+    await expect(pageB.getByRole('heading', { name: 'Update Recovery Required' })).toHaveCount(0);
+    await expect.poll(() => pageB.evaluate(() => window.sessionStorage.getItem('opsnormal-sw-controller-reload-count'))).toBeNull();
 
     await context.close();
   });
