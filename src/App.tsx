@@ -22,6 +22,7 @@ function App() {
     offlineReady,
     isApplyingUpdate,
     updateStalled,
+    reloadRecoveryRequired,
     handleApplyUpdate,
     handleDismissBanner,
     handleReloadPage
@@ -120,6 +121,7 @@ function App() {
           offlineReady={offlineReady}
           isApplyingUpdate={isApplyingUpdate}
           updateStalled={updateStalled}
+          reloadRecoveryRequired={reloadRecoveryRequired}
           onReload={handleApplyUpdate}
           onDismiss={handleDismissBanner}
           onReloadPage={handleReloadPage}
