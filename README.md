@@ -29,7 +29,7 @@ It runs in the browser, stores working data in IndexedDB through Dexie, and keep
 ## Bottom Line Up Front (BLUF)
 
 > [!IMPORTANT]
-> OpsNormal is built for one job: preserve a usable daily readiness signal when life gets noisy.
+> **OpsNormal is built for one job: preserve a usable daily readiness signal when life gets noisy.**
 >
 > The model is intentionally coarse. Five fixed sectors. Three states. One trailing 30-day picture. The point is fast signal, not endless bookkeeping.
 >
