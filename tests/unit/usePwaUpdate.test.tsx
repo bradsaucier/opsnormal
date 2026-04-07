@@ -23,18 +23,22 @@ const mocks = vi.hoisted(() => ({
 
 let mockServiceWorkerContainer: EventTarget & { controller: ServiceWorker | null };
 
-vi.mock('../../src/features/pwa/registerSw', () => ({
-  useRegisterSW: ({ onRegisteredSW }: { onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
-    if (onRegisteredSW) {
-      onRegisteredSW('/sw.js', mocks.registration as unknown as ServiceWorkerRegistration);
-    }
+vi.mock('../../src/features/pwa/registerSw', async () => {
+  const React = await import('react');
 
-    return {
-      needRefresh: [mocks.state.needRefresh, mocks.setNeedRefresh],
-      offlineReady: [mocks.state.offlineReady, mocks.setOfflineReady]
-    };
-  }
-}));
+  return {
+    useRegisterSW: ({ onRegisteredSW }: { onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
+      React.useEffect(() => {
+        onRegisteredSW?.('/sw.js', mocks.registration as unknown as ServiceWorkerRegistration);
+      }, [onRegisteredSW]);
+
+      return {
+        needRefresh: [mocks.state.needRefresh, mocks.setNeedRefresh],
+        offlineReady: [mocks.state.offlineReady, mocks.setOfflineReady]
+      };
+    }
+  };
+});
 
 vi.mock('../../src/db/appDb', () => ({
   closeDatabaseForServiceWorkerHandoff: mocks.closeDatabaseForServiceWorkerHandoff,
