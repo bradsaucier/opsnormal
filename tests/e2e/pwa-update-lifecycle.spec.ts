@@ -39,10 +39,24 @@ test.describe('OpsNormal PWA update lifecycle', () => {
     await dispatchControllerChange(pageA);
 
     await expect.poll(() =>
-      pageA.evaluate(() => performance.getEntriesByType('navigation').at(-1)?.type ?? 'navigate')
+      pageA.evaluate((): string => {
+        const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
+        if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
+          return 'navigate';
+        }
+
+        return lastNavigationEntry.type;
+      })
     ).toBe('reload');
     await expect.poll(() =>
-      pageB.evaluate(() => performance.getEntriesByType('navigation').at(-1)?.type ?? 'navigate')
+      pageB.evaluate((): string => {
+        const lastNavigationEntry = performance.getEntriesByType('navigation').at(-1);
+        if (!(lastNavigationEntry instanceof PerformanceNavigationTiming)) {
+          return 'navigate';
+        }
+
+        return lastNavigationEntry.type;
+      })
     ).toBe('reload');
 
     await expect(pageA.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
