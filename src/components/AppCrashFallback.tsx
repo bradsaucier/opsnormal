@@ -2,12 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { deleteOpsNormalDatabase, readCrashExportSnapshot } from '../lib/crashExport';
 import { getErrorMessage } from '../lib/errors';
-import {
-  createCrashJsonExport,
-  createCsvExport,
-  downloadTextFile,
-  recordExportCompleted
-} from '../lib/export';
+import { downloadTextFile } from '../lib/fileDownload';
+import { recordExportCompleted } from '../lib/exportPersistence';
+import { createCrashJsonExport, createCsvExport } from '../lib/exportSerialization';
 import { reloadCurrentPage } from '../lib/runtime';
 import type { CrashExportSnapshot } from '../lib/crashExport';
 
@@ -185,245 +182,88 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#0a0f0d',
-        color: '#e4e4e7',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '2rem'
-      }}
-    >
-      <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+    <div className="ops-crash-fallback-shell" data-testid="app-crash-fallback">
+      <div className="ops-crash-fallback-container">
+        <p className="ops-crash-fallback-eyebrow">Render fault</p>
+        <h1 className="ops-crash-fallback-title">OpsNormal stopped rendering</h1>
         <p
-          style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            letterSpacing: '0.28em',
-            textTransform: 'uppercase',
-            color: '#fca5a5'
-          }}
-        >
-          Render fault
-        </p>
-        <h1
-          style={{
-            marginTop: '0.5rem',
-            fontSize: '1.5rem',
-            fontWeight: 600,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase'
-          }}
-        >
-          OpsNormal stopped rendering
-        </h1>
-        <p
+          className="ops-crash-fallback-status"
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          style={{
-            marginTop: '1rem',
-            fontSize: '0.875rem',
-            lineHeight: '1.75',
-            color: '#a1a1aa'
-          }}
         >
           {message}
         </p>
 
-        <div
-          style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '0.75rem',
-            backgroundColor: 'rgba(0,0,0,0.25)'
-          }}
-        >
-          <p
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: '#71717a'
-            }}
-          >
-            Error detail
-          </p>
-          <p
-            role="alert"
-            style={{
-              marginTop: '0.5rem',
-              fontSize: '0.8125rem',
-              fontFamily: 'monospace',
-              color: '#fca5a5',
-              wordBreak: 'break-word'
-            }}
-          >
+        <div className="ops-crash-fallback-detail-card">
+          <p className="ops-crash-fallback-detail-label">Error detail</p>
+          <p className="ops-crash-fallback-detail" role="alert">
             {faultMessage}
           </p>
         </div>
 
-        <div style={{ marginTop: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div className="ops-crash-fallback-actions">
           <button
+            className="ops-crash-fallback-button ops-crash-fallback-button-primary"
             type="button"
             onClick={() => void handleJsonExport()}
             disabled={recoveryControlsDisabled}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: '#a7f3d0',
-              backgroundColor: 'rgba(16,185,129,0.1)',
-              border: '1px solid rgba(52,211,153,0.4)',
-              borderRadius: '0.5rem',
-              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
-              opacity: recoveryControlsDisabled ? 0.7 : 1
-            }}
           >
             {busyAction === 'json' ? 'Exporting JSON' : 'Export JSON'}
           </button>
           <button
+            className="ops-crash-fallback-button ops-crash-fallback-button-muted"
             type="button"
             onClick={() => void handleCsvExport()}
             disabled={recoveryControlsDisabled}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: '#e4e4e7',
-              backgroundColor: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: '0.5rem',
-              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
-              opacity: recoveryControlsDisabled ? 0.7 : 1
-            }}
           >
             {busyAction === 'csv' ? 'Exporting CSV' : 'Export CSV'}
           </button>
           <button
+            className="ops-crash-fallback-button ops-crash-fallback-button-retry"
             type="button"
             onClick={onRetry}
             disabled={recoveryControlsDisabled}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: '#93c5fd',
-              backgroundColor: 'rgba(59,130,246,0.1)',
-              border: '1px solid rgba(96,165,250,0.4)',
-              borderRadius: '0.5rem',
-              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
-              opacity: recoveryControlsDisabled ? 0.7 : 1
-            }}
           >
             Retry app
           </button>
           <button
+            className="ops-crash-fallback-button ops-crash-fallback-button-reload"
             type="button"
             onClick={reloadCurrentPage}
             disabled={recoveryControlsDisabled}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              color: '#fdba74',
-              backgroundColor: 'rgba(251,146,60,0.1)',
-              border: '1px solid rgba(251,146,60,0.4)',
-              borderRadius: '0.5rem',
-              cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
-              opacity: recoveryControlsDisabled ? 0.7 : 1
-            }}
           >
             Reload page
           </button>
         </div>
 
-        <div
-          ref={clearActionRef}
-          style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            border: '1px solid rgba(248,113,113,0.28)',
-            borderRadius: '0.75rem',
-            backgroundColor: 'rgba(127,29,29,0.18)'
-          }}
-        >
-          <p
-            style={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: '#fca5a5'
-            }}
-          >
-            Destructive recovery
-          </p>
-          <p
-            style={{
-              marginTop: '0.75rem',
-              fontSize: '0.875rem',
-              lineHeight: '1.6',
-              color: '#d4d4d8'
-            }}
-          >
+        <div ref={clearActionRef} className="ops-crash-fallback-danger-zone">
+          <p className="ops-crash-fallback-danger-label">Destructive recovery</p>
+          <p className="ops-crash-fallback-danger-copy">
             Use this only if export, retry, and reload still leave OpsNormal stuck in a repeat crash loop.
             This action permanently deletes all local data stored on this device for this app.
           </p>
-          <label
-            style={{
-              marginTop: '1rem',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem',
-              fontSize: '0.8125rem',
-              lineHeight: '1.5',
-              color: '#e4e4e7'
-            }}
-          >
+          <label className="ops-crash-fallback-checkbox-row">
             <input
+              className="ops-crash-fallback-checkbox"
               type="checkbox"
               checked={manualDeleteAcknowledged}
               onChange={(event) => {
                 setManualDeleteAcknowledged(event.currentTarget.checked);
               }}
               disabled={recoveryControlsDisabled || hasExported}
-              style={{ marginTop: '0.2rem' }}
             />
             <span>
               I understand this will permanently delete local data and should only be used after I export a recovery file.
             </span>
           </label>
-          <div style={{ marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div className="ops-crash-fallback-actions">
             <button
               ref={primaryClearButtonRef}
+              className={`ops-crash-fallback-button ops-crash-fallback-button-danger${clearConfirmState === 'armed' ? ' is-armed' : ''}`}
               type="button"
               onClick={() => void handleClearDataAndReload()}
               disabled={clearDataButtonDisabled}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                letterSpacing: '0.14em',
-                textTransform: 'uppercase',
-                color: '#fee2e2',
-                backgroundColor:
-                  clearConfirmState === 'armed' ? 'rgba(220,38,38,0.32)' : 'rgba(220,38,38,0.12)',
-                border: '1px solid rgba(248,113,113,0.45)',
-                borderRadius: '0.5rem',
-                cursor: clearDataButtonDisabled ? 'not-allowed' : recoveryControlsDisabled ? 'wait' : 'pointer',
-                opacity: clearDataButtonDisabled ? 0.55 : 1
-              }}
             >
               {busyAction === 'clear'
                 ? 'Clearing local data'
@@ -433,38 +273,19 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
             </button>
             {clearConfirmState === 'armed' ? (
               <button
+                className="ops-crash-fallback-button ops-crash-fallback-button-muted"
                 type="button"
                 onClick={() => {
                   disarmClearData('Clear-data reset disarmed. Local data remains untouched.');
                 }}
                 disabled={recoveryControlsDisabled}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: '#e4e4e7',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '0.5rem',
-                  cursor: recoveryControlsDisabled ? 'wait' : 'pointer',
-                  opacity: recoveryControlsDisabled ? 0.7 : 1
-                }}
               >
                 Disarm clear-data reset
               </button>
             ) : null}
           </div>
           {!clearDataUnlocked ? (
-            <p
-              style={{
-                marginTop: '0.75rem',
-                fontSize: '0.75rem',
-                lineHeight: '1.5',
-                color: '#fecaca'
-              }}
-            >
+            <p className="ops-crash-fallback-danger-note">
               Unlock requires either a successful export in this crash session or the explicit delete acknowledgment above.
             </p>
           ) : null}
