@@ -84,7 +84,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
       </div>
 
       <p id={ids.captionId} className="sr-only">
-        Week-paginated readiness history for the trailing 30-day window.
+        Weekly readiness history.
       </p>
       <p id={ids.instructionsId} className="sr-only">
         Swipe left or right, or use the previous and next week buttons, to move by week. Activate a day header to open the daily brief for that date. The daily brief lists all five sector states for the selected day.
@@ -109,7 +109,6 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
           ref={mobileScrollRef}
           className="history-scroll-shell history-scroll-shell-mobile flex gap-3 overflow-x-auto pr-10"
           role="region"
-          aria-roledescription="carousel"
           aria-labelledby={ids.captionId}
           aria-describedby={`${ids.instructionsId} ${ids.statusSummaryId}`}
           tabIndex={0}

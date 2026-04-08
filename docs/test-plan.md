@@ -9,6 +9,7 @@ Prove that the app:
 - reopens offline after first load
 - exports consistent data
 - verifies export to import round-trip integrity
+- blocks accessibility regressions in custom ARIA widgets and critical page flows
 
 ## Layers
 
@@ -45,6 +46,7 @@ Prove that the app:
 - viewport-driven history render-path changes
 - today-panel write path uses the live local date if a direct selection lands after midnight before the shell refreshes
 - today-panel save failures surface an operator-visible error and clear the sector busy state
+- targeted vitest-axe checks catch semantic regressions in the direct-select check-in and history surfaces without relying on layout-dependent color contrast rules
 
 ### Integration tests
 - Dexie persistence behavior
@@ -65,6 +67,8 @@ Prove that the app:
 - synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
 - production-artifact smoke gating reuses an already-built `dist/` bundle and excludes the harness-only crash and fallback specs that require e2e-mode fixture pages
+- dedicated WCAG 2.1 A and AA Playwright scans cover the desktop app shell, the direct-select radiogroup pattern, and the mobile history region with service workers blocked for deterministic DOM evaluation
+- ARIA snapshot coverage locks the direct-select radiogroup structure without snapshotting time-driven history surfaces
 
 ## Coverage posture
 
@@ -72,6 +76,10 @@ Target:
 - 70 percent or better on core logic
 - 100 percent on date helpers and export helpers
 
+
+## Accessibility automation note
+
+Vitest accessibility checks run in JSDOM and validate semantic markup only. The shared `axe` helper disables `color-contrast` because JSDOM cannot compute real browser layout or CSS color stacks. Browser-level accessibility enforcement runs in Playwright with `@axe-core/playwright`, filtered to `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`, and the dedicated accessibility project blocks service workers so cached assets cannot taint the scan target.
 
 ## Chromium-only note
 

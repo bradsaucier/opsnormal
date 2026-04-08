@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TodayPanel } from '../../src/features/checkin/TodayPanel';
+import { axe } from '../setup';
 import type { DailyEntry } from '../../src/types';
 
 type UseEntriesForDate = typeof import('../../src/db/hooks')['useEntriesForDate'];
@@ -32,6 +33,15 @@ describe('TodayPanel', () => {
     vi.restoreAllMocks();
     mockUseEntriesForDate.mockReset();
     mockSetDailyStatus.mockReset();
+  });
+
+  it('has no accessibility violations in the direct-select check-in surface', async () => {
+    vi.useRealTimers();
+    const { container } = render(<TodayPanel todayKey="2026-03-27" />);
+
+    expect((await axe(container)).violations).toEqual([]);
+
+    vi.useFakeTimers();
   });
 
   it('renders direct-select radio controls for each sector', () => {
