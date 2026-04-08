@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HistoryGrid } from '../../src/features/history/HistoryGrid';
+import { axe } from '../setup';
 import { formatLongDate, getTrailingDateKeys } from '../../src/lib/date';
 import {
   computeCheckInStreak,
@@ -232,7 +233,8 @@ describe('history helpers and grid behavior', () => {
     const weekStatus = screen.getByTestId('mobile-history-week-status');
     const dailyBriefHeading = screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i });
 
-    expect(carousel).toHaveAttribute('aria-roledescription', 'carousel');
+    expect(carousel).toHaveAccessibleName('Weekly readiness history.');
+    expect(carousel).not.toHaveAttribute('aria-roledescription');
     expect(screen.getAllByRole('group', { name: /week \d of 5/i })).toHaveLength(5);
     expect(nextWeekButton).toBeDisabled();
     expect(previousWeekButton).toBeEnabled();
@@ -248,6 +250,23 @@ describe('history helpers and grid behavior', () => {
 
     expect(weekStatus).toHaveTextContent('Week 5 of 5');
     expect(screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i })).toBeVisible();
+  });
+
+  it('has no accessibility violations in the mobile history view', async () => {
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+
+    const { container } = render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    expect((await axe(container)).violations).toEqual([]);
+  });
+
+  it('has no accessibility violations in the desktop history view', async () => {
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    installMatchMediaController(true);
+
+    const { container } = render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('keeps a single tabbable desktop gridcell and updates the selected-cell brief during keyboard traversal', async () => {
