@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { db, getAllEntries, setDailyStatus } from '../../src/db/appDb';
+import { exportCurrentEntriesAsJson } from '../../src/lib/export';
 import { applyImport, previewImportPayload } from '../../src/services/importService';
 import { OPSNORMAL_APP_NAME, type JsonExportPayload } from '../../src/types';
+
+
+function getCompoundKey(entry: Pick<NonNullable<JsonExportPayload['entries'][number]>, 'date' | 'sectorId'>): string {
+  return `${entry.date}:${entry.sectorId}`;
+}
+
+function createComparableEntry(entry: NonNullable<JsonExportPayload['entries'][number]>) {
+  return {
+    date: entry.date,
+    sectorId: entry.sectorId,
+    status: entry.status,
+    updatedAt: entry.updatedAt
+  };
+}
 
 function buildPayload(entries: JsonExportPayload['entries']): JsonExportPayload {
   return {
@@ -87,6 +102,67 @@ describe('import service', () => {
     expect(byCompoundKey.get('2026-03-27:body')?.status).toBe('degraded');
     expect(byCompoundKey.get('2026-03-27:rest')?.status).toBe('nominal');
     expect(byCompoundKey.get('2026-03-28:relationships')?.status).toBe('nominal');
+  });
+
+  it('round-trips exported entries through preview and merge import without data loss', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+    await setDailyStatus('2026-03-28', 'relationships', 'nominal');
+
+    const originalEntries = (await getAllEntries())
+      .map((entry) => createComparableEntry(entry))
+      .sort((left, right) => getCompoundKey(left).localeCompare(getCompoundKey(right)));
+
+    const exportResult = await exportCurrentEntriesAsJson();
+    const payload = JSON.parse(exportResult.payload) as JsonExportPayload;
+
+    await db.dailyEntries.clear();
+
+    const preview = await previewImportPayload(payload);
+    expect(preview.integrityStatus).toBe('verified');
+    expect(preview.existingEntryCount).toBe(0);
+    expect(preview.totalEntries).toBe(originalEntries.length);
+
+    const result = await applyImport(payload, 'merge');
+    expect(result.importedCount).toBe(originalEntries.length);
+
+    const roundTrippedEntries = (await getAllEntries())
+      .map((entry) => createComparableEntry(entry))
+      .sort((left, right) => getCompoundKey(left).localeCompare(getCompoundKey(right)));
+
+    expect(roundTrippedEntries).toEqual(originalEntries);
+  });
+
+  it('round-trips exported entries through preview and replace import, purging orphaned data', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+    await setDailyStatus('2026-03-28', 'relationships', 'nominal');
+
+    const originalEntries = (await getAllEntries())
+      .map((entry) => createComparableEntry(entry))
+      .sort((left, right) => getCompoundKey(left).localeCompare(getCompoundKey(right)));
+
+    const exportResult = await exportCurrentEntriesAsJson();
+    const payload = JSON.parse(exportResult.payload) as JsonExportPayload;
+
+    await setDailyStatus('2026-03-29', 'household', 'degraded');
+    await setDailyStatus('2026-03-30', 'work-school', 'nominal');
+
+    const preview = await previewImportPayload(payload);
+    expect(preview.integrityStatus).toBe('verified');
+    expect(preview.existingEntryCount).toBe(originalEntries.length + 2);
+    expect(preview.totalEntries).toBe(originalEntries.length);
+
+    const result = await applyImport(payload, 'replace');
+    expect(result.importedCount).toBe(originalEntries.length);
+
+    const replacedEntries = (await getAllEntries())
+      .map((entry) => createComparableEntry(entry))
+      .sort((left, right) => getCompoundKey(left).localeCompare(getCompoundKey(right)));
+
+    expect(replacedEntries).toEqual(originalEntries);
+    expect(replacedEntries.map((entry) => getCompoundKey(entry))).not.toContain('2026-03-29:household');
+    expect(replacedEntries.map((entry) => getCompoundKey(entry))).not.toContain('2026-03-30:work-school');
   });
 
   it('replaces the database and supports undo restore', async () => {
