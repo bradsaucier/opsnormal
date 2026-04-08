@@ -222,7 +222,8 @@ async function verifyPersistedDailyStatus(
     }
 
     throw new Error(
-      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.',
+      { cause: error }
     );
   }
 
