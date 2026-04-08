@@ -12,7 +12,9 @@ export default tseslint.config(
   ...tseslint.configs.recommendedTypeChecked,
   {
     files: ['**/*.{ts,tsx}'],
+    ...reactHooks.configs.flat.recommended,
     languageOptions: {
+      ...reactHooks.configs.flat.recommended.languageOptions,
       parserOptions: {
         project: ['./tsconfig.app.json', './tsconfig.node.json']
       },
@@ -22,11 +24,11 @@ export default tseslint.config(
       }
     },
     plugins: {
-      'react-hooks': reactHooks,
+      ...reactHooks.configs.flat.recommended.plugins,
       'react-refresh': reactRefresh
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      ...reactHooks.configs.flat.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }]
     }
   }
