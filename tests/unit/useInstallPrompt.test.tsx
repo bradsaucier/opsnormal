@@ -273,11 +273,9 @@ describe('useInstallPrompt', () => {
 
     expect(result.current.canPromptInstall).toBe(true);
 
-    await expect(
-      act(async () => {
-        await result.current.promptInstall();
-      })
-    ).rejects.toThrow(promptError);
+    await act(async () => {
+      await expect(result.current.promptInstall()).rejects.toThrow(promptError);
+    });
 
     expect(result.current.canPromptInstall).toBe(false);
   });
@@ -296,13 +294,11 @@ describe('useInstallPrompt', () => {
 
     expect(result.current.canPromptInstall).toBe(true);
 
-    const installAttempt = act(async () => {
+    await act(async () => {
       const promptInstallPromise = result.current.promptInstall();
       deferredChoice.reject(choiceError);
-      await promptInstallPromise;
+      await expect(promptInstallPromise).rejects.toThrow(choiceError);
     });
-
-    await expect(installAttempt).rejects.toThrow(choiceError);
 
     expect(event.prompt).toHaveBeenCalledTimes(1);
     expect(result.current.canPromptInstall).toBe(false);
