@@ -10,8 +10,15 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  verify_matrix:
+    name: Verify (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version:
+          - 22
+          - 24
 
     steps:
       - name: Checkout
@@ -20,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: package-lock.json
 
@@ -36,8 +43,27 @@ jobs:
       - name: Unit and integration tests
         run: npm run test
 
+      - name: Production build
+        run: npm run build
+
       - name: Install Playwright browsers
+        if: matrix.node-version == 22
         run: npx playwright install --with-deps chromium
 
       - name: End-to-end tests
+        if: matrix.node-version == 22
         run: npm run test:e2e
+
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    needs: verify_matrix
+    if: ${{ always() }}
+
+    steps:
+      - name: Enforce matrix success
+        run: |
+          if [ "${{ needs.verify_matrix.result }}" != "success" ]; then
+            echo "One or more matrix lanes failed"
+            exit 1
+          fi

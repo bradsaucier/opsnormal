@@ -52,13 +52,15 @@ It runs in the browser, stores working data in IndexedDB through Dexie, and keep
 
 Prerequisites:
 
-- Node.js 20.19.0 or newer
+- Node.js 22.12.0 or newer
 - npm 10 or newer
 
 ```bash
 npm ci
 npm run dev
 ```
+
+Local verification and CI are aligned to supported LTS lines. The project baseline is Node 22.12.0 or newer, and GitHub Actions verifies Node 22 and Node 24. `devEngines` enforces the local Node and npm contract before install, ci, and run commands.
 
 <details>
 <summary>Run the full local verification stack</summary>
