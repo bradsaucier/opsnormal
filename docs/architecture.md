@@ -162,8 +162,10 @@ Deployment posture:
 - Static hosting on GitHub Pages
 - PWA manifest and service worker generated at build time
 - App shell cached for offline reopen after first successful load
-- Service worker update checks performed during long-lived sessions
-- Offline guard prevents pointless update checks while the browser reports the device offline
+- Service worker update checks performed during long-lived sessions, on foreground return, and when connectivity resumes
+- Existing waiting workers are surfaced immediately when the registration becomes available so update prompts do not depend on a later interval tick
+- Foreground and reconnect revalidation are throttled to at most once per 60 seconds so repeated focus churn does not spam update checks
+- Offline guard prevents pointless update checks while the browser reports the device offline, and offline focus events do not consume the next online revalidation window
 - Update banner escalates to pinned manual recovery guidance if waiting-worker handoff stalls
 - Service worker controller handoff closes the Dexie handle before reload so schema upgrades do not compete with stale connections
 - Session-scoped reload guard suppresses tight repeat reloads for both schema recovery and immediate post-handoff controllerchange churn

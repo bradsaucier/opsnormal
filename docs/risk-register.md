@@ -12,7 +12,7 @@
 
 ### Service worker update drift
 - Risk: users stay on stale cached code.
-- Mitigation: explicit update banner, cache versioning, stale cache cleanup, and manual recovery guidance when the waiting-worker handoff stalls. Repeated controllerchange reload churn now escalates to a pinned loop-breaker banner in one tab, and manual recovery broadcasts a duplicate-tab clear signal so stale loop-breaker state does not stay pinned elsewhere.
+- Mitigation: explicit update banner, cache versioning, stale cache cleanup, waiting-worker discovery when the registration becomes available, and foreground or reconnect revalidation throttled to one check per 60 seconds. Offline focus events do not consume the next online revalidation window, and manual recovery guidance stays pinned when the waiting-worker handoff stalls. Repeated controllerchange reload churn now escalates to a pinned loop-breaker banner in one tab, and manual recovery broadcasts a duplicate-tab clear signal so stale loop-breaker state does not stay pinned elsewhere.
 
 ### Uncontained React render fault
 - Risk: an uncaught render error can collapse the full UI into a blank screen at the worst possible moment.

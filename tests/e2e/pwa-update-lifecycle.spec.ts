@@ -14,11 +14,51 @@ async function dispatchControllerChange(page: import('@playwright/test').Page) {
   });
 }
 
+async function queueForegroundUpdateReady(page: import('@playwright/test').Page) {
+  await page.evaluate(() => {
+    window.__opsNormalPwaTestApi__?.queueForegroundUpdateReady();
+  });
+}
+
+async function getForegroundRevalidationCount(page: import('@playwright/test').Page) {
+  return page.evaluate(() => window.__opsNormalPwaTestApi__?.getForegroundRevalidationCount() ?? 0);
+}
+
+async function dispatchSyntheticForegroundReturn(page: import('@playwright/test').Page) {
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('focus'));
+  });
+}
+
 function getPwaUpdateBanner(page: import('@playwright/test').Page) {
   return page.getByTestId('pwa-update-banner');
 }
 
 test.describe('OpsNormal PWA update lifecycle', () => {
+  test('surfaces a queued update on a synthetic foreground return without repeated revalidation churn @harness', async ({ browser }) => {
+    const context = await browser.newContext({ serviceWorkers: 'block' });
+    const appUrl = 'http://127.0.0.1:4173/';
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+
+    await pageA.goto(appUrl);
+    await pageB.goto(appUrl);
+    await pageB.bringToFront();
+
+    await queueForegroundUpdateReady(pageA);
+    await dispatchSyntheticForegroundReturn(pageA);
+
+    await expect(pageA.getByRole('heading', { name: 'Update Ready' })).toBeVisible();
+    await expect.poll(() => getForegroundRevalidationCount(pageA)).toBe(1);
+
+    await dispatchSyntheticForegroundReturn(pageA);
+    await dispatchSyntheticForegroundReturn(pageA);
+
+    await expect.poll(() => getForegroundRevalidationCount(pageA)).toBe(1);
+
+    await context.close();
+  });
+
   test('reloads both tabs through the synthetic controller handoff without losing the visible check-in state @harness', async ({ browser }) => {
     const context = await browser.newContext({ serviceWorkers: 'block' });
     const appUrl = 'http://127.0.0.1:4173/';
