@@ -14,7 +14,7 @@ function formatViolations(violations: AxeResults['violations']): string {
       const impact = violation.impact ?? 'unclassified';
       const targets = violation.nodes
         .flatMap((node) => node.target)
-        .map((target) => `- ${target}`)
+        .map((target) => `- ${String(target)}`)
         .join('\n');
 
       return `${violation.id} [${impact}] ${violation.help}\n${targets}`;
