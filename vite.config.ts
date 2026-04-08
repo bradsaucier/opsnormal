@@ -6,14 +6,20 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
-  const base = process.env.VITE_BASE_PATH ?? '/';
+  const requestedBase = process.env.VITE_BASE_PATH ?? '/';
   const isE2E = mode === 'e2e';
-  const normalizedBase = base.startsWith('/') ? base : `/${base}`;
-  const basePath = normalizedBase.endsWith('/') ? normalizedBase : `${normalizedBase}/`;
-  const escapedBasePath = basePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const isAbsoluteBase = requestedBase.startsWith('http://') || requestedBase.startsWith('https://');
+  const basePath = isAbsoluteBase
+    ? new URL(requestedBase.endsWith('/') ? requestedBase : `${requestedBase}/`).toString()
+    : (() => {
+        const normalizedBase = requestedBase.startsWith('/') ? requestedBase : `/${requestedBase}`;
+        return normalizedBase.endsWith('/') ? normalizedBase : `${normalizedBase}/`;
+      })();
+  const serviceWorkerBasePath = isAbsoluteBase ? new URL(basePath).pathname : basePath;
+  const escapedBasePath = serviceWorkerBasePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
   return {
-    base,
+    base: basePath,
     build: {
       assetsInlineLimit: 0,
       rollupOptions: isE2E
@@ -34,13 +40,13 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'auto',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
         manifest: {
-          id: base,
+          id: basePath,
           name: 'OpsNormal',
           short_name: 'OpsNormal',
           description:
             'Offline-first personal readiness tracker for daily balance across work or school, household, relationships, body, and rest.',
-          start_url: base,
-          scope: base,
+          start_url: basePath,
+          scope: basePath,
           display: 'standalone',
           background_color: '#0a0f0d',
           theme_color: '#0a0f0d',
