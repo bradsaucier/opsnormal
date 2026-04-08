@@ -55,32 +55,44 @@ function installMatchMediaController(
   const listeners = new Set<MediaQueryListener>();
   const supportsEventListener = options.supportsEventListener ?? true;
 
+  const addEventListenerSpy = vi.fn(
+    (eventName: string, listener: EventListenerOrEventListenerObject) => {
+      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
+        return;
+      }
+
+      listeners.add(listener as MediaQueryListener);
+    }
+  );
+
+  const removeEventListenerSpy = vi.fn(
+    (eventName: string, listener: EventListenerOrEventListenerObject) => {
+      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
+        return;
+      }
+
+      listeners.delete(listener as MediaQueryListener);
+    }
+  );
+
+  const addListenerSpy = vi.fn((listener: MediaQueryListener) => {
+    listeners.add(listener);
+  });
+
+  const removeListenerSpy = vi.fn((listener: MediaQueryListener) => {
+    listeners.delete(listener);
+  });
+
   const mediaQueryList = {
     get matches() {
       return matches;
     },
     media: '(display-mode: standalone)',
     onchange: null,
-    addEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
-        return;
-      }
-
-      listeners.add(listener as MediaQueryListener);
-    }),
-    removeEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
-        return;
-      }
-
-      listeners.delete(listener as MediaQueryListener);
-    }),
-    addListener: vi.fn((listener: MediaQueryListener) => {
-      listeners.add(listener);
-    }),
-    removeListener: vi.fn((listener: MediaQueryListener) => {
-      listeners.delete(listener);
-    }),
+    addEventListener: addEventListenerSpy,
+    removeEventListener: removeEventListenerSpy,
+    addListener: addListenerSpy,
+    removeListener: removeListenerSpy,
     dispatchEvent: vi.fn()
   } as MediaQueryList;
 
@@ -106,6 +118,8 @@ function installMatchMediaController(
 
   return {
     mediaQueryList,
+    addListenerSpy,
+    removeListenerSpy,
     setMatches(nextMatches: boolean) {
       matches = nextMatches;
       const event = {
@@ -345,11 +359,11 @@ describe('useInstallPrompt', () => {
     });
 
     expect(result.current.isStandalone).toBe(true);
-    expect(matchMediaController.mediaQueryList.addListener).toHaveBeenCalledTimes(1);
+    expect(matchMediaController.addListenerSpy).toHaveBeenCalledTimes(1);
 
     unmount();
 
-    expect(matchMediaController.mediaQueryList.removeListener).toHaveBeenCalledTimes(1);
+    expect(matchMediaController.removeListenerSpy).toHaveBeenCalledTimes(1);
   });
 
   it('removes beforeinstallprompt and appinstalled listeners on unmount', () => {
