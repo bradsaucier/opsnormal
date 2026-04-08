@@ -67,6 +67,12 @@
     "vitest-axe": "^0.1.0"
   },
   "overrides": {
-    "serialize-javascript": "^7.0.5"
+    "serialize-javascript": "^7.0.5",
+    "@tailwindcss/vite": {
+      "vite": "$vite"
+    },
+    "vite-plugin-pwa": {
+      "vite": "$vite"
+    }
   }
 }
