@@ -203,7 +203,8 @@ Accessibility is built into the UI contract.
 
 The repo carries a stronger proof layer than most projects of this size.
 
-- CI runs lint, typecheck, unit and integration tests, Playwright end-to-end tests, and build validation
+- CI runs lint, typecheck, unit and integration tests, the full Playwright Chromium suite, and build validation
+- GitHub Pages deployment is gated on a production-artifact Playwright smoke pass that reuses the built `dist/` output rather than rebuilding inside the deploy lane
 - Current test inventory includes 19 unit suites, 2 integration suites, and 9 end-to-end specs
 - ADRs document architecture and trust-boundary decisions
 - The docs set includes a risk register, test plan, release checklist, and design token guide
