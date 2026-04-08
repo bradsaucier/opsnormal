@@ -19,7 +19,7 @@ function getPwaUpdateBanner(page: import('@playwright/test').Page) {
 }
 
 test.describe('OpsNormal PWA update lifecycle', () => {
-  test('reloads both tabs through the synthetic controller handoff without losing the visible check-in state', async ({ browser }) => {
+  test('reloads both tabs through the synthetic controller handoff without losing the visible check-in state @harness', async ({ browser }) => {
     const context = await browser.newContext({ serviceWorkers: 'block' });
     const appUrl = 'http://127.0.0.1:4173/';
     const pageA = await context.newPage();
@@ -121,7 +121,7 @@ test.describe('OpsNormal PWA update lifecycle', () => {
     await context.close();
   });
 
-  test('pins stalled handoff guidance until the operator reloads', async ({ page }) => {
+  test('pins stalled handoff guidance until the operator reloads @harness', async ({ page }) => {
     await page.goto('http://127.0.0.1:4173/');
 
     await markUpdateReady(page);
