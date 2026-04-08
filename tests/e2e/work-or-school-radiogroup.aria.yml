@@ -1,0 +1,5 @@
+- radiogroup "Work or School status":
+  - paragraph: Choose a state directly. Arrow keys move inside the control group.
+  - radio "Work or School unmarked": UN
+  - radio "Work or School nominal" [checked]: OK
+  - radio "Work or School degraded": DG
