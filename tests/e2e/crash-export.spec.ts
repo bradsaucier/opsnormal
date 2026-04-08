@@ -256,7 +256,7 @@ async function createCleanImportContext(browser: Browser): Promise<BrowserContex
 
 test.use({ serviceWorkers: 'block' });
 
-test.describe('OpsNormal crash export recovery', () => {
+test.describe('OpsNormal crash export recovery @harness', () => {
   test.beforeEach(async ({ page }) => {
     await page.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
   });
