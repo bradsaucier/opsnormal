@@ -13,6 +13,9 @@ Before tagging a release:
 - [ ] service worker registration smoke test passes in Chromium
 - [ ] synthetic service worker update lifecycle Playwright proof passes in Chromium
 - [ ] deployed service worker update smoke check verified manually after a worker change with Chrome DevTools "Update on reload" disabled
+- [ ] with Chrome DevTools open, stage a waiting worker, background the tab, return to the app, and confirm the update banner appears without waiting for the hourly revalidation interval
+- [ ] repeated focus or visibility churn inside 60 seconds does not trigger repeated update checks or repeated banner surfacing for the same dismissed waiting worker
+- [ ] offline foreground return does not consume the first reconnect-triggered update check when connectivity resumes
 - [ ] stalled multi-tab update handoff escalates to pinned recovery guidance instead of silently failing
 - [ ] repeated automatic controllerchange reloads escalate to pinned loop-breaker guidance instead of continuing reload churn
 - [ ] manual recovery in one tab clears stale loop-breaker state in another open tab
