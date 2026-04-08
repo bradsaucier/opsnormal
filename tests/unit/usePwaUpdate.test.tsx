@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
     installing: null as ServiceWorker | null,
     waiting: {
       postMessage: vi.fn<(message: unknown) => void>()
-    },
+    } as { postMessage: ReturnType<typeof vi.fn<(message: unknown) => void>> } | null,
     update: vi.fn<() => Promise<void>>().mockResolvedValue()
   },
   closeDatabaseForServiceWorkerHandoff: vi.fn(),
@@ -108,6 +108,11 @@ describe('usePwaUpdate', () => {
       value: MockBroadcastChannel
     });
 
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: true
+    });
+
     MockBroadcastChannel.instances = [];
     window.sessionStorage.clear();
     vi.useFakeTimers();
@@ -116,10 +121,118 @@ describe('usePwaUpdate', () => {
     mocks.state.needRefresh = true;
     mocks.state.offlineReady = false;
     mocks.registration.installing = null;
-    mocks.registration.waiting.postMessage.mockReset();
+    mocks.registration.waiting = {
+      postMessage: vi.fn<(message: unknown) => void>()
+    };
     mocks.setNeedRefresh.mockReset();
     mocks.setOfflineReady.mockReset();
     mocks.suppressControllerReload.mockReturnValue(false);
+  });
+
+  it('surfaces a waiting worker immediately when registration already carries one', () => {
+    mocks.state.needRefresh = false;
+    mocks.state.offlineReady = true;
+
+    renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
+    expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
+  });
+
+  it('revalidates on focus after the foreground throttle window expires', async () => {
+    mocks.state.needRefresh = false;
+    mocks.registration.waiting = null;
+
+    renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      window.dispatchEvent(new Event('focus'));
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('coalesces repeated foreground events into one revalidation inside the throttle window', async () => {
+    mocks.state.needRefresh = false;
+    mocks.registration.waiting = null;
+
+    renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+
+      for (let attempt = 0; attempt < 50; attempt += 1) {
+        window.dispatchEvent(new Event('focus'));
+      }
+
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not re-surface the same waiting worker on foreground return after dismissal inside the same session', async () => {
+    mocks.state.needRefresh = true;
+    mocks.state.offlineReady = false;
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
+
+    act(() => {
+      result.current.handleDismissBanner();
+    });
+
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      window.dispatchEvent(new Event('focus'));
+      await Promise.resolve();
+    });
+
+    const resurfaceCalls = mocks.setNeedRefresh.mock.calls.filter(([value]) => value === true);
+    expect(resurfaceCalls).toHaveLength(1);
+  });
+
+  it('skips foreground revalidation while offline without consuming the next online check', async () => {
+    mocks.state.needRefresh = false;
+    mocks.registration.waiting = null;
+
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: false
+    });
+
+    renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(0);
+
+    await act(async () => {
+      vi.advanceTimersByTime(60_001);
+      window.dispatchEvent(new Event('focus'));
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(0);
+
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: true
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('posts SKIP_WAITING to the waiting worker and stalls if no controller handoff arrives', () => {
@@ -129,7 +242,7 @@ describe('usePwaUpdate', () => {
       result.current.handleApplyUpdate();
     });
 
-    expect(mocks.registration.waiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     expect(result.current.isApplyingUpdate).toBe(true);
 
     act(() => {
