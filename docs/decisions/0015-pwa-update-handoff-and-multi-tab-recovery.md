@@ -19,6 +19,11 @@ OpsNormal will keep the Vite PWA plugin in prompt mode and will not switch to au
 The application will:
 
 - send `SKIP_WAITING` directly to the waiting worker when the operator applies an update
+- surface an already-waiting worker as soon as the registration becomes available instead of waiting for a later interval tick
+- revalidate the registration when the tab returns to the foreground or connectivity resumes so stale code is less likely to stay pinned silently
+- throttle foreground-triggered revalidation to one check per 60 seconds so repeated focus or visibility churn does not spam update requests
+- evaluate the offline guard before consuming the next foreground revalidation window so an offline focus event does not block the first reconnect check
+- suppress repeat foreground surfacing for the same waiting worker after an operator dismisses the banner in the same session until the next forced revalidation window
 - treat `controllerchange` as the decisive handoff event after an operator applies an update
 - close the current Dexie handle before the `controllerchange` reload path runs
 - insert a short reload buffer after the close request so the forced navigation does not fire in the same execution turn as the handoff close
