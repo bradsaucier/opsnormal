@@ -7,6 +7,33 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+function subscribeToDisplayModeChanges(
+  mediaQuery: MediaQueryList | null,
+  listener: () => void
+): () => void {
+  if (!mediaQuery) {
+    return () => undefined;
+  }
+
+  if (
+    typeof mediaQuery.addEventListener === 'function' &&
+    typeof mediaQuery.removeEventListener === 'function'
+  ) {
+    mediaQuery.addEventListener('change', listener);
+    return () => mediaQuery.removeEventListener('change', listener);
+  }
+
+  if (
+    typeof mediaQuery.addListener === 'function' &&
+    typeof mediaQuery.removeListener === 'function'
+  ) {
+    mediaQuery.addListener(listener);
+    return () => mediaQuery.removeListener(listener);
+  }
+
+  return () => undefined;
+}
+
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [standalone, setStandalone] = useState<boolean>(isStandaloneDisplayMode());
@@ -23,30 +50,44 @@ export function useInstallPrompt() {
     }
 
     function handleDisplayModeChange() {
-      setStandalone(isStandaloneDisplayMode());
+      const nextStandalone = isStandaloneDisplayMode();
+      setStandalone(nextStandalone);
+
+      if (nextStandalone) {
+        setDeferredPrompt(null);
+      }
     }
+
+    const unsubscribeDisplayModeChanges = subscribeToDisplayModeChanges(
+      mediaQuery,
+      handleDisplayModeChange
+    );
 
     window.addEventListener('beforeinstallprompt', handlePrompt);
     window.addEventListener('appinstalled', handleDisplayModeChange);
-    mediaQuery?.addEventListener('change', handleDisplayModeChange);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handlePrompt);
       window.removeEventListener('appinstalled', handleDisplayModeChange);
-      mediaQuery?.removeEventListener('change', handleDisplayModeChange);
+      unsubscribeDisplayModeChanges();
     };
   }, []);
 
   const canPromptInstall = useMemo(() => Boolean(deferredPrompt), [deferredPrompt]);
 
   async function promptInstall() {
-    if (!deferredPrompt) {
+    const promptEvent = deferredPrompt;
+
+    if (!promptEvent) {
       return;
     }
 
-    await deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
+    try {
+      await promptEvent.prompt();
+      await promptEvent.userChoice;
+    } finally {
+      setDeferredPrompt((current) => (current === promptEvent ? null : current));
+    }
   }
 
   return {
