@@ -17,8 +17,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
 
     steps:
       - name: Checkout
@@ -43,29 +41,78 @@ jobs:
       - name: Unit and integration tests
         run: npm run test
 
-      - name: Configure Pages
-        uses: actions/configure-pages@v6
-
-      - name: Build
+      - name: Build production artifact
         env:
           VITE_BASE_PATH: /
         run: |
           npm run build
           cp dist/index.html dist/404.html
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Upload production artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: dist-production
+          path: ./dist
+          retention-days: 1
+
+  test_e2e_smoke:
+    name: Production E2E smoke
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-production
           path: ./dist
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production Playwright smoke suite
+        run: npm run test:e2e:smoke
+
   deploy:
-    needs: build
+    needs:
+      - build
+      - test_e2e_smoke
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - name: Download production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-production
+          path: ./dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

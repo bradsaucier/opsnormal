@@ -37,7 +37,7 @@ test.describe('OpsNormal CSP posture', () => {
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
-  test('renders the boot fallback surface without CSP violations in Chromium', async ({ page }) => {
+  test('renders the boot fallback surface without CSP violations in Chromium @harness', async ({ page }) => {
     await installCspViolationCollector(page);
 
     await page.goto('/boot-fallback-harness.html');
@@ -50,7 +50,7 @@ test.describe('OpsNormal CSP posture', () => {
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
-  test('renders the root crash fallback surface without CSP violations in Chromium', async ({ page }) => {
+  test('renders the root crash fallback surface without CSP violations in Chromium @harness', async ({ page }) => {
     await installCspViolationCollector(page);
 
     await page.goto('/crash-fallback-harness.html');

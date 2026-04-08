@@ -71,7 +71,10 @@ npm run typecheck
 npm run test
 npm run test:e2e
 npm run build
+npm run test:e2e:smoke
 ```
+
+`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
 
 </details>
 

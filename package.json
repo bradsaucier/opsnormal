@@ -28,8 +28,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "pretest:e2e": "npm run build:e2e",
-    "test:e2e": "playwright test"
+    "test:e2e": "npm run build:e2e && playwright test",
+    "test:e2e:smoke": "playwright test --grep-invert @harness"
   },
   "dependencies": {
     "dexie": "^4.4.2",
