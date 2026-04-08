@@ -6,6 +6,9 @@ Before tagging a release:
 - [ ] typecheck passes
 - [ ] unit and integration tests pass
 - [ ] Playwright tests pass
+- [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
+- [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project
+- [ ] direct-select radiogroup ARIA snapshot passes and only changes when the intended accessibility tree changes
 - [ ] production build passes
 - [ ] service worker registration smoke test passes in Chromium
 - [ ] synthetic service worker update lifecycle Playwright proof passes in Chromium
@@ -18,6 +21,7 @@ Before tagging a release:
 - [ ] export verified manually
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
+- [ ] mobile history region no longer announces a custom carousel role and is verified with at least one mobile screen reader path
 - [ ] iOS install guidance reviewed
 - [ ] README reflects current behavior
 - [ ] ADR index reflects current architecture
