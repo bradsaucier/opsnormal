@@ -43,7 +43,7 @@ export const db = new OpsNormalDb();
 
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
-let databaseRecoveryReloadScheduled = false;
+let databaseRecoveryReloadTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 let schemaReloadRetryTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 function delay(ms: number): Promise<void> {
@@ -76,19 +76,21 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 }
 
 function scheduleDatabaseRecoveryReload(): void {
-  if (databaseRecoveryReloadScheduled || typeof window === 'undefined') {
+  if (databaseRecoveryReloadTimeoutId !== null || typeof window === 'undefined') {
     return;
   }
 
-  databaseRecoveryReloadScheduled = true;
-
-  globalThis.setTimeout(() => {
+  databaseRecoveryReloadTimeoutId = globalThis.setTimeout(() => {
+    databaseRecoveryReloadTimeoutId = null;
     reloadCurrentPage();
   }, DATABASE_RELOAD_DELAY_MS);
 }
 
 function clearDatabaseRecoveryReload(): void {
-  databaseRecoveryReloadScheduled = false;
+  if (databaseRecoveryReloadTimeoutId !== null) {
+    globalThis.clearTimeout(databaseRecoveryReloadTimeoutId);
+    databaseRecoveryReloadTimeoutId = null;
+  }
 }
 
 function scheduleSchemaReloadRetry(delayMs: number): void {
