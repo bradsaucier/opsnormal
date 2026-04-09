@@ -105,7 +105,42 @@ describe('database operations', () => {
     expect(openSpy).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(1);
 
-    vi.clearAllTimers();
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('cancels a scheduled recovery reload if the database reconnects before the timer fires', async () => {
+    vi.useFakeTimers();
+    const openSpy = vi.spyOn(db, 'open');
+
+    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
+    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
+    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
+    openSpy.mockResolvedValueOnce(db);
+
+    db.close();
+
+    const reopenPromise = expect(reopenIfClosed()).rejects.toThrow('Recovery reload initiated');
+
+    await vi.advanceTimersByTimeAsync(450);
+    await reopenPromise;
+
+    expect(openSpy).toHaveBeenCalledTimes(3);
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    await expect(reopenIfClosed()).resolves.toBeUndefined();
+
+    const diagnostics = getStorageDurabilityDiagnostics();
+
+    expect(diagnostics.reconnectFailures).toBe(1);
+    expect(diagnostics.reconnectSuccesses).toBe(1);
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
     expect(vi.getTimerCount()).toBe(0);
   });
 
