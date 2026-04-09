@@ -1,6 +1,8 @@
 const STORAGE_PERSISTENCE_FLAG = 'opsnormal-storage-persistence-attempted';
+const STORAGE_PERSISTENCE_CONTEXT_KEY = 'opsnormal-storage-persistence-context';
 const STORAGE_DIAGNOSTICS_EVENT = 'opsnormal-storage-diagnostics-changed';
 const HIGH_STORAGE_USAGE_THRESHOLD = 0.8;
+const PERSISTENT_STORAGE_REQUEST_COOLDOWN_MS = 60 * 1000;
 
 export type StorageReconnectState = 'steady' | 'recovering' | 'failed';
 export type StorageWriteVerificationResult =
@@ -39,6 +41,11 @@ export interface StorageHealth {
 export interface StorageHealthOptions {
   requestPersistence?: boolean;
   allowRepeatRequest?: boolean;
+}
+
+interface PersistentStorageAttemptContext {
+  requestedAt: string;
+  standaloneMode: boolean;
 }
 
 interface ErrorLike {
@@ -85,16 +92,92 @@ function updateStorageDiagnosticsState(
   emitStorageDiagnosticsChanged();
 }
 
-function recordPersistentStorageAttempt(): void {
+function readLocalStorageItem(key: string): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalStorageItem(key: string, value: string): void {
   if (typeof window === 'undefined') {
     return;
   }
 
   try {
-    window.localStorage.setItem(STORAGE_PERSISTENCE_FLAG, 'true');
+    window.localStorage.setItem(key, value);
   } catch {
     // Ignore localStorage access failures.
   }
+}
+
+function getPersistentStorageAttemptContext(): PersistentStorageAttemptContext | null {
+  const rawValue = readLocalStorageItem(STORAGE_PERSISTENCE_CONTEXT_KEY);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue) as Partial<PersistentStorageAttemptContext> | null;
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    if (typeof parsed.requestedAt !== 'string' || typeof parsed.standaloneMode !== 'boolean') {
+      return null;
+    }
+
+    return Number.isNaN(Date.parse(parsed.requestedAt)) ? null : parsed as PersistentStorageAttemptContext;
+  } catch {
+    return null;
+  }
+}
+
+function recordPersistentStorageAttempt(): void {
+  const attemptContext: PersistentStorageAttemptContext = {
+    requestedAt: new Date().toISOString(),
+    standaloneMode: isStandaloneDisplayMode()
+  };
+
+  writeLocalStorageItem(STORAGE_PERSISTENCE_FLAG, 'true');
+  writeLocalStorageItem(STORAGE_PERSISTENCE_CONTEXT_KEY, JSON.stringify(attemptContext));
+}
+
+function hasAttemptedPersistentStorageInCurrentContext(): boolean {
+  if (!hasAttemptedPersistentStorage()) {
+    return false;
+  }
+
+  const context = getPersistentStorageAttemptContext();
+
+  if (!context) {
+    return false;
+  }
+
+  return context.standaloneMode === isStandaloneDisplayMode();
+}
+
+function getPersistentStorageRetryCooldownRemainingMs(): number {
+  const context = getPersistentStorageAttemptContext();
+
+  if (!context) {
+    return 0;
+  }
+
+  const requestedAtMs = Date.parse(context.requestedAt);
+
+  if (Number.isNaN(requestedAtMs)) {
+    return 0;
+  }
+
+  return Math.max(0, PERSISTENT_STORAGE_REQUEST_COOLDOWN_MS - (Date.now() - requestedAtMs));
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -300,15 +383,7 @@ export async function estimateStorage(): Promise<StorageEstimate | null> {
 }
 
 export function hasAttemptedPersistentStorage(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    return window.localStorage.getItem(STORAGE_PERSISTENCE_FLAG) === 'true';
-  } catch {
-    return false;
-  }
+  return readLocalStorageItem(STORAGE_PERSISTENCE_FLAG) === 'true';
 }
 
 export function formatBytes(bytes: number): string {
@@ -428,11 +503,11 @@ export function createStorageHealth(
 export async function getStorageHealth(options: StorageHealthOptions = {}): Promise<StorageHealth> {
   let persisted = await isPersistentStorageGranted();
 
-  if (
-    options.requestPersistence &&
-    !persisted &&
-    (!hasAttemptedPersistentStorage() || options.allowRepeatRequest)
-  ) {
+  const currentContextAttempted = hasAttemptedPersistentStorageInCurrentContext();
+  const cooldownRemainingMs = getPersistentStorageRetryCooldownRemainingMs();
+  const canRepeatRequest = options.allowRepeatRequest && cooldownRemainingMs === 0;
+
+  if (options.requestPersistence && !persisted && (!currentContextAttempted || canRepeatRequest)) {
     persisted = await requestPersistentStorage();
 
     if (!persisted) {
