@@ -16,6 +16,8 @@ The repository also needed explicit containment for repeat `controllerchange` ch
 
 OpsNormal will keep the Vite PWA plugin in prompt mode and will not switch to automatic update application.
 
+The application architecture deliberately bypasses the vite-plugin-pwa provided `updateServiceWorker()` trigger. That helper is documented as a reload path and its `reloadPage` argument is no longer used. OpsNormal must keep explicit ownership of the `SKIP_WAITING` message and the subsequent `controllerchange` teardown so Dexie can close before the forced reload path runs.
+
 The application will:
 
 - send `SKIP_WAITING` directly to the waiting worker when the operator applies an update
@@ -58,6 +60,7 @@ Negative:
 
 This decision does not authorize:
 
+- switching the manual `SKIP_WAITING` handoff to `updateServiceWorker()` or any other helper that owns page reload timing
 - switching the PWA registration mode to automatic update application
 - weakening export or import integrity checks
 - introducing cloud sync, telemetry, or backend recovery paths
