@@ -89,7 +89,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               <h3 id={visibleWeekHeadingId} className="mt-1 text-left text-xs text-ops-text-primary">
                 Week of {formatDayLabel(visibleWeekStart)} to {formatDayLabel(visibleWeekEnd)}
               </h3>
-            </nav>
+            </div>
             <button
               type="button"
               onClick={handleNextWeek}
@@ -99,7 +99,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             >
               Next week
             </button>
-          </div>
+          </nav>
         </div>
       </div>
 
