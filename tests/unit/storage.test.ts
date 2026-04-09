@@ -30,19 +30,23 @@ function setUserAgent(userAgent: string) {
   });
 }
 
+function createMatchMediaMock(matches: boolean) {
+  return {
+    matches,
+    media: '(display-mode: standalone)',
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn()
+  };
+}
+
 function setMatchMedia(matches: boolean) {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
-    value: vi.fn().mockImplementation(() => ({
-      matches,
-      media: '(display-mode: standalone)',
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn()
-    }))
+    value: vi.fn().mockImplementation(() => createMatchMediaMock(matches))
   });
 }
 
@@ -105,6 +109,88 @@ describe('storage helpers', () => {
     expect(health.status).toBe('protected');
     expect(hasAttemptedPersistentStorage()).toBe(true);
     expect(health.safari.persistAttempted).toBe(true);
+  });
+
+  it('retries persistence automatically after standalone posture changes on a shared origin', async () => {
+    const persist = vi.fn().mockResolvedValue(false);
+
+    setNavigatorStorage({
+      persist,
+      persisted: () => Promise.resolve(false),
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+    });
+    setMatchMedia(false);
+
+    await getStorageHealth({ requestPersistence: true });
+    expect(persist).toHaveBeenCalledTimes(1);
+
+    setMatchMedia(true);
+    await getStorageHealth({ requestPersistence: true });
+
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats a fresh standalone container as a new persistence attempt context after import-style migration', async () => {
+    const persist = vi.fn().mockResolvedValue(false);
+
+    setNavigatorStorage({
+      persist,
+      persisted: () => Promise.resolve(false),
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+    });
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setMatchMedia(false);
+
+    await getStorageHealth({ requestPersistence: true });
+    expect(persist).toHaveBeenCalledTimes(1);
+
+    localStorage.clear();
+    setMatchMedia(true);
+    setNavigatorStandalone(true);
+
+    await getStorageHealth({ requestPersistence: true });
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
+  it('enforces a cooldown before repeated manual retry requests', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-09T12:00:00.000Z'));
+
+    const persist = vi.fn().mockResolvedValue(false);
+
+    setNavigatorStorage({
+      persist,
+      persisted: () => Promise.resolve(false),
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+    });
+
+    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+
+    expect(persist).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(new Date('2026-04-09T12:01:01.000Z'));
+    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+
+    expect(persist).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
+  it('fails open when the persistence context record is malformed', async () => {
+    const persist = vi.fn().mockResolvedValue(false);
+
+    setNavigatorStorage({
+      persist,
+      persisted: () => Promise.resolve(false),
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+    });
+
+    localStorage.setItem('opsnormal-storage-persistence-attempted', 'true');
+    localStorage.setItem('opsnormal-storage-persistence-context', '{bad-json');
+
+    await getStorageHealth({ requestPersistence: true });
+
+    expect(persist).toHaveBeenCalledTimes(1);
   });
 
   it('builds protected storage health when persistence is already granted', async () => {

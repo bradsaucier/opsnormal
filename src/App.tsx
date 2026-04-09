@@ -16,7 +16,12 @@ function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
   const [announcement, setAnnouncement] = useState('');
-  const { storageHealth, refreshStorageHealth } = useStorageHealth();
+  const {
+    storageHealth,
+    refreshStorageHealth,
+    requestStorageProtection,
+    isRequestingStorageProtection
+  } = useStorageHealth();
   const {
     needRefresh,
     offlineReady,
@@ -68,9 +73,13 @@ function App() {
     });
   }, []);
 
-  function reinforceLocalStorageDurability() {
+  const reinforceLocalStorageDurability = useCallback(() => {
     void refreshStorageHealth({ requestPersistence: true });
-  }
+  }, [refreshStorageHealth]);
+
+  const refreshStorageHealthAfterImport = useCallback(() => {
+    void refreshStorageHealth({ requestPersistence: true });
+  }, [refreshStorageHealth]);
 
   const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
 
@@ -145,7 +154,12 @@ function App() {
         >
           <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
         </ErrorBoundary>
-        <ExportPanel storageHealth={storageHealth} />
+        <ExportPanel
+          storageHealth={storageHealth}
+          onRequestStorageProtection={requestStorageProtection}
+          isRequestingStorageProtection={isRequestingStorageProtection}
+          onImportCommitted={refreshStorageHealthAfterImport}
+        />
 
         <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
           <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">

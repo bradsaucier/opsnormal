@@ -6,6 +6,7 @@ import type { ReplaceConfirmState, StatusMessage } from './workflowTypes';
 
 interface UseImportWorkflowOptions {
   onImportApplied: (undo: () => Promise<void>) => void;
+  onImportCommitted?: () => void;
   onOpenImportSection: () => void;
   onOpenUndoSection: () => void;
   onReplaceWorkflowResetRequested: () => void;
@@ -31,6 +32,7 @@ interface UseImportWorkflowResult {
 
 export function useImportWorkflow({
   onImportApplied,
+  onImportCommitted,
   onOpenImportSection,
   onOpenUndoSection,
   onReplaceWorkflowResetRequested,
@@ -150,6 +152,7 @@ export function useImportWorkflow({
             ? `Replace import complete. ${importedCount} rows restored.`
             : `Merge import complete. ${importedCount} rows applied.`
       });
+      onImportCommitted?.();
     } catch (error) {
       onStatusMessage({
         tone: 'error',
