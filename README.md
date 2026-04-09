@@ -7,60 +7,61 @@ tagline: "Local-only readiness tracking for fast use under load."
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
-[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#local-only-by-design)
-[![Telemetry: None](https://img.shields.io/badge/Telemetry-None-36476F?style=flat-square)](#local-only-by-design)
-
-Live app - [opsnormal.app](https://opsnormal.app)
-
----
+[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#local-only-and-trust-boundary)
 
 <p align="center">
-  <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop 30-day readiness grid showing five sectors across recent days with a selected day summary for quick pattern recognition.">
+  <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop interface displaying a 30-day readiness grid across five sectors and a detailed daily summary.">
 </p>
-<p align="center"><em>Desktop view - 30-day history kept visible for quick pattern recognition and daily context.</em></p>
+<p align="center">Desktop view: 30-day trailing grid and daily summary.</p>
 
----
+OpsNormal is a local-only Progressive Web App for fast daily readiness tracking across five fixed sectors: Work or School, Household, Relationships, Body, and Rest.
 
-OpsNormal is a static Progressive Web App for personal daily readiness tracking across five fixed sectors: Work or School, Household, Relationships, Body, and Rest.
+No backend. No account. No cloud sync. No analytics. After the first successful load, the app can reopen offline. Readiness records stay in browser-managed storage until you export them to a file you control.
 
-It runs in the browser, stores working data in IndexedDB through Dexie, and keeps the product boundary hard: no backend, no account system, no cloud sync path for readiness data, and no analytics or telemetry pipeline moving personal status off device. After the first successful load, the app can reopen offline. Browser storage is working storage, not backup. Export is the durable boundary the operator controls.
-
-<a id="bluf"></a>
-## Bottom Line Up Front (BLUF)
+## BLUF
 
 > [!IMPORTANT]
 > **OpsNormal is built for one job: preserve a usable daily readiness signal when life gets noisy.**
 >
-> The model is intentionally coarse. Five fixed sectors. Three states. One trailing 30-day picture. The point is fast signal, not endless bookkeeping.
+> The user model stays intentionally small. Five sectors. Three states. One trailing 30-day picture.
 >
-> Recovery posture, storage limits, import and export controls, crash containment, and update handling are visible in the source and docs.
+> Simplicity lives in the daily workflow. Rigor lives in validation, export, recovery, accessibility, and update handling.
 
+## What this is
 
----
+- Static PWA with same-origin asset and service-worker behavior
+- Local-only readiness tracking backed by IndexedDB through Dexie
+- Desktop 30-day history plus a narrow-screen mobile history path
+- JSON and CSV export, validated import, replace gating, and undo support
+
+## What this is not
+
+- Not an account-based product
+- Not a cloud-sync tool
+- Not a free-form journal or custom-category tracker
+- Not a permanent archive unless you export
+- Not a medical device or source of medical or psychological advice
 
 ## Quick start
 
 ### Use the deployed app
 
 1. Open `https://opsnormal.app`
-2. Install it from the browser when supported if you want stronger app-like use, better offline reopen behavior, and a better storage posture on some platforms
+2. On Apple devices, install it to Home Screen if you plan to rely on it there. Ordinary Safari tabs are subject to WebKit's seven-day inactivity cap for script-writable storage.
 3. Record an initial status across the five fixed sectors
 4. Run a test JSON export and keep the file somewhere you control
 5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
 
 ### Run locally
 
-Prerequisites:
-
-- Node.js 22.13.0 or newer
-- npm 10.9.2 or newer
+Prerequisites: Ensure the local environment meets the engine contract defined in `package.json`. `devEngines` enforces the local Node and npm baseline before install, ci, and run commands.
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Local verification and CI are aligned to supported LTS lines. The project baseline is Node 22.13.0 or newer, and GitHub Actions verifies Node 22 and Node 24. `devEngines` enforces the local Node and npm contract before install, ci, and run commands.
+Local verification and CI are aligned to supported LTS lines. GitHub Actions verifies the application across multiple current Node environments.
 
 <details>
 <summary>Run the full local verification stack</summary>
@@ -80,23 +81,19 @@ npm run test:e2e:smoke
 
 ## Core views
 
-The app keeps the workflow narrow on purpose.
-
 - Today panel for direct daily entry
 - Desktop 30-day history grid for pattern recognition
 - Week-paginated mobile history with a daily brief on narrow screens
 - Export and import surface for backup, recovery, preview, merge, replace, and undo flows
 
----
+## Responsive history proof
 
-The screenshots in this README show the desktop product. Mobile history uses a different layout so the 30-day grid does not collapse into noise on narrow screens.
+Narrow screens switch from the 30-day grid to week groups with a daily brief so the history surface stays readable on phone-sized viewports.
 
 <p align="center">
-  <img src="./docs/images/desktop-daily-checkin.png" width="860" alt="Desktop Today panel showing five sector cards with direct-select readiness controls for a fast daily entry.">
+  <img src="./docs/images/mobile-history-week-brief.png" width="300" alt="Mobile interface displaying week-paginated readiness cards and a focused daily brief.">
 </p>
-<p align="center"><em>Desktop view - Today panel optimized for fast daily entry across the fixed five-sector model.</em></p>
-
----
+<p align="center">Mobile view: Week-paginated cards and daily brief.</p>
 
 ## Operating model
 
@@ -122,38 +119,40 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 | Nominal | Holding together |
 | Degraded | Needs attention |
 
-## Local-only by design
+<a id="local-only-and-trust-boundary"></a>
+## Local-only and trust boundary
 
-OpsNormal is a static web app with no backend data plane for readiness records.
+### Storage model
 
-What that means:
+- Readiness data is stored in IndexedDB through Dexie
+- Same-origin asset fetches and service-worker lifecycle traffic still exist
+- There is no backend data plane for readiness records
 
-- No account required
-- No cloud sync path for readiness data
-- No analytics or telemetry pipeline for personal status
-- No third-party API dependency for core operation
-- Same-origin static hosting and same-origin PWA update behavior only
+### What the repo can promise
 
-What that does not mean:
+- Core use stays local to the device after the first successful load
+- Export creates operator-controlled JSON and CSV files
+- Import validates structure before commit
+- Crash containment preserves recovery options instead of dropping the user into a blank failure state
 
-- The app is not network-absent - same-origin asset fetches and service-worker lifecycle traffic still exist
+### What the repo will not promise
+
 - Browser-managed storage is not a backup system
-- Offline reopen is available after the first successful load, not before
+- Private, incognito, and other ephemeral browsing modes do not provide durable storage. Data can be discarded when the session ends
+- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
+- On Apple devices, install to Home Screen if you plan to rely on the app there. Home Screen mode avoids the standard Safari browser-tab counter, but export is still the only durable boundary you control
+- On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, or device loss can destroy records
 
-## Recovery and storage limits
+Export is the durable boundary the operator controls. Run a test export early. Export routinely.
 
-OpsNormal treats browser-managed storage as working storage, not permanent archive storage.
+## Proof of rigor
 
-The repo hardens that posture with versioned JSON export, CSV export, validated import, replace gating, import undo, crash fallback export access, section-level fault containment, storage posture checks, persistent-storage requests where the platform supports them, guarded Dexie reopen logic after connection interruption, and strict Chromium-family transaction durability.
-
-The limits stay real:
-
-- Manual site-data clearing, profile deletion, quota failure, browser eviction, or device loss can still destroy records
-- Safari-family browsers carry materially higher storage risk, especially when the app is not installed to Home Screen
-- Install can improve posture on some platforms, but it is not a guarantee
-- Session undo after import is a convenience, not a durable recovery boundary
-
-Run a test export early. Export routinely. If you need a durable copy, keep the exported file.
+- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, and build validation
+- GitHub Pages deployment is gated on a production-artifact smoke pass
+- JSON export carries versioning and integrity checks
+- Import fails closed on malformed or unsafe data
+- Root and section-level crash containment preserve recovery and export paths
+- ADRs, the risk register, the test plan, and the release checklist keep constraints visible
 
 ## Accessibility
 
@@ -181,12 +180,6 @@ The README stays short on purpose. Deeper proof, limits, and design constraints 
 | [Design tokens](./docs/design-tokens.md) | Visual language, structural colors, state colors, and clipped geometry |
 | [Contributing guide](./CONTRIBUTING.md) | Contribution rules that preserve repo scope |
 | [Code of conduct](./CODE_OF_CONDUCT.md) | Expected project conduct |
-
-## Boundary
-
-OpsNormal is a personal status tracking tool.
-
-It is not a medical device. It does not diagnose, treat, cure, or prevent any disease or condition. It does not provide medical or psychological advice.
 
 ## Contributing
 
