@@ -6,166 +6,25 @@ import {
   shouldSuppressControllerReload
 } from '../../db/appDb';
 import { reloadCurrentPage } from '../../lib/runtime';
-
-const UPDATE_REVALIDATION_INTERVAL_MS = 60 * 60 * 1000;
-const UPDATE_HANDOFF_TIMEOUT_MS = 4000;
-const CONTROLLER_RELOAD_WINDOW_MS = 15 * 1000;
-const FOREGROUND_REVALIDATION_THROTTLE_MS = 60 * 1000;
-const CONTROLLER_RELOAD_COUNT_KEY = 'opsnormal-sw-controller-reload-count';
-const CONTROLLER_RELOAD_LAST_AT_KEY = 'opsnormal-sw-controller-reload-last-at';
-const CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS = 2;
-const CONTROLLER_RELOAD_RECOVERY_CHANNEL_NAME = 'opsnormal-pwa-update-recovery';
-const CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE = 'controller-reload-recovery-cleared';
-// Best-effort separation from the Dexie close request before forcing navigation.
-// This delay reduces same-turn reload churn but is not a formal ordering guarantee.
-const CONTROLLER_RELOAD_DELAY_MS = 50;
+import {
+  broadcastControllerReloadRecoveryClear,
+  clearControllerReloadState,
+  isControllerReloadRecoveryMessage,
+  isControllerReloadRecoveryRequired,
+  recordControllerReloadAttempt,
+  subscribeToControllerReloadRecovery
+} from './controllerReloadRecovery';
+import {
+  CONTROLLER_RELOAD_DELAY_MS,
+  CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS,
+  FOREGROUND_REVALIDATION_THROTTLE_MS,
+  UPDATE_HANDOFF_TIMEOUT_MS,
+  UPDATE_REVALIDATION_INTERVAL_MS
+} from './pwaUpdateConstants';
+import type { PwaUpdateController } from './pwaUpdateTypes';
+import { isNavigatorOffline, resolveWaitingWorkerForApply } from './swUpdateRuntime';
 
 let controllerReloadInFlight = false;
-
-interface ControllerReloadState {
-  count: number;
-  lastAt: number | null;
-}
-
-interface ControllerReloadRecoveryMessage {
-  type: typeof CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE;
-}
-
-declare global {
-  interface Window {
-    __opsNormalPwaTestApi__?: {
-      markUpdateReady: () => void;
-      queueForegroundUpdateReady: () => void;
-      getForegroundRevalidationCount: () => number;
-      dispatchControllerChange: () => void;
-    };
-  }
-}
-
-export interface PwaUpdateController {
-  needRefresh: boolean;
-  offlineReady: boolean;
-  isApplyingUpdate: boolean;
-  updateStalled: boolean;
-  reloadRecoveryRequired: boolean;
-  handleApplyUpdate: () => void;
-  handleDismissBanner: () => void;
-  handleReloadPage: () => void;
-}
-
-function isNavigatorOffline(): boolean {
-  return typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine;
-}
-
-function readSessionNumber(key: string): number | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  try {
-    const raw = window.sessionStorage.getItem(key);
-
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = Number.parseInt(raw, 10);
-    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function readControllerReloadState(now = Date.now()): ControllerReloadState {
-  const count = Math.max(0, readSessionNumber(CONTROLLER_RELOAD_COUNT_KEY) ?? 0);
-  const lastAt = readSessionNumber(CONTROLLER_RELOAD_LAST_AT_KEY);
-
-  if (lastAt === null || now - lastAt > CONTROLLER_RELOAD_WINDOW_MS) {
-    return {
-      count: 0,
-      lastAt: null
-    };
-  }
-
-  return {
-    count,
-    lastAt
-  };
-}
-
-function writeControllerReloadState(count: number, timestamp: number): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.setItem(CONTROLLER_RELOAD_COUNT_KEY, String(count));
-    window.sessionStorage.setItem(CONTROLLER_RELOAD_LAST_AT_KEY, String(timestamp));
-  } catch {
-    // Ignore sessionStorage access failures during recovery bookkeeping.
-  }
-}
-
-function clearControllerReloadState(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  try {
-    window.sessionStorage.removeItem(CONTROLLER_RELOAD_COUNT_KEY);
-    window.sessionStorage.removeItem(CONTROLLER_RELOAD_LAST_AT_KEY);
-  } catch {
-    // Ignore sessionStorage access failures during recovery bookkeeping.
-  }
-}
-
-function recordControllerReloadAttempt(now = Date.now()): number {
-  const currentState = readControllerReloadState(now);
-  const nextCount = currentState.lastAt === null ? 1 : currentState.count + 1;
-  writeControllerReloadState(nextCount, now);
-  return nextCount;
-}
-
-function isControllerReloadRecoveryRequired(now = Date.now()): boolean {
-  return readControllerReloadState(now).count >= CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS;
-}
-
-function createRecoveryBroadcastChannel(): BroadcastChannel | null {
-  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
-    return null;
-  }
-
-  try {
-    return new BroadcastChannel(CONTROLLER_RELOAD_RECOVERY_CHANNEL_NAME);
-  } catch {
-    return null;
-  }
-}
-
-function isControllerReloadRecoveryMessage(value: unknown): value is ControllerReloadRecoveryMessage {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'type' in value &&
-    value.type === CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE
-  );
-}
-
-function broadcastControllerReloadRecoveryClear(): void {
-  const channel = createRecoveryBroadcastChannel();
-
-  if (!channel) {
-    return;
-  }
-
-  try {
-    channel.postMessage({ type: CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE } satisfies ControllerReloadRecoveryMessage);
-  } catch {
-    // Ignore channel delivery failures during manual recovery.
-  } finally {
-    channel.close();
-  }
-}
 
 export function usePwaUpdate(): PwaUpdateController {
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
@@ -217,32 +76,43 @@ export function usePwaUpdate(): PwaUpdateController {
     onRegisteredSW: handleRegisteredSW
   });
 
+  const clearBannerState = useCallback(() => {
+    setNeedRefresh(false);
+    setOfflineReady(false);
+    setOfflineBannerDismissed(false);
+    setIsApplyingUpdate(false);
+    setUpdateStalled(false);
+  }, [setNeedRefresh, setOfflineReady]);
+
+  const surfaceWaitingWorker = useCallback(
+    (waitingWorker: ServiceWorker, options: { force?: boolean } = {}) => {
+      if (!options.force && dismissedWaitingWorkerRef.current === waitingWorker) {
+        return;
+      }
+
+      dismissedWaitingWorkerRef.current = null;
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setNeedRefresh(true);
+      setOfflineReady(false);
+      setOfflineBannerDismissed(false);
+    },
+    [setNeedRefresh, setOfflineReady]
+  );
+
   const revalidateRegistration = useCallback(
     async (options: { force?: boolean } = {}) => {
       if (!swRegistration) {
         return;
       }
 
-      const surfaceWaitingWorker = (waitingWorker: ServiceWorker): void => {
-        if (!options.force && dismissedWaitingWorkerRef.current === waitingWorker) {
-          return;
-        }
-
-        dismissedWaitingWorkerRef.current = null;
-
-        if (!isMountedRef.current) {
-          return;
-        }
-
-        setNeedRefresh(true);
-        setOfflineReady(false);
-        setOfflineBannerDismissed(false);
-      };
-
       const waitingWorker = swRegistration.waiting;
 
       if (waitingWorker) {
-        surfaceWaitingWorker(waitingWorker);
+        surfaceWaitingWorker(waitingWorker, options);
         return;
       }
 
@@ -271,9 +141,9 @@ export function usePwaUpdate(): PwaUpdateController {
         return;
       }
 
-      surfaceWaitingWorker(swRegistration.waiting);
+      surfaceWaitingWorker(swRegistration.waiting, options);
     },
-    [setNeedRefresh, setOfflineReady, swRegistration]
+    [surfaceWaitingWorker, swRegistration]
   );
 
   useEffect(() => {
@@ -309,7 +179,7 @@ export function usePwaUpdate(): PwaUpdateController {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [revalidateRegistration, setNeedRefresh, setOfflineReady, swRegistration]);
+  }, [revalidateRegistration, swRegistration]);
 
   useEffect(() => {
     if (!swRegistration && import.meta.env.MODE !== 'e2e') {
@@ -356,16 +226,10 @@ export function usePwaUpdate(): PwaUpdateController {
       window.removeEventListener('online', handleForegroundRevalidation);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [revalidateRegistration, setNeedRefresh, setOfflineReady, swRegistration]);
+  }, [revalidateRegistration, swRegistration, setNeedRefresh, setOfflineReady]);
 
   useEffect(() => {
-    const channel = createRecoveryBroadcastChannel();
-
-    if (!channel) {
-      return;
-    }
-
-    const handleRecoveryMessage = (event: MessageEvent<unknown>) => {
+    const unsubscribe = subscribeToControllerReloadRecovery((event) => {
       if (!isControllerReloadRecoveryMessage(event.data)) {
         return;
       }
@@ -380,20 +244,11 @@ export function usePwaUpdate(): PwaUpdateController {
       }
 
       setReloadRecoveryRequired(false);
-      setNeedRefresh(false);
-      setOfflineReady(false);
-      setOfflineBannerDismissed(false);
-      setIsApplyingUpdate(false);
-      setUpdateStalled(false);
-    };
+      clearBannerState();
+    });
 
-    channel.addEventListener('message', handleRecoveryMessage);
-
-    return () => {
-      channel.removeEventListener('message', handleRecoveryMessage);
-      channel.close();
-    };
-  }, [clearUpdateTimeout, reloadRecoveryRequired, setNeedRefresh, setOfflineReady, updateStalled]);
+    return unsubscribe ?? undefined;
+  }, [clearBannerState, clearUpdateTimeout, reloadRecoveryRequired, updateStalled]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
@@ -459,11 +314,7 @@ export function usePwaUpdate(): PwaUpdateController {
       }
 
       setReloadRecoveryRequired(false);
-      setNeedRefresh(false);
-      setOfflineReady(false);
-      setOfflineBannerDismissed(false);
-      setIsApplyingUpdate(false);
-      setUpdateStalled(false);
+      clearBannerState();
       scheduleReload();
     };
 
@@ -472,7 +323,7 @@ export function usePwaUpdate(): PwaUpdateController {
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
     };
-  }, [clearUpdateTimeout, reloadRecoveryRequired, scheduleReload, setNeedRefresh, setOfflineReady]);
+  }, [clearBannerState, clearUpdateTimeout, reloadRecoveryRequired, scheduleReload, setNeedRefresh, setOfflineReady]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || import.meta.env.MODE !== 'e2e') {
@@ -542,27 +393,26 @@ export function usePwaUpdate(): PwaUpdateController {
       return;
     }
 
-    const waitingWorker = swRegistration?.waiting;
+    void (async () => {
+      const waitingWorker = await resolveWaitingWorkerForApply(swRegistration);
 
-    // Deliberately bypass vite-plugin-pwa's updateServiceWorker() helper here.
-    // The plugin owns its own reload behavior after worker control changes, but
-    // OpsNormal must keep linear ownership of the Dexie close-before-reload path.
-    if (!waitingWorker) {
-      return;
-    }
-
-    try {
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-    } catch {
-      clearUpdateTimeout();
-
-      if (!isMountedRef.current) {
+      if (!waitingWorker) {
         return;
       }
 
-      setIsApplyingUpdate(false);
-      setUpdateStalled(true);
-    }
+      try {
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      } catch {
+        clearUpdateTimeout();
+
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        setIsApplyingUpdate(false);
+        setUpdateStalled(true);
+      }
+    })();
   }, [clearUpdateTimeout, resetTransientState, swRegistration]);
 
   const handleDismissBanner = useCallback(() => {
@@ -594,14 +444,10 @@ export function usePwaUpdate(): PwaUpdateController {
     clearControllerReloadState();
     clearUpdateTimeout();
     setReloadRecoveryRequired(false);
-    setNeedRefresh(false);
-    setOfflineReady(false);
-    setOfflineBannerDismissed(false);
-    setIsApplyingUpdate(false);
-    setUpdateStalled(false);
+    clearBannerState();
     closeDatabaseForServiceWorkerHandoff();
     scheduleReload();
-  }, [clearUpdateTimeout, scheduleReload, setNeedRefresh, setOfflineReady]);
+  }, [clearBannerState, clearUpdateTimeout, scheduleReload]);
 
   return {
     needRefresh: needRefresh || reloadRecoveryRequired,
