@@ -207,7 +207,7 @@ The repo carries a stronger proof layer than most projects of this size.
 
 - CI runs lint, typecheck, unit and integration tests, the full Playwright Chromium suite, and build validation
 - GitHub Pages deployment is gated on a production-artifact Playwright smoke pass that reuses the built `dist/` output rather than rebuilding inside the deploy lane
-- Current test inventory includes 19 unit suites, 2 integration suites, and 9 end-to-end specs
+- Automated coverage spans unit, integration, Playwright end-to-end, accessibility, and production-artifact smoke verification without relying on fragile README counts
 - ADRs document architecture and trust-boundary decisions
 - The docs set includes a risk register, test plan, release checklist, and design token guide
 - CSP-sensitive runtime paths, crash export, import round-trip, PWA registration, mobile history, and storage behavior all have direct test coverage or explicit manual release checks
@@ -217,6 +217,7 @@ The repo carries a stronger proof layer than most projects of this size.
 These are real limits, not marketing omissions.
 
 - Browser-local storage is not a backup system
+- Ordinary Safari-family browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage, and private browsing does not provide durable storage beyond the session
 - Exported JSON and CSV files are user-managed files and should be treated as sensitive
 - The five-sector model is fixed in current scope
 - The history window is intentionally limited to the trailing 30 days
