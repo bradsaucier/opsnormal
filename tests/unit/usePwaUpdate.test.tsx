@@ -297,8 +297,9 @@ describe('usePwaUpdate', () => {
     }) as ServiceWorker;
 
     mocks.registration.waiting = null;
-    mocks.registration.update.mockImplementationOnce(async () => {
+    mocks.registration.update.mockImplementationOnce(() => {
       mocks.registration.installing = installingWorker;
+      return Promise.resolve();
     });
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
