@@ -3,8 +3,8 @@
 ## High severity
 
 ### iOS and Safari-family storage eviction
-- Risk: Safari-family browser sessions can clear script-writable storage after inactivity. Risk is highest on iPhone and iPad when the app is not installed to Home Screen.
-- Mitigation: surface the platform risk explicitly, distinguish Home Screen mode from ordinary browser tabs, request persistent storage without implying a guarantee, and keep export available.
+- Risk: ordinary Safari-family browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cache data can be purged. Private or incognito sessions also do not provide durable storage beyond the session.
+- Mitigation: surface the exact platform risk explicitly, recommend Home Screen installation on Apple devices, request persistent storage without implying a guarantee, and keep export available.
 
 ### Local quota exhaustion during write operations
 - Risk: browser quota pressure can abort IndexedDB writes and leave the operator without a saved check-in. Chromium now defaults ordinary IndexedDB commits to relaxed durability, which widens the crash window after write completion.
