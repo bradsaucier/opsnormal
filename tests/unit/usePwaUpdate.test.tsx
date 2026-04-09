@@ -235,15 +235,110 @@ describe('usePwaUpdate', () => {
     expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
-  it('posts SKIP_WAITING to the waiting worker and stalls if no controller handoff arrives', () => {
+  it('posts SKIP_WAITING to the waiting worker and stalls if no controller handoff arrives', async () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
-    act(() => {
+    await act(async () => {
       result.current.handleApplyUpdate();
+      await Promise.resolve();
     });
 
     expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
     expect(result.current.isApplyingUpdate).toBe(true);
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(result.current.isApplyingUpdate).toBe(false);
+    expect(result.current.updateStalled).toBe(true);
+  });
+
+  it('waits for an installing worker to reach installed before posting SKIP_WAITING', async () => {
+    const recoveredWaitingWorker = {
+      postMessage: vi.fn<(message: unknown) => void>()
+    };
+    const installingWorker = Object.assign(new EventTarget(), {
+      state: 'installing' as ServiceWorkerState
+    }) as ServiceWorker;
+
+    mocks.registration.waiting = null;
+    mocks.registration.installing = installingWorker;
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    await act(async () => {
+      result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    expect(result.current.isApplyingUpdate).toBe(true);
+    expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      Object.assign(installingWorker, { state: 'installed' satisfies ServiceWorkerState });
+      mocks.registration.installing = null;
+      mocks.registration.waiting = recoveredWaitingWorker;
+      installingWorker.dispatchEvent(new Event('statechange'));
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).not.toHaveBeenCalled();
+    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(result.current.updateStalled).toBe(false);
+  });
+
+  it('forces one registration revalidation if the waiting worker disappears before apply and then waits for install completion', async () => {
+    const recoveredWaitingWorker = {
+      postMessage: vi.fn<(message: unknown) => void>()
+    };
+    const installingWorker = Object.assign(new EventTarget(), {
+      state: 'installing' as ServiceWorkerState
+    }) as ServiceWorker;
+
+    mocks.registration.waiting = null;
+    mocks.registration.update.mockImplementationOnce(async () => {
+      mocks.registration.installing = installingWorker;
+    });
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    await act(async () => {
+      result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+    expect(result.current.isApplyingUpdate).toBe(true);
+    expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
+
+    await act(async () => {
+      Object.assign(installingWorker, { state: 'installed' satisfies ServiceWorkerState });
+      mocks.registration.installing = null;
+      mocks.registration.waiting = recoveredWaitingWorker;
+      installingWorker.dispatchEvent(new Event('statechange'));
+      await Promise.resolve();
+    });
+
+    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(result.current.updateStalled).toBe(false);
+  });
+
+  it('keeps the handoff timeout active when apply cannot reacquire a waiting worker', async () => {
+    mocks.registration.waiting = null;
+
+    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    mocks.registration.update.mockClear();
+
+    await act(async () => {
+      result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+    expect(result.current.isApplyingUpdate).toBe(true);
+    expect(result.current.updateStalled).toBe(false);
 
     act(() => {
       vi.advanceTimersByTime(4000);
@@ -371,6 +466,18 @@ describe('usePwaUpdate', () => {
     expect(secondaryTab.result.current.reloadRecoveryRequired).toBe(false);
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
     expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
+  });
+
+  it('cleans up the recovery BroadcastChannel across Strict Mode remounts', () => {
+    expect(MockBroadcastChannel.instances).toHaveLength(0);
+
+    const mounted = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    expect(MockBroadcastChannel.instances).toHaveLength(1);
+
+    mounted.unmount();
+
+    expect(MockBroadcastChannel.instances).toHaveLength(0);
   });
 
   it('re-establishes background revalidation across unmount and remount', () => {
