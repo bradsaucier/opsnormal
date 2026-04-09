@@ -24,7 +24,7 @@ Before tagging a release:
 - [ ] export verified manually
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
-- [ ] mobile history region no longer announces a custom carousel role and is verified with at least one mobile screen reader path
+- [ ] mobile history region no longer announces a custom carousel or slide role, stays free of CSP violations, and is verified with at least one mobile screen reader path
 - [ ] iOS install guidance reviewed
 - [ ] README reflects current behavior
 - [ ] ADR index reflects current architecture
