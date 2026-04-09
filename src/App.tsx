@@ -1,179 +1,467 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import Dexie, { type EntityTable } from 'dexie';
 
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { PwaUpdateBanner } from './components/PwaUpdateBanner';
-import { SectionCrashFallback } from './components/SectionCrashFallback';
-import { TodayPanel } from './features/checkin/TodayPanel';
-import { ExportPanel } from './features/export/ExportPanel';
-import { HistoryGrid } from './features/history/HistoryGrid';
-import { InstallBanner } from './features/install/InstallBanner';
-import { usePwaUpdate } from './features/pwa/usePwaUpdate';
-import { useStorageHealth } from './hooks/useStorageHealth';
-import { formatDateKey, getTrailingDateKeys } from './lib/date';
-import { formatStorageSummary } from './lib/storage';
+import {
+  createStorageOperationError,
+  isDatabaseClosedError,
+  recordStorageConnectionDrop,
+  recordStorageReconnectFailure,
+  recordStorageReconnectSuccess,
+  recordStorageWriteVerification
+} from '../lib/storage';
+import { reloadCurrentPage } from '../lib/runtime';
+import type { DailyEntry, SectorId, UiStatus } from '../types';
+import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from './schema';
 
-function App() {
-  const [todayKey, setTodayKey] = useState(() => formatDateKey());
-  const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
-  const [announcement, setAnnouncement] = useState('');
-  const {
-    storageHealth,
-    refreshStorageHealth,
-    requestStorageProtection,
-    isRequestingStorageProtection
-  } = useStorageHealth();
-  const {
-    needRefresh,
-    offlineReady,
-    isApplyingUpdate,
-    updateStalled,
-    reloadRecoveryRequired,
-    handleApplyUpdate,
-    handleDismissBanner,
-    handleReloadPage
-  } = usePwaUpdate();
+const SCHEMA_RELOAD_GUARD_KEY = 'opsnormal-schema-reload-guard';
+const SCHEMA_RELOAD_GUARD_WINDOW_MS = 5000;
+const DATABASE_REOPEN_MAX_ATTEMPTS = 3;
+const DATABASE_REOPEN_BACKOFF_MS = 150;
+const DATABASE_OPEN_TIMEOUT_MS = 1000;
+const DATABASE_RELOAD_DELAY_MS = 2000;
+const WRITE_VERIFICATION_TIMEOUT_MS = 500;
+const SCHEMA_RELOAD_RETRY_BUFFER_MS = 50;
 
-  const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
-    setTodayKey(formatDateKey(referenceDate));
-    setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
-  }, []);
-
-  useEffect(() => {
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        refreshCalendarWindow();
-      }
-    }
-
-    function handleWindowFocus() {
-      refreshCalendarWindow();
-    }
-
-    const intervalId = window.setInterval(() => {
-      refreshCalendarWindow();
-    }, 60 * 1000);
-
-    window.addEventListener('focus', handleWindowFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener('focus', handleWindowFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+declare global {
+  interface Window {
+    __opsNormalDbTestApi__?: {
+      simulateVersionChange: () => 'reloading' | 'blocked' | 'noop';
+      isRecoveryRequired: () => boolean;
     };
-  }, [refreshCalendarWindow]);
+  }
+}
 
-  const handleAnnouncement = useCallback((message: string) => {
-    setAnnouncement((currentMessage) => {
-      if (currentMessage.trimEnd() !== message) {
-        return message;
+class OpsNormalDb extends Dexie {
+  dailyEntries!: EntityTable<DailyEntry, 'id'>;
+
+  constructor() {
+    super(OPSNORMAL_DB_NAME, { chromeTransactionDurability: 'strict' });
+    applyOpsNormalDbSchema(this);
+  }
+}
+
+export const db = new OpsNormalDb();
+
+let databaseRecoveryRequired = false;
+let schemaReloadLoopDetected = false;
+let databaseRecoveryReloadTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+let schemaReloadRetryTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      reject(new Error(message));
+    }, ms);
+
+    promise.then(
+      (value) => {
+        globalThis.clearTimeout(timeoutId);
+        resolve(value);
+      },
+      (error: unknown) => {
+        globalThis.clearTimeout(timeoutId);
+        reject(
+          error instanceof Error
+            ? error
+            : new Error('Local database operation timed out before a valid failure reason was returned.')
+        );
       }
+    );
+  });
+}
 
-      return currentMessage.endsWith(' ') ? message : `${message} `;
-    });
-  }, []);
+function scheduleDatabaseRecoveryReload(): void {
+  if (databaseRecoveryReloadTimeoutId !== null || typeof window === 'undefined') {
+    return;
+  }
 
-  const reinforceLocalStorageDurability = useCallback(() => {
-    void refreshStorageHealth({ requestPersistence: true });
-  }, [refreshStorageHealth]);
+  databaseRecoveryReloadTimeoutId = globalThis.setTimeout(() => {
+    databaseRecoveryReloadTimeoutId = null;
+    reloadCurrentPage();
+  }, DATABASE_RELOAD_DELAY_MS);
+}
 
-  const refreshStorageHealthAfterImport = useCallback(() => {
-    void refreshStorageHealth({ requestPersistence: true });
-  }, [refreshStorageHealth]);
+function clearDatabaseRecoveryReload(): void {
+  if (databaseRecoveryReloadTimeoutId !== null) {
+    globalThis.clearTimeout(databaseRecoveryReloadTimeoutId);
+    databaseRecoveryReloadTimeoutId = null;
+  }
+}
 
-  const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
+function scheduleSchemaReloadRetry(delayMs: number): void {
+  if (typeof window === 'undefined' || schemaReloadRetryTimeoutId !== null) {
+    return;
+  }
 
-  return (
-    <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
-      <a className="ops-skip-link" href="#main-content">
-        Skip to main content
-      </a>
+  schemaReloadRetryTimeoutId = globalThis.setTimeout(() => {
+    schemaReloadRetryTimeoutId = null;
+    recordSchemaReloadAt(Date.now());
+    reloadCurrentPage();
+  }, delayMs);
+}
 
-      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
-        {announcement}
-      </div>
+function clearSchemaReloadRetry(): void {
+  if (schemaReloadRetryTimeoutId !== null) {
+    globalThis.clearTimeout(schemaReloadRetryTimeoutId);
+    schemaReloadRetryTimeoutId = null;
+  }
+}
 
-      <main id="main-content" tabIndex={-1} className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
-        <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
-          <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.28em] text-emerald-300/90 uppercase">
-                  Personal Readiness Tracker
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-white uppercase sm:text-4xl">
-                  OpsNormal
-                </h1>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
-                  A local-only mirror for daily balance across work or school, household,
-                  relationships, body, and rest. No account. No cloud sync. No analytics layer.
-                </p>
-              </div>
-              <div className="clip-notched ops-notch-panel-outer bg-white/10 p-px text-right">
-                <div className="clip-notched ops-notch-panel-inner bg-black/25 px-4 py-3">
-                  <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
-                  <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
-                    Local only
-                  </div>
-                  <div className="mt-2 text-xs leading-5 text-zinc-400">
-                    {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
-        </div>
-
-        <InstallBanner />
-        <PwaUpdateBanner
-          needRefresh={needRefresh}
-          offlineReady={offlineReady}
-          isApplyingUpdate={isApplyingUpdate}
-          updateStalled={updateStalled}
-          reloadRecoveryRequired={reloadRecoveryRequired}
-          onReload={handleApplyUpdate}
-          onDismiss={handleDismissBanner}
-          onReloadPage={handleReloadPage}
-        />
-
-        <TodayPanel
-          todayKey={todayKey}
-          onDateRollover={refreshCalendarWindow}
-          onMeaningfulSave={reinforceLocalStorageDurability}
-          onAnnounce={handleAnnouncement}
-        />
-        <ErrorBoundary
-          resetKeys={[historyKey, todayKey]}
-          fallbackRender={({ error, resetErrorBoundary }) => (
-            <SectionCrashFallback
-              label="History Grid"
-              error={error}
-              onRetry={resetErrorBoundary}
-            />
-          )}
-        >
-          <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
-        </ErrorBoundary>
-        <ExportPanel
-          storageHealth={storageHealth}
-          onRequestStorageProtection={requestStorageProtection}
-          isRequestingStorageProtection={isRequestingStorageProtection}
-          onImportCommitted={refreshStorageHealthAfterImport}
-        />
-
-        <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
-          <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">
-            <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>
-            <p className="mt-2">
-              OpsNormal is a personal status tracking tool. It is not a medical device and does not
-              diagnose, treat, cure, or prevent any disease or condition. It does not provide medical
-              or psychological advice.
-            </p>
-          </footer>
-        </div>
-      </main>
-    </div>
+async function openDatabaseWithTimeout(): Promise<void> {
+  await withTimeout(
+    db.open(),
+    DATABASE_OPEN_TIMEOUT_MS,
+    'Local database reopen stalled. Reload initiated to recover the browser storage connection.'
   );
 }
 
-export default App;
+export function shouldBlockVersionChangeReload(
+  now: number,
+  lastReloadAt: number | null,
+  windowMs = SCHEMA_RELOAD_GUARD_WINDOW_MS
+): boolean {
+  return lastReloadAt !== null && now - lastReloadAt < windowMs;
+}
+
+function readLastSchemaReloadAt(): number | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem(SCHEMA_RELOAD_GUARD_KEY);
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function recordSchemaReloadAt(timestamp: number): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    window.sessionStorage.setItem(SCHEMA_RELOAD_GUARD_KEY, String(timestamp));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearSchemaReloadGuard(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(SCHEMA_RELOAD_GUARD_KEY);
+  } catch {
+    // Ignore sessionStorage access failures during normal recovery.
+  }
+}
+
+function clearDatabaseRecoveryRequirement(): void {
+  databaseRecoveryRequired = false;
+}
+
+
+function closeDatabaseConnection(): void {
+  databaseRecoveryRequired = true;
+
+  try {
+    db.close();
+  } catch {
+    // Ignore redundant close failures during update or schema handoff.
+  }
+}
+
+export function closeDatabaseForVersionUpgrade(): void {
+  closeDatabaseConnection();
+}
+
+export function closeDatabaseForServiceWorkerHandoff(now = Date.now()): void {
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadRetry();
+  closeDatabaseConnection();
+  recordSchemaReloadAt(now);
+}
+
+export function shouldSuppressControllerReload(now = Date.now()): boolean {
+  return shouldBlockVersionChangeReload(now, readLastSchemaReloadAt());
+}
+
+async function verifyPersistedDailyStatus(
+  date: string,
+  sectorId: SectorId,
+  expectedStatus: UiStatus,
+  expectedUpdatedAt: string | null
+): Promise<void> {
+  let persistedEntry: DailyEntry | undefined;
+
+  try {
+    persistedEntry = await withTimeout(
+      db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first(),
+      WRITE_VERIFICATION_TIMEOUT_MS,
+      'Local write verification stalled. Confirm the latest check-in, export now, then reload before continuing.'
+    );
+  } catch (error) {
+    recordStorageWriteVerification('failed');
+
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    throw new Error(
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.',
+      { cause: error }
+    );
+  }
+
+  if (expectedStatus === 'unmarked') {
+    if (persistedEntry) {
+      recordStorageWriteVerification('mismatch');
+      throw new Error(
+        'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+      );
+    }
+
+    recordStorageWriteVerification('verified');
+    return;
+  }
+
+  const matchesExpectedWrite =
+    persistedEntry?.status === expectedStatus &&
+    persistedEntry.updatedAt === expectedUpdatedAt;
+
+  if (!matchesExpectedWrite) {
+    recordStorageWriteVerification('mismatch');
+    throw new Error(
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+    );
+  }
+
+  recordStorageWriteVerification('verified');
+}
+
+db.on('close', () => {
+  databaseRecoveryRequired = true;
+  recordStorageConnectionDrop();
+});
+
+db.on('ready', () => {
+  clearDatabaseRecoveryRequirement();
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadGuard();
+  clearDatabaseRecoveryReload();
+  clearSchemaReloadRetry();
+});
+
+export function handleDatabaseVersionChange(now = Date.now()): 'reloading' | 'blocked' | 'noop' {
+  closeDatabaseForVersionUpgrade();
+
+  if (typeof window === 'undefined') {
+    return 'noop';
+  }
+
+  const lastReloadAt = readLastSchemaReloadAt();
+
+  if (shouldBlockVersionChangeReload(now, lastReloadAt)) {
+    schemaReloadLoopDetected = true;
+    clearSchemaReloadRetry();
+
+    if (lastReloadAt !== null) {
+      const remainingWindowMs = Math.max(0, SCHEMA_RELOAD_GUARD_WINDOW_MS - (now - lastReloadAt));
+      scheduleSchemaReloadRetry(remainingWindowMs + SCHEMA_RELOAD_RETRY_BUFFER_MS);
+    } else {
+      recordSchemaReloadAt(now);
+      reloadCurrentPage();
+      return 'reloading';
+    }
+
+    return 'blocked';
+  }
+
+  schemaReloadLoopDetected = false;
+  clearSchemaReloadRetry();
+  recordSchemaReloadAt(now);
+  reloadCurrentPage();
+  return 'reloading';
+}
+
+db.on('versionchange', () => {
+  handleDatabaseVersionChange();
+  return false;
+});
+
+export function isDatabaseRecoveryRequired(): boolean {
+  return databaseRecoveryRequired;
+}
+
+export async function reopenIfClosed(): Promise<void> {
+  if (schemaReloadLoopDetected) {
+    throw new Error(
+      'Schema upgrade handoff stalled. Close duplicate OpsNormal tabs, reload once, then verify local data before retrying.'
+    );
+  }
+
+  if (db.isOpen() && !databaseRecoveryRequired) {
+    return;
+  }
+
+  let lastError: unknown;
+  const recovering = databaseRecoveryRequired;
+
+  for (let attempt = 0; attempt < DATABASE_REOPEN_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      if (databaseRecoveryRequired && db.isOpen()) {
+        try {
+          db.close();
+        } catch {
+          // Ignore redundant close failures during recovery retry.
+        }
+      }
+
+      if (!db.isOpen() || databaseRecoveryRequired) {
+        await openDatabaseWithTimeout();
+      }
+
+      clearDatabaseRecoveryRequirement();
+      clearDatabaseRecoveryReload();
+
+      if (recovering) {
+        recordStorageReconnectSuccess();
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+      databaseRecoveryRequired = true;
+
+      try {
+        db.close();
+      } catch {
+        // Ignore redundant close failures during recovery retry.
+      }
+
+      if (attempt < DATABASE_REOPEN_MAX_ATTEMPTS - 1) {
+        await delay(DATABASE_REOPEN_BACKOFF_MS * (attempt + 1));
+      }
+    }
+  }
+
+  recordStorageReconnectFailure(lastError);
+  scheduleDatabaseRecoveryReload();
+  throw new Error(
+    'Local database connection was interrupted. Recovery reload initiated. Confirm the data view after reload, then export before more edits.'
+  );
+}
+
+async function runDatabaseOperation<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    if (databaseRecoveryRequired || !db.isOpen()) {
+      await reopenIfClosed();
+    }
+
+    return await operation();
+  } catch (error) {
+    if (isDatabaseClosedError(error)) {
+      await reopenIfClosed();
+
+      try {
+        return await operation();
+      } catch (retryError) {
+        throw createStorageOperationError(retryError);
+      }
+    }
+
+    throw createStorageOperationError(error);
+  }
+}
+
+export async function runDatabaseWrite<T>(operation: () => Promise<T>): Promise<T> {
+  return runDatabaseOperation(operation);
+}
+
+export async function setDailyStatus(
+  date: string,
+  sectorId: SectorId,
+  status: UiStatus
+): Promise<UiStatus> {
+  return runDatabaseWrite(async () => {
+    let savedStatus: UiStatus = status;
+    let expectedUpdatedAt: string | null = null;
+
+    await db.transaction('rw', db.dailyEntries, async () => {
+      const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+
+      if (status === 'unmarked') {
+        if (existing?.id !== undefined) {
+          await db.dailyEntries.delete(existing.id);
+        }
+
+        savedStatus = 'unmarked';
+        expectedUpdatedAt = null;
+        return;
+      }
+
+      expectedUpdatedAt = new Date().toISOString();
+      const payload: DailyEntry = {
+        id: existing?.id,
+        date,
+        sectorId,
+        status,
+        updatedAt: expectedUpdatedAt
+      };
+
+      await db.dailyEntries.put(payload);
+      savedStatus = payload.status;
+    });
+
+    await verifyPersistedDailyStatus(date, sectorId, savedStatus, expectedUpdatedAt);
+
+    return savedStatus;
+  });
+}
+
+export async function cycleDailyStatus(date: string, sectorId: SectorId): Promise<UiStatus> {
+  return runDatabaseOperation(async () => {
+    const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+
+    if (!existing) {
+      return setDailyStatus(date, sectorId, 'nominal');
+    }
+
+    if (existing.status === 'nominal') {
+      return setDailyStatus(date, sectorId, 'degraded');
+    }
+
+    return setDailyStatus(date, sectorId, 'unmarked');
+  });
+}
+
+export async function getAllEntries(): Promise<DailyEntry[]> {
+  return runDatabaseOperation(async () => db.dailyEntries.orderBy('[date+sectorId]').toArray());
+}
+
+if (typeof window !== 'undefined' && import.meta.env.MODE === 'e2e') {
+  window.__opsNormalDbTestApi__ = {
+    simulateVersionChange() {
+      return handleDatabaseVersionChange();
+    },
+    isRecoveryRequired() {
+      return isDatabaseRecoveryRequired();
+    }
+  };
+}
