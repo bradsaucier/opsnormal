@@ -78,7 +78,6 @@ export default defineConfig(({ mode }) => {
             '**/assets/crashFallbackHarness-*.js'
           ],
           cleanupOutdatedCaches: true,
-          clientsClaim: true,
           skipWaiting: false,
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [
