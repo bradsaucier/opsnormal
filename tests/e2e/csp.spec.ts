@@ -37,6 +37,16 @@ test.describe('OpsNormal CSP posture', () => {
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
+  test('renders the mobile history path without CSP violations in Chromium', async ({ page }) => {
+    await installCspViolationCollector(page);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await expect(page.getByRole('region', { name: /weekly readiness history/i })).toBeVisible();
+    await expect.poll(() => getCspViolations(page)).toEqual([]);
+  });
+
   test('renders the boot fallback surface without CSP violations in Chromium @harness', async ({ page }) => {
     await installCspViolationCollector(page);
 

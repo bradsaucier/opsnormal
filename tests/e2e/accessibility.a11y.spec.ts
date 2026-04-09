@@ -59,6 +59,14 @@ test.describe('OpsNormal accessibility regression coverage', () => {
 
     await expect(mobileHistoryRegion).toBeVisible();
     await expect(mobileHistoryRegion).not.toHaveAttribute('aria-roledescription', 'carousel');
+    await expect(page.getByRole('navigation', { name: /week navigation/i })).toBeVisible();
+
+    const weekGroups = page.getByRole('group');
+    await expect(weekGroups).toHaveCount(5);
+
+    for (const weekGroup of await weekGroups.all()) {
+      await expect(weekGroup).not.toHaveAttribute('aria-roledescription', 'slide');
+    }
 
     const results = await makeAxeBuilder().include('#main-content').analyze();
 

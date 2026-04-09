@@ -11,6 +11,22 @@ interface MobileHistoryGridProps {
   model: HistoryGridModel;
 }
 
+// Keep the first track at a fixed readable minimum while preserving CSP-safe static class names.
+const MOBILE_WEEK_GRID_COLUMN_CLASS = {
+  1: 'grid-cols-[minmax(4.5rem,_auto)_repeat(1,_minmax(0,_1fr))]',
+  2: 'grid-cols-[minmax(4.5rem,_auto)_repeat(2,_minmax(0,_1fr))]',
+  3: 'grid-cols-[minmax(4.5rem,_auto)_repeat(3,_minmax(0,_1fr))]',
+  4: 'grid-cols-[minmax(4.5rem,_auto)_repeat(4,_minmax(0,_1fr))]',
+  5: 'grid-cols-[minmax(4.5rem,_auto)_repeat(5,_minmax(0,_1fr))]',
+  6: 'grid-cols-[minmax(4.5rem,_auto)_repeat(6,_minmax(0,_1fr))]',
+  7: 'grid-cols-[minmax(4.5rem,_auto)_repeat(7,_minmax(0,_1fr))]'
+} as const;
+
+function getMobileWeekGridColumnsClass(dayCount: number) {
+  return MOBILE_WEEK_GRID_COLUMN_CLASS[dayCount as keyof typeof MOBILE_WEEK_GRID_COLUMN_CLASS]
+    ?? MOBILE_WEEK_GRID_COLUMN_CLASS[7];
+}
+
 export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
   const {
     canScrollLeft,
@@ -34,6 +50,8 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
     weekGroups
   } = model;
 
+  const visibleWeekHeadingId = `${ids.mobileRegionId}-visible-week-heading`;
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-3">
@@ -48,7 +66,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
 
         <div className="flex flex-col gap-3">
           <StatusLegend />
-          <div className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Week navigation" className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handlePreviousWeek}
@@ -60,15 +78,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             </button>
             <div
               data-testid="mobile-history-week-status"
+              role="status"
               aria-live="polite"
+              aria-atomic="true"
               className="clip-notched ops-notch-chip border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
             >
               <span className="block text-[10px] text-ops-text-muted">
                 Week {visibleWeekIndex + 1} of {weekGroups.length}
               </span>
-              <span className="mt-1 block text-ops-text-primary">
-                {formatDayLabel(visibleWeekStart)} to {formatDayLabel(visibleWeekEnd)}
-              </span>
+              <h3 id={visibleWeekHeadingId} className="mt-1 text-left text-xs text-ops-text-primary">
+                Week of {formatDayLabel(visibleWeekStart)} to {formatDayLabel(visibleWeekEnd)}
+              </h3>
             </div>
             <button
               type="button"
@@ -79,7 +99,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             >
               Next week
             </button>
-          </div>
+          </nav>
         </div>
       </div>
 
@@ -116,6 +136,8 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
           {weekGroups.map((weekGroup, weekIndex) => {
             const weekStart = weekGroup[0] ?? selectedCell.dateKey;
             const weekEnd = weekGroup[weekGroup.length - 1] ?? selectedCell.dateKey;
+            const weekHeadingId = `${ids.mobileRegionId}-week-heading-${weekIndex}`;
+            const weekStateId = `${ids.mobileRegionId}-week-state-${weekIndex}`;
 
             return (
               <div
@@ -123,8 +145,8 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 ref={(element) => registerWeekRef(weekIndex, element)}
                 data-week-index={weekIndex}
                 role="group"
-                aria-roledescription="slide"
-                aria-label={`Week ${weekIndex + 1} of ${weekGroups.length}`}
+                aria-labelledby={weekHeadingId}
+                aria-describedby={weekStateId}
                 className="history-week-card clip-notched ops-notch-panel-outer w-[calc(100%-2.75rem)] min-w-[17.5rem] max-w-[24rem] shrink-0 bg-ops-border-struct p-px"
               >
                 <div className="clip-notched ops-notch-panel-inner bg-ops-base/80 p-3">
@@ -133,18 +155,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
                         Week {weekIndex + 1}
                       </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+                      <p id={weekHeadingId} className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
                     </div>
-                    <div className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted">
+                    <div id={weekStateId} className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted">
                       {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
                     </div>
                   </div>
 
                   <div
-                    className="grid gap-2"
-                    style={{ gridTemplateColumns: `minmax(4.5rem, auto) repeat(${weekGroup.length}, minmax(0, 1fr))` }}
+                    className={`grid gap-2 ${getMobileWeekGridColumnsClass(weekGroup.length)}`}
                   >
                     <div className="sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-secondary">
                       Sector
