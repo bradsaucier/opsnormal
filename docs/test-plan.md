@@ -61,8 +61,8 @@ Prove that the app:
 - JSON export can be imported into a clean browser context and re-exported without data loss
 - import preview and staged merge path hold under the accordion backup panel
 - replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
-- mobile history week pagination and daily brief selection hold under a narrow viewport
-- CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium
+- mobile history week pagination, daily brief selection, and week-navigation semantics hold under a narrow viewport
+- CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium, including the narrow mobile history path
 - root crash fallback exports valid JSON and CSV after a controlled render fault, the crash-state JSON remains importable in a clean browser context, and the fallback does not emit CSP violations in Chromium
 - synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
