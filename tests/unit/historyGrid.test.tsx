@@ -235,7 +235,12 @@ describe('history helpers and grid behavior', () => {
 
     expect(carousel).toHaveAccessibleName('Weekly readiness history.');
     expect(carousel).not.toHaveAttribute('aria-roledescription');
-    expect(screen.getAllByRole('group', { name: /week \d of 5/i })).toHaveLength(5);
+    expect(screen.getByRole('navigation', { name: /week navigation/i })).toBeVisible();
+    const weekGroups = screen.getAllByRole('group');
+    expect(weekGroups).toHaveLength(5);
+    weekGroups.forEach((weekGroup) => {
+      expect(weekGroup).not.toHaveAttribute('aria-roledescription', 'slide');
+    });
     expect(nextWeekButton).toBeDisabled();
     expect(previousWeekButton).toBeEnabled();
     expect(weekStatus).toHaveTextContent('Week 5 of 5');
