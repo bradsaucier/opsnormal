@@ -1,7 +1,13 @@
+import { useEffect, useState } from 'react';
+
 import { formatStorageSummary, type StorageHealth } from '../lib/storage';
+
+const MANUAL_RETRY_COOLDOWN_MS = 60 * 1000;
 
 interface StorageHealthIndicatorProps {
   storageHealth: StorageHealth | null;
+  onRequestStorageProtection?: () => Promise<StorageHealth>;
+  isRequestingStorageProtection?: boolean;
 }
 
 function getInstallStateLabel(storageHealth: StorageHealth): string {
@@ -12,16 +18,19 @@ function getInstallStateLabel(storageHealth: StorageHealth): string {
   return storageHealth.safari.installRecommended ? 'Browser tab - install recommended' : 'Browser tab';
 }
 
-function getPersistenceLabel(storageHealth: StorageHealth): string {
+function getPersistenceLabel(
+  storageHealth: StorageHealth,
+  hasRequestedDurableStorage: boolean
+): string {
   if (storageHealth.persisted) {
     return 'Best-effort protection active';
   }
 
-  if (storageHealth.safari.persistAttempted) {
-    return 'Protection requested but not granted';
+  if (hasRequestedDurableStorage || storageHealth.safari.persistAttempted) {
+    return 'Durable storage requested but not granted';
   }
 
-  return 'Protection not requested yet';
+  return 'Durable storage not requested yet';
 }
 
 function getReconnectLabel(storageHealth: StorageHealth): string {
@@ -53,7 +62,91 @@ function getVerificationLabel(storageHealth: StorageHealth): string {
   }
 }
 
-export function StorageHealthIndicator({ storageHealth }: StorageHealthIndicatorProps) {
+function getDurabilityHelperText(storageHealth: StorageHealth): string {
+  if (storageHealth.safari.installRecommended) {
+    return 'Install to Home Screen, then request durable storage again. Safari requires installation for maximum data retention.';
+  }
+
+  if (storageHealth.safari.standaloneMode && !storageHealth.persisted) {
+    return 'Installed path active. The browser evaluates durability requests silently in the background based on app usage history.';
+  }
+
+  return 'Browser storage is strictly best-effort. Routine JSON export remains the only guaranteed backup.';
+}
+
+function getRequestButtonLabel(
+  storageHealth: StorageHealth,
+  isCoolingDown: boolean,
+  hasRequestedDurableStorage: boolean
+): string {
+  if (isCoolingDown) {
+    return 'Request denied by browser';
+  }
+
+  if (hasRequestedDurableStorage || storageHealth.safari.persistAttempted) {
+    return 'Retry durable storage request';
+  }
+
+  return 'Request durable storage';
+}
+
+export function StorageHealthIndicator({
+  storageHealth,
+  onRequestStorageProtection,
+  isRequestingStorageProtection = false
+}: StorageHealthIndicatorProps) {
+  const [cooldownUntilMs, setCooldownUntilMs] = useState<number | null>(null);
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
+  const [hasManualRequestAttempted, setHasManualRequestAttempted] = useState(false);
+
+  const effectiveCooldownUntilMs = storageHealth?.persisted ? null : cooldownUntilMs;
+  const hasRequestedDurableStorage =
+    hasManualRequestAttempted || Boolean(storageHealth?.safari.persistAttempted);
+
+  useEffect(() => {
+    if (effectiveCooldownUntilMs === null) {
+      return;
+    }
+
+    const remainingMs = effectiveCooldownUntilMs - currentTimeMs;
+
+    if (remainingMs <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setCurrentTimeMs(Date.now());
+    }, remainingMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [currentTimeMs, effectiveCooldownUntilMs]);
+
+  const isCoolingDown =
+    effectiveCooldownUntilMs !== null && effectiveCooldownUntilMs > currentTimeMs;
+  const canRequestStorageProtection = Boolean(
+    storageHealth &&
+      !storageHealth.persisted &&
+      storageHealth.persistenceAvailable &&
+      onRequestStorageProtection
+  );
+
+  async function handleRequestStorageProtection() {
+    if (!canRequestStorageProtection || !onRequestStorageProtection || isRequestingStorageProtection || isCoolingDown) {
+      return;
+    }
+
+    const nextHealth = await onRequestStorageProtection();
+
+    if (!nextHealth.persisted) {
+      const nextCooldownStartMs = Date.now();
+      setHasManualRequestAttempted(true);
+      setCurrentTimeMs(nextCooldownStartMs);
+      setCooldownUntilMs(nextCooldownStartMs + MANUAL_RETRY_COOLDOWN_MS);
+    }
+  }
+
   const toneClasses =
     storageHealth?.status === 'warning'
       ? 'border-orange-400/35 bg-orange-400/10 text-orange-100'
@@ -75,8 +168,24 @@ export function StorageHealthIndicator({ storageHealth }: StorageHealthIndicator
         {storageHealth?.message ?? 'Assessing local storage posture.'}
       </p>
       <p className="mt-2 text-xs leading-5 text-ops-text-muted">
-        Your data stays on this device until you export it. Browser storage is not backup storage.
+        {storageHealth ? getDurabilityHelperText(storageHealth) : 'Browser storage is strictly best-effort. Routine JSON export remains the only guaranteed backup.'}
       </p>
+      {canRequestStorageProtection && storageHealth ? (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => {
+              void handleRequestStorageProtection();
+            }}
+            disabled={isRequestingStorageProtection || isCoolingDown}
+            className="min-h-11 rounded-lg border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-xs font-semibold tracking-[0.14em] text-emerald-100 uppercase transition hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-zinc-400"
+          >
+            {isRequestingStorageProtection
+              ? 'Requesting durable storage'
+              : getRequestButtonLabel(storageHealth, isCoolingDown, hasRequestedDurableStorage)}
+          </button>
+        </div>
+      ) : null}
       {storageHealth ? (
         <dl className="mt-3 grid gap-2 text-xs leading-5 text-ops-text-muted sm:grid-cols-2">
           <div>
@@ -89,7 +198,7 @@ export function StorageHealthIndicator({ storageHealth }: StorageHealthIndicator
             <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
               Persistence
             </dt>
-            <dd className="mt-1">{getPersistenceLabel(storageHealth)}</dd>
+            <dd className="mt-1">{getPersistenceLabel(storageHealth, hasRequestedDurableStorage)}</dd>
           </div>
           <div>
             <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
