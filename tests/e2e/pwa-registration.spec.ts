@@ -8,17 +8,28 @@ test.describe('OpsNormal service worker registration', () => {
 
     const serviceWorker = await serviceWorkerPromise;
 
-    await page.evaluate(async () => {
-      const registration = await navigator.serviceWorker.getRegistration();
+    await expect
+      .poll(async () => {
+        return page.evaluate(async () => {
+          const registration = await navigator.serviceWorker.getRegistration();
 
-      if (registration?.active?.state === 'activated') {
-        return;
-      }
-
-      await new Promise<void>((resolve) => {
-        navigator.serviceWorker.addEventListener('controllerchange', () => resolve(), { once: true });
+          return {
+            activeState: registration?.active?.state ?? null,
+            activeScriptUrl: registration?.active?.scriptURL ?? null,
+            waitingState: registration?.waiting?.state ?? null,
+            waitingScriptUrl: registration?.waiting?.scriptURL ?? null,
+            installingState: registration?.installing?.state ?? null,
+            installingScriptUrl: registration?.installing?.scriptURL ?? null
+          };
+        });
+      }, {
+        timeout: 30000,
+        message: 'Expected a registered service worker to reach an installable or active state.'
+      })
+      .toMatchObject({
+        activeState: 'activated',
+        activeScriptUrl: expect.stringContaining('/sw.js')
       });
-    });
 
     expect(serviceWorker.url()).toContain('/sw.js');
   });
