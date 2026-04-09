@@ -14,7 +14,7 @@ export function SectionCrashFallback({ label, error, onRetry }: SectionCrashFall
         {label} failed to render
       </p>
       <p className="mt-2 text-sm leading-6 text-zinc-400">
-        This section crashed but the rest of the app is still running. Your data is safe.
+        This section crashed but the rest of the app is still running. OpsNormal keeps entries in your browser on this device. Export routinely if you need an external backup.
       </p>
       <p className="mt-2 font-mono text-xs leading-5 text-orange-300/80 break-words">
         {error.message}
