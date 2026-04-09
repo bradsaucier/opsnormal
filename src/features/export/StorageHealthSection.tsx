@@ -7,12 +7,16 @@ interface StorageHealthSectionProps {
   isOpen: boolean;
   onToggle: (sectionKey: AccordionSectionKey) => void;
   storageHealth: StorageHealth | null;
+  onRequestStorageProtection?: () => Promise<StorageHealth>;
+  isRequestingStorageProtection?: boolean;
 }
 
 export function StorageHealthSection({
   isOpen,
   onToggle,
-  storageHealth
+  storageHealth,
+  onRequestStorageProtection,
+  isRequestingStorageProtection = false
 }: StorageHealthSectionProps) {
   return (
     <AccordionSection
@@ -23,9 +27,13 @@ export function StorageHealthSection({
       onToggle={onToggle}
     >
       <div className="space-y-4">
-        <StorageHealthIndicator storageHealth={storageHealth} />
+        <StorageHealthIndicator
+          storageHealth={storageHealth}
+          onRequestStorageProtection={onRequestStorageProtection}
+          isRequestingStorageProtection={isRequestingStorageProtection}
+        />
         <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
-          Storage telemetry informs posture. It does not remove the need for routine export.
+          The browser automatically manages local storage. You can manually request exemption from automatic deletion, though browsers may deny this silently. Always rely on routine exports to secure your critical data.
         </div>
       </div>
     </AccordionSection>
