@@ -544,6 +544,9 @@ export function usePwaUpdate(): PwaUpdateController {
 
     const waitingWorker = swRegistration?.waiting;
 
+    // Deliberately bypass vite-plugin-pwa's updateServiceWorker() helper here.
+    // The plugin owns its own reload behavior after worker control changes, but
+    // OpsNormal must keep linear ownership of the Dexie close-before-reload path.
     if (!waitingWorker) {
       return;
     }
