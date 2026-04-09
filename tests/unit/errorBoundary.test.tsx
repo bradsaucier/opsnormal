@@ -416,6 +416,9 @@ describe('SectionCrashFallback', () => {
     );
 
     expect(screen.getByText('History Grid failed to render')).toBeInTheDocument();
+    expect(
+      screen.getByText(/opsnormal keeps entries in your browser on this device\. export routinely if you need an external backup\./i)
+    ).toBeInTheDocument();
     expect(screen.getByText('Grid fault')).toBeInTheDocument();
   });
 
