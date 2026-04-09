@@ -20,9 +20,17 @@ import type { StatusMessage } from './workflowTypes';
 
 interface ExportPanelProps {
   storageHealth: StorageHealth | null;
+  onRequestStorageProtection?: () => Promise<StorageHealth>;
+  isRequestingStorageProtection?: boolean;
+  onImportCommitted?: () => void;
 }
 
-export function ExportPanel({ storageHealth }: ExportPanelProps) {
+export function ExportPanel({
+  storageHealth,
+  onRequestStorageProtection,
+  isRequestingStorageProtection = false,
+  onImportCommitted = () => undefined
+}: ExportPanelProps) {
   const [statusMessage, setStatusMessage] = useState<StatusMessage>(() => getDefaultStatusMessage());
   const [expandedSections, setExpandedSections] = useState<Record<AccordionSectionKey, boolean>>({
     export: true,
@@ -77,6 +85,7 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
     setImportModeWithReset
   } = useImportWorkflow({
     onImportApplied: stageUndoImport,
+    onImportCommitted,
     onOpenImportSection: openImportSection,
     onOpenUndoSection: openUndoSection,
     onReplaceWorkflowResetRequested: () => {
@@ -173,6 +182,8 @@ export function ExportPanel({ storageHealth }: ExportPanelProps) {
           isOpen={expandedSections.storage}
           onToggle={toggleSection}
           storageHealth={storageHealth}
+          onRequestStorageProtection={onRequestStorageProtection}
+          isRequestingStorageProtection={isRequestingStorageProtection}
         />
 
         <StatusMessageRegions statusMessage={statusMessage} />
