@@ -16,8 +16,13 @@ import {
   closeDatabaseForServiceWorkerHandoff,
   cycleDailyStatus,
   db,
+  handleDatabaseReady,
+  handleDatabaseUpgradeBlocked,
   handleDatabaseVersionChange,
   isDatabaseRecoveryRequired,
+  isDatabaseUpgradeBlocked,
+  OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+  OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
   reopenIfClosed,
   setDailyStatus,
   shouldBlockVersionChangeReload,
@@ -38,6 +43,8 @@ describe('database operations', () => {
     mocks.reloadCurrentPage.mockReset();
     window.sessionStorage.clear();
     resetStorageDurabilityDiagnostics();
+
+    handleDatabaseReady();
 
     if (!db.isOpen()) {
       await db.open();
@@ -71,6 +78,53 @@ describe('database operations', () => {
 
     expect(diagnostics.lastVerificationResult).toBe('verified');
     expect(diagnostics.lastVerifiedAt).not.toBeNull();
+  });
+
+  it('surfaces a blocked schema upgrade and clears the signal once the database becomes ready again', () => {
+    const blockedListener = vi.fn();
+    const unblockedListener = vi.fn();
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    window.addEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, blockedListener);
+    window.addEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, unblockedListener);
+
+    try {
+      handleDatabaseUpgradeBlocked();
+
+      expect(isDatabaseUpgradeBlocked()).toBe(true);
+      expect(isDatabaseRecoveryRequired()).toBe(true);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.'
+      );
+      expect(blockedListener).toHaveBeenCalledTimes(1);
+      expect((blockedListener.mock.calls[0]?.[0] as CustomEvent<{ message: string }>).detail.message).toContain(
+        'Schema upgrade blocked by another OpsNormal tab.'
+      );
+
+      handleDatabaseReady();
+
+      expect(isDatabaseUpgradeBlocked()).toBe(false);
+      expect(isDatabaseRecoveryRequired()).toBe(false);
+      expect(unblockedListener).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, blockedListener);
+      window.removeEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, unblockedListener);
+    }
+  });
+
+  it('fails fast with an operator-facing message while a schema upgrade remains blocked', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      handleDatabaseUpgradeBlocked();
+
+      await expect(reopenIfClosed()).rejects.toThrow(
+        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.'
+      );
+    } finally {
+      handleDatabaseReady();
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('marks the database for recovery after closure and reopens cleanly', async () => {
