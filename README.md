@@ -134,6 +134,7 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 - Export creates operator-controlled JSON and CSV files
 - Import validates structure before commit
 - Crash containment preserves recovery options instead of dropping the user into a blank failure state
+- Backup action prompts escalate when storage diagnostics or Safari-tab risk make a fresh JSON export urgent
 
 ### What the repo will not promise
 
@@ -143,7 +144,7 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 - On Apple devices, install to Home Screen if you plan to rely on the app there. Home Screen mode avoids the standard Safari browser-tab counter, but export is still the only durable boundary you control
 - On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, or device loss can destroy records
 
-Export is the durable boundary the operator controls. Run a test export early. Export routinely.
+Export is the durable boundary the operator controls. Run a test export early. Export routinely. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
 
 ## Proof of rigor
 
