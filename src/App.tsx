@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { ExportPanelCrashFallback } from './components/ExportPanelCrashFallback';
+import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { TodayPanel } from './features/checkin/TodayPanel';
+import { BackupActionBanner } from './features/export/BackupActionBanner';
+import { createBackupActionPrompt } from './features/export/backupActionPrompt';
 import { ExportPanel } from './features/export/ExportPanel';
 import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
 import { usePwaUpdate } from './features/pwa/usePwaUpdate';
 import { useStorageHealth } from './hooks/useStorageHealth';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
+import { getLastExportCompletedAt } from './lib/export';
 import { formatStorageSummary } from './lib/storage';
 
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
   const [announcement, setAnnouncement] = useState('');
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => getLastExportCompletedAt());
   const {
     storageHealth,
     refreshStorageHealth,
@@ -83,6 +87,10 @@ function App() {
   }, [refreshStorageHealth]);
 
   const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
+  const backupActionPrompt = useMemo(
+    () => createBackupActionPrompt(storageHealth, lastBackupAt),
+    [lastBackupAt, storageHealth]
+  );
 
   return (
     <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
@@ -136,6 +144,7 @@ function App() {
           onDismiss={handleDismissBanner}
           onReloadPage={handleReloadPage}
         />
+        <BackupActionBanner prompt={backupActionPrompt} />
 
         <ErrorBoundary
           resetKeys={[todayKey]}
@@ -168,22 +177,25 @@ function App() {
         >
           <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
         </ErrorBoundary>
-        <ErrorBoundary
-          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
-            <ExportPanelCrashFallback
-              error={error}
-              componentStack={componentStack}
-              onRetry={resetErrorBoundary}
+        <div id="backup-and-recovery">
+          <ErrorBoundary
+            fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+              <ExportPanelCrashFallback
+                error={error}
+                componentStack={componentStack}
+                onRetry={resetErrorBoundary}
+              />
+            )}
+          >
+            <ExportPanel
+              storageHealth={storageHealth}
+              onBackupCompleted={setLastBackupAt}
+              onRequestStorageProtection={requestStorageProtection}
+              isRequestingStorageProtection={isRequestingStorageProtection}
+              onImportCommitted={refreshStorageHealthAfterImport}
             />
-          )}
-        >
-          <ExportPanel
-            storageHealth={storageHealth}
-            onRequestStorageProtection={requestStorageProtection}
-            isRequestingStorageProtection={isRequestingStorageProtection}
-            onImportCommitted={refreshStorageHealthAfterImport}
-          />
-        </ErrorBoundary>
+          </ErrorBoundary>
+        </div>
 
         <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
           <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">

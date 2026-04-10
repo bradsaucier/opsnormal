@@ -22,6 +22,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0014 | ExportPanel workflow decomposition |
 | 0015 | PWA update handoff and multi-tab recovery |
 | 0016 | Expand sectional error boundaries to TodayPanel and ExportPanel |
+| 0017 | Risk-driven backup action prompts |
 
 ## Operating rule
 

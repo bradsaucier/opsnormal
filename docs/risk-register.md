@@ -4,7 +4,7 @@
 
 ### iOS and Safari-family storage eviction
 - Risk: ordinary Safari-family browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cache data can be purged. Private or incognito sessions also do not provide durable storage beyond the session.
-- Mitigation: surface the exact platform risk explicitly, recommend Home Screen installation on Apple devices, request persistent storage without implying a guarantee, and keep export available.
+- Mitigation: surface the exact platform risk explicitly, recommend Home Screen installation on Apple devices, request persistent storage without implying a guarantee, keep export available, and raise a fresh-backup prompt before the seven-day inactivity window is likely to close.
 
 ### Local quota exhaustion during write operations
 - Risk: browser quota pressure can abort IndexedDB writes and leave the operator without a saved check-in. Chromium now defaults ordinary IndexedDB commits to relaxed durability, which widens the crash window after write completion.
@@ -23,7 +23,7 @@
 
 ### Safari IndexedDB connection interruption
 - Risk: browser or WebKit faults can close the IndexedDB connection mid-session.
-- Mitigation: monitor Dexie close events, retry bounded reopen with operator-visible diagnostics, verify the next critical write, and schedule a full reload if the connection cannot be restored cleanly.
+- Mitigation: monitor Dexie close events, retry bounded reopen with operator-visible diagnostics, verify the next critical write, schedule a full reload if the connection cannot be restored cleanly, and prompt for a fresh JSON backup after instability is detected.
 
 ### Multi-tab schema upgrade blocking
 - Risk: one tab can hold an old IndexedDB connection open and block a schema upgrade in a newer tab.

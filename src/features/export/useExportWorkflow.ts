@@ -12,6 +12,7 @@ import {
 import type { StatusMessage } from './workflowTypes';
 
 interface UseExportWorkflowOptions {
+  onBackupCompleted?: (exportedAt: string) => void;
   onStatusMessage: (message: StatusMessage) => void;
 }
 
@@ -23,6 +24,7 @@ interface UseExportWorkflowResult {
 }
 
 export function useExportWorkflow({
+  onBackupCompleted = () => undefined,
   onStatusMessage
 }: UseExportWorkflowOptions): UseExportWorkflowResult {
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(getLastExportCompletedAt());
@@ -32,6 +34,7 @@ export function useExportWorkflow({
   function markBackupCompleted(exportedAt: string) {
     recordExportCompleted(exportedAt);
     setLastBackupAt(exportedAt);
+    onBackupCompleted(exportedAt);
   }
 
   async function handleJsonExport() {
