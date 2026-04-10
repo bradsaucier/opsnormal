@@ -33,6 +33,8 @@ function App() {
     isApplyingUpdate,
     updateStalled,
     reloadRecoveryRequired,
+    externalUpdateInProgress,
+    externalUpdateStalled,
     handleApplyUpdate,
     handleDismissBanner,
     handleReloadPage
@@ -140,6 +142,8 @@ function App() {
           isApplyingUpdate={isApplyingUpdate}
           updateStalled={updateStalled}
           reloadRecoveryRequired={reloadRecoveryRequired}
+          externalUpdateInProgress={externalUpdateInProgress}
+          externalUpdateStalled={externalUpdateStalled}
           onReload={handleApplyUpdate}
           onDismiss={handleDismissBanner}
           onReloadPage={handleReloadPage}

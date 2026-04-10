@@ -14,6 +14,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: false,
         updateStalled: false,
         reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
@@ -35,6 +37,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: false,
         updateStalled: false,
         reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload,
         onDismiss,
         onReloadPage: vi.fn()
@@ -59,6 +63,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: false,
         updateStalled: false,
         reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
@@ -80,6 +86,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: false,
         updateStalled: true,
         reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage
@@ -107,6 +115,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: false,
         updateStalled: false,
         reloadRecoveryRequired: true,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage
@@ -134,7 +144,79 @@ describe('PwaUpdateBanner', () => {
     vi.useRealTimers();
   });
 
-  it('shows the applying state while the update handoff is in progress', () => {
+
+  it('pins coordinated update guidance while another tab owns the handoff', () => {
+    render(
+      createElement(PwaUpdateBanner, {
+        needRefresh: true,
+        offlineReady: false,
+        isApplyingUpdate: false,
+        updateStalled: false,
+        reloadRecoveryRequired: false,
+        externalUpdateInProgress: true,
+        externalUpdateStalled: false,
+        onReload: vi.fn(),
+        onDismiss: vi.fn(),
+        onReloadPage: vi.fn()
+      })
+    );
+
+    expect(screen.getByRole('heading', { name: 'Update In Progress' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /apply update/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+  });
+
+  it('pins coordinated recovery when another tab stalls the handoff', () => {
+    vi.useFakeTimers();
+    render(
+      createElement(PwaUpdateBanner, {
+        needRefresh: true,
+        offlineReady: false,
+        isApplyingUpdate: false,
+        updateStalled: false,
+        reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: true,
+        onReload: vi.fn(),
+        onDismiss: vi.fn(),
+        onReloadPage: vi.fn()
+      })
+    );
+
+    expect(screen.getByRole('heading', { name: 'Update Recovery Required' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /reload tab/i })).toBeInTheDocument();
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/another opsnormal tab started an update handoff/i);
+    vi.useRealTimers();
+  });
+
+  it('prioritizes local stalled recovery over external stalled messaging when both states are present', () => {
+    render(
+      createElement(PwaUpdateBanner, {
+        needRefresh: true,
+        offlineReady: false,
+        isApplyingUpdate: false,
+        updateStalled: true,
+        reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: true,
+        onReload: vi.fn(),
+        onDismiss: vi.fn(),
+        onReloadPage: vi.fn()
+      })
+    );
+
+    expect(screen.getByText(/update handoff did not complete/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/another opsnormal tab started an update handoff, but this tab has not received the new worker/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the applying state while the update handoff is in progress and pins the banner', () => {
     render(
       createElement(PwaUpdateBanner, {
         needRefresh: true,
@@ -142,6 +224,8 @@ describe('PwaUpdateBanner', () => {
         isApplyingUpdate: true,
         updateStalled: false,
         reloadRecoveryRequired: false,
+        externalUpdateInProgress: false,
+        externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
         onReloadPage: vi.fn()
@@ -149,5 +233,6 @@ describe('PwaUpdateBanner', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Applying' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
   });
 });

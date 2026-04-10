@@ -15,14 +15,27 @@ import {
   subscribeToControllerReloadRecovery
 } from './controllerReloadRecovery';
 import {
+  broadcastPwaUpdateHandoffCleared,
+  broadcastPwaUpdateHandoffStalled,
+  broadcastPwaUpdateHandoffStarted,
+  createPwaUpdateTabId,
+  isPwaUpdateCoordinationMessage,
+  subscribeToPwaUpdateCoordination
+} from './pwaUpdateCoordination';
+import {
   CONTROLLER_RELOAD_DELAY_MS,
   CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS,
+  EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS,
   FOREGROUND_REVALIDATION_THROTTLE_MS,
   UPDATE_HANDOFF_TIMEOUT_MS,
   UPDATE_REVALIDATION_INTERVAL_MS
 } from './pwaUpdateConstants';
 import type { PwaUpdateController } from './pwaUpdateTypes';
-import { isNavigatorOffline, resolveWaitingWorkerForApply } from './swUpdateRuntime';
+import {
+  isNavigatorOffline,
+  resolveServiceWorkerRegistration,
+  resolveWaitingWorkerForApply
+} from './swUpdateRuntime';
 
 let controllerReloadInFlight = false;
 
@@ -30,12 +43,16 @@ export function usePwaUpdate(): PwaUpdateController {
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
   const [updateStalled, setUpdateStalled] = useState(false);
+  const [externalUpdateInProgress, setExternalUpdateInProgress] = useState(false);
+  const [externalUpdateStalled, setExternalUpdateStalled] = useState(false);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [reloadRecoveryRequired, setReloadRecoveryRequired] = useState(() =>
     isControllerReloadRecoveryRequired()
   );
   const isMountedRef = useRef(true);
+  const tabIdRef = useRef(createPwaUpdateTabId());
   const updateTimeoutRef = useRef<number | null>(null);
+  const externalHandoffTimeoutRef = useRef<number | null>(null);
   const syntheticUpdateModeRef = useRef(false);
   const hadControllerRef = useRef(false);
   const lastRegistrationRevalidationAtRef = useRef(0);
@@ -49,6 +66,19 @@ export function usePwaUpdate(): PwaUpdateController {
       updateTimeoutRef.current = null;
     }
   }, []);
+
+  const clearExternalHandoffTimeout = useCallback(() => {
+    if (externalHandoffTimeoutRef.current !== null) {
+      window.clearTimeout(externalHandoffTimeoutRef.current);
+      externalHandoffTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearExternalUpdateState = useCallback(() => {
+    clearExternalHandoffTimeout();
+    setExternalUpdateInProgress(false);
+    setExternalUpdateStalled(false);
+  }, [clearExternalHandoffTimeout]);
 
   const scheduleReload = useCallback(() => {
     window.setTimeout(() => {
@@ -76,13 +106,60 @@ export function usePwaUpdate(): PwaUpdateController {
     onRegisteredSW: handleRegisteredSW
   });
 
+  const surfaceUpdateReady = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    clearExternalUpdateState();
+    setReloadRecoveryRequired(false);
+    setNeedRefresh(true);
+    setOfflineReady(false);
+    setOfflineBannerDismissed(false);
+    setIsApplyingUpdate(false);
+    setUpdateStalled(false);
+  }, [clearExternalUpdateState, setNeedRefresh, setOfflineReady]);
+
+  const pinReloadRecovery = useCallback(() => {
+    if (!isMountedRef.current) {
+      return;
+    }
+
+    clearExternalUpdateState();
+    setReloadRecoveryRequired(true);
+    setNeedRefresh(true);
+    setOfflineReady(false);
+    setOfflineBannerDismissed(false);
+    setIsApplyingUpdate(false);
+    setUpdateStalled(false);
+  }, [clearExternalUpdateState, setNeedRefresh, setOfflineReady]);
+
+  const pinExternalUpdateState = useCallback(
+    (stalled: boolean) => {
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setReloadRecoveryRequired(false);
+      setNeedRefresh(true);
+      setOfflineReady(false);
+      setOfflineBannerDismissed(false);
+      setIsApplyingUpdate(false);
+      setUpdateStalled(false);
+      setExternalUpdateInProgress(!stalled);
+      setExternalUpdateStalled(stalled);
+    },
+    [setNeedRefresh, setOfflineReady]
+  );
+
   const clearBannerState = useCallback(() => {
     setNeedRefresh(false);
     setOfflineReady(false);
     setOfflineBannerDismissed(false);
     setIsApplyingUpdate(false);
     setUpdateStalled(false);
-  }, [setNeedRefresh, setOfflineReady]);
+    clearExternalUpdateState();
+  }, [clearExternalUpdateState, setNeedRefresh, setOfflineReady]);
 
   const surfaceWaitingWorker = useCallback(
     (waitingWorker: ServiceWorker, options: { force?: boolean } = {}) => {
@@ -91,32 +168,31 @@ export function usePwaUpdate(): PwaUpdateController {
       }
 
       dismissedWaitingWorkerRef.current = null;
-
-      if (!isMountedRef.current) {
-        return;
-      }
-
-      setNeedRefresh(true);
-      setOfflineReady(false);
-      setOfflineBannerDismissed(false);
+      surfaceUpdateReady();
     },
-    [setNeedRefresh, setOfflineReady]
+    [surfaceUpdateReady]
   );
 
   const revalidateRegistration = useCallback(
     async (options: { force?: boolean } = {}) => {
-      if (!swRegistration) {
+      const activeRegistration = await resolveServiceWorkerRegistration(swRegistration);
+
+      if (activeRegistration && activeRegistration !== swRegistration && isMountedRef.current) {
+        setSwRegistration(activeRegistration);
+      }
+
+      if (!activeRegistration) {
         return;
       }
 
-      const waitingWorker = swRegistration.waiting;
+      const waitingWorker = activeRegistration.waiting;
 
       if (waitingWorker) {
         surfaceWaitingWorker(waitingWorker, options);
         return;
       }
 
-      if (swRegistration.installing || isNavigatorOffline()) {
+      if (activeRegistration.installing || isNavigatorOffline()) {
         return;
       }
 
@@ -132,16 +208,16 @@ export function usePwaUpdate(): PwaUpdateController {
       lastRegistrationRevalidationAtRef.current = now;
 
       try {
-        await swRegistration.update();
+        await activeRegistration.update();
       } catch {
         return;
       }
 
-      if (!isMountedRef.current || !swRegistration.waiting) {
+      if (!isMountedRef.current || !activeRegistration.waiting) {
         return;
       }
 
-      surfaceWaitingWorker(swRegistration.waiting, options);
+      surfaceWaitingWorker(activeRegistration.waiting, options);
     },
     [surfaceWaitingWorker, swRegistration]
   );
@@ -161,9 +237,10 @@ export function usePwaUpdate(): PwaUpdateController {
     return () => {
       isMountedRef.current = false;
       clearUpdateTimeout();
+      clearExternalHandoffTimeout();
       controllerReloadInFlight = false;
     };
-  }, [clearUpdateTimeout]);
+  }, [clearExternalHandoffTimeout, clearUpdateTimeout]);
 
   useEffect(() => {
     if (!swRegistration) {
@@ -198,11 +275,7 @@ export function usePwaUpdate(): PwaUpdateController {
         syntheticForegroundUpdateReadyRef.current = false;
         syntheticForegroundRevalidationCountRef.current += 1;
         syntheticUpdateModeRef.current = true;
-        setNeedRefresh(true);
-        setOfflineReady(false);
-        setOfflineBannerDismissed(false);
-        setIsApplyingUpdate(false);
-        setUpdateStalled(false);
+        surfaceUpdateReady();
         return;
       }
 
@@ -226,7 +299,7 @@ export function usePwaUpdate(): PwaUpdateController {
       window.removeEventListener('online', handleForegroundRevalidation);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [revalidateRegistration, swRegistration, setNeedRefresh, setOfflineReady]);
+  }, [revalidateRegistration, surfaceUpdateReady, swRegistration]);
 
   useEffect(() => {
     const unsubscribe = subscribeToControllerReloadRecovery((event) => {
@@ -239,7 +312,7 @@ export function usePwaUpdate(): PwaUpdateController {
       syntheticUpdateModeRef.current = false;
       clearUpdateTimeout();
 
-      if (!isMountedRef.current || (!reloadRecoveryRequired && !updateStalled)) {
+      if (!isMountedRef.current || (!reloadRecoveryRequired && !updateStalled && !externalUpdateStalled)) {
         return;
       }
 
@@ -248,7 +321,55 @@ export function usePwaUpdate(): PwaUpdateController {
     });
 
     return unsubscribe ?? undefined;
-  }, [clearBannerState, clearUpdateTimeout, reloadRecoveryRequired, updateStalled]);
+  }, [
+    clearBannerState,
+    clearUpdateTimeout,
+    externalUpdateStalled,
+    reloadRecoveryRequired,
+    updateStalled
+  ]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToPwaUpdateCoordination((event) => {
+      if (!isPwaUpdateCoordinationMessage(event.data) || event.data.sourceTabId === tabIdRef.current) {
+        return;
+      }
+
+      controllerReloadInFlight = false;
+      syntheticUpdateModeRef.current = false;
+      clearUpdateTimeout();
+      clearExternalHandoffTimeout();
+
+      switch (event.data.type) {
+        case 'update-handoff-started':
+          pinExternalUpdateState(false);
+          externalHandoffTimeoutRef.current = window.setTimeout(() => {
+            clearExternalUpdateState();
+            void revalidateRegistration({ force: true });
+          }, EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS);
+          return;
+        case 'update-handoff-stalled':
+          pinExternalUpdateState(true);
+          return;
+        case 'update-handoff-cleared':
+          clearExternalUpdateState();
+          return;
+        default:
+          return;
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+      clearExternalHandoffTimeout();
+    };
+  }, [
+    clearExternalHandoffTimeout,
+    clearExternalUpdateState,
+    clearUpdateTimeout,
+    pinExternalUpdateState,
+    revalidateRegistration
+  ]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
@@ -271,17 +392,8 @@ export function usePwaUpdate(): PwaUpdateController {
         controllerReloadInFlight = false;
         syntheticUpdateModeRef.current = false;
         clearUpdateTimeout();
-
-        if (!isMountedRef.current) {
-          return;
-        }
-
-        setReloadRecoveryRequired(true);
-        setNeedRefresh(true);
-        setOfflineReady(false);
-        setOfflineBannerDismissed(false);
-        setIsApplyingUpdate(false);
-        setUpdateStalled(false);
+        broadcastPwaUpdateHandoffStalled(tabIdRef.current, now);
+        pinReloadRecovery();
         return;
       }
 
@@ -293,20 +405,12 @@ export function usePwaUpdate(): PwaUpdateController {
 
       if (automaticReloadCount >= CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS) {
         controllerReloadInFlight = false;
-
-        if (!isMountedRef.current) {
-          return;
-        }
-
-        setReloadRecoveryRequired(true);
-        setNeedRefresh(true);
-        setOfflineReady(false);
-        setOfflineBannerDismissed(false);
-        setIsApplyingUpdate(false);
-        setUpdateStalled(false);
+        broadcastPwaUpdateHandoffStalled(tabIdRef.current, now);
+        pinReloadRecovery();
         return;
       }
 
+      broadcastPwaUpdateHandoffCleared(tabIdRef.current, now);
       closeDatabaseForServiceWorkerHandoff(now);
 
       if (!isMountedRef.current) {
@@ -323,7 +427,13 @@ export function usePwaUpdate(): PwaUpdateController {
     return () => {
       navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
     };
-  }, [clearBannerState, clearUpdateTimeout, reloadRecoveryRequired, scheduleReload, setNeedRefresh, setOfflineReady]);
+  }, [
+    clearBannerState,
+    clearUpdateTimeout,
+    pinReloadRecovery,
+    reloadRecoveryRequired,
+    scheduleReload
+  ]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || import.meta.env.MODE !== 'e2e') {
@@ -335,12 +445,7 @@ export function usePwaUpdate(): PwaUpdateController {
         syntheticForegroundUpdateReadyRef.current = false;
         syntheticUpdateModeRef.current = true;
         controllerReloadInFlight = false;
-        setReloadRecoveryRequired(false);
-        setOfflineBannerDismissed(false);
-        setNeedRefresh(true);
-        setOfflineReady(false);
-        setIsApplyingUpdate(false);
-        setUpdateStalled(false);
+        surfaceUpdateReady();
       },
       queueForegroundUpdateReady() {
         syntheticForegroundUpdateReadyRef.current = true;
@@ -361,7 +466,7 @@ export function usePwaUpdate(): PwaUpdateController {
     return () => {
       delete window.__opsNormalPwaTestApi__;
     };
-  }, [setNeedRefresh, setOfflineReady]);
+  }, [surfaceUpdateReady]);
 
   useEffect(() => {
     if (!needRefresh) {
@@ -371,12 +476,14 @@ export function usePwaUpdate(): PwaUpdateController {
 
   const handleApplyUpdate = useCallback(() => {
     resetTransientState();
+    clearExternalUpdateState();
     controllerReloadInFlight = false;
     setReloadRecoveryRequired(false);
     setOfflineBannerDismissed(false);
     setIsApplyingUpdate(true);
 
     dismissedWaitingWorkerRef.current = null;
+    broadcastPwaUpdateHandoffStarted(tabIdRef.current);
 
     updateTimeoutRef.current = window.setTimeout(() => {
       updateTimeoutRef.current = null;
@@ -387,6 +494,7 @@ export function usePwaUpdate(): PwaUpdateController {
 
       setIsApplyingUpdate(false);
       setUpdateStalled(true);
+      broadcastPwaUpdateHandoffStalled(tabIdRef.current);
     }, UPDATE_HANDOFF_TIMEOUT_MS);
 
     if (import.meta.env.MODE === 'e2e' && syntheticUpdateModeRef.current) {
@@ -411,12 +519,18 @@ export function usePwaUpdate(): PwaUpdateController {
 
         setIsApplyingUpdate(false);
         setUpdateStalled(true);
+        broadcastPwaUpdateHandoffStalled(tabIdRef.current);
       }
     })();
-  }, [clearUpdateTimeout, resetTransientState, swRegistration]);
+  }, [clearExternalUpdateState, clearUpdateTimeout, resetTransientState, swRegistration]);
 
   const handleDismissBanner = useCallback(() => {
-    if (reloadRecoveryRequired || (needRefresh && updateStalled)) {
+    if (
+      reloadRecoveryRequired ||
+      externalUpdateInProgress ||
+      externalUpdateStalled ||
+      (needRefresh && updateStalled)
+    ) {
       return;
     }
 
@@ -430,7 +544,17 @@ export function usePwaUpdate(): PwaUpdateController {
     setNeedRefresh(false);
     setOfflineReady(false);
     setOfflineBannerDismissed(true);
-  }, [needRefresh, reloadRecoveryRequired, resetTransientState, setNeedRefresh, setOfflineReady, swRegistration, updateStalled]);
+  }, [
+    externalUpdateInProgress,
+    externalUpdateStalled,
+    needRefresh,
+    reloadRecoveryRequired,
+    resetTransientState,
+    setNeedRefresh,
+    setOfflineReady,
+    swRegistration,
+    updateStalled
+  ]);
 
   const handleReloadPage = useCallback(() => {
     if (controllerReloadInFlight) {
@@ -440,6 +564,7 @@ export function usePwaUpdate(): PwaUpdateController {
     controllerReloadInFlight = true;
     syntheticUpdateModeRef.current = false;
     dismissedWaitingWorkerRef.current = null;
+    broadcastPwaUpdateHandoffCleared(tabIdRef.current);
     broadcastControllerReloadRecoveryClear();
     clearControllerReloadState();
     clearUpdateTimeout();
@@ -450,11 +575,25 @@ export function usePwaUpdate(): PwaUpdateController {
   }, [clearBannerState, clearUpdateTimeout, scheduleReload]);
 
   return {
-    needRefresh: needRefresh || reloadRecoveryRequired,
-    offlineReady: rawOfflineReady && !offlineBannerDismissed && !reloadRecoveryRequired,
-    isApplyingUpdate: needRefresh && !reloadRecoveryRequired ? isApplyingUpdate : false,
-    updateStalled: needRefresh && !reloadRecoveryRequired ? updateStalled : false,
+    needRefresh:
+      needRefresh || reloadRecoveryRequired || externalUpdateInProgress || externalUpdateStalled,
+    offlineReady:
+      rawOfflineReady &&
+      !offlineBannerDismissed &&
+      !reloadRecoveryRequired &&
+      !externalUpdateInProgress &&
+      !externalUpdateStalled,
+    isApplyingUpdate:
+      needRefresh && !reloadRecoveryRequired && !externalUpdateInProgress && !externalUpdateStalled
+        ? isApplyingUpdate
+        : false,
+    updateStalled:
+      needRefresh && !reloadRecoveryRequired && !externalUpdateInProgress && !externalUpdateStalled
+        ? updateStalled
+        : false,
     reloadRecoveryRequired,
+    externalUpdateInProgress,
+    externalUpdateStalled,
     handleApplyUpdate,
     handleDismissBanner,
     handleReloadPage
