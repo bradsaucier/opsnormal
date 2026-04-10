@@ -30,6 +30,8 @@ Before tagging a release:
 - [ ] ADR index reflects current architecture
 - [ ] persistent storage request verified after a meaningful local save
 - [ ] storage durability indicator verified for install path, reconnect state, and write verification state
+- [ ] backup action banner verified for Safari-tab risk, reconnect or write-verification diagnostics, and first-backup warning conditions
+- [ ] backup action banner announces through the accessibility tree as an alert when it mounts
 - [ ] forced close recovery verified with bounded reopen and operator-visible guidance
 - [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
 - [ ] JSON and CSV export verified on live build
