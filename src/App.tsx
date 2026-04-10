@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
+import { ExportPanelCrashFallback } from './components/ExportPanelCrashFallback';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { ExportPanel } from './features/export/ExportPanel';
@@ -136,30 +137,53 @@ function App() {
           onReloadPage={handleReloadPage}
         />
 
-        <TodayPanel
-          todayKey={todayKey}
-          onDateRollover={refreshCalendarWindow}
-          onMeaningfulSave={reinforceLocalStorageDurability}
-          onAnnounce={handleAnnouncement}
-        />
+        <ErrorBoundary
+          resetKeys={[todayKey]}
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+            <SectionCrashFallback
+              sectionName="Daily Check-In"
+              error={error}
+              componentStack={componentStack}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <TodayPanel
+            todayKey={todayKey}
+            onDateRollover={refreshCalendarWindow}
+            onMeaningfulSave={reinforceLocalStorageDurability}
+            onAnnounce={handleAnnouncement}
+          />
+        </ErrorBoundary>
         <ErrorBoundary
           resetKeys={[historyKey, todayKey]}
-          fallbackRender={({ error, resetErrorBoundary }) => (
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
             <SectionCrashFallback
-              label="History Grid"
+              sectionName="History Grid"
               error={error}
+              componentStack={componentStack}
               onRetry={resetErrorBoundary}
             />
           )}
         >
           <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
         </ErrorBoundary>
-        <ExportPanel
-          storageHealth={storageHealth}
-          onRequestStorageProtection={requestStorageProtection}
-          isRequestingStorageProtection={isRequestingStorageProtection}
-          onImportCommitted={refreshStorageHealthAfterImport}
-        />
+        <ErrorBoundary
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+            <ExportPanelCrashFallback
+              error={error}
+              componentStack={componentStack}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <ExportPanel
+            storageHealth={storageHealth}
+            onRequestStorageProtection={requestStorageProtection}
+            isRequestingStorageProtection={isRequestingStorageProtection}
+            onImportCommitted={refreshStorageHealthAfterImport}
+          />
+        </ErrorBoundary>
 
         <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
           <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">
