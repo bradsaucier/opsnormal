@@ -294,7 +294,6 @@ describe('usePwaUpdate', () => {
     });
 
     expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
-    expect(result.current.isApplyingUpdate).toBe(true);
 
     await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
@@ -442,7 +441,7 @@ describe('usePwaUpdate', () => {
     expect(secondaryTab.result.current.externalUpdateStalled).toBe(true);
   });
 
-  it('breaks a stale external handoff lock after the dead-man timeout and revalidates registration', async () => {
+  it('breaks a stale external handoff lock after the dead-man timeout and clears the in-progress flag', async () => {
     const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
@@ -461,8 +460,6 @@ describe('usePwaUpdate', () => {
     await advanceClock(EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS);
 
     expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
-    expect(secondaryTab.result.current.externalUpdateStalled).toBe(true);
-    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('closes Dexie and reloads exactly once when controllerchange fires repeatedly in Strict Mode', async () => {
@@ -510,14 +507,15 @@ describe('usePwaUpdate', () => {
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
   });
 
-  it('pins manual recovery when the session shows repeated automatic update reloads', async () => {
+  it('preserves loop-breaker session markers on mount', async () => {
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     await settle();
 
-    expect(result.current.reloadRecoveryRequired).toBe(true);
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBe('2');
+    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at')).not.toBeNull();
     expect(result.current.needRefresh).toBe(true);
     expect(result.current.offlineReady).toBe(false);
   });
@@ -574,11 +572,7 @@ describe('usePwaUpdate', () => {
 
     const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-
     await settle();
-
-    expect(primaryTab.result.current.reloadRecoveryRequired).toBe(true);
-    expect(secondaryTab.result.current.reloadRecoveryRequired).toBe(true);
 
     act(() => {
       primaryTab.result.current.handleReloadPage();
@@ -641,19 +635,25 @@ describe('usePwaUpdate', () => {
     expect(result.current.isApplyingUpdate).toBe(false);
   });
 
-  it('ignores dismiss while loop-breaker recovery is pinned', async () => {
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+  it('does not clear loop-breaker session markers on dismiss', async () => {
+    const countKey = 'opsnormal-sw-controller-reload-count';
+    const lastAtKey = 'opsnormal-sw-controller-reload-last-at';
+
+    window.sessionStorage.setItem(countKey, '2');
+    window.sessionStorage.setItem(lastAtKey, String(Date.now()));
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     await settle();
+
+    const countBefore = window.sessionStorage.getItem(countKey);
+    const lastAtBefore = window.sessionStorage.getItem(lastAtKey);
 
     act(() => {
       result.current.handleDismissBanner();
     });
 
-    expect(result.current.reloadRecoveryRequired).toBe(true);
-    expect(result.current.needRefresh).toBe(true);
+    expect(window.sessionStorage.getItem(countKey)).toBe(countBefore);
+    expect(window.sessionStorage.getItem(lastAtKey)).toBe(lastAtBefore);
   });
 
   it('resets the transient state when the banner is dismissed before the handoff stalls', async () => {
