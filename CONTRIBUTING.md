@@ -38,3 +38,5 @@ npm run build
 2. Update tests and docs when behavior changes.
 3. Do not commit build output, coverage output, or local tooling artifacts.
 4. Keep language clinical and professional throughout the repo.
+5. Any database schema change must add or update the migration registry, migration tests, and the relevant ADR before merge.
+6. Any durability-sensitive migration change must include browser-level upgrade proof before merge, not just unit coverage.
