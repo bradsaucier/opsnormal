@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { axe } from '../setup';
+
 import { AppCrashFallback } from '../../src/components/AppCrashFallback';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { SectionCrashFallback } from '../../src/components/SectionCrashFallback';
@@ -406,20 +408,30 @@ describe('ErrorBoundary', () => {
 });
 
 describe('SectionCrashFallback', () => {
-  it('displays the section label and error message', () => {
-    render(
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('displays the section name, alert semantics, and error details', async () => {
+    const { container } = render(
       <SectionCrashFallback
-        label="History Grid"
+        sectionName="History Grid"
         error={new Error('Grid fault')}
+        componentStack={'at HistoryGrid'}
         onRetry={vi.fn()}
       />
     );
 
-    expect(screen.getByText('History Grid failed to render')).toBeInTheDocument();
-    expect(
-      screen.getByText(/opsnormal keeps entries in your browser on this device\. export routinely if you need an external backup\./i)
-    ).toBeInTheDocument();
-    expect(screen.getByText('Grid fault')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('History Grid offline');
+    expect(screen.getByRole('alert')).toHaveFocus();
+    expect(screen.getAllByText('Grid fault')).toHaveLength(2);
+
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('calls onRetry when retry is clicked', async () => {
@@ -428,14 +440,65 @@ describe('SectionCrashFallback', () => {
 
     render(
       <SectionCrashFallback
-        label="History Grid"
+        sectionName="History Grid"
         error={new Error('Grid fault')}
         onRetry={onRetry}
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /retry/i }));
+    await user.click(screen.getByRole('button', { name: /retry section/i }));
 
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps sibling sections online when one section crashes', () => {
+    function StableSection({ label }: { label: string }): ReactElement {
+      return <div>{label}</div>;
+    }
+
+    render(
+      <div>
+        <ErrorBoundary
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+            <SectionCrashFallback
+              sectionName="Daily Check-In"
+              error={error}
+              componentStack={componentStack}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <CrashOnRender />
+        </ErrorBoundary>
+        <ErrorBoundary
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+            <SectionCrashFallback
+              sectionName="History Grid"
+              error={error}
+              componentStack={componentStack}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <StableSection label="History still online" />
+        </ErrorBoundary>
+        <ErrorBoundary
+          fallbackRender={({ error, componentStack, resetErrorBoundary }) => (
+            <SectionCrashFallback
+              sectionName="Backup and Recovery"
+              error={error}
+              componentStack={componentStack}
+              onRetry={resetErrorBoundary}
+            />
+          )}
+        >
+          <StableSection label="Export still online" />
+        </ErrorBoundary>
+      </div>
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Daily Check-In offline');
+    expect(screen.getByText('History still online')).toBeInTheDocument();
+    expect(screen.getByText('Export still online')).toBeInTheDocument();
   });
 });
