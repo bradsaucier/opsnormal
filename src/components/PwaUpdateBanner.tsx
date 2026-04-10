@@ -40,10 +40,14 @@ export function PwaUpdateBanner({
   });
 
   useEffect(() => {
-    setStatusAnnouncement('');
+    const clearTimeoutId = window.setTimeout(() => {
+      setStatusAnnouncement('');
+    }, 0);
 
     if (!viewModel.statusAnnouncement) {
-      return;
+      return () => {
+        window.clearTimeout(clearTimeoutId);
+      };
     }
 
     const announceTimeoutId = window.setTimeout(() => {
@@ -51,15 +55,20 @@ export function PwaUpdateBanner({
     }, 50);
 
     return () => {
+      window.clearTimeout(clearTimeoutId);
       window.clearTimeout(announceTimeoutId);
     };
   }, [viewModel.statusAnnouncement]);
 
   useEffect(() => {
-    setRecoveryAnnouncement('');
+    const clearTimeoutId = window.setTimeout(() => {
+      setRecoveryAnnouncement('');
+    }, 0);
 
     if (!viewModel.recoveryAnnouncement) {
-      return;
+      return () => {
+        window.clearTimeout(clearTimeoutId);
+      };
     }
 
     const announceTimeoutId = window.setTimeout(() => {
@@ -67,6 +76,7 @@ export function PwaUpdateBanner({
     }, 50);
 
     return () => {
+      window.clearTimeout(clearTimeoutId);
       window.clearTimeout(announceTimeoutId);
     };
   }, [viewModel.recoveryAnnouncement]);
