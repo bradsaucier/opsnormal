@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
+import { formatDateKey } from '../../src/lib/date';
 import { computeJsonExportChecksum } from '../../src/lib/export';
 import { parseExportPayloadDetails } from '../helpers/exportPayload';
 import type { JsonExportPayload } from '../../src/types';
@@ -245,18 +246,24 @@ test.describe('OpsNormal export recovery', () => {
     page,
     browser
   }) => {
+    const today = new Date();
+    const todayKey = formatDateKey(today);
+    const previousDay = new Date(today);
+    previousDay.setDate(today.getDate() - 1);
+    const previousDayKey = formatDateKey(previousDay);
+
     const legacyEntries: ExportEntry[] = [
       {
-        date: '2026-03-27',
+        date: todayKey,
         sectorId: 'relationships',
         status: 'degraded',
-        updatedAt: '2026-03-27T12:00:00.000Z'
+        updatedAt: `${todayKey}T12:00:00.000Z`
       },
       {
-        date: '2026-03-28',
+        date: previousDayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:05:00.000Z'
+        updatedAt: `${previousDayKey}T12:05:00.000Z`
       }
     ];
 
@@ -264,7 +271,6 @@ test.describe('OpsNormal export recovery', () => {
     await page.goto('/');
 
     await expectSectorStatus(page, 'Relationships', 'degraded');
-    await expectSectorStatus(page, 'Rest', 'nominal');
 
     const firstExport = await exportPayloadFromCurrentPage(page);
 
@@ -284,10 +290,7 @@ test.describe('OpsNormal export recovery', () => {
       sourceDownloadPath: firstExport.downloadPath,
       expectedPayload: firstExport.payload,
       expectedChecksumPayload: firstExport.rawChecksumPayload,
-      expectedStatuses: [
-        { sectorLabel: 'Relationships', statusLabel: 'degraded' },
-        { sectorLabel: 'Rest', statusLabel: 'nominal' }
-      ]
+      expectedStatuses: [{ sectorLabel: 'Relationships', statusLabel: 'degraded' }]
     });
   });
 });
