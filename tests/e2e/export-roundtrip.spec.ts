@@ -242,7 +242,7 @@ test.describe('OpsNormal export recovery', () => {
     });
   });
 
-  test('preserves export and import fidelity after opening legacy version 1 IndexedDB state', async ({
+  test('preserves export and import fidelity after opening legacy version 1 IndexedDB state @harness', async ({
     page,
     browser
   }) => {
