@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -73,7 +73,11 @@ vi.mock('../../src/features/pwa/registerSw', async () => {
   const React = await import('react');
 
   return {
-    useRegisterSW: ({ onRegisteredSW }: { onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
+    useRegisterSW: ({
+      onRegisteredSW
+    }: {
+      onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void;
+    }) => {
       React.useEffect(() => {
         onRegisteredSW?.('/sw.js', mocks.registration as unknown as ServiceWorkerRegistration);
       }, [onRegisteredSW]);
@@ -104,10 +108,16 @@ import { usePwaUpdate } from '../../src/features/pwa/usePwaUpdate';
 const strictWrapper = ({ children }: { children: React.ReactNode }) =>
   React.createElement(React.StrictMode, null, children);
 
-async function flushAsyncWork() {
+async function settle() {
   await act(async () => {
     await Promise.resolve();
     await Promise.resolve();
+  });
+}
+
+async function advanceClock(ms: number) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
   });
 }
 
@@ -157,13 +167,10 @@ describe('usePwaUpdate', () => {
     mocks.state.offlineReady = true;
 
     renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
-    await flushAsyncWork();
-
-    await waitFor(() => {
-      expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
-      expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
-    });
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
+    expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
   });
 
   it('revalidates on focus after the foreground throttle window expires', async () => {
@@ -171,23 +178,21 @@ describe('usePwaUpdate', () => {
     mocks.registration.waiting = null;
 
     renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
 
     mocks.registration.update.mockClear();
 
+    await advanceClock(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
+
     await act(async () => {
-      vi.advanceTimersByTime(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
       window.dispatchEvent(new Event('focus'));
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('coalesces repeated foreground events into one revalidation inside the throttle window', async () => {
@@ -195,27 +200,23 @@ describe('usePwaUpdate', () => {
     mocks.registration.waiting = null;
 
     renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
 
     mocks.registration.update.mockClear();
 
-    await act(async () => {
-      vi.advanceTimersByTime(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
+    await advanceClock(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
 
+    await act(async () => {
       for (let attempt = 0; attempt < 50; attempt += 1) {
         window.dispatchEvent(new Event('focus'));
       }
-
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('does not re-surface the same waiting worker on foreground return after dismissal inside the same session', async () => {
@@ -223,10 +224,9 @@ describe('usePwaUpdate', () => {
     mocks.state.offlineReady = false;
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
-    await waitFor(() => {
-      expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
-    });
+    expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
 
     act(() => {
       result.current.handleDismissBanner();
@@ -234,8 +234,9 @@ describe('usePwaUpdate', () => {
 
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
 
+    await advanceClock(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
+
     await act(async () => {
-      vi.advanceTimersByTime(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
       window.dispatchEvent(new Event('focus'));
       await Promise.resolve();
       await Promise.resolve();
@@ -255,12 +256,13 @@ describe('usePwaUpdate', () => {
     });
 
     renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-    await flushAsyncWork();
+    await settle();
 
     expect(mocks.registration.update).toHaveBeenCalledTimes(0);
 
+    await advanceClock(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
+
     await act(async () => {
-      vi.advanceTimersByTime(FOREGROUND_REVALIDATION_THROTTLE_MS + 1);
       window.dispatchEvent(new Event('focus'));
       await Promise.resolve();
       await Promise.resolve();
@@ -279,34 +281,26 @@ describe('usePwaUpdate', () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('posts SKIP_WAITING to the waiting worker and stalls if no controller handoff arrives', async () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
-      expect(result.current.isApplyingUpdate).toBe(true);
-    });
+    expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(result.current.isApplyingUpdate).toBe(true);
 
-    await act(async () => {
-      vi.advanceTimersByTime(UPDATE_HANDOFF_TIMEOUT_MS);
-      await Promise.resolve();
-    });
+    await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
-    await waitFor(() => {
-      expect(result.current.isApplyingUpdate).toBe(false);
-      expect(result.current.updateStalled).toBe(true);
-    });
+    expect(result.current.isApplyingUpdate).toBe(false);
+    expect(result.current.updateStalled).toBe(true);
   });
 
   it('waits for an installing worker to reach installed before posting SKIP_WAITING', async () => {
@@ -322,16 +316,15 @@ describe('usePwaUpdate', () => {
     mocks.registration.installing = installingWorker;
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(result.current.isApplyingUpdate).toBe(true);
-    });
+    expect(result.current.isApplyingUpdate).toBe(true);
     expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -363,17 +356,16 @@ describe('usePwaUpdate', () => {
     });
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-      expect(result.current.isApplyingUpdate).toBe(true);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+    expect(result.current.isApplyingUpdate).toBe(true);
     expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
 
     await act(async () => {
@@ -393,117 +385,95 @@ describe('usePwaUpdate', () => {
     mocks.registration.waiting = null;
 
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
 
     mocks.registration.update.mockClear();
     mocks.getRegistration.mockResolvedValueOnce(mocks.registration as unknown as ServiceWorkerRegistration);
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-      expect(result.current.isApplyingUpdate).toBe(true);
-      expect(result.current.updateStalled).toBe(false);
-    });
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+    expect(result.current.isApplyingUpdate).toBe(true);
+    expect(result.current.updateStalled).toBe(false);
 
-    await act(async () => {
-      vi.advanceTimersByTime(UPDATE_HANDOFF_TIMEOUT_MS);
-      await Promise.resolve();
-    });
+    await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
-    await waitFor(() => {
-      expect(result.current.isApplyingUpdate).toBe(false);
-      expect(result.current.updateStalled).toBe(true);
-    });
+    expect(result.current.isApplyingUpdate).toBe(false);
+    expect(result.current.updateStalled).toBe(true);
   });
 
   it('surfaces coordinated update-in-progress guidance in a second tab when another tab starts apply', async () => {
     const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
-    await flushAsyncWork();
+    await settle();
 
     await act(async () => {
-      primaryTab.result.current.handleApplyUpdate();
+      void primaryTab.result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(primaryTab.result.current.isApplyingUpdate).toBe(true);
-      expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
-      expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
-      expect(secondaryTab.result.current.isApplyingUpdate).toBe(false);
-    });
+    expect(primaryTab.result.current.isApplyingUpdate).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
+    expect(secondaryTab.result.current.isApplyingUpdate).toBe(false);
   });
 
   it('pins coordinated recovery in a second tab when the initiating tab stalls', async () => {
     const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
-    await flushAsyncWork();
+    await settle();
 
     await act(async () => {
-      primaryTab.result.current.handleApplyUpdate();
+      void primaryTab.result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await act(async () => {
-      vi.advanceTimersByTime(UPDATE_HANDOFF_TIMEOUT_MS);
-      await Promise.resolve();
-    });
+    await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
-    await waitFor(() => {
-      expect(primaryTab.result.current.updateStalled).toBe(true);
-      expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
-      expect(secondaryTab.result.current.externalUpdateStalled).toBe(true);
-    });
+    expect(primaryTab.result.current.updateStalled).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(true);
   });
 
   it('breaks a stale external handoff lock after the dead-man timeout and revalidates registration', async () => {
     const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
     const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
-    await flushAsyncWork();
+    await settle();
     mocks.registration.update.mockClear();
 
     await act(async () => {
-      primaryTab.result.current.handleApplyUpdate();
+      void primaryTab.result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    await waitFor(() => {
-      expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
-      expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
-    });
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
 
-    await act(async () => {
-      vi.advanceTimersByTime(EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS);
-      await Promise.resolve();
-      await Promise.resolve();
-    });
+    await advanceClock(EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS);
 
-    await waitFor(() => {
-      expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
-      expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
-      expect(mocks.registration.update).toHaveBeenCalledTimes(1);
-    });
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
   });
 
   it('closes Dexie and reloads exactly once when controllerchange fires repeatedly in Strict Mode', async () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -530,12 +500,17 @@ describe('usePwaUpdate', () => {
 
   it('suppresses controllerchange reload when the schema guard reports a recent handoff', async () => {
     mocks.suppressControllerReload.mockReturnValue(true);
+
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
       await Promise.resolve();
+    });
+
+    act(() => {
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
       vi.advanceTimersByTime(50);
     });
@@ -654,14 +629,15 @@ describe('usePwaUpdate', () => {
 
   it('ignores dismiss while stalled update guidance is pinned', async () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    await settle();
 
     await act(async () => {
-      result.current.handleApplyUpdate();
+      void result.current.handleApplyUpdate();
       await Promise.resolve();
-      await Promise.resolve();
-      vi.advanceTimersByTime(UPDATE_HANDOFF_TIMEOUT_MS);
       await Promise.resolve();
     });
+
+    await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
     act(() => {
       result.current.handleDismissBanner();
