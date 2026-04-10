@@ -39,7 +39,10 @@ Before tagging a release:
 
 - [ ] error boundary crash fallback renders correctly when a component throws
 - [ ] crash-state JSON and CSV export works from the root fallback outside the automated Chromium coverage path
+- [ ] sectional boundary shows fallback when Today is artificially faulted
 - [ ] sectional boundary shows fallback when history grid is artificially faulted
+- [ ] sectional boundary shows fallback when backup or recovery is artificially faulted
+- [ ] emergency JSON and CSV export works from the backup or recovery fallback
 - [ ] retry from crash fallback recovers cleanly
 - [ ] reload from crash fallback performs a full page reload
 - [ ] clear-data reset remains locked until export or explicit destructive acknowledgment
