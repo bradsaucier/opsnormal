@@ -20,6 +20,7 @@ import type { StatusMessage } from './workflowTypes';
 
 interface ExportPanelProps {
   storageHealth: StorageHealth | null;
+  onBackupCompleted?: (exportedAt: string) => void;
   onRequestStorageProtection?: () => Promise<StorageHealth>;
   isRequestingStorageProtection?: boolean;
   onImportCommitted?: () => void;
@@ -27,6 +28,7 @@ interface ExportPanelProps {
 
 export function ExportPanel({
   storageHealth,
+  onBackupCompleted = () => undefined,
   onRequestStorageProtection,
   isRequestingStorageProtection = false,
   onImportCommitted = () => undefined
@@ -66,6 +68,7 @@ export function ExportPanel({
 
   const { backupStatus, handleCsvExport, handleJsonExport, markBackupCompleted } =
     useExportWorkflow({
+      onBackupCompleted,
       onStatusMessage: updateStatusMessage
     });
   const { canUndoImport, handleUndoImport, stageUndoImport, undoBusy } = useUndoImport({
