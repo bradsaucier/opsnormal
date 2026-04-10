@@ -349,6 +349,64 @@ describe('usePwaUpdate', () => {
     expect(result.current.updateStalled).toBe(true);
   });
 
+
+  it('surfaces coordinated update-in-progress guidance in a second tab when another tab starts apply', async () => {
+    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    await act(async () => {
+      primaryTab.result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    expect(primaryTab.result.current.isApplyingUpdate).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
+    expect(secondaryTab.result.current.isApplyingUpdate).toBe(false);
+  });
+
+  it('pins coordinated recovery in a second tab when the initiating tab stalls', async () => {
+    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    await act(async () => {
+      primaryTab.result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+
+    expect(primaryTab.result.current.updateStalled).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(true);
+  });
+
+  it('breaks a stale external handoff lock after the dead-man timeout and revalidates registration', async () => {
+    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+
+    mocks.registration.update.mockClear();
+
+    await act(async () => {
+      primaryTab.result.current.handleApplyUpdate();
+      await Promise.resolve();
+    });
+
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(true);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
+
+    await act(async () => {
+      vi.advanceTimersByTime(6000);
+      await Promise.resolve();
+    });
+
+    expect(secondaryTab.result.current.externalUpdateInProgress).toBe(false);
+    expect(secondaryTab.result.current.externalUpdateStalled).toBe(false);
+    expect(mocks.registration.update).toHaveBeenCalledTimes(1);
+  });
+
   it('closes Dexie and reloads exactly once when controllerchange fires repeatedly in Strict Mode', () => {
     const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
 
