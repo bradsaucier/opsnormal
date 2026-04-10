@@ -12,6 +12,7 @@ import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
 import { usePwaUpdate } from './features/pwa/usePwaUpdate';
 import { useStorageHealth } from './hooks/useStorageHealth';
+import { OPSNORMAL_DB_BLOCKED_EVENT_NAME, OPSNORMAL_DB_UNBLOCKED_EVENT_NAME } from './db/appDb';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
 import { getLastExportCompletedAt } from './lib/export';
 import { formatStorageSummary } from './lib/storage';
@@ -20,6 +21,7 @@ function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
   const [announcement, setAnnouncement] = useState('');
+  const [databaseBlockedMessage, setDatabaseBlockedMessage] = useState<string | null>(null);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => getLastExportCompletedAt());
   const {
     storageHealth,
@@ -43,6 +45,24 @@ function App() {
   const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
     setTodayKey(formatDateKey(referenceDate));
     setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
+  }, []);
+
+  useEffect(() => {
+    function handleDatabaseBlocked(event: WindowEventMap[typeof OPSNORMAL_DB_BLOCKED_EVENT_NAME]) {
+      setDatabaseBlockedMessage(event.detail.message);
+    }
+
+    function handleDatabaseUnblocked() {
+      setDatabaseBlockedMessage(null);
+    }
+
+    window.addEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, handleDatabaseBlocked);
+    window.addEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, handleDatabaseUnblocked);
+
+    return () => {
+      window.removeEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, handleDatabaseBlocked);
+      window.removeEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, handleDatabaseUnblocked);
+    };
   }, []);
 
   useEffect(() => {
@@ -148,6 +168,24 @@ function App() {
           onDismiss={handleDismissBanner}
           onReloadPage={handleReloadPage}
         />
+        {databaseBlockedMessage ? (
+          <div className="clip-notched ops-notch-shell-outer bg-amber-400/40 p-px">
+            <section
+              className="clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(251,191,36,0.14),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-4"
+              role="alert"
+              aria-atomic="true"
+              aria-labelledby="database-upgrade-blocked-title"
+            >
+              <p
+                id="database-upgrade-blocked-title"
+                className="text-xs font-semibold tracking-[0.18em] text-amber-200 uppercase"
+              >
+                Database Upgrade Blocked
+              </p>
+              <p className="mt-2 text-sm leading-6 text-zinc-200">{databaseBlockedMessage}</p>
+            </section>
+          </div>
+        ) : null}
         <BackupActionBanner prompt={backupActionPrompt} />
 
         <ErrorBoundary
