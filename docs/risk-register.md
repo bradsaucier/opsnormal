@@ -16,7 +16,7 @@
 
 ### Uncontained React render fault
 - Risk: an uncaught render error can collapse the full UI into a blank screen at the worst possible moment.
-- Mitigation: root and section-level error boundaries contain faults, keep recovery actions visible, and preserve export access from the crash screen.
+- Mitigation: root and section-level error boundaries contain faults, keep Today, history, and backup or recovery isolated where possible, keep recovery actions visible, preserve export access from the crash screen, and keep the backup or recovery fallback on the isolated crash-export helper backed by a temporary Dexie connection.
 - Residual limitation: if malformed or corrupted IndexedDB data crashes the app again during initial mount, the boundary now exposes a self-service reset path. Database deletion can still fail when another tab keeps the store locked, so some cases may still require closing duplicate tabs or using browser site-data controls.
 
 ## Medium severity
