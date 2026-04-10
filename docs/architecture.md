@@ -151,6 +151,8 @@ The storage layer currently:
 - Tracks connection drops, reconnect attempts, and write-verification results
 - Pins Chromium-family transactions to strict durability
 - Surfaces operator-facing durability messages in the UI
+- Escalates a shell-level backup action prompt when storage diagnostics or Safari-tab risk make the JSON backup urgent
+- Renders that prompt with alert semantics so assistive technology receives the same immediate durability warning as sighted operators
 
 This is mitigation, not a guarantee. Browser eviction, manual site-data clearing, profile deletion, quota pressure, or device loss can still destroy local records.
 
