@@ -274,12 +274,17 @@ test.describe('OpsNormal export recovery', () => {
 
     const firstExport = await exportPayloadFromCurrentPage(page);
 
+    const expectedLegacyExportEntries: ExportEntry[] = legacyEntries.map((entry, index) => ({
+      ...entry,
+      id: index + 1
+    }));
+
     expect(normalizeExportPayload(firstExport.payload).entries).toEqual(
       normalizeExportPayload({
         app: firstExport.payload.app,
         schemaVersion: firstExport.payload.schemaVersion,
         exportedAt: firstExport.payload.exportedAt,
-        entries: legacyEntries,
+        entries: expectedLegacyExportEntries,
         checksum: firstExport.payload.checksum
       }).entries
     );
