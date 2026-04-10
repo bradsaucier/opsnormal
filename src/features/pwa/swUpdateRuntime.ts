@@ -2,6 +2,24 @@ export function isNavigatorOffline(): boolean {
   return typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine;
 }
 
+export async function resolveServiceWorkerRegistration(
+  currentRegistration: ServiceWorkerRegistration | null
+): Promise<ServiceWorkerRegistration | null> {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    return currentRegistration;
+  }
+
+  if (typeof navigator.serviceWorker.getRegistration !== 'function') {
+    return currentRegistration;
+  }
+
+  try {
+    return (await navigator.serviceWorker.getRegistration()) ?? currentRegistration;
+  } catch {
+    return currentRegistration;
+  }
+}
+
 function waitForInstallingWorkerToSettle(
   registration: ServiceWorkerRegistration,
   installingWorker: ServiceWorker
@@ -48,30 +66,32 @@ function waitForInstallingWorkerToSettle(
 export async function resolveWaitingWorkerForApply(
   registration: ServiceWorkerRegistration | null
 ): Promise<ServiceWorker | null> {
-  if (!registration) {
+  const activeRegistration = await resolveServiceWorkerRegistration(registration);
+
+  if (!activeRegistration) {
     return null;
   }
 
-  if (registration.waiting) {
-    return registration.waiting;
+  if (activeRegistration.waiting) {
+    return activeRegistration.waiting;
   }
 
-  if (registration.installing) {
-    return waitForInstallingWorkerToSettle(registration, registration.installing);
+  if (activeRegistration.installing) {
+    return waitForInstallingWorkerToSettle(activeRegistration, activeRegistration.installing);
   }
 
   try {
-    await registration.update();
+    await activeRegistration.update();
   } catch {
-    return registration.waiting ?? null;
+    return activeRegistration.waiting ?? null;
   }
 
-  if (registration.waiting) {
-    return registration.waiting;
+  if (activeRegistration.waiting) {
+    return activeRegistration.waiting;
   }
 
-  if (registration.installing) {
-    return waitForInstallingWorkerToSettle(registration, registration.installing);
+  if (activeRegistration.installing) {
+    return waitForInstallingWorkerToSettle(activeRegistration, activeRegistration.installing);
   }
 
   return null;
