@@ -6,6 +6,8 @@ export interface PwaUpdateController {
   isApplyingUpdate: boolean;
   updateStalled: boolean;
   reloadRecoveryRequired: boolean;
+  externalUpdateInProgress: boolean;
+  externalUpdateStalled: boolean;
   handleApplyUpdate: () => void;
   handleDismissBanner: () => void;
   handleReloadPage: () => void;
