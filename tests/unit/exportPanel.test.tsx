@@ -178,6 +178,39 @@ describe('ExportPanel import warnings', () => {
     ).toBeTruthy();
   });
 
+
+  it('notifies the shell when a JSON backup completes', async () => {
+    const onBackupCompleted = vi.fn();
+    exportCurrentEntriesAsJsonMock.mockResolvedValue({
+      entryCount: 3,
+      exportedAt: EXPORTED_AT,
+      payload: '{"app":"OpsNormal"}'
+    });
+
+    render(<ExportPanel storageHealth={null} onBackupCompleted={onBackupCompleted} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /export json/i }));
+
+    await waitFor(() => expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT));
+  });
+
+  it('notifies the shell when the pre-replace checkpoint backup completes', async () => {
+    const onBackupCompleted = vi.fn();
+    primeReplacePreview();
+    checkpointJsonBackupToDiskMock.mockResolvedValue({
+      kind: 'verified-save-succeeded',
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT
+    });
+
+    render(<ExportPanel storageHealth={null} onBackupCompleted={onBackupCompleted} />);
+
+    await stageReplacePreview();
+    await triggerPreReplaceBackup();
+
+    await waitFor(() => expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT));
+  });
+
   it('preserves accordion button and region bindings for backup sections', async () => {
     render(<ExportPanel storageHealth={null} />);
 
