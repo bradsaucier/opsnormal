@@ -133,7 +133,8 @@ A successful import returns a session-scoped undo closure that restores the pre-
 OpsNormal uses layered fault containment.
 
 - A root error boundary keeps the app from collapsing into a blank screen and preserves export access on the crash fallback, which renders from a same-origin recovery stylesheet instead of React inline styles
-- A section-level boundary isolates the history grid so a panel fault does not take Today, install, or export controls offline
+- Section-level boundaries isolate Today, the history grid, and backup or recovery so one panel fault does not collapse the rest of the shell
+- The backup or recovery fallback keeps emergency JSON and CSV export online through the isolated crash-export path backed by a temporary Dexie connection even if ExportPanel fails to render
 - The crash fallback includes a gated database reset path for malformed persistent data that causes repeat render faults
 
 The design goal is graceful degradation with user-visible recovery actions.

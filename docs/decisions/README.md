@@ -21,6 +21,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0013 | Week-paginated mobile history grid |
 | 0014 | ExportPanel workflow decomposition |
 | 0015 | PWA update handoff and multi-tab recovery |
+| 0016 | Expand sectional error boundaries to TodayPanel and ExportPanel |
 
 ## Operating rule
 

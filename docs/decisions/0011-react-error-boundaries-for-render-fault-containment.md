@@ -1,7 +1,7 @@
 # ADR 0011 - React error boundaries for render fault containment
 
 ## Status
-Accepted
+Accepted, amended by ADR 0016
 
 ## Context
 OpsNormal is a local-first PWA with IndexedDB as the primary working store.

@@ -64,6 +64,8 @@ Prove that the app:
 - mobile history week pagination, daily brief selection, and week-navigation semantics hold under a narrow viewport
 - CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium, including the narrow mobile history path
 - root crash fallback exports valid JSON and CSV after a controlled render fault, the crash-state JSON remains importable in a clean browser context, and the fallback does not emit CSP violations in Chromium
+- sectional boundaries are unit-tested for reset-key recovery and retry recovery, and manual release checks verify that Today, history, and backup or recovery faults do not collapse sibling panels
+- ExportPanel fallback keeps emergency JSON and CSV export available through the isolated crash-export helper after a controlled render fault
 - synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
 - production-artifact smoke gating reuses an already-built `dist/` bundle and excludes the harness-only crash and fallback specs that require e2e-mode fixture pages
