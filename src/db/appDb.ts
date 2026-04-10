@@ -20,6 +20,15 @@ const DATABASE_OPEN_TIMEOUT_MS = 1000;
 const DATABASE_RELOAD_DELAY_MS = 2000;
 const WRITE_VERIFICATION_TIMEOUT_MS = 500;
 const SCHEMA_RELOAD_RETRY_BUFFER_MS = 50;
+const DATABASE_UPGRADE_BLOCKED_MESSAGE =
+  'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.';
+
+export const OPSNORMAL_DB_BLOCKED_EVENT_NAME = 'opsnormal:db:blocked';
+export const OPSNORMAL_DB_UNBLOCKED_EVENT_NAME = 'opsnormal:db:unblocked';
+
+export interface OpsNormalDbBlockedEventDetail {
+  message: string;
+}
 
 declare global {
   interface Window {
@@ -27,6 +36,11 @@ declare global {
       simulateVersionChange: () => 'reloading' | 'blocked' | 'noop';
       isRecoveryRequired: () => boolean;
     };
+  }
+
+  interface WindowEventMap {
+    'opsnormal:db:blocked': CustomEvent<OpsNormalDbBlockedEventDetail>;
+    'opsnormal:db:unblocked': Event;
   }
 }
 
@@ -43,6 +57,7 @@ export const db = new OpsNormalDb();
 
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
+let databaseUpgradeBlocked = false;
 let databaseRecoveryReloadTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 let schemaReloadRetryTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 
@@ -176,6 +191,47 @@ function clearDatabaseRecoveryRequirement(): void {
   databaseRecoveryRequired = false;
 }
 
+function dispatchDatabaseUpgradeBlocked(message: string): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<OpsNormalDbBlockedEventDetail>(OPSNORMAL_DB_BLOCKED_EVENT_NAME, {
+      detail: { message }
+    })
+  );
+}
+
+function dispatchDatabaseUpgradeUnblocked(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new Event(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME));
+}
+
+function clearDatabaseUpgradeBlockedState(): void {
+  if (!databaseUpgradeBlocked) {
+    return;
+  }
+
+  databaseUpgradeBlocked = false;
+  dispatchDatabaseUpgradeUnblocked();
+}
+
+export function handleDatabaseUpgradeBlocked(
+  message = DATABASE_UPGRADE_BLOCKED_MESSAGE
+): void {
+  databaseUpgradeBlocked = true;
+  databaseRecoveryRequired = true;
+  console.error(message);
+  dispatchDatabaseUpgradeBlocked(message);
+}
+
+export function isDatabaseUpgradeBlocked(): boolean {
+  return databaseUpgradeBlocked;
+}
 
 function closeDatabaseConnection(): void {
   databaseRecoveryRequired = true;
@@ -260,12 +316,37 @@ db.on('close', () => {
   recordStorageConnectionDrop();
 });
 
-db.on('ready', () => {
+export function handleDatabaseReady(): void {
   clearDatabaseRecoveryRequirement();
+  clearDatabaseUpgradeBlockedState();
   schemaReloadLoopDetected = false;
   clearSchemaReloadGuard();
   clearDatabaseRecoveryReload();
   clearSchemaReloadRetry();
+}
+
+function monitorBlockedUpgradeResolution(): void {
+  if (db.isOpen()) {
+    return;
+  }
+
+  void db.open().then(
+    () => {
+      handleDatabaseReady();
+    },
+    () => {
+      // Ignore failed reopen attempts here and let the existing recovery paths surface the failure.
+    }
+  );
+}
+
+db.on('ready', () => {
+  handleDatabaseReady();
+});
+
+db.on('blocked', () => {
+  handleDatabaseUpgradeBlocked();
+  monitorBlockedUpgradeResolution();
 });
 
 export function handleDatabaseVersionChange(now = Date.now()): 'reloading' | 'blocked' | 'noop' {
@@ -310,6 +391,10 @@ export function isDatabaseRecoveryRequired(): boolean {
 }
 
 export async function reopenIfClosed(): Promise<void> {
+  if (databaseUpgradeBlocked) {
+    throw new Error(DATABASE_UPGRADE_BLOCKED_MESSAGE);
+  }
+
   if (schemaReloadLoopDetected) {
     throw new Error(
       'Schema upgrade handoff stalled. Close duplicate OpsNormal tabs, reload once, then verify local data before retrying.'
