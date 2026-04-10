@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 interface ErrorBoundaryFallbackProps {
   error: Error;
+  componentStack?: string;
   resetErrorBoundary: () => void;
 }
 
@@ -15,7 +16,7 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   error: Error | null;
-  retryKey: number;
+  componentStack: string | null;
 }
 
 function haveResetKeysChanged(previous: unknown[] = [], next: unknown[] = []): boolean {
@@ -28,7 +29,7 @@ function haveResetKeysChanged(previous: unknown[] = [], next: unknown[] = []): b
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = {
     error: null,
-    retryKey: 0
+    componentStack: null
   };
 
   static getDerivedStateFromError(error: Error): Pick<ErrorBoundaryState, 'error'> {
@@ -38,6 +39,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    this.setState({
+      componentStack: errorInfo.componentStack ?? null
+    });
     this.props.onError?.(error, errorInfo);
   }
 
@@ -49,20 +53,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   resetErrorBoundary = (): void => {
     this.props.onReset?.();
-    this.setState((previousState) => ({
+    this.setState({
       error: null,
-      retryKey: previousState.retryKey + 1
-    }));
+      componentStack: null
+    });
   };
 
   render(): ReactNode {
     if (this.state.error) {
       return this.props.fallbackRender({
         error: this.state.error,
+        componentStack: this.state.componentStack ?? undefined,
         resetErrorBoundary: this.resetErrorBoundary
       });
     }
 
-    return <div key={this.state.retryKey}>{this.props.children}</div>;
+    return this.props.children;
   }
 }
