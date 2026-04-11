@@ -1,13 +1,13 @@
 # OpsNormal
 
 ```yaml
-tagline: "Local-only readiness tracking for fast use under load."
+tagline: "Local-only readiness tracking with deliberate constraints and operator-controlled recovery."
 ```
 
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
 [![Deploy Pages](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
-[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#local-only-and-trust-boundary)
+[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-and-transparency)
 
 <p align="center">
   <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop interface displaying a 30-day readiness grid across five sectors and a detailed daily summary.">
@@ -21,20 +21,32 @@ No backend. No account. No cloud sync. No analytics. After the first successful 
 ## BLUF
 
 > [!IMPORTANT]
-> **OpsNormal is built for one job: preserve a usable daily readiness signal when life gets noisy.**
+> **OpsNormal is built for one job: preserve a usable daily readiness signal with a local-only operating model and explicit recovery discipline.**
 >
-> The user model stays intentionally small. Five sectors. Three states. One trailing 30-day picture.
+> Five sectors. Three states. One trailing 30-day picture.
 >
-> Simplicity lives in the daily workflow. Rigor lives in validation, export, recovery, accessibility, and update handling.
+> No account system, no backend data plane, no analytics path, and no cloud-sync layer.
+>
+> The trade is deliberate: control stays with the operator, and backup responsibility stays there too.
 
 ## What this is
 
 - Static PWA with same-origin asset and service-worker behavior
 - Local-only readiness tracking backed by IndexedDB through Dexie
 - Desktop 30-day history plus a narrow-screen mobile history path
-- JSON and CSV export, validated import, replace gating, and undo support
+- JSON and CSV export, validated import, explicit replace gating, and undo support
 
-## What this is not
+## Why we chose these constraints
+
+These are not missing features. They are deliberate choices that protect the operating model.
+
+- No accounts or cloud sync keeps the readiness signal under operator control and removes the platform risk that comes with a hosted data plane
+- Five fixed sectors and three states keep the model legible under stress and preserve day-to-day comparability
+- Local-only storage with export as the durable boundary keeps recovery deliberate instead of pretending browser storage is permanent
+- Static PWA delivery keeps deployment simple, same-origin, and usable anywhere a standards-compliant browser exists
+- Explicit operational boundaries keep storage risk, export responsibility, crash recovery, and accessibility requirements visible instead of implied
+
+### What this is not
 
 - Not an account-based product
 - Not a cloud-sync tool
@@ -47,10 +59,12 @@ No backend. No account. No cloud sync. No analytics. After the first successful 
 ### Use the deployed app
 
 1. Open `https://opsnormal.app`
-2. On Apple devices, install it to Home Screen if you plan to rely on it there. Ordinary Safari tabs are subject to WebKit's seven-day storage purge after seven days of Safari use without user interaction on the site.
-3. Record an initial status across the five fixed sectors
-4. Run a test JSON export and keep the file somewhere you control
-5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
+2. On Apple devices, decide first where you will rely on the app. Ordinary Safari tabs are subject to WebKit's seven-day storage purge after seven days of Safari use without user interaction on the site.
+3. If you plan to rely on the app on iPhone or iPad, install it to Home Screen before entering data. Safari browser tabs and installed Home Screen apps keep isolated website data on Apple platforms.
+4. If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file. Installation does not migrate Safari-tab data into the installed app automatically.
+5. Record an initial status across the five fixed sectors in the environment you intend to keep using
+6. Run a test JSON export and keep the file somewhere you control
+7. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
 
 ### Run locally
 
@@ -79,6 +93,37 @@ npm run test:e2e:smoke
 `npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` adds the narrow WebKit smoke lane that verifies rendering and IndexedDB I/O without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
 
 </details>
+
+<a id="local-only-and-trust-boundary"></a>
+## Trust and transparency
+
+Local-only means no server can lose your readiness record. It also means no server can save it. Browser-managed storage remains a best-effort environment, not a durable archive.
+
+### Storage model
+
+- Readiness data is stored in IndexedDB through Dexie
+- The shell requests persistent storage through the Storage API when the browser exposes it, but grant behavior is browser-managed, not guaranteed, and does not override Safari-tab inactivity policy
+- Same-origin asset fetches and service-worker lifecycle traffic still exist
+- There is no backend data plane for readiness records
+
+### What the repo can promise
+
+- Core use stays local to the device after the first successful load
+- Export creates operator-controlled JSON and CSV files
+- Import validates structure before commit and fails closed on malformed or unsafe data
+- Root-level and section-level error boundaries preserve recovery surfaces and keep export reachable during localized render failures
+- Backup action prompts escalate when storage diagnostics or Safari-tab risk make a fresh JSON export urgent
+
+### What the repo will not promise
+
+- Browser-managed storage is not a backup system
+- Private, incognito, and other ephemeral browsing modes do not provide persistent storage guarantees. IndexedDB can be blocked there, or data can exist only for that private session and is destroyed when the session ends
+- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day purge for script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
+- On Apple devices, Safari browser tabs and installed Home Screen apps keep isolated website data. Installing after entering data in Safari does not migrate that data automatically
+- If Safari purges the app after inactivity, it can erase both the readiness database and the browser-side timestamp that recorded the last export. The app may reopen looking like a clean install. Restore from the latest JSON export immediately
+- On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, browser updates, or device loss can destroy records
+
+You are responsible for exporting and backing up the data you intend to keep. Run a test export early. Export routinely. Keep important JSON exports in more than one location you control. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
 
 ## Core views
 
@@ -120,46 +165,11 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 | Nominal | Holding together |
 | Degraded | Needs attention |
 
-<a id="local-only-and-trust-boundary"></a>
-## Local-only and trust boundary
+## Built for reliability and accessibility
 
-### Storage model
+Accessibility is architectural. Recovery is preserved even when part of the interface fails.
 
-- Readiness data is stored in IndexedDB through Dexie
-- Same-origin asset fetches and service-worker lifecycle traffic still exist
-- There is no backend data plane for readiness records
-
-### What the repo can promise
-
-- Core use stays local to the device after the first successful load
-- Export creates operator-controlled JSON and CSV files
-- Import validates structure before commit
-- Crash containment preserves recovery options instead of dropping the user into a blank failure state
-- Backup action prompts escalate when storage diagnostics or Safari-tab risk make a fresh JSON export urgent
-
-### What the repo will not promise
-
-- Browser-managed storage is not a backup system
-- Private, incognito, and other ephemeral browsing modes do not provide durable storage. Data can be discarded when the session ends
-- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day purge for script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
-- On Apple devices, install to Home Screen if you plan to rely on the app there. Home Screen mode avoids the standard Safari browser-tab counter, but export is still the only durable boundary you control
-- If Safari purges the app after inactivity, it can erase both the readiness database and the browser-side timestamp that recorded the last export. The app may reopen looking like a clean install. Restore from the latest JSON export immediately
-- On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, or device loss can destroy records
-
-Export is the durable boundary the operator controls. Run a test export early. Export routinely. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
-
-## Proof of rigor
-
-- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a non-gating Playwright WebKit smoke lane, and build validation
-- GitHub Pages deployment is gated on a production-artifact smoke pass
-- JSON export carries versioning and integrity checks
-- Import fails closed on malformed or unsafe data
-- Root and section-level crash containment preserve recovery and export paths
-- ADRs, the risk register, the test plan, and the release checklist keep constraints visible
-
-## Accessibility
-
-Accessibility is built into the operational surface.
+Accessibility posture:
 
 - Skip link to the main surface
 - Persistent live regions for state changes
@@ -168,9 +178,28 @@ Accessibility is built into the operational surface.
 - Focus treatment designed to stay visible on the clipped cockpit geometry
 - State encoding that does not rely on color alone
 
-## Documentation and verification
+Recovery posture:
 
-The README stays short on purpose. Deeper proof, limits, and design constraints live in the repo docs.
+- Root-level and section-level error boundaries contain render faults instead of allowing full-application unmount and blank-screen failure
+- Recovery surfaces keep JSON and CSV export reachable, including the crash-state export path
+- Backup action prompts escalate when Safari-tab risk, quota pressure, or storage instability make a fresh JSON export urgent
+- Import validation, replace gating, and fail-closed commit verification prevent silent corruption
+- Undo support remains available for data correction and pre-replace recovery drills
+
+## How we ensure quality
+
+Quality is enforced through release gates, test coverage, and explicit design constraints.
+
+- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a non-gating Playwright WebKit smoke lane, and build validation
+- GitHub Pages deployment is gated on a production-artifact smoke pass
+- JSON export carries versioning and integrity checks
+- Import fails closed on malformed or unsafe data
+- Root-level and section-level error boundaries preserve recovery and export paths
+- ADRs, the risk register, the test plan, and the release checklist keep constraints visible so the repo cannot drift quietly
+
+## Learn more
+
+This README stays focused on orientation and first use. Deeper proof, limits, and design constraints live in the repo docs.
 
 | Document | What it covers |
 | --- | --- |
@@ -183,6 +212,8 @@ The README stays short on purpose. Deeper proof, limits, and design constraints 
 | [Design tokens](./docs/design-tokens.md) | Visual language, structural colors, state colors, and clipped geometry |
 | [Contributing guide](./CONTRIBUTING.md) | Contribution rules that preserve repo scope |
 | [Code of conduct](./CODE_OF_CONDUCT.md) | Expected project conduct |
+
+These docs exist because the constraints are part of the product and should stay visible.
 
 ## Contributing
 
