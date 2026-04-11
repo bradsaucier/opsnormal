@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   verify_matrix:
     name: Verify (Node ${{ matrix.node-version }})
@@ -75,7 +78,7 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-webkit-${{ hashFiles('package-lock.json') }}
@@ -88,7 +91,7 @@ jobs:
 
       - name: Upload WebKit traces
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: webkit-smoke-traces
           path: test-results/
