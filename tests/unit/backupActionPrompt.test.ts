@@ -125,6 +125,42 @@ describe('createBackupActionPrompt', () => {
     expect(prompt).toBeNull();
   });
 
+
+  it('keeps the Safari freshness prompt quiet for installed iPhone and iPad paths', () => {
+    const prompt = createBackupActionPrompt(
+      buildStorageHealth({
+        status: 'monitor',
+        safari: {
+          ...buildStorageHealth().safari,
+          webKitRisk: false,
+          standaloneMode: true
+        }
+      }),
+      '2026-04-01T12:00:00.000Z',
+      new Date('2026-04-10T12:00:00.000Z')
+    );
+
+    expect(prompt).toBeNull();
+  });
+
+  it('prioritizes reconnect guidance over stale Safari-tab freshness guidance', () => {
+    const prompt = createBackupActionPrompt(
+      buildStorageHealth({
+        status: 'warning',
+        safari: {
+          ...buildStorageHealth().safari,
+          reconnectState: 'failed',
+          webKitRisk: true,
+          installRecommended: true
+        }
+      }),
+      '2026-04-01T12:00:00.000Z',
+      new Date('2026-04-10T12:00:00.000Z')
+    );
+
+    expectPromptTitle(prompt, 'Confirm state and refresh the JSON backup');
+  });
+
   it('warns when elevated storage risk has no recorded JSON backup', () => {
     const prompt = createBackupActionPrompt(
       buildStorageHealth({

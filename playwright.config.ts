@@ -28,7 +28,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /.*\.a11y\.spec\.ts/,
+      testIgnore: [/.*\.a11y\.spec\.ts/, /.*webkit-smoke\.spec\.ts/],
       use: { ...devices['Desktop Chrome'] }
     },
     {
@@ -37,6 +37,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         serviceWorkers: 'block'
+      }
+    },
+    {
+      name: 'webkit',
+      testMatch: /.*webkit-smoke\.spec\.ts/,
+      retries: 2,
+      workers: 1,
+      use: {
+        ...devices['Desktop Safari']
       }
     }
   ]

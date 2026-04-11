@@ -9,6 +9,7 @@ import {
   computeJsonExportChecksum
 } from './exportSerialization';
 import {
+  clearLastExportCompletedAt,
   recordExportCompleted,
   getLastExportCompletedAt,
   formatLastExportCompletedAt
@@ -134,6 +135,7 @@ async function readExportSnapshot(): Promise<ExportSnapshotResult> {
 
 export {
   canUseVerifiedFileSave,
+  clearLastExportCompletedAt,
   computeJsonExportChecksum,
   createCrashJsonExport,
   createCsvExport,
