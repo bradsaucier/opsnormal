@@ -30,7 +30,6 @@ function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHeal
   };
 }
 
-
 async function waitForStorageTestApi(page: Page) {
   await page.waitForFunction(() => typeof window.__opsNormalStorageTestApi__ !== 'undefined');
 }
@@ -44,15 +43,9 @@ async function setSyntheticStorageState(
 
   await page.evaluate(
     async ({ nextStorageHealth, nextLastBackupAt }) => {
-      const storageTestApi = window.__opsNormalStorageTestApi__;
-
-      if (!storageTestApi) {
-        throw new Error('OpsNormal storage test API was not registered.');
-      }
-
-      storageTestApi.setLastBackupAt(nextLastBackupAt);
-      storageTestApi.setStorageHealth(nextStorageHealth);
-      await storageTestApi.refreshStorageHealth();
+      window.__opsNormalStorageTestApi__?.setLastBackupAt(nextLastBackupAt);
+      window.__opsNormalStorageTestApi__?.setStorageHealth(nextStorageHealth);
+      await window.__opsNormalStorageTestApi__?.refreshStorageHealth();
     },
     {
       nextStorageHealth: storageHealth,
@@ -67,7 +60,7 @@ async function openStorageHealth(page: Page) {
   await expect(page.getByText(/storage durability/i)).toBeVisible();
 }
 
-test.describe('OpsNormal Safari storage warning harness', () => {
+test.describe('@harness OpsNormal Safari storage warning harness', () => {
   test('surfaces a fresh-backup order for stale Safari browser-tab risk', async ({ page }) => {
     await page.goto('/');
 
