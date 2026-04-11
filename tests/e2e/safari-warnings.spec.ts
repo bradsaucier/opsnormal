@@ -30,16 +30,29 @@ function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHeal
   };
 }
 
+
+async function waitForStorageTestApi(page: Page) {
+  await page.waitForFunction(() => typeof window.__opsNormalStorageTestApi__ !== 'undefined');
+}
+
 async function setSyntheticStorageState(
   page: Page,
   storageHealth: StorageHealth,
   lastBackupAt: string | null
 ) {
+  await waitForStorageTestApi(page);
+
   await page.evaluate(
     async ({ nextStorageHealth, nextLastBackupAt }) => {
-      window.__opsNormalStorageTestApi__?.setLastBackupAt(nextLastBackupAt);
-      window.__opsNormalStorageTestApi__?.setStorageHealth(nextStorageHealth);
-      await window.__opsNormalStorageTestApi__?.refreshStorageHealth();
+      const storageTestApi = window.__opsNormalStorageTestApi__;
+
+      if (!storageTestApi) {
+        throw new Error('OpsNormal storage test API was not registered.');
+      }
+
+      storageTestApi.setLastBackupAt(nextLastBackupAt);
+      storageTestApi.setStorageHealth(nextStorageHealth);
+      await storageTestApi.refreshStorageHealth();
     },
     {
       nextStorageHealth: storageHealth,
