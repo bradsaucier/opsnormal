@@ -69,6 +69,17 @@ const storageDiagnosticsState: Omit<
   lastVerifiedAt: null
 };
 
+let storageHealthTestOverride: StorageHealth | null = null;
+
+function cloneStorageHealth(storageHealth: StorageHealth): StorageHealth {
+  return {
+    ...storageHealth,
+    safari: {
+      ...storageHealth.safari
+    }
+  };
+}
+
 function getStorageManager(): StorageManager | null {
   if (typeof navigator === 'undefined' || !('storage' in navigator)) {
     return null;
@@ -124,17 +135,28 @@ function getPersistentStorageAttemptContext(): PersistentStorageAttemptContext |
   }
 
   try {
-    const parsed = JSON.parse(rawValue) as Partial<PersistentStorageAttemptContext> | null;
+    const parsed: unknown = JSON.parse(rawValue);
 
-    if (!parsed || typeof parsed !== 'object') {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
 
-    if (typeof parsed.requestedAt !== 'string' || typeof parsed.standaloneMode !== 'boolean') {
+    const candidate = parsed as Record<string, unknown>;
+    const requestedAt = candidate.requestedAt;
+    const standaloneMode = candidate.standaloneMode;
+
+    if (typeof requestedAt !== 'string' || typeof standaloneMode !== 'boolean') {
       return null;
     }
 
-    return Number.isNaN(Date.parse(parsed.requestedAt)) ? null : parsed as PersistentStorageAttemptContext;
+    if (Number.isNaN(Date.parse(requestedAt))) {
+      return null;
+    }
+
+    return {
+      requestedAt,
+      standaloneMode
+    };
   } catch {
     return null;
   }
@@ -321,6 +343,8 @@ export function recordStorageWriteVerification(
 }
 
 export function resetStorageDurabilityDiagnostics(): void {
+  storageHealthTestOverride = null;
+
   updateStorageDiagnosticsState((current) => {
     current.connectionDropsDetected = 0;
     current.reconnectSuccesses = 0;
@@ -330,6 +354,16 @@ export function resetStorageDurabilityDiagnostics(): void {
     current.lastVerificationResult = 'unknown';
     current.lastVerifiedAt = null;
   });
+}
+
+export function setStorageHealthForTesting(storageHealth: StorageHealth | null): void {
+  storageHealthTestOverride = storageHealth ? cloneStorageHealth(storageHealth) : null;
+  emitStorageDiagnosticsChanged();
+}
+
+export function clearStorageHealthForTesting(): void {
+  storageHealthTestOverride = null;
+  emitStorageDiagnosticsChanged();
 }
 
 export function canUseStorageApi(): boolean {
@@ -431,7 +465,7 @@ export function createStorageHealth(
   ) {
     status = 'warning';
     message =
-      'Recent local write verification failed. Confirm the latest check-in, export now, then reload before continuing.';
+      'Recent local write verification failed. Confirm the latest visible check-in, export now, then reload before continuing.';
   } else if (persisted) {
     status = 'protected';
 
@@ -501,6 +535,10 @@ export function createStorageHealth(
 }
 
 export async function getStorageHealth(options: StorageHealthOptions = {}): Promise<StorageHealth> {
+  if (storageHealthTestOverride) {
+    return cloneStorageHealth(storageHealthTestOverride);
+  }
+
   let persisted = await isPersistentStorageGranted();
 
   const currentContextAttempted = hasAttemptedPersistentStorageInCurrentContext();
@@ -603,9 +641,13 @@ export function isStandaloneDisplayMode(): boolean {
 }
 
 export function isIOSDevice(): boolean {
-  if (typeof window === 'undefined') {
+  if (typeof navigator === 'undefined') {
     return false;
   }
 
-  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  const userAgent = navigator.userAgent;
+  const isIOSUserAgent = /iphone|ipad|ipod/i.test(userAgent);
+  const isMacTouch = /macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
+
+  return isIOSUserAgent || isMacTouch;
 }
