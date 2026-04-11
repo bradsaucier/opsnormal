@@ -72,6 +72,16 @@ Current repo controls include:
 - CI validation across lint, typecheck, unit and integration tests, end-to-end tests, and build
 - Dependabot coverage for npm and GitHub Actions dependencies
 
+## Dependency maintenance posture
+
+Current repo policy for dependency hygiene is intentionally conservative.
+
+- Direct dependency ranges should not lag behind the audited lockfile floor without a reason
+- CI and deploy now fail on high-severity npm advisories through `npm audit --audit-level=high`
+- The `serialize-javascript` override stays in place until the Workbox dependency chain absorbs a fixed release
+- `eslint-plugin-react-hooks` stays on the React canary line until a stable release fully supports ESLint 10
+- Zod remains on the validated 3.x line until a separate migration proves 4.x behavior across import, export, and recovery schemas
+
 ## Honest limits
 
 OpsNormal should not be described in stronger terms than the repo proves.
