@@ -24,6 +24,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0016 | Expand sectional error boundaries to TodayPanel and ExportPanel |
 | 0017 | Risk-driven backup action prompts |
 | 0018 | Database schema versioning and migration framework |
+| 0019 | Truthful Safari storage lifecycle automation |
 
 ## Operating rule
 

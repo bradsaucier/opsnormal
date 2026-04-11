@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { formatLastExportCompletedAt } from '../../src/lib/exportPersistence';
 import {
+  clearStorageHealthForTesting,
   createStorageHealth,
   formatBytes,
   formatStorageSummary,
@@ -13,7 +15,9 @@ import {
   recordStorageReconnectSuccess,
   recordStorageWriteVerification,
   requestPersistentStorage,
-  resetStorageDurabilityDiagnostics
+  resetStorageDurabilityDiagnostics,
+  setStorageHealthForTesting,
+  subscribeToStorageDiagnostics
 } from '../../src/lib/storage';
 
 function setNavigatorStorage(storage: Partial<StorageManager> | undefined) {
@@ -57,6 +61,13 @@ function setNavigatorStandalone(standalone: boolean | undefined) {
   });
 }
 
+function setMaxTouchPoints(maxTouchPoints: number) {
+  Object.defineProperty(window.navigator, 'maxTouchPoints', {
+    configurable: true,
+    value: maxTouchPoints
+  });
+}
+
 describe('storage helpers', () => {
   afterEach(() => {
     localStorage.clear();
@@ -65,6 +76,7 @@ describe('storage helpers', () => {
     setUserAgent('Mozilla/5.0');
     setMatchMedia(false);
     setNavigatorStandalone(undefined);
+    setMaxTouchPoints(0);
     vi.restoreAllMocks();
   });
 
@@ -254,6 +266,18 @@ describe('storage helpers', () => {
     expect(summary).toContain('Best-effort protection active');
   });
 
+  it('treats modern iPad desktop user agents with touch input as install-recommended Apple devices', () => {
+    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setMaxTouchPoints(5);
+    setMatchMedia(false);
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+
+    expect(health.status).toBe('warning');
+    expect(health.message).toContain('Install to Home Screen');
+    expect(health.safari.installRecommended).toBe(true);
+  });
+
   it('uses conservative protection language on Safari-family risk platforms', () => {
     setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
     setMatchMedia(false);
@@ -263,6 +287,50 @@ describe('storage helpers', () => {
     );
 
     expect(summary).toContain('Best-effort protection active');
+  });
+
+
+  it('returns a synthetic storage-health override for lifecycle harness tests', async () => {
+    const syntheticHealth = createStorageHealth({ usage: 321, quota: 4096 }, false, true);
+    syntheticHealth.status = 'warning';
+    syntheticHealth.message = 'Synthetic Safari risk path for test coverage.';
+    syntheticHealth.safari.webKitRisk = true;
+
+    setStorageHealthForTesting(syntheticHealth);
+
+    const health = await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+
+    expect(health).toEqual(syntheticHealth);
+
+    health.message = 'Mutated by test';
+
+    await expect(getStorageHealth()).resolves.toEqual(syntheticHealth);
+
+    clearStorageHealthForTesting();
+  });
+
+  it('emits a diagnostics event when the synthetic storage-health override changes', () => {
+    const listener = vi.fn();
+    const unsubscribe = subscribeToStorageDiagnostics(listener);
+
+    setStorageHealthForTesting(createStorageHealth({ usage: 100, quota: 1000 }, false, true));
+    clearStorageHealthForTesting();
+
+    unsubscribe();
+
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('marks desktop Safari tabs as a high-risk posture when persistence is not granted', () => {
+    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setMatchMedia(false);
+
+    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+
+    expect(health.status).toBe('warning');
+    expect(health.message).toContain('Safari-family browsers');
+    expect(health.safari.webKitRisk).toBe(true);
+    expect(health.safari.installRecommended).toBe(false);
   });
 
   it('surfaces reconnect and write verification diagnostics in storage health', () => {
@@ -312,6 +380,18 @@ describe('storage helpers', () => {
         }
       })
     ).toBe(true);
+  });
+
+  it('formats missing backup metadata with blank-return recovery guidance', () => {
+    expect(formatLastExportCompletedAt(null)).toBe(
+      'No external backup recorded on this browser yet. If the app returns blank after Safari inactivity, restore from the latest JSON export immediately.'
+    );
+  });
+
+  it('formats unreadable backup metadata with immediate restore guidance', () => {
+    expect(formatLastExportCompletedAt('garbage')).toBe(
+      'Last backup timestamp is unreadable. Export again to refresh the record, and restore from the latest JSON export immediately if the app returns blank after Safari inactivity.'
+    );
   });
 
   it('detects database closed errors from browser-specific messages', () => {

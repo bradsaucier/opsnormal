@@ -27,15 +27,17 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
+    "test:unit:storage": "vitest run tests/unit/storage.test.ts tests/unit/backupActionPrompt.test.ts",
     "test:watch": "vitest",
-    "test:e2e": "npm run build:e2e && playwright test",
-    "test:e2e:smoke": "playwright test --grep-invert @harness"
+    "test:e2e": "npm run build:e2e && playwright test --project=chromium --project=chromium-a11y",
+    "test:e2e:smoke": "playwright test --project=chromium --grep-invert @harness",
+    "test:e2e:webkit": "npm run build:e2e && playwright test --project=webkit"
   },
   "dependencies": {
     "dexie": "^4.4.2",
     "dexie-react-hooks": "^4.4.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

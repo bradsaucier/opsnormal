@@ -5,7 +5,8 @@ Before tagging a release:
 - [ ] lint passes
 - [ ] typecheck passes
 - [ ] unit and integration tests pass
-- [ ] Playwright tests pass
+- [ ] Playwright Chromium tests pass
+- [ ] Playwright WebKit smoke lane reviewed. Failures are investigated even though the lane is non-gating
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
 - [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project
 - [ ] direct-select radiogroup ARIA snapshot passes and only changes when the intended accessibility tree changes
@@ -26,11 +27,12 @@ Before tagging a release:
 - [ ] history grid crash containment verified manually
 - [ ] mobile history region no longer announces a custom carousel or slide role, stays free of CSP violations, and is verified with at least one mobile screen reader path
 - [ ] iOS install guidance reviewed
+- [ ] blank-return recovery guidance reviewed so a previously used Safari session that reopens as a clean install directs the operator to restore from the latest JSON export immediately
 - [ ] README reflects current behavior
 - [ ] ADR index reflects current architecture
 - [ ] persistent storage request verified after a meaningful local save
-- [ ] storage durability indicator verified for install path, reconnect state, and write verification state
-- [ ] backup action banner verified for Safari-tab risk, reconnect or write-verification diagnostics, and first-backup warning conditions
+- [ ] storage durability indicator verified for install path, reconnect state, write verification state, and the synthetic Safari warning matrix
+- [ ] backup action banner verified for Safari-tab risk, reconnect or write-verification diagnostics, first-backup warning conditions, and fresh-backup suppression inside the six-day buffer
 - [ ] backup action banner announces through the accessibility tree as an alert when it mounts
 - [ ] forced close recovery verified with bounded reopen and operator-visible guidance
 - [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
