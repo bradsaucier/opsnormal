@@ -55,7 +55,7 @@
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.4",
     "eslint": "^10.0.1",
-    "eslint-plugin-react-hooks": "7.1.0-canary-52684925-20251110",
+    "eslint-plugin-react-hooks": "7.1.0-canary-ed69815c-20260323",
     "eslint-plugin-react-refresh": "^0.5.2",
     "fake-indexeddb": "^6.0.0",
     "globals": "^17.4.0",
