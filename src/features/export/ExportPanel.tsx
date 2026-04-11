@@ -5,10 +5,8 @@ import type { StorageHealth } from '../../lib/storage';
 import { BackupSummarySignals } from './BackupSummarySignals';
 import { ExportBackupSection } from './ExportBackupSection';
 import { ImportRestoreSection } from './ImportRestoreSection';
-import {
-  type AccordionSectionKey,
-  getDefaultStatusMessage
-} from './exportPanelShared';
+import { getDefaultStatusMessage } from './exportPanelHelpers';
+import { type AccordionSectionKey } from './exportPanelShared';
 import { StatusMessageRegions } from './StatusMessageRegions';
 import { StorageHealthSection } from './StorageHealthSection';
 import { UndoRecoverySection } from './UndoRecoverySection';

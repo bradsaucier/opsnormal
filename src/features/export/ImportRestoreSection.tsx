@@ -1,12 +1,12 @@
 import type { ChangeEvent, RefObject } from 'react';
 
+import { formatBytes } from '../../lib/storage';
 import type { ImportMode, ImportPreview } from '../../types';
 import type { ReplaceBackupState, ReplaceConfirmState } from './workflowTypes';
+import { getImportImpactText } from './exportPanelHelpers';
 import {
   AccordionSection,
   type AccordionSectionKey,
-  formatBytes,
-  getImportImpactText,
   PreviewFactCard,
   SignalCard
 } from './exportPanelShared';
