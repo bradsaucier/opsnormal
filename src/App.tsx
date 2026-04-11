@@ -14,8 +14,24 @@ import { usePwaUpdate } from './features/pwa/usePwaUpdate';
 import { useStorageHealth } from './hooks/useStorageHealth';
 import { OPSNORMAL_DB_BLOCKED_EVENT_NAME, OPSNORMAL_DB_UNBLOCKED_EVENT_NAME } from './db/appDb';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
-import { getLastExportCompletedAt } from './lib/export';
-import { formatStorageSummary } from './lib/storage';
+import { clearLastExportCompletedAt, getLastExportCompletedAt, recordExportCompleted } from './lib/export';
+import {
+  clearStorageHealthForTesting,
+  formatStorageSummary,
+  setStorageHealthForTesting,
+  type StorageHealth
+} from './lib/storage';
+
+declare global {
+  interface Window {
+    __opsNormalStorageTestApi__?: {
+      setStorageHealth: (storageHealth: StorageHealth | null) => void;
+      clearStorageHealth: () => void;
+      setLastBackupAt: (lastBackupAt: string | null) => void;
+      refreshStorageHealth: () => Promise<void>;
+    };
+  }
+}
 
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
@@ -114,6 +130,38 @@ function App() {
     [lastBackupAt, storageHealth]
   );
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || import.meta.env.MODE !== 'e2e') {
+      return;
+    }
+
+    window.__opsNormalStorageTestApi__ = {
+      setStorageHealth(nextStorageHealth) {
+        setStorageHealthForTesting(nextStorageHealth);
+      },
+      clearStorageHealth() {
+        clearStorageHealthForTesting();
+      },
+      setLastBackupAt(nextLastBackupAt) {
+        if (nextLastBackupAt) {
+          recordExportCompleted(nextLastBackupAt);
+        } else {
+          clearLastExportCompletedAt();
+        }
+
+        setLastBackupAt(nextLastBackupAt);
+      },
+      async refreshStorageHealth() {
+        await refreshStorageHealth();
+      }
+    };
+
+    return () => {
+      clearStorageHealthForTesting();
+      delete window.__opsNormalStorageTestApi__;
+    };
+  }, [refreshStorageHealth]);
+
   return (
     <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
       <a className="ops-skip-link" href="#main-content">
@@ -147,7 +195,7 @@ function App() {
                     Local only
                   </div>
                   <div className="mt-2 text-xs leading-5 text-zinc-400">
-                    {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture.'}
+                    {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
                   </div>
                 </div>
               </div>
