@@ -6,6 +6,11 @@ async function openStorageHealth(page: Page) {
   await expect(page.getByText(/storage durability/i)).toBeVisible();
 }
 
+
+async function waitForStorageTestApi(page: Page) {
+  await page.waitForFunction(() => typeof window.__opsNormalStorageTestApi__ !== 'undefined');
+}
+
 function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
   return page.getByRole('radio', {
     name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
@@ -48,9 +53,17 @@ test.describe('OpsNormal WebKit smoke', () => {
   test('clears the Safari-tab backup banner after recording a fresh backup timestamp', async ({ page }) => {
     await page.goto('/');
 
+    await waitForStorageTestApi(page);
+
     await page.evaluate(async () => {
-      window.__opsNormalStorageTestApi__?.setLastBackupAt(new Date().toISOString());
-      await window.__opsNormalStorageTestApi__?.refreshStorageHealth();
+      const storageTestApi = window.__opsNormalStorageTestApi__;
+
+      if (!storageTestApi) {
+        throw new Error('OpsNormal storage test API was not registered.');
+      }
+
+      storageTestApi.setLastBackupAt(new Date().toISOString());
+      await storageTestApi.refreshStorageHealth();
     });
 
     await expect(
