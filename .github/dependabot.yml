@@ -16,6 +16,8 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: "eslint-plugin-react-hooks"
   - package-ecosystem: github-actions
     directory: /
     schedule:
