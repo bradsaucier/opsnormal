@@ -47,7 +47,7 @@ No backend. No account. No cloud sync. No analytics. After the first successful 
 ### Use the deployed app
 
 1. Open `https://opsnormal.app`
-2. On Apple devices, install it to Home Screen if you plan to rely on it there. Ordinary Safari tabs are subject to WebKit's seven-day inactivity cap for script-writable storage.
+2. On Apple devices, install it to Home Screen if you plan to rely on it there. Ordinary Safari tabs are subject to WebKit's seven-day storage purge after seven days of Safari use without user interaction on the site.
 3. Record an initial status across the five fixed sectors
 4. Run a test JSON export and keep the file somewhere you control
 5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
@@ -71,11 +71,12 @@ npm run lint
 npm run typecheck
 npm run test
 npm run test:e2e
+npm run test:e2e:webkit
 npm run build
 npm run test:e2e:smoke
 ```
 
-`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
+`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` adds the narrow WebKit smoke lane that verifies rendering and IndexedDB I/O without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
 
 </details>
 
@@ -140,15 +141,16 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 
 - Browser-managed storage is not a backup system
 - Private, incognito, and other ephemeral browsing modes do not provide durable storage. Data can be discarded when the session ends
-- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
+- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day purge for script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
 - On Apple devices, install to Home Screen if you plan to rely on the app there. Home Screen mode avoids the standard Safari browser-tab counter, but export is still the only durable boundary you control
+- If Safari purges the app after inactivity, it can erase both the readiness database and the browser-side timestamp that recorded the last export. The app may reopen looking like a clean install. Restore from the latest JSON export immediately
 - On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, or device loss can destroy records
 
 Export is the durable boundary the operator controls. Run a test export early. Export routinely. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
 
 ## Proof of rigor
 
-- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, and build validation
+- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a non-gating Playwright WebKit smoke lane, and build validation
 - GitHub Pages deployment is gated on a production-artifact smoke pass
 - JSON export carries versioning and integrity checks
 - Import fails closed on malformed or unsafe data
