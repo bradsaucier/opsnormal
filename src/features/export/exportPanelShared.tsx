@@ -1,7 +1,5 @@
 import { type ReactNode, useId } from 'react';
 
-import type { ImportMode, ImportPreview } from '../../types';
-import type { StatusMessage } from './workflowTypes';
 
 export type AccordionSectionKey = 'export' | 'import' | 'undo' | 'storage';
 
@@ -61,37 +59,6 @@ export function AccordionSection({
       </div>
     </div>
   );
-}
-
-export function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) {
-    return '0 B';
-  }
-
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-export function getImportImpactText(preview: ImportPreview, mode: ImportMode): string {
-  if (mode === 'replace') {
-    return `Replace ${preview.existingEntryCount} current rows with ${preview.totalEntries} imported rows.`;
-  }
-
-  return `${preview.newEntryCount} new rows and ${preview.overwriteCount} overwrites will be applied. All other local rows stay in place.`;
-}
-
-export function getDefaultStatusMessage(): StatusMessage {
-  return {
-    tone: 'info',
-    text: 'Backup and recovery are local actions. No cloud sync. No account system.'
-  };
 }
 
 function getSignalToneClasses(tone: 'default' | 'safe' | 'warning' = 'default'): string {
