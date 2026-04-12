@@ -1,5 +1,7 @@
 import type { StorageHealth } from '../../lib/storage';
 
+// Architecture: ADR-0017 and ADR-0019 enforce explicit backup prompts over silent hints.
+// WebKit tab exposure and backup age are operator risk signals, not durability guarantees.
 const SAFARI_EXPORT_REFRESH_WINDOW_MS = 6 * 24 * 60 * 60 * 1000;
 
 export interface BackupActionPrompt {

@@ -26,6 +26,8 @@ function haveResetKeysChanged(previous: unknown[] = [], next: unknown[] = []): b
   );
 }
 
+// Architecture: ADR-0011 and ADR-0016 make this a sectional fault-containment boundary.
+// Reset keys restore a failed feature surface without collapsing the full shell.
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = {
     error: null,

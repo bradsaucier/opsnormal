@@ -6,6 +6,8 @@ import type { OpsNormalDbMigration } from './types';
 
 export type OpsNormalDbSchemaVersion = Pick<OpsNormalDbMigration, 'version' | 'stores'>;
 
+// Architecture: ADR-0018 requires a typed, strictly ordered migration registry.
+// That keeps schema evolution reviewable and lets upgrade tests assert exact version order.
 export const OPSNORMAL_DB_MIGRATIONS = [
   migration001InitialSchema,
   migration002RemoveLegacyDailyEntrySecondaryIndexes

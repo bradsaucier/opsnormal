@@ -33,6 +33,8 @@ declare global {
   }
 }
 
+// Architecture: ADR-0011, ADR-0015, ADR-0016, and ADR-0017 keep failure containment
+// sectional and preserve critical recovery surfaces at the app boundary.
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
   const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
