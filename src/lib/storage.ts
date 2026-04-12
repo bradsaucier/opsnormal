@@ -1,3 +1,6 @@
+// Architecture: ADR-0009, ADR-0017, and ADR-0019 require truthful storage
+// diagnostics that favor conservative Safari-family risk language and export-first
+// recovery over optimistic browser persistence claims.
 const STORAGE_PERSISTENCE_FLAG = 'opsnormal-storage-persistence-attempted';
 const STORAGE_PERSISTENCE_CONTEXT_KEY = 'opsnormal-storage-persistence-context';
 const STORAGE_DIAGNOSTICS_EVENT = 'opsnormal-storage-diagnostics-changed';
