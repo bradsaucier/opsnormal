@@ -90,7 +90,7 @@ npm run build
 npm run test:e2e:smoke
 ```
 
-`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` adds the narrow WebKit smoke lane that verifies rendering and IndexedDB I/O without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
+`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
 
 </details>
 
@@ -190,7 +190,7 @@ Recovery posture:
 
 Quality is enforced through release gates, test coverage, and explicit design constraints.
 
-- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a non-gating Playwright WebKit smoke lane, and build validation
+- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a merge-blocking Playwright WebKit smoke lane, and build validation
 - GitHub Pages deployment is gated on a production-artifact smoke pass
 - JSON export carries versioning and integrity checks
 - Import fails closed on malformed or unsafe data
@@ -205,6 +205,7 @@ This README stays focused on orientation and first use. Deeper proof, limits, an
 | --- | --- |
 | [Architecture overview](./docs/architecture.md) | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits |
 | [Risk register](./docs/risk-register.md) | Known operational risks, browser-storage hazards, and current mitigations |
+| [WebKit CI coverage boundary](./docs/webkit-limitations.md) | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures |
 | [Architecture Decision Records](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
 | [Test plan](./docs/test-plan.md) | Verification strategy, release checks, and coverage priorities |
 | [Release checklist](./docs/release-checklist.md) | Pre-release validation and operator-facing quality gates |
