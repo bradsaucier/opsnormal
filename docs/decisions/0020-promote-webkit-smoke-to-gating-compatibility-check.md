@@ -1,6 +1,7 @@
 ## Status
 Accepted
 Amends ADR-0019.
+Amended by ADR-0021.
 
 ## Context
 
