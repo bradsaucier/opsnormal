@@ -37,6 +37,8 @@ import {
   resolveWaitingWorkerForApply
 } from './swUpdateRuntime';
 
+// Architecture: ADR-0015 keeps service-worker updates in prompt mode with multi-tab
+// coordination, controlled handoff, and post-close reload instead of hot-swapping the UI.
 let controllerReloadInFlight = false;
 
 export function usePwaUpdate(): PwaUpdateController {
