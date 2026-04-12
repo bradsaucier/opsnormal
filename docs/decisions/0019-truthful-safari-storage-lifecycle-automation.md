@@ -1,5 +1,6 @@
 ## Status
 Accepted
+Amended by ADR-0020.
 
 ## Context
 
@@ -19,8 +20,8 @@ Adopt a three-layer storage-lifecycle verification model.
 2. Chromium harness tests inject synthetic storage states and verify the exact operator-facing warning surfaces.
 3. A narrow WebKit smoke lane proves app boot, warning rendering, and IndexedDB I-O on a WebKit engine without claiming eviction simulation.
 
-The WebKit lane remains non-gating.
-It is a compatibility canary, not a browser-policy oracle.
+At adoption time, the WebKit lane remained non-gating. ADR-0020 later promoted that lane to a merge-blocking compatibility gate while keeping the truth boundary unchanged.
+It is a compatibility gate, not a browser-policy oracle.
 Documentation, CI, and release checklists must state that boundary plainly.
 
 ## Consequences
