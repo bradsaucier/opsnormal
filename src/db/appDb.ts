@@ -44,6 +44,9 @@ declare global {
   }
 }
 
+// Architecture: ADR-0002, ADR-0009, and ADR-0018 make this the primary offline
+// dataset boundary with explicit schema application, blocked-upgrade signaling, and
+// reconnect telemetry instead of silent best-effort recovery.
 class OpsNormalDb extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
 
@@ -247,6 +250,8 @@ export function closeDatabaseForVersionUpgrade(): void {
   closeDatabaseConnection();
 }
 
+// Architecture: ADR-0015 requires the database connection to close before service-worker
+// handoff so the final controller reload does not race Dexie teardown or schema guard state.
 export function closeDatabaseForServiceWorkerHandoff(now = Date.now()): void {
   schemaReloadLoopDetected = false;
   clearSchemaReloadRetry();
