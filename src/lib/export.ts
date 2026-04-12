@@ -15,6 +15,9 @@ import {
   formatLastExportCompletedAt
 } from './exportPersistence';
 
+// Architecture: ADR-0007, ADR-0008, ADR-0010, and ADR-0012 define the local-only
+// data-sovereignty perimeter. Export artifacts must be versioned, checksummed, and
+// validated before destructive replace paths are allowed to proceed.
 interface ExportSnapshotResult {
   entries: DailyEntry[];
   exportedAt: string;
