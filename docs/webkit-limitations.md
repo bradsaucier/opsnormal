@@ -8,7 +8,7 @@ It does not prove Safari storage policy behavior on Apple hardware.
 ## What the WebKit gate is allowed to prove
 
 1. the shell boots on a WebKit engine
-2. Safari-family storage-risk messaging still renders in the shell
+2. Apple WebKit storage-risk messaging still renders in the shell
 3. the core Dexie-backed check-in path persists across a page reload
 4. a fresh recorded backup suppresses the Safari-tab backup banner
 
@@ -16,7 +16,7 @@ It does not prove Safari storage policy behavior on Apple hardware.
 
 1. Safari's seven-day inactivity purge for script-writable storage
 2. Storage API persistence grant heuristics on Apple platforms
-3. installed Home Screen app behavior on iPhone or iPad
+3. installed Home Screen app behavior on iPhone or iPad, or Add to Dock behavior on macOS Safari
 4. real-device storage pressure, quota eviction, or Safari-only connection-loss faults
 
 ## Triage rule for WebKit smoke failures
