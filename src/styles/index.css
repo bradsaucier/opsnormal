@@ -5,6 +5,10 @@
   --color-ops-surface-1: #151d1a;
   --color-ops-surface-2: #1c2521;
   --color-ops-surface-3: #24302a;
+  --color-ops-surface-base: #101613;
+  --color-ops-surface-raised: #18211d;
+  --color-ops-surface-overlay: #1f2a25;
+  --color-ops-surface-interactive: #28342e;
   --color-ops-text-primary: #e6ece9;
   --color-ops-text-secondary: #b4bfba;
   --color-ops-text-muted: #8b9691;
@@ -13,7 +17,13 @@
   --color-ops-border-soft: #ffffff14;
   --color-ops-border-struct: #ffffff29;
   --color-ops-border-strong: #ffffff3a;
+  --color-ops-panel-border: #ffffff1a;
   --color-ops-accent-border: #6ee7b724;
+  --spacing-ops-2: 0.5rem;
+  --spacing-ops-3: 0.75rem;
+  --spacing-ops-4: 1rem;
+  --spacing-ops-5: 1.25rem;
+  --spacing-ops-6: 1.5rem;
 }
 
 :root {
@@ -39,6 +49,8 @@
   --ops-notch-panel-outer: 12px;
   --ops-notch-panel-inner: 11px;
   --ops-notch-chip: 8px;
+  --ops-focus-ring: rgba(183, 247, 218, 0.92);
+  --ops-focus-ring-edge: rgba(10, 15, 13, 0.96);
   --ops-status-nominal-border: rgba(110, 231, 183, 0.56);
   --ops-status-nominal-bg: rgba(110, 231, 183, 0.14);
   --ops-status-nominal-text: #c9fae4;
@@ -94,7 +106,6 @@ button {
   padding-bottom: max(1.5rem, var(--ops-safe-bottom));
   padding-left: max(1rem, var(--ops-safe-left));
 }
-
 
 .ops-skip-link {
   position: absolute;
@@ -259,6 +270,14 @@ button {
 }
 
 @utility clip-notched {
+  -webkit-clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
   clip-path: polygon(
     var(--notch) 0,
     100% 0,
@@ -267,11 +286,190 @@ button {
     0 100%,
     0 var(--notch)
   );
+  transform: translateZ(0);
 }
 
 @utility panel-shadow {
   position: relative;
   isolation: isolate;
+}
+
+.ops-focus-ring-inset:focus-visible,
+.ops-focus-ring-inset:focus-within {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 3px var(--ops-focus-ring);
+}
+
+.ops-focus-ring-within:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 3px var(--ops-focus-ring);
+}
+
+.ops-action-button {
+  --notch: var(--ops-notch-chip);
+  --ops-button-border: rgba(255, 255, 255, 0.14);
+  --ops-button-bg: rgba(255, 255, 255, 0.04);
+  --ops-button-bg-hover: rgba(255, 255, 255, 0.08);
+  --ops-button-text: var(--color-ops-text-primary);
+  --notch: var(--ops-notch-chip);
+  position: relative;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  -webkit-clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  transform: translateZ(0);
+  border: 1px solid var(--ops-button-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 68%),
+    var(--ops-button-bg);
+  color: var(--ops-button-text);
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.ops-action-button:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 68%),
+    var(--ops-button-bg-hover);
+}
+
+.ops-action-button:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 3px var(--ops-focus-ring);
+}
+
+.ops-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  --ops-button-border: rgba(255, 255, 255, 0.1);
+  --ops-button-bg: rgba(255, 255, 255, 0.04);
+  --ops-button-bg-hover: rgba(255, 255, 255, 0.04);
+  --ops-button-text: #a1a1aa;
+}
+
+.ops-action-button-subtle {
+  --ops-button-border: rgba(255, 255, 255, 0.16);
+  --ops-button-bg: rgba(255, 255, 255, 0.05);
+  --ops-button-bg-hover: rgba(255, 255, 255, 0.1);
+  --ops-button-text: #e4e4e7;
+}
+
+.ops-action-button-info {
+  --ops-button-border: rgba(125, 211, 252, 0.38);
+  --ops-button-bg: rgba(56, 189, 248, 0.12);
+  --ops-button-bg-hover: rgba(56, 189, 248, 0.18);
+  --ops-button-text: #e0f2fe;
+}
+
+.ops-action-button-success {
+  --ops-button-border: rgba(110, 231, 183, 0.4);
+  --ops-button-bg: rgba(16, 185, 129, 0.16);
+  --ops-button-bg-hover: rgba(16, 185, 129, 0.24);
+  --ops-button-text: #ecfdf5;
+}
+
+.ops-action-button-success-solid {
+  --ops-button-border: rgba(110, 231, 183, 0.45);
+  --ops-button-bg: rgba(16, 185, 129, 0.78);
+  --ops-button-bg-hover: rgba(16, 185, 129, 0.92);
+  --ops-button-text: #ffffff;
+}
+
+.ops-action-button-warning {
+  --ops-button-border: rgba(251, 191, 36, 0.36);
+  --ops-button-bg: rgba(245, 158, 11, 0.14);
+  --ops-button-bg-hover: rgba(245, 158, 11, 0.22);
+  --ops-button-text: #fef3c7;
+}
+
+.ops-action-button-danger {
+  --ops-button-border: rgba(248, 113, 113, 0.38);
+  --ops-button-bg: rgba(239, 68, 68, 0.14);
+  --ops-button-bg-hover: rgba(239, 68, 68, 0.24);
+  --ops-button-text: #fee2e2;
+}
+
+.ops-action-button-neutral {
+  --ops-button-border: rgba(255, 255, 255, 0.16);
+  --ops-button-bg: rgba(255, 255, 255, 0.05);
+  --ops-button-bg-hover: rgba(255, 255, 255, 0.1);
+  --ops-button-text: #e4e4e7;
+}
+
+.ops-action-button-sky {
+  --ops-button-border: rgba(125, 211, 252, 0.38);
+  --ops-button-bg: rgba(56, 189, 248, 0.12);
+  --ops-button-bg-hover: rgba(56, 189, 248, 0.18);
+  --ops-button-text: #e0f2fe;
+}
+
+.ops-action-button-emerald {
+  --ops-button-border: rgba(110, 231, 183, 0.4);
+  --ops-button-bg: rgba(16, 185, 129, 0.16);
+  --ops-button-bg-hover: rgba(16, 185, 129, 0.24);
+  --ops-button-text: #ecfdf5;
+}
+
+.ops-action-button-emerald-solid {
+  --ops-button-border: rgba(110, 231, 183, 0.45);
+  --ops-button-bg: rgba(16, 185, 129, 0.78);
+  --ops-button-bg-hover: rgba(16, 185, 129, 0.92);
+  --ops-button-text: #ffffff;
+}
+
+.ops-action-button-amber {
+  --ops-button-border: rgba(251, 191, 36, 0.36);
+  --ops-button-bg: rgba(245, 158, 11, 0.14);
+  --ops-button-bg-hover: rgba(245, 158, 11, 0.22);
+  --ops-button-text: #fef3c7;
+}
+
+.ops-action-button-orange {
+  --ops-button-border: rgba(251, 146, 60, 0.4);
+  --ops-button-bg: rgba(251, 146, 60, 0.12);
+  --ops-button-bg-hover: rgba(251, 146, 60, 0.18);
+  --ops-button-text: #ffedd5;
+}
+
+.ops-action-button-rose {
+  --ops-button-border: rgba(251, 113, 133, 0.34);
+  --ops-button-bg: rgba(244, 63, 94, 0.14);
+  --ops-button-bg-hover: rgba(244, 63, 94, 0.22);
+  --ops-button-text: #ffe4e6;
+}
+
+.ops-action-button-red {
+  --ops-button-border: rgba(248, 113, 113, 0.38);
+  --ops-button-bg: rgba(127, 29, 29, 0.42);
+  --ops-button-bg-hover: rgba(127, 29, 29, 0.58);
+  --ops-button-text: #fee2e2;
 }
 
 @media (prefers-reduced-motion: reduce) {
