@@ -39,7 +39,11 @@ describe('file download helpers', () => {
   });
 
   it('downloads text content through a temporary anchor and revokes the blob url', () => {
-    downloadTextFile('opsnormal-backup.json', '{"ok":true}', 'application/json');
+    downloadTextFile(
+      'opsnormal-backup.json',
+      '{"ok":true}',
+      'application/json',
+    );
 
     expect(createObjectUrlSpy).toHaveBeenCalledTimes(1);
     expect(anchorClickSpy).toHaveBeenCalledTimes(1);
