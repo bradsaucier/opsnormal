@@ -1,3 +1,4 @@
+import { NotchedFrame } from '../../components/NotchedFrame';
 import type { BackupActionPrompt } from './backupActionPrompt';
 
 interface BackupActionBannerProps {
@@ -10,12 +11,11 @@ export function BackupActionBanner({ prompt }: BackupActionBannerProps) {
   }
 
   return (
-    <div className="panel-shadow">
-      <section
-        role="alert"
-        className="clip-notched border border-orange-400/35 bg-orange-400/10 p-4 [--notch:12px] sm:p-5"
-        aria-labelledby="backup-action-banner-title"
-      >
+    <NotchedFrame
+      outerClassName="bg-orange-400/35"
+      innerClassName="bg-[linear-gradient(180deg,rgba(251,146,60,0.12),rgba(255,255,255,0.02)),var(--color-ops-surface-raised)] p-4 sm:p-5"
+    >
+      <section role="alert" aria-labelledby="backup-action-banner-title">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2
@@ -30,13 +30,13 @@ export function BackupActionBanner({ prompt }: BackupActionBannerProps) {
           <div className="flex flex-wrap gap-3">
             <a
               href="#backup-and-recovery"
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-orange-200/40 bg-orange-200/10 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-orange-50 uppercase transition hover:bg-orange-200/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-100"
+              className="ops-action-button ops-action-button-orange inline-flex min-h-11 items-center justify-center px-4 py-2 text-xs font-semibold tracking-[0.16em] uppercase transition"
             >
               Open backup and recovery
             </a>
           </div>
         </div>
       </section>
-    </div>
+    </NotchedFrame>
   );
 }
