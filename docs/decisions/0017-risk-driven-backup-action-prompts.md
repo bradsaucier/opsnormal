@@ -18,7 +18,7 @@ Add a top-level backup action banner that appears only when the repository has c
 
 The prompt is currently limited to three cases:
 - reconnect or write-verification diagnostics indicate recent storage instability
-- Safari-family browser-tab risk is active and the recorded JSON backup is older than the six-day warning buffer
+- Apple WebKit browser-tab risk is active and the recorded JSON backup is older than the six-day warning buffer
 - storage posture is already warning or unavailable and no JSON backup has been recorded on this browser
 
 The banner links directly to the backup and recovery surface rather than duplicating export logic in a second location.
