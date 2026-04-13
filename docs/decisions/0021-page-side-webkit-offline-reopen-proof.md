@@ -11,7 +11,7 @@ OpsNormal claims the shell can reopen offline after first load, but the WebKit g
 
 A naive implementation would use Playwright's service-worker inspection APIs.
 That would be incorrect for this lane because those APIs are Chromium-only.
-The truthful boundary on WebKit is page-side proof through `navigator.serviceWorker` plus an offline reload after the page is already controlled by the active worker.
+The truthful boundary on WebKit is page-side proof through `navigator.serviceWorker` plus an offline reopen in a fresh page after the page is already controlled by the active worker.
 That approach proves shipped browser behavior without implying Safari-policy simulation on Apple hardware.
 
 ## Decision
@@ -23,7 +23,7 @@ The WebKit lane is now allowed to prove:
 2. Safari-family storage-risk messaging in the shell
 3. IndexedDB persistence across reload for the core check-in path
 4. fresh-backup suppression for the shell-level Safari-tab prompt
-5. offline reopen after first load by waiting for a page-side active registration, reloading under service-worker control, then reloading offline from the cached shell
+5. offline reopen after first load by waiting for a page-side active registration, reloading under service-worker control, then reopening offline in a fresh page within the same browser context
 
 This decision does not authorize Chromium-only Playwright service-worker instrumentation in the WebKit lane.
 It also does not authorize claims about Safari's seven-day purge, Apple persistence heuristics, installed Home Screen behavior, or device-level storage pressure.
