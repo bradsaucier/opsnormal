@@ -23,6 +23,7 @@ Before tagging a release:
 - [ ] manual recovery in one tab clears stale loop-breaker state in another open tab
 - [ ] blocked duplicate-tab schema recovery completes after the 5000 millisecond guard window without entering a reload loop
 - [ ] offline reopen verified manually
+- [ ] offline reopen from a cold start verified on physical iPhone or iPad hardware because CI WebKit coverage does not prove Apple mobile service-worker execution limits
 - [ ] export verified manually
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
