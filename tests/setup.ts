@@ -11,7 +11,10 @@ import { configureAxe } from 'vitest-axe';
 type BroadcastMessageHandler = ((event: MessageEvent<unknown>) => void) | null;
 
 class TestBroadcastChannel extends EventTarget {
-  private static readonly channels = new Map<string, Set<TestBroadcastChannel>>();
+  private static readonly channels = new Map<
+    string,
+    Set<TestBroadcastChannel>
+  >();
 
   static resetForTesting(): void {
     for (const instances of TestBroadcastChannel.channels.values()) {
@@ -43,7 +46,9 @@ class TestBroadcastChannel extends EventTarget {
       return;
     }
 
-    const peers = Array.from(TestBroadcastChannel.channels.get(this.name) ?? []);
+    const peers = Array.from(
+      TestBroadcastChannel.channels.get(this.name) ?? [],
+    );
 
     queueMicrotask(() => {
       for (const peer of peers) {
