@@ -2,9 +2,10 @@
 
 ## High severity
 
-### iOS and Safari-family storage eviction
-- Risk: ordinary Safari-family browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, cache data, and browser-side backup metadata can be purged together. Private or incognito sessions also do not provide durable storage beyond the session.
+### Apple WebKit browser-tab storage eviction
+- Risk: Safari on macOS and browser tabs on iPhone or iPad are subject to WebKit's seven-day inactivity cap on script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, cache data, and browser-side backup metadata can be purged together. Private or incognito sessions also do not provide durable storage beyond the session.
 - Mitigation: surface the exact platform risk explicitly, recommend Home Screen installation on Apple devices, request persistent storage without implying a guarantee, keep export available, raise a fresh-backup prompt before the seven-day window is likely to close, unit-test the storage-health decision tree, and cover the warning UI through the synthetic Chromium harness. WebKit smoke coverage is now merge-blocking compatibility coverage and does not claim to simulate eviction.
+- Scope note: Apple briefly announced EU DMA-driven removal of Home Screen web apps during the iOS 17.4 beta cycle, then reversed that decision before the public iOS 17.4 release. Existing Home Screen web apps continue in the EU on WebKit, so OpsNormal keys risk messaging to observed runtime state rather than geography.
 - Residual limitation: if WebKit purges the app after inactivity, it can erase both IndexedDB and the browser-side timestamp that recorded the last successful export. The app can reopen looking like a clean install. Operator guidance must instruct immediate restore from the latest JSON export when a previously used app returns blank.
 
 ### Local quota exhaustion during write operations
