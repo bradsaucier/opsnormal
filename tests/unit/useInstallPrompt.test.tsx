@@ -193,6 +193,17 @@ describe('useInstallPrompt', () => {
     expect(screen.getByTestId('promptable')).toHaveTextContent('false');
   });
 
+  it('treats Apple navigator.standalone as installed when display-mode media queries stay false', () => {
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)');
+    setNavigatorStandalone(true);
+
+    const { result } = renderHook(() => useInstallPrompt());
+
+    expect(result.current.isIOS).toBe(true);
+    expect(result.current.isStandalone).toBe(true);
+    expect(result.current.canPromptInstall).toBe(false);
+  });
+
   it('starts with no deferred prompt and not-installed state', () => {
     const { result } = renderHook(() => useInstallPrompt());
 
