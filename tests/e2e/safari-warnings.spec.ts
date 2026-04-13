@@ -57,7 +57,7 @@ async function setSyntheticStorageState(
 async function openStorageHealth(page: Page) {
   const storageHealthToggle = page.getByRole('button', { name: /storage health/i });
   await storageHealthToggle.click();
-  await expect(page.getByText(/storage durability/i)).toBeVisible();
+  await expect(page.getByText('Storage durability', { exact: true })).toBeVisible();
 }
 
 function isoDaysBefore(days: number): string {
