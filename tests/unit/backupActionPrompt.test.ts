@@ -39,6 +39,12 @@ function expectPromptTitle(prompt: BackupActionPrompt | null, title: string) {
   expect(prompt?.title).toBe(title);
 }
 
+const ANCHOR_NOW = new Date('2030-04-10T12:00:00.000Z');
+
+function isoDaysBefore(days: number): string {
+  return new Date(ANCHOR_NOW.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 describe('createBackupActionPrompt', () => {
   it('surfaces an immediate export warning after reconnect or verification diagnostics', () => {
     const prompt = createBackupActionPrompt(
@@ -48,8 +54,8 @@ describe('createBackupActionPrompt', () => {
           reconnectState: 'recovering'
         }
       }),
-      '2026-04-09T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(1),
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'Confirm state and refresh the JSON backup');
@@ -66,11 +72,12 @@ describe('createBackupActionPrompt', () => {
           installRecommended: true
         }
       }),
-      '2026-04-01T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(9),
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
+    expect(prompt?.detail).toContain('browser tab on iPhone or iPad');
     expect(prompt?.detail).toContain('Home Screen');
   });
 
@@ -84,8 +91,8 @@ describe('createBackupActionPrompt', () => {
           installRecommended: true
         }
       }),
-      '2026-04-04T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(6),
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
@@ -102,10 +109,28 @@ describe('createBackupActionPrompt', () => {
         }
       }),
       'corrupted-garbage-string-payload',
-      new Date('2026-04-10T12:00:00.000Z')
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
+  });
+
+  it('uses macOS Safari-specific wording for desktop WebKit browser-tab risk', () => {
+    const prompt = createBackupActionPrompt(
+      buildStorageHealth({
+        status: 'warning',
+        safari: {
+          ...buildStorageHealth().safari,
+          webKitRisk: true
+        }
+      }),
+      isoDaysBefore(9),
+      ANCHOR_NOW
+    );
+
+    expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
+    expect(prompt?.detail).toContain('Safari on macOS');
+    expect(prompt?.detail).not.toContain('Home Screen');
   });
 
   it('does not warn for Safari browser-tab risk when the JSON backup is still fresh', () => {
@@ -118,13 +143,12 @@ describe('createBackupActionPrompt', () => {
           installRecommended: true
         }
       }),
-      '2026-04-08T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(2),
+      ANCHOR_NOW
     );
 
     expect(prompt).toBeNull();
   });
-
 
   it('keeps the Safari freshness prompt quiet for installed iPhone and iPad paths', () => {
     const prompt = createBackupActionPrompt(
@@ -136,8 +160,8 @@ describe('createBackupActionPrompt', () => {
           standaloneMode: true
         }
       }),
-      '2026-04-01T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(9),
+      ANCHOR_NOW
     );
 
     expect(prompt).toBeNull();
@@ -154,8 +178,8 @@ describe('createBackupActionPrompt', () => {
           installRecommended: true
         }
       }),
-      '2026-04-01T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(9),
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'Confirm state and refresh the JSON backup');
@@ -167,7 +191,7 @@ describe('createBackupActionPrompt', () => {
         status: 'warning'
       }),
       null,
-      new Date('2026-04-10T12:00:00.000Z')
+      ANCHOR_NOW
     );
 
     expectPromptTitle(prompt, 'No external JSON backup recorded');
@@ -179,8 +203,8 @@ describe('createBackupActionPrompt', () => {
         persisted: true,
         status: 'protected'
       }),
-      '2026-04-09T12:00:00.000Z',
-      new Date('2026-04-10T12:00:00.000Z')
+      isoDaysBefore(1),
+      ANCHOR_NOW
     );
 
     expect(prompt).toBeNull();
