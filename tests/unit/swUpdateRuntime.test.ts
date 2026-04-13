@@ -115,7 +115,9 @@ describe('service worker update runtime helpers', () => {
       update: vi.fn().mockResolvedValue(undefined),
     } as ServiceWorkerRegistration & {
       waiting: ServiceWorker | null;
-      installing: (ServiceWorker & { dispatch: (eventName: string) => void }) | null;
+      installing:
+        | (ServiceWorker & { dispatch: (eventName: string) => void })
+        | null;
     };
 
     Object.defineProperty(navigator, 'serviceWorker', {
@@ -148,7 +150,9 @@ describe('service worker update runtime helpers', () => {
       },
     });
 
-    await expect(resolveWaitingWorkerForApply(registration)).resolves.toBeNull();
+    await expect(
+      resolveWaitingWorkerForApply(registration),
+    ).resolves.toBeNull();
     expect(registration.update).toHaveBeenCalledTimes(1);
   });
 
@@ -167,6 +171,8 @@ describe('service worker update runtime helpers', () => {
       },
     });
 
-    await expect(resolveWaitingWorkerForApply(null)).resolves.toBe(waitingWorker);
+    await expect(resolveWaitingWorkerForApply(null)).resolves.toBe(
+      waitingWorker,
+    );
   });
 });
