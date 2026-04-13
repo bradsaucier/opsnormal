@@ -1,5 +1,6 @@
-import { type ReactNode, useId } from 'react';
+import { NotchedFrame } from '../../components/NotchedFrame';
 
+import { type ReactNode, useId } from 'react';
 
 export type AccordionSectionKey = 'export' | 'import' | 'undo' | 'storage';
 
@@ -24,7 +25,10 @@ export function AccordionSection({
   const panelId = useId();
 
   return (
-    <div className="rounded-xl border border-white/10 bg-black/20">
+    <NotchedFrame
+      outerClassName="bg-ops-border-struct"
+      innerClassName="tactical-panel bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-raised)]"
+    >
       <h3>
         <button
           type="button"
@@ -32,17 +36,17 @@ export function AccordionSection({
           aria-expanded={isOpen}
           aria-controls={panelId}
           onClick={() => onToggle(sectionKey)}
-          className="flex min-h-[56px] w-full items-start justify-between gap-4 rounded-xl px-4 py-4 text-left transition hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+          className="ops-focus-ring-inset flex min-h-[56px] w-full items-start justify-between gap-4 px-4 py-4 text-left transition hover:bg-white/4"
         >
           <span>
-            <span className="block font-mono text-xs font-semibold tracking-[0.22em] text-zinc-400 uppercase">
+            <span className="block text-xs font-semibold tracking-[0.22em] text-ops-text-muted uppercase">
               {title}
             </span>
-            <span className="mt-2 block text-sm leading-6 text-zinc-300">{summary}</span>
+            <span className="mt-2 block text-sm leading-6 text-ops-text-secondary">{summary}</span>
           </span>
           <span
             aria-hidden="true"
-            className={`mt-1 text-lg leading-none text-emerald-300 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`mt-1 text-lg leading-none text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
           >
             ›
           </span>
@@ -53,24 +57,53 @@ export function AccordionSection({
         role="region"
         aria-labelledby={headerId}
         hidden={!isOpen}
-        className="border-t border-white/10 px-4 py-4"
+        className="border-t border-ops-border-soft px-4 py-4"
       >
         {children}
       </div>
-    </div>
+    </NotchedFrame>
   );
 }
 
-function getSignalToneClasses(tone: 'default' | 'safe' | 'warning' = 'default'): string {
+function getSignalChromeClasses(tone: 'default' | 'safe' | 'warning' = 'default'): {
+  outer: string;
+  inner: string;
+  label: string;
+  value: string;
+  detail: string;
+} {
   if (tone === 'safe') {
-    return 'border-emerald-400/25 bg-emerald-400/8';
+    return {
+      outer:
+        'bg-[linear-gradient(180deg,rgba(110,231,183,0.34),rgba(255,255,255,0.04))]',
+      inner:
+        'bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
+      label: 'text-emerald-100/80',
+      value: 'text-emerald-50',
+      detail: 'text-emerald-50/80'
+    };
   }
 
   if (tone === 'warning') {
-    return 'border-amber-400/25 bg-amber-400/8';
+    return {
+      outer:
+        'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
+      inner:
+        'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
+      label: 'text-amber-100/80',
+      value: 'text-amber-50',
+      detail: 'text-amber-50/82'
+    };
   }
 
-  return 'border-white/10 bg-black/20';
+  return {
+    outer: 'bg-ops-border-soft',
+    inner:
+      'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)]',
+    label: 'text-ops-text-muted',
+    value: 'text-ops-text-primary',
+    detail: 'text-ops-text-secondary'
+  };
 }
 
 interface SignalCardProps {
@@ -81,14 +114,21 @@ interface SignalCardProps {
 }
 
 export function SignalCard({ label, value, detail, tone = 'default' }: SignalCardProps) {
+  const chromeClasses = getSignalChromeClasses(tone);
+
   return (
-    <div className={`rounded-xl border p-4 ${getSignalToneClasses(tone)}`}>
-      <dt className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">{label}</dt>
-      <dd className="mt-2 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
+    <NotchedFrame
+      outerClassName={chromeClasses.outer}
+      innerClassName={`p-4 ${chromeClasses.inner}`}
+    >
+      <dt className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}>
+        {label}
+      </dt>
+      <dd className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}>
         {value}
       </dd>
-      <dd className="mt-2 text-sm leading-6 text-zinc-300">{detail}</dd>
-    </div>
+      <dd className={`mt-2 text-sm leading-6 ${chromeClasses.detail}`}>{detail}</dd>
+    </NotchedFrame>
   );
 }
 
@@ -100,10 +140,16 @@ interface PreviewFactCardProps {
 
 export function PreviewFactCard({ label, value, detail }: PreviewFactCardProps) {
   return (
-    <div className="rounded-lg border border-white/10 bg-black/20 p-3">
-      <dt className="text-xs font-semibold tracking-[0.14em] text-zinc-400 uppercase">{label}</dt>
-      <dd className="mt-1 text-sm font-semibold text-white">{value}</dd>
-      {detail ? <p className="mt-2 text-xs leading-5 text-zinc-400">{detail}</p> : null}
+    <div className="panel-shadow">
+      <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
+        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3">
+          <dt className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+            {label}
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-ops-text-primary">{value}</dd>
+          {detail ? <p className="mt-2 text-xs leading-5 text-ops-text-muted">{detail}</p> : null}
+        </div>
+      </div>
     </div>
   );
 }
