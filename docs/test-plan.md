@@ -80,10 +80,15 @@ Prove that the app:
 
 ## Coverage posture
 
-Target:
+Targeted coverage gate:
 
-- 70 percent or better on core logic
-- 100 percent on date helpers and export helpers
+- aggregate floor of 70 percent for lines, functions, and statements across the critical modules named in `vitest.config.ts`
+- aggregate floor of 65 percent for branches across that same targeted module set
+- explicit 100 percent gates for `src/lib/date.ts` and `src/lib/exportSerialization.ts`
+
+The coverage gate is intentionally incremental, not repository-wide. The `coverage.include` list in `vitest.config.ts` forces Vitest to count the critical modules targeted by this PR even when a file is not imported by a test path yet, and `reportOnFailure` keeps the coverage report available when CI blocks the change.
+
+The jsdom-backed unit path uses controlled stubs for APIs such as `BroadcastChannel`, `URL.createObjectURL`, and service-worker registration lookups where the test environment cannot provide a live browser engine. Those tests prove application logic and failure handling, not full browser IPC or background-thread execution.
 
 Formatting gate:
 
