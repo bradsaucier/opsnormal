@@ -25,6 +25,7 @@ function buildHookState(overrides: Partial<InstallPromptState> = {}): InstallPro
 
 describe('InstallBanner', () => {
   afterEach(() => {
+    window.localStorage.clear();
     vi.clearAllMocks();
   });
 
@@ -78,6 +79,22 @@ describe('InstallBanner', () => {
     render(<InstallBanner />);
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
 
+    expect(window.localStorage.getItem('opsnormal-install-banner-dismissed')).toBe('true');
     expect(screen.queryByText('Install the app')).not.toBeInTheDocument();
+  });
+
+  it('stays dismissed across remounts until the installed path is active', () => {
+    window.localStorage.setItem('opsnormal-install-banner-dismissed', 'true');
+
+    mockUseInstallPrompt.mockReturnValue(buildHookState());
+
+    const { rerender } = render(<InstallBanner />);
+
+    expect(screen.queryByText('Install the app')).not.toBeInTheDocument();
+
+    mockUseInstallPrompt.mockReturnValue(buildHookState({ isStandalone: true }));
+    rerender(<InstallBanner />);
+
+    expect(window.localStorage.getItem('opsnormal-install-banner-dismissed')).toBeNull();
   });
 });

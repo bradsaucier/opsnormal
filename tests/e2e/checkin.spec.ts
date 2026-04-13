@@ -22,7 +22,7 @@ test.describe('OpsNormal', () => {
     const storageHealthToggle = page.getByRole('button', { name: /storage health/i });
     await expect(storageHealthToggle).toBeVisible();
     await storageHealthToggle.click();
-    await expect(page.getByText(/storage durability/i)).toBeVisible();
+    await expect(page.getByText('Storage durability', { exact: true })).toBeVisible();
 
     const workNominal = sectorRadio(page, 'Work or School', 'nominal');
     const workDegraded = sectorRadio(page, 'Work or School', 'degraded');

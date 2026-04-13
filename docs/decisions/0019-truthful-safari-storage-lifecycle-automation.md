@@ -4,7 +4,7 @@ Amended by ADR-0020.
 
 ## Context
 
-OpsNormal already models Safari-family storage risk explicitly in the shell.
+OpsNormal already models Apple WebKit browser-tab storage risk explicitly in the shell.
 The unresolved gap was automated proof.
 The repo had strong manual guidance, but no automated path that proved the backup prompt, install guidance, and storage-health messaging stayed correct as the code changed.
 

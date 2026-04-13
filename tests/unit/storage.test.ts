@@ -278,7 +278,7 @@ describe('storage helpers', () => {
     expect(health.safari.installRecommended).toBe(true);
   });
 
-  it('uses conservative protection language on Safari-family risk platforms', () => {
+  it('uses conservative protection language on Safari-on-macOS risk platforms', () => {
     setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
     setMatchMedia(false);
 
@@ -328,7 +328,7 @@ describe('storage helpers', () => {
     const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
 
     expect(health.status).toBe('warning');
-    expect(health.message).toContain('Safari-family browsers');
+    expect(health.message).toContain('Safari on macOS');
     expect(health.safari.webKitRisk).toBe(true);
     expect(health.safari.installRecommended).toBe(false);
   });

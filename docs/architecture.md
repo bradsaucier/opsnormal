@@ -141,7 +141,7 @@ The design goal is graceful degradation with user-visible recovery actions.
 
 ## Storage durability model
 
-Browser-managed storage is treated as an operational risk, especially on Safari-family platforms.
+Browser-managed storage is treated as an operational risk, especially on Apple WebKit browser-tab paths.
 
 The storage layer currently:
 
@@ -220,7 +220,7 @@ The repo carries a stronger proof layer than most projects of this size.
 These are real limits, not marketing omissions.
 
 - Browser-local storage is not a backup system
-- Ordinary Safari-family browser tabs are subject to WebKit's seven-day inactivity cap on script-writable storage, and private browsing does not provide durable storage beyond the session
+- Safari on macOS and browser tabs on iPhone or iPad are subject to WebKit's seven-day inactivity cap on script-writable storage, and private browsing does not provide durable storage beyond the session
 - Exported JSON and CSV files are user-managed files and should be treated as sensitive
 - The five-sector model is fixed in current scope
 - The history window is intentionally limited to the trailing 30 days

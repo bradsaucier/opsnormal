@@ -64,7 +64,7 @@ function getVerificationLabel(storageHealth: StorageHealth): string {
 
 function getDurabilityHelperText(storageHealth: StorageHealth): string {
   if (storageHealth.safari.installRecommended) {
-    return 'Install to Home Screen, then request durable storage again. Safari requires installation for maximum data retention.';
+    return 'Install to Home Screen, then request durable storage again. On iPhone and iPad, installation is the strongest protection path for local data.';
   }
 
   if (storageHealth.safari.standaloneMode && !storageHealth.persisted) {

@@ -23,7 +23,7 @@ Promote the narrow Playwright WebKit smoke lane from advisory to merge-blocking 
 This promotion does not widen what the lane claims to prove.
 The lane remains restricted to engine-level compatibility evidence:
 1. app boot on a WebKit engine
-2. operator-facing Safari-family warning rendering
+2. operator-facing Apple WebKit warning rendering
 3. IndexedDB persistence across reload for the core check-in path
 4. fresh-backup suppression behavior for the shell-level Safari-tab prompt
 

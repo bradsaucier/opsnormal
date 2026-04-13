@@ -55,8 +55,7 @@ export function ExportBackupSection({
         </div>
 
         <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
-          Export produces the recovery file. Run it routinely, especially on Safari-family
-          browsers and mobile hardware where browser-managed storage can disappear.
+          Export produces the recovery file. Run it routinely, especially in Safari on macOS and browser tabs on iPhone or iPad where browser-managed storage can disappear.
         </div>
       </div>
     </AccordionSection>

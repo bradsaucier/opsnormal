@@ -118,7 +118,7 @@ Local-only means no server can lose your readiness record. It also means no serv
 
 - Browser-managed storage is not a backup system
 - Private, incognito, and other ephemeral browsing modes do not provide persistent storage guarantees. IndexedDB can be blocked there, or data can exist only for that private session and is destroyed when the session ends
-- On Safari-family browsers, ordinary browser tabs are subject to WebKit's seven-day purge for script-writable storage. After seven days of Safari use without user interaction on the site, IndexedDB, service-worker state, and cached assets can be purged
+- In Safari on macOS and browser tabs on iPhone or iPad, WebKit can purge script-writable storage after seven days of Safari use without user interaction on the site. IndexedDB, service-worker state, and cached assets can be purged together
 - On Apple devices, Safari browser tabs and installed Home Screen apps keep isolated website data. Installing after entering data in Safari does not migrate that data automatically
 - If Safari purges the app after inactivity, it can erase both the readiness database and the browser-side timestamp that recorded the last export. The app may reopen looking like a clean install. Restore from the latest JSON export immediately
 - On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, browser updates, or device loss can destroy records
