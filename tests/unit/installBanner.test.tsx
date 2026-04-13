@@ -45,6 +45,8 @@ describe('InstallBanner', () => {
     expect(screen.getByText('Install the app')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Install now' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveClass('ops-action-button');
+    expect(screen.getByText('Install the app').closest('div')).toHaveClass('clip-notched');
   });
 
   it('renders iPhone and iPad install instructions when the device is iOS', () => {
