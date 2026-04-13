@@ -122,10 +122,13 @@ test.describe('OpsNormal WebKit smoke', () => {
     await expect(relationshipsNominal).toHaveAttribute('aria-checked', 'true');
 
     await context.setOffline(true);
-    await page.reload();
+    await page.close();
 
-    await expect(page.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
-    await expect(sectorRadio(page, 'Relationships', 'nominal')).toHaveAttribute('aria-checked', 'true');
+    const reopenedPage = await context.newPage();
+    await reopenedPage.goto('/');
+
+    await expect(reopenedPage.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
+    await expect(sectorRadio(reopenedPage, 'Relationships', 'nominal')).toHaveAttribute('aria-checked', 'true');
   });
 
   test('clears the Safari-tab backup banner after recording a fresh backup timestamp', async ({ page }) => {
