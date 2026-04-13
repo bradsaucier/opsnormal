@@ -109,7 +109,7 @@ describe('StorageHealthIndicator', () => {
     );
 
     expect(
-      screen.getByText('Install to Home Screen, then request durable storage again. Safari requires installation for maximum data retention.')
+      screen.getByText('Install to Home Screen, then request durable storage again. On iPhone and iPad, installation is the strongest protection path for local data.')
     ).toBeInTheDocument();
   });
 });
