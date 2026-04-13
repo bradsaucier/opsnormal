@@ -2,14 +2,15 @@
 
 This file documents the custom interface values that are intentionally centralized for cockpit consistency.
 It is not a full design system.
-It only covers custom geometry and state signaling that are easy to drift if redefined ad hoc in JSX.
+It covers the structural palette, clipped geometry, shared chrome utilities, and readiness signaling that are easy to drift if redefined ad hoc in JSX.
 
 ## Scope boundary
 
 In scope:
 - base and surface colors that establish the core cockpit palette
-- structural border values used to frame primary panels
+- structural border values used to frame primary panels and inset support surfaces
 - notch sizes used by the shared clipped panel language
+- shared chrome utilities for primary panels, nested support surfaces, and compact chip surfaces
 - clipped action button chrome used on installation, update, backup, and restore actions
 - readiness state colors used by badges and history cells
 
@@ -28,9 +29,6 @@ Out of scope:
 - `--color-ops-surface-raised`: `#18211d`
 - `--color-ops-surface-overlay`: `#1f2a25`
 - `--color-ops-surface-interactive`: `#28342e`
-- `--color-ops-surface-raised`: `#18211d`
-- `--color-ops-surface-overlay`: `#1f2a25`
-- `--color-ops-surface-interactive`: `#24312b`
 - `--color-ops-text-primary`: `#e6ece9`
 - `--color-ops-text-secondary`: `#b4bfba`
 - `--color-ops-text-muted`: `#8b9691`
@@ -38,16 +36,39 @@ Out of scope:
 - `--color-ops-border-struct`: `#ffffff29`
 - `--color-ops-border-strong`: `#ffffff3a`
 - `--color-ops-panel-border`: `#ffffff1a`
-- `--color-ops-panel-border`: `#ffffff17`
 - `--color-ops-panel-border-strong`: `#ffffff24`
 - `--color-ops-accent`: `#6ee7b7`
 - `--color-ops-accent-muted`: `#b7f7da`
 - `--color-ops-accent-border`: `#6ee7b724`
 
-Application rule:
-- Prefer `surface-raised` for primary cards and accordion bodies.
-- Prefer `surface-overlay` for nested decision zones, preview details, and subordinate notes.
+Application rules:
+- Prefer `surface-1` for the main shell and primary section bodies.
+- Prefer `surface-2` or `surface-raised` when a card needs to lift visually above the parent section.
+- Prefer `surface-overlay` for nested decision zones, detail briefs, support strips, and subordinate notes.
+- Prefer `surface-base` for compact chips, secondary labels, and inset status containers.
 - Use panel border tokens instead of one-off `border-white/10` and `bg-black/20` combinations when the surface belongs to the notch-clipped chrome language.
+
+## Shared chrome utilities
+
+These shared classes live in `src/styles/index.css` and should be preferred over ad hoc surface stacks.
+
+Primary shells:
+- `.tactical-panel`
+- `.panel-shadow`
+
+Inset support surfaces:
+- `.tactical-subpanel`
+- `.tactical-subpanel-strong`
+
+Compact support surfaces:
+- `.tactical-chip-panel`
+
+Application rules:
+- Use `tactical-panel` for major clipped shells that define the page rhythm.
+- Use `tactical-subpanel` for secondary decision zones and narrative guidance inside a section.
+- Use `tactical-subpanel-strong` when a detail brief or selected-state summary should read one step higher than surrounding support strips.
+- Use `tactical-chip-panel` for compact meta blocks, legends, and grouped facts that should feel inset rather than flat.
+- Keep these utilities inside the current cockpit language. They are not a license to add decorative glow, blur, or card-rounding.
 
 ## Notch geometry
 
@@ -74,46 +95,11 @@ clip-path: polygon(
 );
 ```
 
-Application rule:
+Application rules:
 - Primary shells use a clipped outer frame plus a clipped inner surface.
 - Status badges and compact history controls use the chip notch.
 - Buttons inside the chrome system use the chip notch and inset focus rings.
 - Do not add rounded corners to primary structural containers.
-
-## Action button chrome
-
-Clipped action buttons are defined centrally so install, update, export, import, and recovery controls present the same geometry.
-
-Base class:
-- `.ops-action-button`
-
-Tone classes:
-- `.ops-action-button-neutral`
-- `.ops-action-button-sky`
-- `.ops-action-button-emerald`
-- `.ops-action-button-emerald-solid`
-- `.ops-action-button-amber`
-- `.ops-action-button-orange`
-- `.ops-action-button-rose`
-- `.ops-action-button-red`
-
-Application rule:
-- Use clipped action buttons for major operator actions inside notch-framed surfaces.
-- Preserve inset focus visibility on clipped controls.
-- Avoid rounded button chrome inside primary tactical panels.
-
-
-## Surface elevation and interaction tokens
-
-The visual quality pass introduces semantic surface tones for notched panels and compact cards.
-These do not replace every existing Tailwind color utility.
-They define the shared baseline for high-traffic shells in backup, restore, install, and update flows.
-
-Use these semantic layers when adding new structural chrome:
-- `--color-ops-surface-base`: deepest inset content and passive support blocks
-- `--color-ops-surface-raised`: standard panel surface for cards and banners
-- `--color-ops-surface-overlay`: denser inset surface for nested controls and preview facts
-- `--color-ops-surface-interactive`: hover or selected surface for compact interactive cards
 
 ## Compact spacing tokens
 
@@ -128,14 +114,28 @@ They are available for future rollouts even where core Tailwind spacing utilitie
 
 ## Action button chrome
 
-Primary action buttons now default to the chip notch geometry rather than rounded corners.
-This keeps install, update, export, import, and destructive recovery controls inside the same silhouette language as the surrounding panels.
+Clipped action buttons are defined centrally so install, update, export, import, and recovery controls present the same geometry.
+
+Base class:
+- `.ops-action-button`
+
+Tone classes:
+- `.ops-action-button-subtle`
+- `.ops-action-button-neutral`
+- `.ops-action-button-sky`
+- `.ops-action-button-emerald`
+- `.ops-action-button-emerald-solid`
+- `.ops-action-button-amber`
+- `.ops-action-button-orange`
+- `.ops-action-button-rose`
+- `.ops-action-button-red`
 
 Guidance:
-- use `ops-action-button` as the base class for structural controls
-- default button notch is `--ops-notch-chip`
-- use semantic tone modifiers such as success, info, warning, or danger rather than ad hoc border and background values
-- keep focus indication inside the clipped geometry with the shared inset focus treatment
+- Use `ops-action-button` as the base class for structural controls.
+- Default button notch is `--ops-notch-chip`.
+- Use semantic tone modifiers rather than ad hoc border and background values.
+- Keep focus indication inside the clipped geometry with the shared inset focus treatment.
+- Avoid rounded button chrome inside primary tactical panels.
 
 ## Readiness state colors
 
@@ -159,10 +159,11 @@ Unmarked:
 
 ## Enforcement guidance
 
-Use these tokens in:
+Use these tokens and utilities in:
 - `StatusBadge`
 - history state cells
 - structural shells that define the cockpit silhouette
+- nested guidance strips and detail briefs inside Today, history, and backup or recovery surfaces
 - clipped action surfaces such as install, update, export, import, and storage controls
 
 Do not create near-duplicate one-off values in component markup unless there is a clear functional need.
