@@ -11,6 +11,7 @@ It does not prove Safari storage policy behavior on Apple hardware.
 2. Safari-family storage-risk messaging still renders in the shell
 3. the core Dexie-backed check-in path persists across a page reload
 4. a fresh recorded backup suppresses the Safari-tab backup banner
+5. after a page-side active service-worker registration is observed and the page reloads under worker control, the cached shell can reopen offline
 
 ## What the WebKit gate is not allowed to prove
 
@@ -18,12 +19,18 @@ It does not prove Safari storage policy behavior on Apple hardware.
 2. Storage API persistence grant heuristics on Apple platforms
 3. installed Home Screen app behavior on iPhone or iPad
 4. real-device storage pressure, quota eviction, or Safari-only connection-loss faults
+5. anything that depends on Chromium-only Playwright service-worker inspection APIs instead of page-side browser behavior
 
 ## Triage rule for WebKit smoke failures
 
 1. If the failure shows shipped behavior is broken on WebKit, fix the product code before merge.
 2. If the failure is test fragility, harden the test without widening the claim.
 3. If the failure reflects a real platform boundary that the repository accepts, document the boundary here and in the affected test before merge.
+
+## Allowed WebKit proof method
+
+Use page-side `navigator.serviceWorker` state and an offline reload after the page is already controlled by the active worker.
+Do not rely on Playwright service-worker context APIs in this lane because those are Chromium-only and would create a false proof surface.
 
 ## Manual verification remains required
 
