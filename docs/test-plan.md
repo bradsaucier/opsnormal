@@ -6,7 +6,7 @@ Prove that the app:
 - stores daily entries reliably
 - derives view state correctly
 - survives page reloads
-- reopens offline after first load
+- retrieves the shipped shell offline after first controlled load on WebKit CI and reopens offline through manual release checks
 - exports consistent data
 - verifies export to import round-trip integrity
 - blocks accessibility regressions in custom ARIA widgets and critical page flows
@@ -58,7 +58,7 @@ Prove that the app:
 ### End-to-end tests
 - daily check-in persists through reload
 - synthetic Safari storage warning states drive the correct backup banner, install guidance, and storage-health messaging in Chromium
-- narrow WebKit smoke coverage now gates CI for app boot, Safari-family warning rendering, IndexedDB persistence, and offline reopen after first controlled load without claiming eviction simulation
+- narrow WebKit smoke coverage now gates CI for app boot, Safari-family warning rendering, IndexedDB persistence, and offline shell retrieval after first controlled load without claiming eviction simulation
 - production preview can reopen offline after first load
 - JSON export can be imported into a clean browser context and re-exported without data loss
 - import preview and staged merge path hold under the accordion backup panel
@@ -87,13 +87,13 @@ Vitest accessibility checks run in JSDOM and validate semantic markup only. The 
 
 ## Storage lifecycle automation note
 
-Safari storage lifecycle coverage is intentionally split across three layers. Unit tests prove storage-health and backup-prompt decision logic. Chromium e2e harness tests inject synthetic storage states and verify the exact operator-facing warning surfaces. A narrow WebKit smoke lane now gates CI for rendering, page-side service-worker readiness, offline reopen after first controlled load, and IndexedDB I-O on a WebKit engine, but it does not claim to reproduce Safari's seven-day purge behavior. The exact proof boundary and triage rule live in docs/webkit-limitations.md.
+Safari storage lifecycle coverage is intentionally split across three layers. Unit tests prove storage-health and backup-prompt decision logic. Chromium e2e harness tests inject synthetic storage states and verify the exact operator-facing warning surfaces. A narrow WebKit smoke lane now gates CI for rendering, page-side service-worker readiness, offline shell retrieval after first controlled load, and IndexedDB I-O on a WebKit engine, but it does not claim to reproduce Safari's seven-day purge behavior. The exact proof boundary and triage rule live in docs/webkit-limitations.md.
 
 No automated lane in this repository simulates Safari's seven-day script-writable-storage purge. That browser behavior depends on real Safari use over time and still requires manual verification on Apple hardware before release. If WebKit purges the app after inactivity, it can erase both IndexedDB and the browser-side timestamp that recorded the last export, so the shell can reopen looking like a clean install. Recovery guidance must direct the operator to restore from the latest JSON export immediately when that blank return occurs.
 
 ## Chromium-only note
 
-Playwright service-worker context instrumentation is limited to Chromium. The WebKit smoke lane uses page-side `navigator.serviceWorker` proof plus an offline reload after worker control instead of Chromium-only service-worker APIs. Offline reopen is still worth testing manually on Safari and mobile hardware before release because Apple policy behavior and installed-PWA behavior remain outside CI. The mobile history E2E spec also uses Chromium viewport emulation rather than a real mobile browser, so WebKit and installed-PWA behavior still require manual verification. Full local and CI coverage uses the e2e-mode harness build. The deployment lane runs a narrower production-artifact smoke pass so GitHub Pages is blocked on the real shipped bundle without publishing the harness pages.
+Playwright service-worker context instrumentation is limited to Chromium. The WebKit smoke lane uses page-side `navigator.serviceWorker` proof plus offline shell retrieval from an already controlled document instead of Chromium-only service-worker APIs or offline navigation paths that are unstable in Linux WebKit CI. Offline reopen is still worth testing manually on Safari and mobile hardware before release because Apple policy behavior and installed-PWA behavior remain outside CI. The mobile history E2E spec also uses Chromium viewport emulation rather than a real mobile browser, so WebKit and installed-PWA behavior still require manual verification. Full local and CI coverage uses the e2e-mode harness build. The deployment lane runs a narrower production-artifact smoke pass so GitHub Pages is blocked on the real shipped bundle without publishing the harness pages.
 
 ## Manual release checks
 
