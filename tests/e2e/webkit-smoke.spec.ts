@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 async function openStorageHealth(page: Page) {
   const storageHealthToggle = page.getByRole('button', { name: /storage health/i });
   await storageHealthToggle.click();
-  await expect(page.getByText(/storage durability/i)).toBeVisible();
+  await expect(page.getByText('Storage durability', { exact: true })).toBeVisible();
 }
 
 function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
