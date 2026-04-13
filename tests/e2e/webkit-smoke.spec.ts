@@ -13,7 +13,7 @@ function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 
 }
 
 test.describe('OpsNormal WebKit smoke', () => {
-  test('loads the shell and surfaces the natural Safari-family backup prompt', async ({ page }) => {
+  test('loads the shell and surfaces the natural Apple WebKit backup prompt', async ({ page }) => {
     await page.goto('/');
 
     await expect(page.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
@@ -26,7 +26,7 @@ test.describe('OpsNormal WebKit smoke', () => {
 
     await expect(
       page.getByText(
-        'High-risk storage posture on Safari-family browsers. Local browser data can disappear without backup. Export routinely.'
+        'High-risk storage posture in Safari on macOS. Local browser data can disappear without backup. Export routinely.'
       )
     ).toBeVisible();
     await expect(page.getByText('Browser tab', { exact: true })).toBeVisible();
