@@ -62,13 +62,14 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
           />
         ) : null}
         <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div
-            ref={desktopScrollRef}
-            className="history-scroll-shell clip-notched ops-notch-panel-inner overflow-x-auto bg-ops-base/80"
-            role="region"
-            aria-labelledby={ids.captionId}
-          >
-            <table
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel">
+            <div
+              ref={desktopScrollRef}
+              className="history-scroll-shell overflow-x-auto"
+              role="region"
+              aria-labelledby={ids.captionId}
+            >
+              <table
               className="min-w-max w-full border-separate border-spacing-0 text-sm"
               role="grid"
               aria-readonly="true"
@@ -176,14 +177,15 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                   );
                 })}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner bg-ops-surface-2/70 p-4">
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
@@ -204,8 +206,8 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
           </div>
         </div>
 
-        <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
-          <div className="clip-notched ops-notch-panel-inner bg-black/20 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
+        <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary">
             {selectedCell.dateKey === todayKey
               ? 'Today is live. Use the Today panel to update the current status picture.'
               : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
