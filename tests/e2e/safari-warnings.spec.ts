@@ -60,6 +60,10 @@ async function openStorageHealth(page: Page) {
   await expect(page.getByText(/storage durability/i)).toBeVisible();
 }
 
+function isoDaysBefore(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 test.describe('@harness OpsNormal Safari storage warning harness', () => {
   test('surfaces a fresh-backup order for stale Safari browser-tab risk', async ({ page }) => {
     await page.goto('/');
@@ -69,13 +73,13 @@ test.describe('@harness OpsNormal Safari storage warning harness', () => {
       buildStorageHealth({
         status: 'warning',
         message:
-          'High-risk storage posture on Safari-family browsers. Local browser data can disappear without backup. Export routinely.',
+          'High-risk storage posture in Safari on macOS. Local browser data can disappear without backup. Export routinely.',
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true
         }
       }),
-      '2026-04-01T12:00:00.000Z'
+      isoDaysBefore(9)
     );
 
     await expect(page.getByRole('heading', { name: 'Safari tab risk requires a fresh backup' })).toBeVisible();
@@ -94,13 +98,13 @@ test.describe('@harness OpsNormal Safari storage warning harness', () => {
       buildStorageHealth({
         status: 'warning',
         message:
-          'High-risk storage posture on Safari-family browsers. Local browser data can disappear without backup. Export routinely.',
+          'High-risk storage posture in Safari on macOS. Local browser data can disappear without backup. Export routinely.',
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true
         }
       }),
-      '2026-04-09T12:00:00.000Z'
+      isoDaysBefore(2)
     );
 
     await expect(
@@ -125,7 +129,7 @@ test.describe('@harness OpsNormal Safari storage warning harness', () => {
           webKitRisk: true
         }
       }),
-      '2026-04-01T12:00:00.000Z'
+      isoDaysBefore(9)
     );
 
     await expect(
@@ -156,7 +160,7 @@ test.describe('@harness OpsNormal Safari storage warning harness', () => {
 
     await expect(
       page.getByText(
-        'Install to Home Screen, then request durable storage again. Safari requires installation for maximum data retention.'
+        'Install to Home Screen, then request durable storage again. On iPhone and iPad, installation is the strongest protection path for local data.'
       )
     ).toBeVisible();
     await expect(page.getByText('Browser tab - install recommended')).toBeVisible();
