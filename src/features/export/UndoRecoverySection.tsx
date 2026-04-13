@@ -1,3 +1,4 @@
+import { NotchedFrame } from '../../components/NotchedFrame';
 import type { AccordionSectionKey } from './exportPanelShared';
 import { AccordionSection } from './exportPanelShared';
 
@@ -25,15 +26,18 @@ export function UndoRecoverySection({
       onToggle={onToggle}
     >
       <div className="space-y-4">
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
+        <NotchedFrame
+          outerClassName="bg-ops-panel-border"
+          innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-4 text-sm leading-6 text-zinc-300"
+        >
           Undo restores the pre-import snapshot for the current session only. Reload the app and
           that rope is gone. Keep external backups current.
-        </div>
+        </NotchedFrame>
         <button
           type="button"
           onClick={() => void onUndoImport()}
           disabled={!canUndoImport || undoBusy}
-          className="min-h-[44px] rounded-lg border border-amber-400/35 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-amber-100 uppercase transition hover:bg-amber-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          className="ops-action-button ops-action-button-amber min-h-[44px] px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {undoBusy ? 'Undoing Import' : 'Undo Last Import'}
         </button>
