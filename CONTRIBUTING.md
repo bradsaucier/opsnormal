@@ -36,6 +36,8 @@ npm run test:e2e:webkit
 npm run build
 ```
 
+`npm run test` enforces the targeted Vitest coverage gate defined in `vitest.config.ts`. That gate is incremental on purpose. It tracks the critical modules named in `coverage.include`, counts those files even when a test path forgets to import one, and keeps the report available on failure so the next edit can close the exact gap instead of guessing.
+
 ## Pull requests
 
 1. Keep changes scoped and explain the operational reason for the change.
