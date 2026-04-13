@@ -75,8 +75,9 @@ export function createBackupActionPrompt(
     return {
       tone: 'warning',
       title: 'Safari tab risk requires a fresh backup',
-      detail:
-        'This session is running in a Safari-family browser tab rather than an installed app context. Refresh the JSON export now and install to Home Screen when that path is available.'
+      detail: storageHealth.safari.installRecommended
+        ? 'This session is running in a browser tab on iPhone or iPad rather than an installed Home Screen app. Refresh the JSON export now and install to Home Screen when that path is available.'
+        : 'This session is running in Safari on macOS. Refresh the JSON export now before relying on local-only browser storage.'
     };
   }
 
