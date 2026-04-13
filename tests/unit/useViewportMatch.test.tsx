@@ -21,10 +21,7 @@ function installMatchMediaController(
     addEventListener: useLegacyListeners
       ? undefined
       : vi.fn(
-          (
-            eventName: string,
-            listener: EventListenerOrEventListenerObject,
-          ) => {
+          (eventName: string, listener: EventListenerOrEventListenerObject) => {
             if (eventName === 'change' && typeof listener === 'function') {
               listeners.add(listener as ChangeListener);
             }
@@ -33,10 +30,7 @@ function installMatchMediaController(
     removeEventListener: useLegacyListeners
       ? undefined
       : vi.fn(
-          (
-            eventName: string,
-            listener: EventListenerOrEventListenerObject,
-          ) => {
+          (eventName: string, listener: EventListenerOrEventListenerObject) => {
             if (eventName === 'change' && typeof listener === 'function') {
               listeners.delete(listener as ChangeListener);
             }
