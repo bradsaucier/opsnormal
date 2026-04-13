@@ -1,12 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import {
+  clearInstallBannerDismissal,
+  hasDismissedInstallBanner,
+  recordInstallBannerDismissal
+} from './installBannerState';
 import { useInstallPrompt } from './useInstallPrompt';
 
 export function InstallBanner() {
   const { isIOS, isStandalone, canPromptInstall, promptInstall } = useInstallPrompt();
   const [dismissed, setDismissed] = useState(false);
 
-  if (dismissed || isStandalone) {
+  useEffect(() => {
+    if (isStandalone) {
+      clearInstallBannerDismissal();
+    }
+  }, [isStandalone]);
+
+  if (isStandalone) {
+    return null;
+  }
+
+  if (dismissed || hasDismissedInstallBanner()) {
     return null;
   }
 
@@ -21,7 +36,8 @@ export function InstallBanner() {
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-ops-text-secondary">
                 Your data stays on this device. Installing improves offline reopen behavior and
-                browser storage reliability, especially on iPhone and iPad.
+                storage durability, especially in Safari on macOS and browser tabs on iPhone or
+                iPad.
               </p>
 
               {isIOS ? (
@@ -45,7 +61,10 @@ export function InstallBanner() {
               ) : null}
               <button
                 type="button"
-                onClick={() => setDismissed(true)}
+                onClick={() => {
+                  recordInstallBannerDismissal();
+                  setDismissed(true);
+                }}
                 className="min-h-11 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-zinc-200 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-200"
               >
                 Dismiss
