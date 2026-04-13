@@ -98,8 +98,8 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
         </div>
       ) : null}
 
-      <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
-        <div className="clip-notched ops-notch-panel-inner bg-black/20 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
+      <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
+        <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary">
           Select the state directly for each sector. Unmarked means no status recorded for the day. Nominal and degraded are deliberate check-ins, not automatic carry-forward.
         </div>
       </div>

@@ -190,13 +190,13 @@ function App() {
                   relationships, body, and rest. No account. No cloud sync. No analytics layer.
                 </p>
               </div>
-              <div className="clip-notched ops-notch-panel-outer bg-white/10 p-px text-right">
-                <div className="clip-notched ops-notch-panel-inner bg-black/25 px-4 py-3">
+              <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px text-right">
+                <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3">
                   <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
                   <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
                     Local only
                   </div>
-                  <div className="mt-2 text-xs leading-5 text-zinc-400">
+                  <div className="mt-2 text-xs leading-5 text-zinc-400 [font-variant-numeric:tabular-nums]">
                     {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
                   </div>
                 </div>
@@ -289,8 +289,8 @@ function App() {
           </ErrorBoundary>
         </div>
 
-        <div className="clip-notched ops-notch-shell-outer bg-white/10 p-px">
-          <footer className="clip-notched ops-notch-shell-inner bg-black/25 p-4 text-sm leading-6 text-zinc-400">
+        <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
+          <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-zinc-400">
             <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>
             <p className="mt-2">
               OpsNormal is a personal status tracking tool. It is not a medical device and does not

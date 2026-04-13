@@ -12,7 +12,7 @@ export function SectionCard({ title, eyebrow, meta, children }: SectionCardProps
       <div className="clip-notched ops-notch-panel-outer bg-[linear-gradient(180deg,rgba(110,231,183,0.18),rgba(255,255,255,0.02))] p-px">
         <section className="tactical-panel clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_24%),var(--color-ops-surface-1)] p-5 sm:p-6">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
+            <div className="max-w-3xl">
               {eyebrow ? (
                 <p className="text-xs font-semibold tracking-[0.24em] text-ops-accent-muted uppercase">
                   {eyebrow}
@@ -22,7 +22,11 @@ export function SectionCard({ title, eyebrow, meta, children }: SectionCardProps
                 {title}
               </h2>
             </div>
-            {meta ? <div className="text-sm text-ops-text-secondary">{meta}</div> : null}
+            {meta ? (
+              <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-3 text-sm text-ops-text-secondary sm:min-w-[14rem] sm:text-right">
+                {meta}
+              </div>
+            ) : null}
           </div>
           {children}
         </section>

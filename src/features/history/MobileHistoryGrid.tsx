@@ -72,7 +72,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               onClick={handlePreviousWeek}
               disabled={!canViewPreviousWeek}
               aria-controls={ids.mobileRegionId}
-              className="min-h-11 rounded-lg border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold tracking-[0.14em] text-ops-text-primary uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ops-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
             >
               Previous week
             </button>
@@ -81,7 +81,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               role="status"
               aria-live="polite"
               aria-atomic="true"
-              className="clip-notched ops-notch-chip border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+              className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
             >
               <span className="block text-[10px] text-ops-text-muted">
                 Week {visibleWeekIndex + 1} of {weekGroups.length}
@@ -95,7 +95,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               onClick={handleNextWeek}
               disabled={!canViewNextWeek}
               aria-controls={ids.mobileRegionId}
-              className="min-h-11 rounded-lg border border-white/15 bg-transparent px-3 py-2 text-xs font-semibold tracking-[0.14em] text-ops-text-primary uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ops-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
             >
               Next week
             </button>
@@ -149,7 +149,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 aria-describedby={weekStateId}
                 className="history-week-card clip-notched ops-notch-panel-outer w-[calc(100%-2.75rem)] min-w-[17.5rem] max-w-[24rem] shrink-0 bg-ops-border-struct p-px"
               >
-                <div className="clip-notched ops-notch-panel-inner bg-ops-base/80 p-3">
+                <div className="clip-notched ops-notch-panel-inner tactical-subpanel p-3">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
@@ -254,7 +254,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         className="mt-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px"
         aria-live="polite"
       >
-        <div className="clip-notched ops-notch-panel-inner bg-ops-surface-2/70 p-4">
+        <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
@@ -267,7 +267,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 {selectedDaySummary}
               </p>
             </div>
-            <div className="clip-notched ops-notch-chip border border-ops-border-soft bg-black/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
               {visibleWeekIndex + 1} of {weekGroups.length} week groups
             </div>
           </div>
@@ -276,7 +276,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             {selectedDayStatuses.map(({ sector, status }) => (
               <div
                 key={sector.id}
-                className="clip-notched ops-notch-chip flex items-center justify-between gap-3 border border-ops-border-soft bg-black/20 px-3 py-3"
+                className="clip-notched ops-notch-chip tactical-chip-panel flex items-center justify-between gap-3 px-3 py-3"
               >
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">

@@ -27,6 +27,7 @@ Before tagging a release:
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
 - [ ] mobile history region no longer announces a custom carousel or slide role, stays free of CSP violations, and is verified with at least one mobile screen reader path
+- [ ] nested support surfaces remain visually distinct from parent shells across the header posture card, Today direct-select tray, history detail briefs, week-status chip, and footer boundary card
 - [ ] iOS install guidance reviewed
 - [ ] blank-return recovery guidance reviewed so a previously used Safari session that reopens as a clean install directs the operator to restore from the latest JSON export immediately
 - [ ] README reflects current behavior
