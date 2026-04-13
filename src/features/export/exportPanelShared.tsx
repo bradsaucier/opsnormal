@@ -117,18 +117,20 @@ export function SignalCard({ label, value, detail, tone = 'default' }: SignalCar
   const chromeClasses = getSignalChromeClasses(tone);
 
   return (
-    <NotchedFrame
-      outerClassName={chromeClasses.outer}
-      innerClassName={`p-4 ${chromeClasses.inner}`}
-    >
-      <dt className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}>
-        {label}
-      </dt>
-      <dd className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}>
-        {value}
-      </dd>
-      <dd className={`mt-2 text-sm leading-6 ${chromeClasses.detail}`}>{detail}</dd>
-    </NotchedFrame>
+    <div role="listitem">
+      <NotchedFrame
+        outerClassName={chromeClasses.outer}
+        innerClassName={`p-4 ${chromeClasses.inner}`}
+      >
+        <p className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}>
+          {label}
+        </p>
+        <p className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}>
+          {value}
+        </p>
+        <p className={`mt-2 text-sm leading-6 ${chromeClasses.detail}`}>{detail}</p>
+      </NotchedFrame>
+    </div>
   );
 }
 
@@ -140,13 +142,13 @@ interface PreviewFactCardProps {
 
 export function PreviewFactCard({ label, value, detail }: PreviewFactCardProps) {
   return (
-    <div className="panel-shadow">
+    <div role="listitem" className="panel-shadow">
       <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
         <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3">
-          <dt className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+          <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
             {label}
-          </dt>
-          <dd className="mt-1 text-sm font-semibold text-ops-text-primary">{value}</dd>
+          </p>
+          <p className="mt-1 text-sm font-semibold text-ops-text-primary">{value}</p>
           {detail ? <p className="mt-2 text-xs leading-5 text-ops-text-muted">{detail}</p> : null}
         </div>
       </div>
