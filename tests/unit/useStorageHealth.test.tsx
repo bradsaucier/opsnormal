@@ -7,7 +7,8 @@ import type {
 } from '../../src/lib/storage';
 
 const storageMocks = vi.hoisted(() => ({
-  getStorageHealth: vi.fn<(options?: StorageHealthOptions) => Promise<StorageHealth>>(),
+  getStorageHealth:
+    vi.fn<(options?: StorageHealthOptions) => Promise<StorageHealth>>(),
   subscribeToStorageDiagnostics: vi.fn<(callback: () => void) => () => void>(),
 }));
 
@@ -87,10 +88,12 @@ describe('useStorageHealth', () => {
 
   it('hydrates initial storage health and refreshes on focus and diagnostics events', async () => {
     let diagnosticsCallback: (() => void) | undefined;
-    storageMocks.subscribeToStorageDiagnostics.mockImplementation((callback) => {
-      diagnosticsCallback = callback;
-      return () => undefined;
-    });
+    storageMocks.subscribeToStorageDiagnostics.mockImplementation(
+      (callback) => {
+        diagnosticsCallback = callback;
+        return () => undefined;
+      },
+    );
 
     const { result } = renderHook(() => useStorageHealth());
 
