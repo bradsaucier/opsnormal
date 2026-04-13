@@ -1,5 +1,5 @@
 // Architecture: ADR-0009, ADR-0017, and ADR-0019 require truthful storage
-// diagnostics that favor conservative Safari-family risk language and export-first
+// diagnostics that favor conservative Apple WebKit risk language and export-first
 // recovery over optimistic browser persistence claims.
 const STORAGE_PERSISTENCE_FLAG = 'opsnormal-storage-persistence-attempted';
 const STORAGE_PERSISTENCE_CONTEXT_KEY = 'opsnormal-storage-persistence-context';
@@ -480,7 +480,7 @@ export function createStorageHealth(
         'Best-effort storage protection is active. Home Screen mode avoids the standard Safari browser inactivity purge, but local-only data can still be lost to storage pressure or manual clearing. Export routinely.';
     } else if (webKitEvictionRisk) {
       message =
-        'Best-effort storage protection is active, but Safari-family browsers can still evict local data. Keep routine exports and verify the installed path when available.';
+        'Best-effort storage protection is active, but Safari on macOS can still evict local data. Keep routine exports and verify the installed path when available.';
     } else if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
       message = `Persistent storage active. ${formatBytes(usageBytes)} used of ${formatBytes(quotaBytes)} quota.`;
     } else {
@@ -502,7 +502,7 @@ export function createStorageHealth(
   } else if (webKitEvictionRisk) {
     status = 'warning';
     message =
-      'High-risk storage posture on Safari-family browsers. Local browser data can disappear without backup. Export routinely.';
+      'High-risk storage posture in Safari on macOS. Local browser data can disappear without backup. Export routinely.';
   } else if (!persistenceAvailable && !estimateAvailable) {
     status = 'unavailable';
     message = 'Storage telemetry unavailable on this browser. Export routinely as the external backup.';
