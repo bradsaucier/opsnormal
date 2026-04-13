@@ -1,5 +1,6 @@
 import type { ChangeEvent, RefObject } from 'react';
 
+import { NotchedFrame } from '../../components/NotchedFrame';
 import { formatBytes } from '../../lib/storage';
 import type { ImportMode, ImportPreview } from '../../types';
 import type { ReplaceBackupState, ReplaceConfirmState } from './workflowTypes';
@@ -35,6 +36,21 @@ interface ImportRestoreSectionProps {
   onPrepareReplaceBackup: () => Promise<void>;
   onAcknowledgeManualBackup: () => void;
   onDisarmReplace: () => void;
+}
+
+const actionButtonClasses =
+  'ops-action-button clip-notched ops-notch-chip px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase';
+
+function getModeOptionClasses(isSelected: boolean, mode: ImportMode): string {
+  if (!isSelected) {
+    return 'clip-notched ops-notch-chip border border-ops-border-soft bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3 text-ops-text-secondary transition hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_28%),var(--color-ops-surface-interactive)]';
+  }
+
+  if (mode === 'replace') {
+    return 'clip-notched ops-notch-chip border border-amber-400/35 bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-amber-50';
+  }
+
+  return 'clip-notched ops-notch-chip border border-emerald-400/35 bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-emerald-50';
 }
 
 export function ImportRestoreSection({
@@ -80,7 +96,7 @@ export function ImportRestoreSection({
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <label
             htmlFor={fileInputId}
-            className="inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-lg border border-sky-400/40 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-sky-100 uppercase transition hover:bg-sky-400/10 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-sky-300"
+            className={`ops-action-button ops-action-button-info ops-focus-ring-within clip-notched ops-notch-chip cursor-pointer px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase ${importBusy ? 'pointer-events-none opacity-70' : ''}`}
           >
             Select JSON Backup
             <input
@@ -111,7 +127,10 @@ export function ImportRestoreSection({
         </div>
 
         {pendingImport ? (
-          <div className="rounded-xl border border-sky-400/25 bg-sky-400/8 p-4">
+          <NotchedFrame
+            outerClassName="bg-[linear-gradient(180deg,rgba(125,211,252,0.34),rgba(255,255,255,0.04))]"
+            innerClassName="bg-[linear-gradient(180deg,rgba(56,189,248,0.14),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)] p-4"
+          >
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex-1">
                 <h4 className="text-sm font-semibold tracking-[0.16em] text-sky-100 uppercase">
@@ -121,10 +140,10 @@ export function ImportRestoreSection({
                   {pendingFileName || 'Selected file'}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-sky-50/95">{importIntegrityText}</p>
-                <p className="mt-2 text-xs tracking-[0.14em] text-zinc-400 uppercase">
+                <p className="mt-2 text-xs tracking-[0.14em] text-sky-100/75 uppercase">
                   File size - {formatBytes(pendingFileSize)}
                 </p>
-                <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div role="list" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <PreviewFactCard label="Imported rows" value={String(pendingImport.totalEntries)} />
                   <PreviewFactCard
                     label="Current rows"
@@ -151,16 +170,22 @@ export function ImportRestoreSection({
                         : 'All other local rows stay in place.'
                     }
                   />
-                </dl>
+                </div>
               </div>
 
-              <div className="w-full max-w-sm rounded-xl border border-white/10 bg-black/20 p-4">
+              <NotchedFrame
+                className="w-full max-w-sm"
+                outerClassName="bg-ops-border-soft"
+                innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)] p-4"
+              >
                 <fieldset>
-                  <legend className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
+                  <legend className="text-xs font-semibold tracking-[0.16em] text-ops-text-muted uppercase">
                     Restore mode
                   </legend>
-                  <div className="mt-3 space-y-3 text-sm text-zinc-300">
-                    <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                  <div className="mt-3 space-y-3 text-sm text-ops-text-secondary">
+                    <label
+                      className={`flex items-start gap-3 ${getModeOptionClasses(importMode === 'merge', 'merge')}`}
+                    >
                       <input
                         type="radio"
                         name="import-mode"
@@ -172,13 +197,15 @@ export function ImportRestoreSection({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-semibold text-zinc-100">Merge</span>
+                        <span className="block font-semibold text-ops-text-primary">Merge</span>
                         <span className="block leading-6">
                           Write imported rows and preserve all other local rows.
                         </span>
                       </span>
                     </label>
-                    <label className="flex items-start gap-3 rounded-lg border border-white/10 bg-black/20 p-3">
+                    <label
+                      className={`flex items-start gap-3 ${getModeOptionClasses(importMode === 'replace', 'replace')}`}
+                    >
                       <input
                         type="radio"
                         name="import-mode"
@@ -190,7 +217,7 @@ export function ImportRestoreSection({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-semibold text-zinc-100">Replace</span>
+                        <span className="block font-semibold text-ops-text-primary">Replace</span>
                         <span className="block leading-6">
                           Clear local rows first, then restore from the selected backup.
                         </span>
@@ -199,118 +226,133 @@ export function ImportRestoreSection({
                   </div>
                 </fieldset>
 
-                <div className="mt-4 rounded-lg border border-white/10 bg-black/25 px-3 py-3 text-sm leading-6 text-zinc-300">
-                  {importMode === 'replace'
-                    ? 'Destructive restore path selected. '
-                    : 'Merge path selected. '}
-                  {getImportImpactText(pendingImport, importMode)}
-                </div>
-
-                <div className="my-4 border-t border-white/10" />
-
-                {importMode === 'replace' ? (
-                  <div
-                    ref={replaceActionRef}
-                    className="mt-6 space-y-4 rounded-xl border border-red-500/20 bg-red-950/10 p-4"
-                  >
-                    <div className="rounded-lg border border-amber-400/25 bg-amber-400/8 p-3 text-sm leading-6 text-amber-100">
-                      Step 1 - secure a pre-replace backup. Step 2 - verify that the backup file exists on local disk if the browser cannot prove the write. Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
-                    </div>
-
-                    <div className="space-y-3">
-                      {replaceBackupState.phase === 'manual-awaiting-ack' ? (
-                        <div className="space-y-3 rounded-lg border border-amber-400/25 bg-amber-400/6 p-3">
-                          <label className="flex items-start gap-3 text-sm leading-6 text-amber-100">
-                            <input
-                              type="checkbox"
-                              checked={manualBackupConfirmed}
-                              onChange={(event) =>
-                                onManualBackupConfirmedChange(event.target.checked)
-                              }
-                              className="mt-1"
-                            />
-                            <span>
-                              I confirm the backup file was successfully saved to my device before importing this restore.
-                            </span>
-                          </label>
-                          <button
-                            type="button"
-                            onClick={onAcknowledgeManualBackup}
-                            disabled={!manualBackupConfirmed || importBusy}
-                            className="min-h-[44px] w-full rounded-lg border border-amber-400/35 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-amber-100 uppercase transition hover:bg-amber-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            Unlock Replace After Manual Backup Check
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => void onPrepareReplaceBackup()}
-                          disabled={replaceBackupState.phase === 'saving' || importBusy}
-                          className="min-h-[44px] w-full rounded-lg border border-sky-400/35 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-sky-100 uppercase transition hover:bg-sky-400/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          {replaceBackupState.phase === 'saving'
-                            ? 'Writing Backup'
-                            : supportsVerifiedFileSave
-                              ? 'Write Verified Pre-Replace Backup'
-                              : 'Export Pre-Replace Backup'}
-                        </button>
-                      )}
-
-                      {replaceBackupState.phase === 'ready' ? (
-                        <p className="rounded-lg border border-white/10 bg-black/25 px-3 py-3 text-sm leading-6 text-zinc-200">
-                          Backup ready - {replaceBackupState.fileName}.{' '}
-                          {replaceBackupState.verification === 'verified'
-                            ? 'Disk write verified before replace unlock.'
-                            : 'Disk write acknowledged manually before replace unlock.'}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    <div className="border-t border-white/10 pt-4">
-                      <div className="flex flex-col gap-3">
-                        <button
-                          type="button"
-                          onClick={() => void onConfirmImport()}
-                          disabled={!replaceReady || importBusy}
-                          className={`min-h-[44px] rounded-lg border px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-70 ${
-                            replaceConfirmState === 'armed'
-                              ? 'border-red-400/50 bg-red-950/40 text-red-100 hover:bg-red-950/55 focus-visible:outline-red-300'
-                              : 'border-red-700/45 bg-transparent text-red-300 hover:bg-red-950/25 focus-visible:outline-red-300'
-                          }`}
-                        >
-                          {importBusy
-                            ? 'Writing Import'
-                            : replaceConfirmState === 'armed'
-                              ? `Execute Replace All ${pendingImport.existingEntryCount} Rows`
-                              : 'Arm Replace All Data'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={onDisarmReplace}
-                          disabled={replaceConfirmState !== 'armed' || importBusy}
-                          className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          Disarm Replace
-                        </button>
-                        <button
-                          type="button"
-                          onClick={onCancelImport}
-                          disabled={importBusy}
-                          className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                <div className="panel-shadow mt-4">
+                  <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
+                    <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-base)] px-3 py-3 text-sm leading-6 text-ops-text-secondary">
+                      {importMode === 'replace'
+                        ? 'Destructive restore path selected. '
+                        : 'Merge path selected. '}
+                      {getImportImpactText(pendingImport, importMode)}
                     </div>
                   </div>
+                </div>
+
+                <div className="my-4 border-t border-ops-border-soft" />
+
+                {importMode === 'replace' ? (
+                  <NotchedFrame
+                    className="mt-6"
+                    outerClassName="bg-[linear-gradient(180deg,rgba(248,113,113,0.34),rgba(255,255,255,0.04))]"
+                    innerClassName="bg-[linear-gradient(180deg,rgba(239,68,68,0.14),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-4"
+                  >
+                    <div ref={replaceActionRef}>
+                      <div className="panel-shadow">
+                        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
+                          <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-amber-50">
+                            Step 1 - secure a pre-replace backup. Step 2 - verify that the backup file exists on local disk if the browser cannot prove the write. Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {replaceBackupState.phase === 'manual-awaiting-ack' ? (
+                          <div className="panel-shadow">
+                            <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
+                              <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.14),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3">
+                                <label className="flex items-start gap-3 text-sm leading-6 text-amber-100">
+                                  <input
+                                    type="checkbox"
+                                    checked={manualBackupConfirmed}
+                                    onChange={(event) =>
+                                      onManualBackupConfirmedChange(event.target.checked)
+                                    }
+                                    className="mt-1"
+                                  />
+                                  <span>
+                                    I confirm the backup file was successfully saved to my device before importing this restore.
+                                  </span>
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={onAcknowledgeManualBackup}
+                                  disabled={!manualBackupConfirmed || importBusy}
+                                  className={`${actionButtonClasses} ops-action-button-warning mt-3 w-full`}
+                                >
+                                  Unlock Replace After Manual Backup Check
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void onPrepareReplaceBackup()}
+                            disabled={replaceBackupState.phase === 'saving' || importBusy}
+                            className={`${actionButtonClasses} ops-action-button-info w-full`}
+                          >
+                            {replaceBackupState.phase === 'saving'
+                              ? 'Writing Backup'
+                              : supportsVerifiedFileSave
+                                ? 'Write Verified Pre-Replace Backup'
+                                : 'Export Pre-Replace Backup'}
+                          </button>
+                        )}
+
+                        {replaceBackupState.phase === 'ready' ? (
+                          <div className="panel-shadow">
+                            <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
+                              <p className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-base)] px-3 py-3 text-sm leading-6 text-ops-text-primary">
+                                Backup ready - {replaceBackupState.fileName}.{' '}
+                                {replaceBackupState.verification === 'verified'
+                                  ? 'Disk write verified before replace unlock.'
+                                  : 'Disk write acknowledged manually before replace unlock.'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 border-t border-red-400/20 pt-4">
+                        <div className="flex flex-col gap-3">
+                          <button
+                            type="button"
+                            onClick={() => void onConfirmImport()}
+                            disabled={!replaceReady || importBusy}
+                            className={`${actionButtonClasses} ${replaceConfirmState === 'armed' ? 'ops-action-button-danger' : 'ops-action-button-warning'}`}
+                          >
+                            {importBusy
+                              ? 'Writing Import'
+                              : replaceConfirmState === 'armed'
+                                ? `Execute Replace All ${pendingImport.existingEntryCount} Rows`
+                                : 'Arm Replace All Data'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={onDisarmReplace}
+                            disabled={replaceConfirmState !== 'armed' || importBusy}
+                            className={`${actionButtonClasses} ops-action-button-subtle`}
+                          >
+                            Disarm Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={onCancelImport}
+                            disabled={importBusy}
+                            className={`${actionButtonClasses} ops-action-button-subtle`}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </NotchedFrame>
                 ) : (
                   <div className="flex flex-col gap-3">
                     <button
                       type="button"
                       onClick={() => void onConfirmImport()}
                       disabled={importBusy}
-                      className="min-h-[44px] rounded-lg border border-emerald-400/40 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-emerald-200 uppercase transition hover:bg-emerald-400/12 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-wait disabled:opacity-70"
+                      className={`${actionButtonClasses} ops-action-button-success w-full`}
                     >
                       {importBusy ? 'Writing Import' : 'Confirm Merge Import'}
                     </button>
@@ -318,19 +360,22 @@ export function ImportRestoreSection({
                       type="button"
                       onClick={onCancelImport}
                       disabled={importBusy}
-                      className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      className={`${actionButtonClasses} ops-action-button-subtle w-full`}
                     >
                       Cancel
                     </button>
                   </div>
                 )}
-              </div>
+              </NotchedFrame>
             </div>
-          </div>
+          </NotchedFrame>
         ) : (
-          <div className="rounded-xl border border-dashed border-white/10 bg-black/15 p-4 text-sm leading-6 text-zinc-400">
+          <NotchedFrame
+            outerClassName="bg-ops-border-soft"
+            innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-base)] p-4 text-sm leading-6 text-ops-text-muted"
+          >
             No file staged. Select a JSON backup to open the preview and restore controls.
-          </div>
+          </NotchedFrame>
         )}
       </div>
     </AccordionSection>

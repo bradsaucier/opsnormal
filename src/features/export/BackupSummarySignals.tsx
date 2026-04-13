@@ -39,7 +39,11 @@ export function BackupSummarySignals({
   ];
 
   return (
-    <dl className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Backup and recovery summary signals">
+    <div
+      role="list"
+      className="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+      aria-label="Backup and recovery summary signals"
+    >
       {operatorSignals.map((signal) => (
         <SignalCard
           key={signal.label}
@@ -49,6 +53,6 @@ export function BackupSummarySignals({
           tone={signal.tone}
         />
       ))}
-    </dl>
+    </div>
   );
 }

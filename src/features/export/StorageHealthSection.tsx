@@ -1,3 +1,4 @@
+import { NotchedFrame } from '../../components/NotchedFrame';
 import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
 import type { StorageHealth } from '../../lib/storage';
 import type { AccordionSectionKey } from './exportPanelShared';
@@ -32,9 +33,12 @@ export function StorageHealthSection({
           onRequestStorageProtection={onRequestStorageProtection}
           isRequestingStorageProtection={isRequestingStorageProtection}
         />
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
+        <NotchedFrame
+          outerClassName="bg-ops-panel-border"
+          innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-4 text-sm leading-6 text-zinc-300"
+        >
           The browser automatically manages local storage. You can manually request exemption from automatic deletion, though browsers may deny this silently. Always rely on routine exports to secure your critical data.
-        </div>
+        </NotchedFrame>
       </div>
     </AccordionSection>
   );

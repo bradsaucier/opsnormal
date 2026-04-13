@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { formatStorageSummary, type StorageHealth } from '../lib/storage';
 
+import { NotchedFrame } from './NotchedFrame';
+
 const MANUAL_RETRY_COOLDOWN_MS = 60 * 1000;
+const actionButtonClasses =
+  'ops-action-button clip-notched ops-notch-chip px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase';
 
 interface StorageHealthIndicatorProps {
   storageHealth: StorageHealth | null;
@@ -90,6 +94,47 @@ function getRequestButtonLabel(
   return 'Request durable storage';
 }
 
+function getToneClasses(storageHealth: StorageHealth | null): {
+  outer: string;
+  inner: string;
+  text: string;
+  muted: string;
+  definition: string;
+} {
+  if (storageHealth?.status === 'warning') {
+    return {
+      outer:
+        'bg-[linear-gradient(180deg,rgba(251,146,60,0.34),rgba(255,255,255,0.04))]',
+      inner:
+        'bg-[linear-gradient(180deg,rgba(249,115,22,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
+      text: 'text-orange-100',
+      muted: 'text-orange-100/78',
+      definition: 'text-orange-50/88'
+    };
+  }
+
+  if (storageHealth?.status === 'monitor') {
+    return {
+      outer:
+        'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
+      inner:
+        'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
+      text: 'text-amber-50',
+      muted: 'text-amber-100/76',
+      definition: 'text-amber-50/88'
+    };
+  }
+
+  return {
+    outer: 'bg-ops-border-struct',
+    inner:
+      'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-raised)]',
+    text: 'text-ops-text-primary',
+    muted: 'text-ops-text-muted',
+    definition: 'text-ops-text-secondary'
+  };
+}
+
 export function StorageHealthIndicator({
   storageHealth,
   onRequestStorageProtection,
@@ -131,6 +176,7 @@ export function StorageHealthIndicator({
       storageHealth.persistenceAvailable &&
       onRequestStorageProtection
   );
+  const toneClasses = getToneClasses(storageHealth);
 
   async function handleRequestStorageProtection() {
     if (!canRequestStorageProtection || !onRequestStorageProtection || isRequestingStorageProtection || isCoolingDown) {
@@ -147,76 +193,63 @@ export function StorageHealthIndicator({
     }
   }
 
-  const toneClasses =
-    storageHealth?.status === 'warning'
-      ? 'border-orange-400/35 bg-orange-400/10 text-orange-100'
-      : storageHealth?.status === 'monitor'
-        ? 'border-amber-400/25 bg-amber-400/8 text-amber-50'
-        : 'border-ops-border-struct bg-ops-surface-1/75 text-ops-text-secondary';
-
   return (
-    <div
-      className={`rounded-xl border p-4 ${toneClasses}`}
-      role="status"
-      aria-live="polite"
-      aria-atomic="true"
+    <NotchedFrame
+      outerClassName={toneClasses.outer}
+      innerClassName={`p-4 ${toneClasses.inner}`}
     >
-      <p className="text-xs font-semibold tracking-[0.16em] uppercase text-ops-text-muted">
-        Storage durability
-      </p>
-      <p className="mt-2 text-sm leading-6">
-        {storageHealth?.message ?? 'Assessing local storage posture.'}
-      </p>
-      <p className="mt-2 text-xs leading-5 text-ops-text-muted">
-        {storageHealth ? getDurabilityHelperText(storageHealth) : 'Browser storage is strictly best-effort. Routine JSON export remains the only guaranteed backup.'}
-      </p>
-      {canRequestStorageProtection && storageHealth ? (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => {
-              void handleRequestStorageProtection();
-            }}
-            disabled={isRequestingStorageProtection || isCoolingDown}
-            className="min-h-11 rounded-lg border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-xs font-semibold tracking-[0.14em] text-emerald-100 uppercase transition hover:bg-emerald-400/15 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-zinc-400"
-          >
-            {isRequestingStorageProtection
-              ? 'Requesting durable storage'
-              : getRequestButtonLabel(storageHealth, isCoolingDown, hasRequestedDurableStorage)}
-          </button>
-        </div>
-      ) : null}
-      {storageHealth ? (
-        <dl className="mt-3 grid gap-2 text-xs leading-5 text-ops-text-muted sm:grid-cols-2">
-          <div>
-            <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
-              Install path
-            </dt>
-            <dd className="mt-1">{getInstallStateLabel(storageHealth)}</dd>
+      <div role="status" aria-live="polite" aria-atomic="true">
+        <p className={`text-xs font-semibold tracking-[0.16em] uppercase ${toneClasses.muted}`}>
+          Storage durability
+        </p>
+        <p className={`mt-2 text-sm leading-6 ${toneClasses.text}`}>
+          {storageHealth?.message ?? 'Assessing local storage posture.'}
+        </p>
+        <p className={`mt-2 text-xs leading-5 ${toneClasses.muted}`}>
+          {storageHealth
+            ? getDurabilityHelperText(storageHealth)
+            : 'Browser storage is strictly best-effort. Routine JSON export remains the only guaranteed backup.'}
+        </p>
+        {canRequestStorageProtection && storageHealth ? (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                void handleRequestStorageProtection();
+              }}
+              disabled={isRequestingStorageProtection || isCoolingDown}
+              className={`${actionButtonClasses} ops-action-button-success`}
+            >
+              {isRequestingStorageProtection
+                ? 'Requesting durable storage'
+                : getRequestButtonLabel(storageHealth, isCoolingDown, hasRequestedDurableStorage)}
+            </button>
           </div>
-          <div>
-            <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
-              Persistence
-            </dt>
-            <dd className="mt-1">{getPersistenceLabel(storageHealth, hasRequestedDurableStorage)}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
-              Reconnect state
-            </dt>
-            <dd className="mt-1">{getReconnectLabel(storageHealth)}</dd>
-          </div>
-          <div>
-            <dt className="font-semibold tracking-[0.12em] uppercase text-ops-text-secondary">
-              Write verify
-            </dt>
-            <dd className="mt-1">{getVerificationLabel(storageHealth)}</dd>
-          </div>
-        </dl>
-      ) : null}
-      <p className="mt-3 text-xs tracking-[0.14em] uppercase text-ops-text-muted">
-        {storageHealth ? formatStorageSummary(storageHealth) : 'Telemetry pending'}
-      </p>
-    </div>
+        ) : null}
+        {storageHealth ? (
+          <dl className={`mt-3 grid gap-2 text-xs leading-5 sm:grid-cols-2 ${toneClasses.definition}`}>
+            <div>
+              <dt className="font-semibold tracking-[0.12em] uppercase">Install path</dt>
+              <dd className="mt-1">{getInstallStateLabel(storageHealth)}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold tracking-[0.12em] uppercase">Persistence</dt>
+              <dd className="mt-1">{getPersistenceLabel(storageHealth, hasRequestedDurableStorage)}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold tracking-[0.12em] uppercase">Reconnect state</dt>
+              <dd className="mt-1">{getReconnectLabel(storageHealth)}</dd>
+            </div>
+            <div>
+              <dt className="font-semibold tracking-[0.12em] uppercase">Write verify</dt>
+              <dd className="mt-1">{getVerificationLabel(storageHealth)}</dd>
+            </div>
+          </dl>
+        ) : null}
+        <p className={`mt-3 text-xs tracking-[0.14em] uppercase ${toneClasses.muted}`}>
+          {storageHealth ? formatStorageSummary(storageHealth) : 'Telemetry pending'}
+        </p>
+      </div>
+    </NotchedFrame>
   );
 }
