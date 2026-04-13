@@ -9,6 +9,9 @@ interface ExportBackupSectionProps {
   onCsvExport: () => Promise<void>;
 }
 
+const actionButtonClasses =
+  'ops-action-button clip-notched ops-notch-chip px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase';
+
 export function ExportBackupSection({
   isOpen,
   onToggle,
@@ -26,36 +29,45 @@ export function ExportBackupSection({
     >
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-            <p className="text-xs font-semibold tracking-[0.16em] text-zinc-400 uppercase">
-              Backup posture
-            </p>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">{backupStatus}</p>
-            <p className="mt-2 text-xs leading-5 text-zinc-400">
-              Export is the primary safe recovery path. Run it routinely.
-            </p>
+          <div className="panel-shadow">
+            <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
+              <div className="clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)] p-4">
+                <p className="text-xs font-semibold tracking-[0.16em] text-ops-text-muted uppercase">
+                  Backup posture
+                </p>
+                <p className="mt-2 text-sm leading-6 text-ops-text-secondary">{backupStatus}</p>
+                <p className="mt-2 text-xs leading-5 text-ops-text-muted">
+                  Export is the primary safe recovery path. Run it routinely.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
             <button
               type="button"
               onClick={() => void onJsonExport()}
-              className="min-h-[44px] rounded-lg border border-emerald-400/45 bg-emerald-500 px-4 py-3 text-sm font-semibold tracking-[0.14em] text-white uppercase transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300"
+              className={`${actionButtonClasses} ops-action-button-success-solid`}
             >
               Export JSON
             </button>
             <button
               type="button"
               onClick={() => void onCsvExport()}
-              className="min-h-[44px] rounded-lg border border-white/15 bg-transparent px-4 py-3 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100"
+              className={`${actionButtonClasses} ops-action-button-subtle`}
             >
               Export CSV
             </button>
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm leading-6 text-zinc-300">
-          Export produces the recovery file. Run it routinely, especially in Safari on macOS and browser tabs on iPhone or iPad where browser-managed storage can disappear.
+        <div className="panel-shadow">
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
+            <div className="clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-raised)] p-4 text-sm leading-6 text-ops-text-secondary">
+              Export produces the recovery file. Run it routinely, especially in Safari on macOS and
+              browser tabs on iPhone or iPad where browser-managed storage can disappear.
+            </div>
+          </div>
         </div>
       </div>
     </AccordionSection>
