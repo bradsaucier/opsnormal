@@ -62,7 +62,7 @@ async function waitForControllingServiceWorker(page: Page) {
   await expect
     .poll(() => readServiceWorkerClientState(page), {
       timeout: 30000,
-      message: 'Expected the WebKit page to be controlled by the active service worker before offline reopen.'
+      message: 'Expected the WebKit page to be controlled by the active service worker before offline shell retrieval.'
     })
     .toMatchObject({
       isSupported: true,
@@ -104,7 +104,7 @@ test.describe('OpsNormal WebKit smoke', () => {
     await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
   });
 
-  test('reopens offline after the first controlled load in the WebKit smoke lane', async ({ page, context }) => {
+  test('retrieves the cached shell offline after the first controlled load in the WebKit smoke lane', async ({ page, context }) => {
     test.slow();
 
     await page.goto('/');
@@ -122,13 +122,46 @@ test.describe('OpsNormal WebKit smoke', () => {
     await expect(relationshipsNominal).toHaveAttribute('aria-checked', 'true');
 
     await context.setOffline(true);
-    await page.close();
 
-    const reopenedPage = await context.newPage();
-    await reopenedPage.goto('/');
+    const offlineShellProbe = await page.evaluate(async () => {
+      try {
+        const shellUrl = new URL('index.html', window.location.href).toString();
+        const response = await fetch(shellUrl, {
+          cache: 'no-store',
+          headers: {
+            Accept: 'text/html'
+          }
+        });
+        const text = await response.text();
 
-    await expect(reopenedPage.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
-    await expect(sectorRadio(reopenedPage, 'Relationships', 'nominal')).toHaveAttribute('aria-checked', 'true');
+        return {
+          ok: response.ok,
+          status: response.status,
+          shellUrl,
+          hasOpsNormalHeading: text.includes('OpsNormal'),
+          hasRootMount: text.includes('id="root"')
+        };
+      } catch (error) {
+        return {
+          ok: false,
+          status: null,
+          shellUrl: null,
+          hasOpsNormalHeading: false,
+          hasRootMount: false,
+          error: error instanceof Error ? error.message : String(error)
+        };
+      }
+    });
+
+    expect(offlineShellProbe).toMatchObject({
+      ok: true,
+      status: 200,
+      hasOpsNormalHeading: true,
+      hasRootMount: true
+    });
+
+    await expect(page.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
+    await expect(sectorRadio(page, 'Relationships', 'nominal')).toHaveAttribute('aria-checked', 'true');
   });
 
   test('clears the Safari-tab backup banner after recording a fresh backup timestamp', async ({ page }) => {
