@@ -9,7 +9,10 @@ export interface ParsedExportPayloadDetails {
   rawChecksumPayload: ChecksumPayload;
 }
 
-function buildRawChecksumPayload(parsed: unknown, payload: JsonExportPayload): ChecksumPayload {
+function buildRawChecksumPayload(
+  parsed: unknown,
+  payload: JsonExportPayload,
+): ChecksumPayload {
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Export payload must be a JSON object.');
   }
@@ -29,19 +32,23 @@ function buildRawChecksumPayload(parsed: unknown, payload: JsonExportPayload): C
     entries: rawEntries as ChecksumPayload['entries'],
     ...(rawCrashDiagnostics && typeof rawCrashDiagnostics === 'object'
       ? {
-          crashDiagnostics: rawCrashDiagnostics as NonNullable<ChecksumPayload['crashDiagnostics']>
+          crashDiagnostics: rawCrashDiagnostics as NonNullable<
+            ChecksumPayload['crashDiagnostics']
+          >,
         }
-      : {})
+      : {}),
   };
 }
 
-export function parseExportPayloadDetails(rawText: string): ParsedExportPayloadDetails {
+export function parseExportPayloadDetails(
+  rawText: string,
+): ParsedExportPayloadDetails {
   const parsed: unknown = JSON.parse(rawText) as unknown;
   const payload = JsonImportSchema.parse(parsed);
 
   return {
     payload,
-    rawChecksumPayload: buildRawChecksumPayload(parsed, payload)
+    rawChecksumPayload: buildRawChecksumPayload(parsed, payload),
   };
 }
 

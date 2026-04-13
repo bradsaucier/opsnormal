@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   clearInstallBannerDismissal,
   hasDismissedInstallBanner,
-  recordInstallBannerDismissal
+  recordInstallBannerDismissal,
 } from '../../src/features/install/installBannerState';
 
 function createStorageAccessError(name: string): DOMException {

@@ -2,7 +2,12 @@ import { ZodError } from 'zod';
 
 import { computeJsonExportChecksum } from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
-import type { DailyEntry, ImportIntegrityStatus, ImportPreview, JsonExportPayload } from '../types';
+import type {
+  DailyEntry,
+  ImportIntegrityStatus,
+  ImportPreview,
+  JsonExportPayload,
+} from '../types';
 
 export interface ParsedImportSummary {
   payload: JsonExportPayload;
@@ -53,15 +58,20 @@ export function formatValidationError(error: ZodError): string {
     return 'Import validation failed.';
   }
 
-  const path = primaryIssue.path.length > 0 ? `${primaryIssue.path.join('.')} - ` : '';
+  const path =
+    primaryIssue.path.length > 0 ? `${primaryIssue.path.join('.')} - ` : '';
   return `${path}${primaryIssue.message}`;
 }
 
-export function getImportIntegrityStatus(payload: JsonExportPayload): ImportIntegrityStatus {
+export function getImportIntegrityStatus(
+  payload: JsonExportPayload,
+): ImportIntegrityStatus {
   return payload.checksum ? 'verified' : 'legacy-unverified';
 }
 
-export function getDateRange(entries: DailyEntry[]): ImportPreview['dateRange'] {
+export function getDateRange(
+  entries: DailyEntry[],
+): ImportPreview['dateRange'] {
   if (entries.length === 0) {
     return null;
   }
@@ -70,16 +80,18 @@ export function getDateRange(entries: DailyEntry[]): ImportPreview['dateRange'] 
 
   return {
     start: sortedDateKeys[0] ?? '',
-    end: sortedDateKeys[sortedDateKeys.length - 1] ?? ''
+    end: sortedDateKeys[sortedDateKeys.length - 1] ?? '',
   };
 }
 
-export function summarizeParsedPayload(payload: JsonExportPayload): ParsedImportSummary {
+export function summarizeParsedPayload(
+  payload: JsonExportPayload,
+): ParsedImportSummary {
   return {
     payload,
     integrityStatus: getImportIntegrityStatus(payload),
     totalEntries: payload.entries.length,
-    dateRange: getDateRange(payload.entries)
+    dateRange: getDateRange(payload.entries),
   };
 }
 
@@ -94,7 +106,7 @@ interface RawChecksumPayload {
 
 export async function verifyExportChecksum(
   rawPayload: RawChecksumPayload,
-  validatedPayload: JsonExportPayload
+  validatedPayload: JsonExportPayload,
 ): Promise<void> {
   if (!validatedPayload.checksum) {
     return;
@@ -105,17 +117,19 @@ export async function verifyExportChecksum(
     schemaVersion: rawPayload.schemaVersion,
     exportedAt: rawPayload.exportedAt,
     entries: rawPayload.entries,
-    crashDiagnostics: rawPayload.crashDiagnostics
+    crashDiagnostics: rawPayload.crashDiagnostics,
   });
 
   if (computedChecksum !== validatedPayload.checksum) {
     throw new Error(
-      'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
+      'Import rejected. File integrity check failed. The backup may be corrupted or modified.',
     );
   }
 }
 
-export async function parseImportPayload(rawText: string): Promise<JsonExportPayload> {
+export async function parseImportPayload(
+  rawText: string,
+): Promise<JsonExportPayload> {
   const parsed = parseJsonImportText(rawText);
   const validated = JsonImportSchema.safeParse(parsed);
 

@@ -3,14 +3,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderBootFailureFallback } from '../../src/lib/bootFallback';
 
 const mocks = vi.hoisted(() => ({
-  reloadCurrentPage: vi.fn()
+  reloadCurrentPage: vi.fn(),
 }));
 
 vi.mock('../../src/lib/runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
   return {
     ...actual,
-    reloadCurrentPage: mocks.reloadCurrentPage
+    reloadCurrentPage: mocks.reloadCurrentPage,
   };
 });
 
@@ -32,7 +32,9 @@ describe('renderBootFailureFallback', () => {
 
     expect(rootElement.textContent).toContain('Boot failure');
     expect(rootElement.textContent).toContain('OpsNormal failed to start');
-    expect(rootElement.textContent).toContain('Your data may still exist in local storage.');
+    expect(rootElement.textContent).toContain(
+      'Your data may still exist in local storage.',
+    );
     expect(rootElement.querySelector('[onclick]')).toBeNull();
     expect(rootElement.querySelector('[style]')).toBeNull();
   });
@@ -54,7 +56,9 @@ describe('renderBootFailureFallback', () => {
     renderBootFailureFallback(rootElement);
 
     expect(rootElement.textContent).not.toContain('stale');
-    expect(rootElement.querySelector('.ops-boot-fallback-shell')).not.toBeNull();
+    expect(
+      rootElement.querySelector('.ops-boot-fallback-shell'),
+    ).not.toBeNull();
   });
 
   it('reloads the page when the recovery action is selected', () => {

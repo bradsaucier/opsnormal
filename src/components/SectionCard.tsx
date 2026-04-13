@@ -6,7 +6,12 @@ interface SectionCardProps extends PropsWithChildren {
   meta?: ReactNode;
 }
 
-export function SectionCard({ title, eyebrow, meta, children }: SectionCardProps) {
+export function SectionCard({
+  title,
+  eyebrow,
+  meta,
+  children,
+}: SectionCardProps) {
   return (
     <div className="panel-shadow">
       <div className="clip-notched ops-notch-panel-outer bg-[linear-gradient(180deg,rgba(110,231,183,0.18),rgba(255,255,255,0.02))] p-px">

@@ -9,7 +9,7 @@ import {
   AccordionSection,
   type AccordionSectionKey,
   PreviewFactCard,
-  SignalCard
+  SignalCard,
 } from './exportPanelShared';
 
 interface ImportRestoreSectionProps {
@@ -76,7 +76,7 @@ export function ImportRestoreSection({
   onManualBackupConfirmedChange,
   onPrepareReplaceBackup,
   onAcknowledgeManualBackup,
-  onDisarmReplace
+  onDisarmReplace,
 }: ImportRestoreSectionProps) {
   const importIntegrityText = pendingImport
     ? pendingImport.integrityStatus === 'verified'
@@ -139,12 +139,20 @@ export function ImportRestoreSection({
                 <p className="mt-2 break-all text-sm font-semibold text-white">
                   {pendingFileName || 'Selected file'}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sky-50/95">{importIntegrityText}</p>
+                <p className="mt-2 text-sm leading-6 text-sky-50/95">
+                  {importIntegrityText}
+                </p>
                 <p className="mt-2 text-xs tracking-[0.14em] text-sky-100/75 uppercase">
                   File size - {formatBytes(pendingFileSize)}
                 </p>
-                <div role="list" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <PreviewFactCard label="Imported rows" value={String(pendingImport.totalEntries)} />
+                <div
+                  role="list"
+                  className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+                >
+                  <PreviewFactCard
+                    label="Imported rows"
+                    value={String(pendingImport.totalEntries)}
+                  />
                   <PreviewFactCard
                     label="Current rows"
                     value={String(pendingImport.existingEntryCount)}
@@ -158,7 +166,11 @@ export function ImportRestoreSection({
                     }
                   />
                   <PreviewFactCard
-                    label={importMode === 'replace' ? 'Replace impact' : 'Merge impact'}
+                    label={
+                      importMode === 'replace'
+                        ? 'Replace impact'
+                        : 'Merge impact'
+                    }
                     value={
                       importMode === 'replace'
                         ? `${pendingImport.existingEntryCount} current rows cleared`
@@ -197,7 +209,9 @@ export function ImportRestoreSection({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-semibold text-ops-text-primary">Merge</span>
+                        <span className="block font-semibold text-ops-text-primary">
+                          Merge
+                        </span>
                         <span className="block leading-6">
                           Write imported rows and preserve all other local rows.
                         </span>
@@ -217,9 +231,12 @@ export function ImportRestoreSection({
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-semibold text-ops-text-primary">Replace</span>
+                        <span className="block font-semibold text-ops-text-primary">
+                          Replace
+                        </span>
                         <span className="block leading-6">
-                          Clear local rows first, then restore from the selected backup.
+                          Clear local rows first, then restore from the selected
+                          backup.
                         </span>
                       </span>
                     </label>
@@ -249,7 +266,11 @@ export function ImportRestoreSection({
                       <div className="panel-shadow">
                         <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
                           <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-amber-50">
-                            Step 1 - secure a pre-replace backup. Step 2 - verify that the backup file exists on local disk if the browser cannot prove the write. Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
+                            Step 1 - secure a pre-replace backup. Step 2 -
+                            verify that the backup file exists on local disk if
+                            the browser cannot prove the write. Step 3 - arm the
+                            destructive path. Step 4 - execute the replace only
+                            if the preview still matches intent.
                           </div>
                         </div>
                       </div>
@@ -264,18 +285,24 @@ export function ImportRestoreSection({
                                     type="checkbox"
                                     checked={manualBackupConfirmed}
                                     onChange={(event) =>
-                                      onManualBackupConfirmedChange(event.target.checked)
+                                      onManualBackupConfirmedChange(
+                                        event.target.checked,
+                                      )
                                     }
                                     className="mt-1"
                                   />
                                   <span>
-                                    I confirm the backup file was successfully saved to my device before importing this restore.
+                                    I confirm the backup file was successfully
+                                    saved to my device before importing this
+                                    restore.
                                   </span>
                                 </label>
                                 <button
                                   type="button"
                                   onClick={onAcknowledgeManualBackup}
-                                  disabled={!manualBackupConfirmed || importBusy}
+                                  disabled={
+                                    !manualBackupConfirmed || importBusy
+                                  }
                                   className={`${actionButtonClasses} ops-action-button-warning mt-3 w-full`}
                                 >
                                   Unlock Replace After Manual Backup Check
@@ -287,7 +314,10 @@ export function ImportRestoreSection({
                           <button
                             type="button"
                             onClick={() => void onPrepareReplaceBackup()}
-                            disabled={replaceBackupState.phase === 'saving' || importBusy}
+                            disabled={
+                              replaceBackupState.phase === 'saving' ||
+                              importBusy
+                            }
                             className={`${actionButtonClasses} ops-action-button-info w-full`}
                           >
                             {replaceBackupState.phase === 'saving'
@@ -329,7 +359,9 @@ export function ImportRestoreSection({
                           <button
                             type="button"
                             onClick={onDisarmReplace}
-                            disabled={replaceConfirmState !== 'armed' || importBusy}
+                            disabled={
+                              replaceConfirmState !== 'armed' || importBusy
+                            }
                             className={`${actionButtonClasses} ops-action-button-subtle`}
                           >
                             Disarm Replace
@@ -374,7 +406,8 @@ export function ImportRestoreSection({
             outerClassName="bg-ops-border-soft"
             innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-base)] p-4 text-sm leading-6 text-ops-text-muted"
           >
-            No file staged. Select a JSON backup to open the preview and restore controls.
+            No file staged. Select a JSON backup to open the preview and restore
+            controls.
           </NotchedFrame>
         )}
       </div>

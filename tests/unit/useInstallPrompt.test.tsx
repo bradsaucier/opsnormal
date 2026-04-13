@@ -34,14 +34,14 @@ function InstallPromptProbe() {
 function setUserAgent(userAgent: string) {
   Object.defineProperty(window.navigator, 'userAgent', {
     configurable: true,
-    value: userAgent
+    value: userAgent,
   });
 }
 
 function setNavigatorStandalone(standalone: boolean | undefined) {
   Object.defineProperty(window.navigator, 'standalone', {
     configurable: true,
-    value: standalone
+    value: standalone,
   });
 }
 
@@ -49,7 +49,7 @@ function installMatchMediaController(
   initialMatches: boolean,
   options: {
     supportsEventListener?: boolean;
-  } = {}
+  } = {},
 ) {
   let matches = initialMatches;
   const listeners = new Set<MediaQueryListener>();
@@ -57,22 +57,30 @@ function installMatchMediaController(
 
   const addEventListenerSpy = vi.fn(
     (eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
+      if (
+        !supportsEventListener ||
+        eventName !== 'change' ||
+        typeof listener !== 'function'
+      ) {
         return;
       }
 
       listeners.add(listener as MediaQueryListener);
-    }
+    },
   );
 
   const removeEventListenerSpy = vi.fn(
     (eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (!supportsEventListener || eventName !== 'change' || typeof listener !== 'function') {
+      if (
+        !supportsEventListener ||
+        eventName !== 'change' ||
+        typeof listener !== 'function'
+      ) {
         return;
       }
 
       listeners.delete(listener as MediaQueryListener);
-    }
+    },
   );
 
   const addListenerSpy = vi.fn((listener: MediaQueryListener) => {
@@ -93,17 +101,17 @@ function installMatchMediaController(
     removeEventListener: removeEventListenerSpy,
     addListener: addListenerSpy,
     removeListener: removeListenerSpy,
-    dispatchEvent: vi.fn()
+    dispatchEvent: vi.fn(),
   } as MediaQueryList;
 
   if (!supportsEventListener) {
     Object.defineProperty(mediaQueryList, 'addEventListener', {
       configurable: true,
-      value: undefined
+      value: undefined,
     });
     Object.defineProperty(mediaQueryList, 'removeEventListener', {
       configurable: true,
-      value: undefined
+      value: undefined,
     });
   }
 
@@ -112,8 +120,8 @@ function installMatchMediaController(
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
       ...mediaQueryList,
-      media: query
-    }))
+      media: query,
+    })),
   });
 
   return {
@@ -124,12 +132,12 @@ function installMatchMediaController(
       matches = nextMatches;
       const event = {
         matches,
-        media: '(display-mode: standalone)'
+        media: '(display-mode: standalone)',
       } as MediaQueryListEvent;
 
       listeners.forEach((listener) => listener(event));
       mediaQueryList.onchange?.(event);
-    }
+    },
   };
 }
 
@@ -148,21 +156,25 @@ function createMockInstallPromptEvent(
   options: {
     promptImplementation?: () => Promise<void>;
     userChoice?: Promise<InstallChoice>;
-  } = {}
+  } = {},
 ): MockInstallPromptEvent {
   const event = new Event('beforeinstallprompt', {
     bubbles: true,
-    cancelable: true
+    cancelable: true,
   }) as MockInstallPromptEvent;
 
   Object.defineProperty(event, 'prompt', {
     configurable: true,
-    value: vi.fn().mockImplementation(options.promptImplementation ?? (() => Promise.resolve()))
+    value: vi
+      .fn()
+      .mockImplementation(
+        options.promptImplementation ?? (() => Promise.resolve()),
+      ),
   });
 
   Object.defineProperty(event, 'userChoice', {
     configurable: true,
-    value: options.userChoice ?? Promise.resolve({ outcome, platform: 'web' })
+    value: options.userChoice ?? Promise.resolve({ outcome, platform: 'web' }),
   });
 
   return event;
@@ -183,7 +195,7 @@ describe('useInstallPrompt', () => {
     setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)');
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
-      value: undefined
+      value: undefined,
     });
 
     render(<InstallPromptProbe />);
@@ -274,7 +286,7 @@ describe('useInstallPrompt', () => {
   it('clears the deferred event when prompt execution rejects', async () => {
     const promptError = new Error('gesture lost');
     const event = createMockInstallPromptEvent('accepted', {
-      promptImplementation: () => Promise.reject(promptError)
+      promptImplementation: () => Promise.reject(promptError),
     });
     const { result } = renderHook(() => useInstallPrompt());
 
@@ -295,7 +307,7 @@ describe('useInstallPrompt', () => {
     const choiceError = new Error('choice failed');
     const deferredChoice = createDeferredPromise<InstallChoice>();
     const event = createMockInstallPromptEvent('accepted', {
-      userChoice: deferredChoice.promise
+      userChoice: deferredChoice.promise,
     });
     const { result } = renderHook(() => useInstallPrompt());
 
@@ -357,7 +369,7 @@ describe('useInstallPrompt', () => {
 
   it('falls back to legacy media query listeners when addEventListener is unavailable', () => {
     const matchMediaController = installMatchMediaController(false, {
-      supportsEventListener: false
+      supportsEventListener: false,
     });
     const { result, unmount } = renderHook(() => useInstallPrompt());
 
@@ -380,16 +392,22 @@ describe('useInstallPrompt', () => {
 
     expect(addEventListenerSpy).toHaveBeenCalledWith(
       'beforeinstallprompt',
-      expect.any(Function)
+      expect.any(Function),
     );
-    expect(addEventListenerSpy).toHaveBeenCalledWith('appinstalled', expect.any(Function));
+    expect(addEventListenerSpy).toHaveBeenCalledWith(
+      'appinstalled',
+      expect.any(Function),
+    );
 
     unmount();
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       'beforeinstallprompt',
-      expect.any(Function)
+      expect.any(Function),
     );
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('appinstalled', expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      'appinstalled',
+      expect.any(Function),
+    );
   });
 });

@@ -1,4 +1,5 @@
 ## Status
+
 Accepted
 Amends ADR-0019.
 
@@ -22,6 +23,7 @@ Promote the narrow Playwright WebKit smoke lane from advisory to merge-blocking 
 
 This promotion does not widen what the lane claims to prove.
 The lane remains restricted to engine-level compatibility evidence:
+
 1. app boot on a WebKit engine
 2. operator-facing Apple WebKit warning rendering
 3. IndexedDB persistence across reload for the core check-in path
@@ -34,11 +36,13 @@ Documentation must continue to state that WebKit CI coverage is not a browser-po
 ## Consequences
 
 Positive:
+
 - makes the existing WebKit signal enforceable during pull-request review
 - catches cross-engine regressions before merge instead of after release
 - preserves a truthful distinction between WebKit engine proof and Safari policy proof
 
 Trade-offs:
+
 - Playwright or runner regressions in the WebKit lane can now block merges
 - contributors without local WebKit access may rely on CI to validate the lane
 - any accepted platform boundary must be documented clearly so the gate does not drift into silent exception handling

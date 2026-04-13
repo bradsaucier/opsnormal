@@ -2,23 +2,33 @@ import type { DailyEntry, SectorId, UiStatus } from '../types';
 import { SECTORS } from '../types';
 import { formatDateKey, parseDateKey } from './date';
 
-export function createEntryLookup(entries: DailyEntry[]): Map<string, DailyEntry['status']> {
-  return new Map(entries.map((entry) => [`${entry.date}:${entry.sectorId}`, entry.status]));
+export function createEntryLookup(
+  entries: DailyEntry[],
+): Map<string, DailyEntry['status']> {
+  return new Map(
+    entries.map((entry) => [`${entry.date}:${entry.sectorId}`, entry.status]),
+  );
 }
 
 export function getUiStatus(
   entryLookup: Map<string, DailyEntry['status']>,
   date: string,
-  sectorId: SectorId
+  sectorId: SectorId,
 ): UiStatus {
   return entryLookup.get(`${date}:${sectorId}`) ?? 'unmarked';
 }
 
-export function countMarkedForDate(entries: DailyEntry[], date: string): number {
+export function countMarkedForDate(
+  entries: DailyEntry[],
+  date: string,
+): number {
   return entries.filter((entry) => entry.date === date).length;
 }
 
-export function computeCompletionState(entries: DailyEntry[], date: string): {
+export function computeCompletionState(
+  entries: DailyEntry[],
+  date: string,
+): {
   markedCount: number;
   totalCount: number;
   isComplete: boolean;
@@ -29,11 +39,14 @@ export function computeCompletionState(entries: DailyEntry[], date: string): {
   return {
     markedCount,
     totalCount,
-    isComplete: markedCount === totalCount
+    isComplete: markedCount === totalCount,
   };
 }
 
-export function computeCheckInStreak(entries: DailyEntry[], todayKey: string): number {
+export function computeCheckInStreak(
+  entries: DailyEntry[],
+  todayKey: string,
+): number {
   const groupedByDate = new Map<string, Set<SectorId>>();
 
   for (const entry of entries) {

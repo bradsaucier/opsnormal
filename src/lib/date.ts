@@ -16,8 +16,15 @@ export function parseDateKey(dateKey: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function getTrailingDateKeys(days: number, today: Date = new Date()): string[] {
-  const cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+export function getTrailingDateKeys(
+  days: number,
+  today: Date = new Date(),
+): string[] {
+  const cursor = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
   const dateKeys: string[] = [];
 
   for (let offset = days - 1; offset >= 0; offset -= 1) {
@@ -32,7 +39,7 @@ export function getTrailingDateKeys(days: number, today: Date = new Date()): str
 export function formatDayLabel(dateKey: string): string {
   return new Intl.DateTimeFormat(undefined, {
     month: 'numeric',
-    day: 'numeric'
+    day: 'numeric',
   }).format(parseDateKey(dateKey));
 }
 
@@ -41,6 +48,6 @@ export function formatLongDate(dateKey: string): string {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric'
+    year: 'numeric',
   }).format(parseDateKey(dateKey));
 }

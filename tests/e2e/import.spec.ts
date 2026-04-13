@@ -5,13 +5,16 @@ import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
-import { parseExportPayloadDetails, type ParsedExportPayloadDetails } from '../helpers/exportPayload';
+import {
+  parseExportPayloadDetails,
+  type ParsedExportPayloadDetails,
+} from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   type EntryStatus,
   type JsonExportPayload,
-  type SectorId
+  type SectorId,
 } from '../../src/types';
 
 type ImportEntry = JsonExportPayload['entries'][number];
@@ -51,7 +54,7 @@ function createImportEntry(args: {
     date: args.date,
     sectorId: args.sectorId,
     status: args.status,
-    updatedAt: args.updatedAt
+    updatedAt: args.updatedAt,
   };
 }
 
@@ -65,31 +68,33 @@ function buildLegacyImportPayload(todayKey: string): ImportPayload {
         date: todayKey,
         sectorId: 'body',
         status: 'degraded',
-        updatedAt: '2026-03-28T12:00:00.000Z'
+        updatedAt: '2026-03-28T12:00:00.000Z',
       }),
       createImportEntry({
         date: todayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:01:00.000Z'
-      })
-    ]
+        updatedAt: '2026-03-28T12:01:00.000Z',
+      }),
+    ],
   };
 }
 
-async function buildVerifiedImportPayload(entries: ImportEntry[]): Promise<ImportPayload> {
+async function buildVerifiedImportPayload(
+  entries: ImportEntry[],
+): Promise<ImportPayload> {
   const payload: ImportPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt: FIXED_TEST_TIME_ISO,
-    entries
+    entries,
   };
 
   const checksum: string = await computeJsonExportChecksum({
     app: payload.app,
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
-    entries: payload.entries
+    entries: payload.entries,
   });
 
   payload.checksum = checksum;
@@ -107,9 +112,9 @@ function buildInvalidImportPayload(): InvalidImportPayload {
         date: '2026-03-28',
         sectorId: 'invalid-sector',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:00:00.000Z'
-      }
-    ]
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+    ],
   };
 }
 
@@ -119,7 +124,7 @@ function normalizeEntries(entries: JsonExportPayload['entries']) {
       date: entry.date,
       sectorId: entry.sectorId,
       status: entry.status,
-      updatedAt: entry.updatedAt
+      updatedAt: entry.updatedAt,
     }))
     .sort((left, right) => {
       const leftKey = `${left.date}:${left.sectorId}`;
@@ -140,34 +145,45 @@ async function readLocalFileText(filePath: string): Promise<string> {
   return await readFile(filePath, 'utf8');
 }
 
-async function expectExportPayloadIntegrity(parsedPayload: ParsedExportPayloadDetails): Promise<void> {
+async function expectExportPayloadIntegrity(
+  parsedPayload: ParsedExportPayloadDetails,
+): Promise<void> {
   const { payload, rawChecksumPayload } = parsedPayload;
 
   expect(payload.app).toBe(OPSNORMAL_APP_NAME);
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum: string = await computeJsonExportChecksum(rawChecksumPayload);
+  const recomputedChecksum: string =
+    await computeJsonExportChecksum(rawChecksumPayload);
 
   expect(payload.checksum).toBe(recomputedChecksum);
 }
 
-
-function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+function sectorRadio(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
+) {
   return page.getByRole('radio', {
-    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i'),
   });
 }
 
 async function expectSectorStatus(
   page: Page,
   sectorLabel: string,
-  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
 ) {
-  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
 }
 
-async function exportCurrentJson(page: Page): Promise<ParsedExportPayloadDetails> {
+async function exportCurrentJson(
+  page: Page,
+): Promise<ParsedExportPayloadDetails> {
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export JSON' }).click();
   const download = await downloadPromise;
@@ -178,7 +194,9 @@ async function exportCurrentJson(page: Page): Promise<ParsedExportPayloadDetails
 }
 
 async function ensureImportPanelOpen(page: Page): Promise<void> {
-  const importToggle = page.getByRole('button', { name: /import and restore/i });
+  const importToggle = page.getByRole('button', {
+    name: /import and restore/i,
+  });
 
   if ((await importToggle.getAttribute('aria-expanded')) !== 'true') {
     await importToggle.click();
@@ -188,19 +206,19 @@ async function ensureImportPanelOpen(page: Page): Promise<void> {
 async function stageImportJson(
   page: Page,
   fileName: string,
-  payloadText: string
+  payloadText: string,
 ): Promise<void> {
   await page.locator('[data-testid="import-file-input"]').setInputFiles({
     name: fileName,
     mimeType: 'application/json',
-    buffer: Buffer.from(payloadText, 'utf8')
+    buffer: Buffer.from(payloadText, 'utf8'),
   });
 }
 
 async function stageImportPreview(
   page: Page,
   fileName: string,
-  payload: ImportPayload | InvalidImportPayload
+  payload: ImportPayload | InvalidImportPayload,
 ): Promise<void> {
   await ensureImportPanelOpen(page);
   await stageImportJson(page, fileName, JSON.stringify(payload));
@@ -215,27 +233,35 @@ async function switchToReplaceMode(page: Page): Promise<void> {
 }
 
 async function completeManualReplaceCheckpoint(page: Page): Promise<void> {
-  const exportBackupButton = page.getByRole('button', { name: /export pre-replace backup/i });
+  const exportBackupButton = page.getByRole('button', {
+    name: /export pre-replace backup/i,
+  });
   await expect(exportBackupButton).toBeVisible();
 
   const downloadPromise = page.waitForEvent('download');
   await exportBackupButton.click();
   const download = await downloadPromise;
 
-  expect(download.suggestedFilename()).toMatch(/^opsnormal-pre-replace-backup-.*\.json$/);
+  expect(download.suggestedFilename()).toMatch(
+    /^opsnormal-pre-replace-backup-.*\.json$/,
+  );
 
   const armButton = page.getByRole('button', { name: /arm replace all data/i });
   await expect(armButton).toBeDisabled();
 
   await page
     .getByRole('checkbox', {
-      name: /i confirm the backup file was successfully saved to my device before importing this restore/i
+      name: /i confirm the backup file was successfully saved to my device before importing this restore/i,
     })
     .check();
   await expect(armButton).toBeDisabled();
 
-  await page.getByRole('button', { name: /unlock replace after manual backup check/i }).click();
-  await expect(page.getByText(/manual backup checkpoint acknowledged/i)).toBeVisible();
+  await page
+    .getByRole('button', { name: /unlock replace after manual backup check/i })
+    .click();
+  await expect(
+    page.getByText(/manual backup checkpoint acknowledged/i),
+  ).toBeVisible();
   await expect(armButton).toBeEnabled();
 }
 
@@ -245,20 +271,24 @@ test.describe('OpsNormal import workflow', () => {
       Object.defineProperty(window, 'showSaveFilePicker', {
         configurable: true,
         writable: true,
-        value: undefined
+        value: undefined,
       });
     });
 
     await page.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
   });
 
-  test('imports valid JSON into the current browser database', async ({ page }) => {
+  test('imports valid JSON into the current browser database', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     const payload = buildLegacyImportPayload(currentDateKey());
     await stageImportPreview(page, 'opsnormal-import.json', payload);
 
-    await expect(page.getByRole('heading', { name: /import preview/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /import preview/i }),
+    ).toBeVisible();
     await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
     await confirmMergeImport(page);
 
@@ -272,11 +302,17 @@ test.describe('OpsNormal import workflow', () => {
     await page.goto('/');
     await stageImportPreview(page, 'opsnormal-invalid.json', invalidPayload);
 
-    await expect(page.getByText(/import rejected|entries\.0\.sectorId/i)).toBeVisible();
-    await expect(page.getByRole('heading', { name: /import preview/i })).toHaveCount(0);
+    await expect(
+      page.getByText(/import rejected|entries\.0\.sectorId/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /import preview/i }),
+    ).toHaveCount(0);
   });
 
-  test('keeps replace locked until the manual backup checkpoint completes', async ({ page }) => {
+  test('keeps replace locked until the manual backup checkpoint completes', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     const todayKey = currentDateKey();
@@ -285,14 +321,14 @@ test.describe('OpsNormal import workflow', () => {
         date: todayKey,
         sectorId: 'body',
         status: 'degraded',
-        updatedAt: '2026-03-28T12:00:00.000Z'
+        updatedAt: '2026-03-28T12:00:00.000Z',
       }),
       createImportEntry({
         date: todayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:01:00.000Z'
-      })
+        updatedAt: '2026-03-28T12:01:00.000Z',
+      }),
     ]);
 
     await stageImportPreview(page, 'opsnormal-replace-verified.json', payload);
@@ -300,13 +336,17 @@ test.describe('OpsNormal import workflow', () => {
     await expect(page.getByText(/integrity verified/i)).toBeVisible();
     await switchToReplaceMode(page);
 
-    const armButton = page.getByRole('button', { name: /arm replace all data/i });
+    const armButton = page.getByRole('button', {
+      name: /arm replace all data/i,
+    });
     await expect(armButton).toBeDisabled();
 
     await completeManualReplaceCheckpoint(page);
   });
 
-  test('requires a separate arm step and leaves data unchanged when replace is disarmed', async ({ page }) => {
+  test('requires a separate arm step and leaves data unchanged when replace is disarmed', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     const todayKey = currentDateKey();
@@ -315,22 +355,22 @@ test.describe('OpsNormal import workflow', () => {
         date: todayKey,
         sectorId: 'body',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:00:00.000Z'
-      })
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      }),
     ]);
     const replacePayload = await buildVerifiedImportPayload([
       createImportEntry({
         date: todayKey,
         sectorId: 'body',
         status: 'degraded',
-        updatedAt: '2026-03-29T12:00:00.000Z'
+        updatedAt: '2026-03-29T12:00:00.000Z',
       }),
       createImportEntry({
         date: todayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: '2026-03-29T12:01:00.000Z'
-      })
+        updatedAt: '2026-03-29T12:01:00.000Z',
+      }),
     ]);
 
     await stageImportPreview(page, 'opsnormal-seed.json', seedPayload);
@@ -340,8 +380,14 @@ test.describe('OpsNormal import workflow', () => {
     await expectSectorStatus(page, 'Body', 'nominal');
     await expectSectorStatus(page, 'Rest', 'unmarked');
 
-    await stageImportPreview(page, 'opsnormal-replace-staged.json', replacePayload);
-    await expect(page.getByRole('heading', { name: /import preview/i })).toBeVisible();
+    await stageImportPreview(
+      page,
+      'opsnormal-replace-staged.json',
+      replacePayload,
+    );
+    await expect(
+      page.getByRole('heading', { name: /import preview/i }),
+    ).toBeVisible();
     await switchToReplaceMode(page);
     await completeManualReplaceCheckpoint(page);
 
@@ -349,21 +395,25 @@ test.describe('OpsNormal import workflow', () => {
 
     await expect(page.getByText(/replace armed\./i)).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /execute replace all \d+ rows/i })
+      page.getByRole('button', { name: /execute replace all \d+ rows/i }),
     ).toBeVisible();
     await expectSectorStatus(page, 'Body', 'nominal');
     await expectSectorStatus(page, 'Rest', 'unmarked');
 
     await page.getByRole('button', { name: /disarm replace/i }).click();
 
-    await expect(page.getByText(/replace disarmed\. local data unchanged\./i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /arm replace all data/i })).toBeVisible();
+    await expect(
+      page.getByText(/replace disarmed\. local data unchanged\./i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /arm replace all data/i }),
+    ).toBeVisible();
     await expectSectorStatus(page, 'Body', 'nominal');
     await expectSectorStatus(page, 'Rest', 'unmarked');
   });
 
   test('replaces all local rows with the imported snapshot and supports undo restore', async ({
-    page
+    page,
   }) => {
     await page.goto('/');
 
@@ -374,34 +424,34 @@ test.describe('OpsNormal import workflow', () => {
         date: todayKey,
         sectorId: 'body',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:00:00.000Z'
+        updatedAt: '2026-03-28T12:00:00.000Z',
       }),
       createImportEntry({
         date: todayKey,
         sectorId: 'relationships',
         status: 'degraded',
-        updatedAt: '2026-03-28T12:01:00.000Z'
+        updatedAt: '2026-03-28T12:01:00.000Z',
       }),
       createImportEntry({
         date: yesterdayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: '2026-03-27T12:02:00.000Z'
-      })
+        updatedAt: '2026-03-27T12:02:00.000Z',
+      }),
     ]);
     const replacePayload = await buildVerifiedImportPayload([
       createImportEntry({
         date: todayKey,
         sectorId: 'household',
         status: 'nominal',
-        updatedAt: '2026-03-29T12:00:00.000Z'
+        updatedAt: '2026-03-29T12:00:00.000Z',
       }),
       createImportEntry({
         date: yesterdayKey,
         sectorId: 'work-school',
         status: 'degraded',
-        updatedAt: '2026-03-29T12:01:00.000Z'
-      })
+        updatedAt: '2026-03-29T12:01:00.000Z',
+      }),
     ]);
 
     await stageImportPreview(page, 'opsnormal-seed-snapshot.json', seedPayload);
@@ -411,15 +461,25 @@ test.describe('OpsNormal import workflow', () => {
     const beforeReplaceExport = await exportCurrentJson(page);
 
     await expectExportPayloadIntegrity(beforeReplaceExport);
-    expect(normalizeEntries(beforeReplaceExport.payload.entries)).toEqual(normalizeEntries(seedPayload.entries));
+    expect(normalizeEntries(beforeReplaceExport.payload.entries)).toEqual(
+      normalizeEntries(seedPayload.entries),
+    );
 
-    await stageImportPreview(page, 'opsnormal-replace-snapshot.json', replacePayload);
+    await stageImportPreview(
+      page,
+      'opsnormal-replace-snapshot.json',
+      replacePayload,
+    );
     await switchToReplaceMode(page);
     await completeManualReplaceCheckpoint(page);
     await page.getByRole('button', { name: /arm replace all data/i }).click();
-    await page.getByRole('button', { name: /execute replace all \d+ rows/i }).click();
+    await page
+      .getByRole('button', { name: /execute replace all \d+ rows/i })
+      .click();
 
-    await expect(page.getByText(/replace import complete\. 2 rows restored\./i)).toBeVisible();
+    await expect(
+      page.getByText(/replace import complete\. 2 rows restored\./i),
+    ).toBeVisible();
     await expectSectorStatus(page, 'Body', 'unmarked');
     await expectSectorStatus(page, 'Household', 'nominal');
     await expectSectorStatus(page, 'Relationships', 'unmarked');
@@ -428,18 +488,22 @@ test.describe('OpsNormal import workflow', () => {
 
     await expectExportPayloadIntegrity(afterReplaceExport);
     expect(normalizeEntries(afterReplaceExport.payload.entries)).toEqual(
-      normalizeEntries(replacePayload.entries)
+      normalizeEntries(replacePayload.entries),
     );
 
     await page.getByRole('button', { name: /undo last import/i }).click();
     await expect(
-      page.getByText(/undo complete\. the pre-import database snapshot has been restored\./i)
+      page.getByText(
+        /undo complete\. the pre-import database snapshot has been restored\./i,
+      ),
     ).toBeVisible();
 
     const afterUndoExport = await exportCurrentJson(page);
 
     await expectExportPayloadIntegrity(afterUndoExport);
-    expect(normalizeEntries(afterUndoExport.payload.entries)).toEqual(normalizeEntries(seedPayload.entries));
+    expect(normalizeEntries(afterUndoExport.payload.entries)).toEqual(
+      normalizeEntries(seedPayload.entries),
+    );
     await expectSectorStatus(page, 'Body', 'nominal');
     await expectSectorStatus(page, 'Relationships', 'degraded');
     await expectSectorStatus(page, 'Household', 'unmarked');

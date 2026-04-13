@@ -5,7 +5,10 @@ import { getServerSnapshot } from './historyGridShared';
 export function useViewportMatch(query: string) {
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      if (
+        typeof window === 'undefined' ||
+        typeof window.matchMedia !== 'function'
+      ) {
         return () => undefined;
       }
 
@@ -22,11 +25,14 @@ export function useViewportMatch(query: string) {
       mediaQueryList.addListener(handleChange);
       return () => mediaQueryList.removeListener(handleChange);
     },
-    [query]
+    [query],
   );
 
   const getSnapshot = useCallback(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
       return false;
     }
 

@@ -5,7 +5,11 @@ import { SectionCard } from '../../components/SectionCard';
 import { useEntriesForDate } from '../../db/hooks';
 import { setDailyStatus } from '../../db/appDb';
 import { formatDateKey, formatLongDate } from '../../lib/date';
-import { computeCompletionState, createEntryLookup, getUiStatus } from '../../lib/history';
+import {
+  computeCompletionState,
+  createEntryLookup,
+  getUiStatus,
+} from '../../lib/history';
 import { getStatusLabel } from '../../lib/status';
 import { SECTORS, type SectorId, type UiStatus } from '../../types';
 
@@ -16,7 +20,12 @@ interface TodayPanelProps {
   onAnnounce?: (message: string) => void;
 }
 
-export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnounce }: TodayPanelProps) {
+export function TodayPanel({
+  todayKey,
+  onDateRollover,
+  onMeaningfulSave,
+  onAnnounce,
+}: TodayPanelProps) {
   const entries = useEntriesForDate(todayKey);
   const [busySectorId, setBusySectorId] = useState<SectorId | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -24,7 +33,10 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
   const persistRequestedRef = useRef(false);
 
   const entryLookup = useMemo(() => createEntryLookup(entries), [entries]);
-  const completion = useMemo(() => computeCompletionState(entries, todayKey), [entries, todayKey]);
+  const completion = useMemo(
+    () => computeCompletionState(entries, todayKey),
+    [entries, todayKey],
+  );
 
   function announce(message: string) {
     onAnnounce?.(message);
@@ -46,7 +58,11 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
       setBusySectorId(sectorId);
 
       const writeDateKey = formatDateKey();
-      const savedStatus = await setDailyStatus(writeDateKey, sectorId, nextStatus);
+      const savedStatus = await setDailyStatus(
+        writeDateKey,
+        sectorId,
+        nextStatus,
+      );
 
       if (writeDateKey !== todayKey) {
         onDateRollover?.();
@@ -64,7 +80,7 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Local save failed. Export your data, then reload the app.'
+          : 'Local save failed. Export your data, then reload the app.',
       );
     } finally {
       setBusySectorId(null);
@@ -85,7 +101,12 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
       }
     >
       {!onAnnounce ? (
-        <p className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+        <p
+          className="sr-only"
+          aria-live="polite"
+          aria-atomic="true"
+          role="status"
+        >
           {fallbackAnnouncement}
         </p>
       ) : null}
@@ -100,7 +121,9 @@ export function TodayPanel({ todayKey, onDateRollover, onMeaningfulSave, onAnnou
 
       <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
         <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary">
-          Select the state directly for each sector. Unmarked means no status recorded for the day. Nominal and degraded are deliberate check-ins, not automatic carry-forward.
+          Select the state directly for each sector. Unmarked means no status
+          recorded for the day. Nominal and degraded are deliberate check-ins,
+          not automatic carry-forward.
         </div>
       </div>
 

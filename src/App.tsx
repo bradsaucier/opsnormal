@@ -12,14 +12,21 @@ import { HistoryGrid } from './features/history/HistoryGrid';
 import { InstallBanner } from './features/install/InstallBanner';
 import { usePwaUpdate } from './features/pwa/usePwaUpdate';
 import { useStorageHealth } from './hooks/useStorageHealth';
-import { OPSNORMAL_DB_BLOCKED_EVENT_NAME, OPSNORMAL_DB_UNBLOCKED_EVENT_NAME } from './db/appDb';
+import {
+  OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+  OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
+} from './db/appDb';
 import { formatDateKey, getTrailingDateKeys } from './lib/date';
-import { clearLastExportCompletedAt, getLastExportCompletedAt, recordExportCompleted } from './lib/export';
+import {
+  clearLastExportCompletedAt,
+  getLastExportCompletedAt,
+  recordExportCompleted,
+} from './lib/export';
 import {
   clearStorageHealthForTesting,
   formatStorageSummary,
   setStorageHealthForTesting,
-  type StorageHealth
+  type StorageHealth,
 } from './lib/storage';
 
 declare global {
@@ -37,15 +44,21 @@ declare global {
 // sectional and preserve critical recovery surfaces at the app boundary.
 function App() {
   const [todayKey, setTodayKey] = useState(() => formatDateKey());
-  const [trailingDateKeys, setTrailingDateKeys] = useState(() => getTrailingDateKeys(30));
+  const [trailingDateKeys, setTrailingDateKeys] = useState(() =>
+    getTrailingDateKeys(30),
+  );
   const [announcement, setAnnouncement] = useState('');
-  const [databaseBlockedMessage, setDatabaseBlockedMessage] = useState<string | null>(null);
-  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() => getLastExportCompletedAt());
+  const [databaseBlockedMessage, setDatabaseBlockedMessage] = useState<
+    string | null
+  >(null);
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(() =>
+    getLastExportCompletedAt(),
+  );
   const {
     storageHealth,
     refreshStorageHealth,
     requestStorageProtection,
-    isRequestingStorageProtection
+    isRequestingStorageProtection,
   } = useStorageHealth();
   const {
     needRefresh,
@@ -57,16 +70,21 @@ function App() {
     externalUpdateStalled,
     handleApplyUpdate,
     handleDismissBanner,
-    handleReloadPage
+    handleReloadPage,
   } = usePwaUpdate();
 
-  const refreshCalendarWindow = useCallback((referenceDate: Date = new Date()) => {
-    setTodayKey(formatDateKey(referenceDate));
-    setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
-  }, []);
+  const refreshCalendarWindow = useCallback(
+    (referenceDate: Date = new Date()) => {
+      setTodayKey(formatDateKey(referenceDate));
+      setTrailingDateKeys(getTrailingDateKeys(30, referenceDate));
+    },
+    [],
+  );
 
   useEffect(() => {
-    function handleDatabaseBlocked(event: WindowEventMap[typeof OPSNORMAL_DB_BLOCKED_EVENT_NAME]) {
+    function handleDatabaseBlocked(
+      event: WindowEventMap[typeof OPSNORMAL_DB_BLOCKED_EVENT_NAME],
+    ) {
       setDatabaseBlockedMessage(event.detail.message);
     }
 
@@ -74,12 +92,24 @@ function App() {
       setDatabaseBlockedMessage(null);
     }
 
-    window.addEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, handleDatabaseBlocked);
-    window.addEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, handleDatabaseUnblocked);
+    window.addEventListener(
+      OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+      handleDatabaseBlocked,
+    );
+    window.addEventListener(
+      OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
+      handleDatabaseUnblocked,
+    );
 
     return () => {
-      window.removeEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, handleDatabaseBlocked);
-      window.removeEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, handleDatabaseUnblocked);
+      window.removeEventListener(
+        OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+        handleDatabaseBlocked,
+      );
+      window.removeEventListener(
+        OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
+        handleDatabaseUnblocked,
+      );
     };
   }, []);
 
@@ -126,10 +156,13 @@ function App() {
     void refreshStorageHealth({ requestPersistence: true });
   }, [refreshStorageHealth]);
 
-  const historyKey = useMemo(() => trailingDateKeys.join('|'), [trailingDateKeys]);
+  const historyKey = useMemo(
+    () => trailingDateKeys.join('|'),
+    [trailingDateKeys],
+  );
   const backupActionPrompt = useMemo(
     () => createBackupActionPrompt(storageHealth, lastBackupAt),
-    [lastBackupAt, storageHealth]
+    [lastBackupAt, storageHealth],
   );
 
   useEffect(() => {
@@ -155,7 +188,7 @@ function App() {
       },
       async refreshStorageHealth() {
         await refreshStorageHealth();
-      }
+      },
     };
 
     return () => {
@@ -170,11 +203,20 @@ function App() {
         Skip to main content
       </a>
 
-      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {announcement}
       </div>
 
-      <main id="main-content" tabIndex={-1} className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4"
+      >
         <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
           <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -186,18 +228,23 @@ function App() {
                   OpsNormal
                 </h1>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
-                  A local-only mirror for daily balance across work or school, household,
-                  relationships, body, and rest. No account. No cloud sync. No analytics layer.
+                  A local-only mirror for daily balance across work or school,
+                  household, relationships, body, and rest. No account. No cloud
+                  sync. No analytics layer.
                 </p>
               </div>
               <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px text-right">
                 <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3">
-                  <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">Data posture</div>
+                  <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">
+                    Data posture
+                  </div>
                   <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
                     Local only
                   </div>
                   <div className="mt-2 text-xs leading-5 text-zinc-400 [font-variant-numeric:tabular-nums]">
-                    {storageHealth ? formatStorageSummary(storageHealth) : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
+                    {storageHealth
+                      ? formatStorageSummary(storageHealth)
+                      : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
                   </div>
                 </div>
               </div>
@@ -232,7 +279,9 @@ function App() {
               >
                 Database Upgrade Blocked
               </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-200">{databaseBlockedMessage}</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-200">
+                {databaseBlockedMessage}
+              </p>
             </section>
           </div>
         ) : null}
@@ -267,7 +316,11 @@ function App() {
             />
           )}
         >
-          <HistoryGrid key={historyKey} dateKeys={trailingDateKeys} todayKey={todayKey} />
+          <HistoryGrid
+            key={historyKey}
+            dateKeys={trailingDateKeys}
+            todayKey={todayKey}
+          />
         </ErrorBoundary>
         <div id="backup-and-recovery">
           <ErrorBoundary
@@ -291,11 +344,13 @@ function App() {
 
         <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
           <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-zinc-400">
-            <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">Boundary</p>
+            <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">
+              Boundary
+            </p>
             <p className="mt-2">
-              OpsNormal is a personal status tracking tool. It is not a medical device and does not
-              diagnose, treat, cure, or prevent any disease or condition. It does not provide medical
-              or psychological advice.
+              OpsNormal is a personal status tracking tool. It is not a medical
+              device and does not diagnose, treat, cure, or prevent any disease
+              or condition. It does not provide medical or psychological advice.
             </p>
           </footer>
         </div>

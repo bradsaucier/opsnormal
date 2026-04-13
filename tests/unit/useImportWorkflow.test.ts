@@ -4,17 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../src/services/importService', () => ({
   applyImport: vi.fn(),
-  previewImportFile: vi.fn()
+  previewImportFile: vi.fn(),
 }));
 
-import { applyImport, previewImportFile } from '../../src/services/importService';
+import {
+  applyImport,
+  previewImportFile,
+} from '../../src/services/importService';
 import { useImportWorkflow } from '../../src/features/export/useImportWorkflow';
 import type { ImportPreview, JsonExportPayload } from '../../src/types';
 
 const applyImportMock = vi.mocked(applyImport);
 const previewImportFileMock = vi.mocked(previewImportFile);
 
-function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview {
+function buildPreview(
+  overrides: Partial<JsonExportPayload> = {},
+): ImportPreview {
   return {
     payload: {
       app: 'OpsNormal',
@@ -25,10 +30,10 @@ function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview
           date: '2026-03-28',
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: '2026-03-28T12:00:00.000Z'
-        }
+          updatedAt: '2026-03-28T12:00:00.000Z',
+        },
       ],
-      ...overrides
+      ...overrides,
     },
     integrityStatus: overrides.checksum ? 'verified' : 'legacy-unverified',
     existingEntryCount: 3,
@@ -37,8 +42,8 @@ function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview
     totalEntries: 1,
     dateRange: {
       start: '2026-03-28',
-      end: '2026-03-28'
-    }
+      end: '2026-03-28',
+    },
   };
 }
 
@@ -46,12 +51,12 @@ function createFileSelectionEvent(file: File): ChangeEvent<HTMLInputElement> {
   const input = document.createElement('input');
   Object.defineProperty(input, 'files', {
     configurable: true,
-    value: [file]
+    value: [file],
   });
 
   return {
     currentTarget: input,
-    target: input
+    target: input,
   } as ChangeEvent<HTMLInputElement>;
 }
 
@@ -65,7 +70,9 @@ describe('useImportWorkflow', () => {
     const onOpenImportSection = vi.fn();
     const onStatusMessage = vi.fn();
 
-    previewImportFileMock.mockResolvedValue(buildPreview({ checksum: 'a'.repeat(64) }));
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
 
     const { result } = renderHook(() =>
       useImportWorkflow({
@@ -73,13 +80,17 @@ describe('useImportWorkflow', () => {
         onOpenImportSection,
         onOpenUndoSection: vi.fn(),
         onReplaceWorkflowResetRequested: vi.fn(),
-        onStatusMessage
-      })
+        onStatusMessage,
+      }),
     );
 
     await act(async () => {
       await result.current.handleImportSelection(
-        createFileSelectionEvent(new File(['{}'], 'verified-export.json', { type: 'application/json' }))
+        createFileSelectionEvent(
+          new File(['{}'], 'verified-export.json', {
+            type: 'application/json',
+          }),
+        ),
       );
     });
 
@@ -89,7 +100,7 @@ describe('useImportWorkflow', () => {
     expect(onOpenImportSection).toHaveBeenCalledTimes(1);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: 'Import staged. 1 entries validated. Review the preview and confirm the write path.'
+      text: 'Import staged. 1 entries validated. Review the preview and confirm the write path.',
     });
   });
 
@@ -107,9 +118,9 @@ describe('useImportWorkflow', () => {
                 error.name = 'AbortError';
                 reject(error);
               },
-              { once: true }
+              { once: true },
             );
-          })
+          }),
       )
       .mockResolvedValueOnce(secondPreview);
 
@@ -119,22 +130,26 @@ describe('useImportWorkflow', () => {
         onOpenImportSection: vi.fn(),
         onOpenUndoSection: vi.fn(),
         onReplaceWorkflowResetRequested: vi.fn(),
-        onStatusMessage: vi.fn()
-      })
+        onStatusMessage: vi.fn(),
+      }),
     );
 
     let firstSelection: Promise<void>;
 
     await act(async () => {
       firstSelection = result.current.handleImportSelection(
-        createFileSelectionEvent(new File(['{}'], 'first.json', { type: 'application/json' }))
+        createFileSelectionEvent(
+          new File(['{}'], 'first.json', { type: 'application/json' }),
+        ),
       );
       await Promise.resolve();
     });
 
     await act(async () => {
       await result.current.handleImportSelection(
-        createFileSelectionEvent(new File(['{}'], 'second.json', { type: 'application/json' }))
+        createFileSelectionEvent(
+          new File(['{}'], 'second.json', { type: 'application/json' }),
+        ),
       );
     });
 
@@ -154,7 +169,7 @@ describe('useImportWorkflow', () => {
     previewImportFileMock.mockResolvedValue(buildPreview());
     applyImportMock.mockResolvedValue({
       importedCount: 1,
-      undo: vi.fn(() => Promise.resolve())
+      undo: vi.fn(() => Promise.resolve()),
     });
 
     const { result } = renderHook(() =>
@@ -163,13 +178,15 @@ describe('useImportWorkflow', () => {
         onOpenImportSection: vi.fn(),
         onOpenUndoSection,
         onReplaceWorkflowResetRequested: vi.fn(),
-        onStatusMessage
-      })
+        onStatusMessage,
+      }),
     );
 
     await act(async () => {
       await result.current.handleImportSelection(
-        createFileSelectionEvent(new File(['{}'], 'merge.json', { type: 'application/json' }))
+        createFileSelectionEvent(
+          new File(['{}'], 'merge.json', { type: 'application/json' }),
+        ),
       );
     });
 
@@ -178,7 +195,7 @@ describe('useImportWorkflow', () => {
     await act(async () => {
       await result.current.handleConfirmImport({
         onArmReplace: vi.fn(),
-        replaceConfirmState: 'idle'
+        replaceConfirmState: 'idle',
       });
     });
 
@@ -187,7 +204,7 @@ describe('useImportWorkflow', () => {
     expect(onOpenUndoSection).toHaveBeenCalledTimes(1);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: 'Merge import complete. 1 rows applied.'
+      text: 'Merge import complete. 1 rows applied.',
     });
   });
 
@@ -197,7 +214,7 @@ describe('useImportWorkflow', () => {
     previewImportFileMock.mockResolvedValue(buildPreview());
     applyImportMock.mockResolvedValue({
       importedCount: 1,
-      undo: vi.fn(() => Promise.resolve())
+      undo: vi.fn(() => Promise.resolve()),
     });
 
     const { result } = renderHook(() =>
@@ -206,13 +223,15 @@ describe('useImportWorkflow', () => {
         onOpenImportSection: vi.fn(),
         onOpenUndoSection: vi.fn(),
         onReplaceWorkflowResetRequested: vi.fn(),
-        onStatusMessage: vi.fn()
-      })
+        onStatusMessage: vi.fn(),
+      }),
     );
 
     await act(async () => {
       await result.current.handleImportSelection(
-        createFileSelectionEvent(new File(['{}'], 'replace.json', { type: 'application/json' }))
+        createFileSelectionEvent(
+          new File(['{}'], 'replace.json', { type: 'application/json' }),
+        ),
       );
     });
 
@@ -223,7 +242,7 @@ describe('useImportWorkflow', () => {
     await act(async () => {
       await result.current.handleConfirmImport({
         onArmReplace,
-        replaceConfirmState: 'idle'
+        replaceConfirmState: 'idle',
       });
     });
 
@@ -233,7 +252,7 @@ describe('useImportWorkflow', () => {
     await act(async () => {
       await result.current.handleConfirmImport({
         onArmReplace,
-        replaceConfirmState: 'armed'
+        replaceConfirmState: 'armed',
       });
     });
 

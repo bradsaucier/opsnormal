@@ -8,15 +8,27 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => {
   const requestedBase = process.env.VITE_BASE_PATH ?? '/';
   const isE2E = mode === 'e2e';
-  const isAbsoluteBase = requestedBase.startsWith('http://') || requestedBase.startsWith('https://');
+  const isAbsoluteBase =
+    requestedBase.startsWith('http://') || requestedBase.startsWith('https://');
   const basePath = isAbsoluteBase
-    ? new URL(requestedBase.endsWith('/') ? requestedBase : `${requestedBase}/`).toString()
+    ? new URL(
+        requestedBase.endsWith('/') ? requestedBase : `${requestedBase}/`,
+      ).toString()
     : (() => {
-        const normalizedBase = requestedBase.startsWith('/') ? requestedBase : `/${requestedBase}`;
-        return normalizedBase.endsWith('/') ? normalizedBase : `${normalizedBase}/`;
+        const normalizedBase = requestedBase.startsWith('/')
+          ? requestedBase
+          : `/${requestedBase}`;
+        return normalizedBase.endsWith('/')
+          ? normalizedBase
+          : `${normalizedBase}/`;
       })();
-  const serviceWorkerBasePath = isAbsoluteBase ? new URL(basePath).pathname : basePath;
-  const escapedBasePath = serviceWorkerBasePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const serviceWorkerBasePath = isAbsoluteBase
+    ? new URL(basePath).pathname
+    : basePath;
+  const escapedBasePath = serviceWorkerBasePath.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    '\\$&',
+  );
 
   return {
     base: basePath,
@@ -26,11 +38,17 @@ export default defineConfig(({ mode }) => {
         ? {
             input: {
               main: resolve(__dirname, 'index.html'),
-              bootFallbackHarness: resolve(__dirname, 'boot-fallback-harness.html'),
-              crashFallbackHarness: resolve(__dirname, 'crash-fallback-harness.html')
-            }
+              bootFallbackHarness: resolve(
+                __dirname,
+                'boot-fallback-harness.html',
+              ),
+              crashFallbackHarness: resolve(
+                __dirname,
+                'crash-fallback-harness.html',
+              ),
+            },
           }
-        : undefined
+        : undefined,
     },
     plugins: [
       react(),
@@ -54,20 +72,20 @@ export default defineConfig(({ mode }) => {
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
             },
             {
               src: 'maskable-icon-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'maskable'
-            }
-          ]
+              purpose: 'maskable',
+            },
+          ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
@@ -75,20 +93,20 @@ export default defineConfig(({ mode }) => {
             '**/boot-fallback-harness.html',
             '**/crash-fallback-harness.html',
             '**/assets/bootFallbackHarness-*.js',
-            '**/assets/crashFallbackHarness-*.js'
+            '**/assets/crashFallbackHarness-*.js',
           ],
           cleanupOutdatedCaches: true,
           skipWaiting: false,
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [
             new RegExp(`^${escapedBasePath}boot-fallback-harness\\.html$`),
-            new RegExp(`^${escapedBasePath}crash-fallback-harness\\.html$`)
-          ]
+            new RegExp(`^${escapedBasePath}crash-fallback-harness\\.html$`),
+          ],
         },
         devOptions: {
-          enabled: false
-        }
-      })
-    ]
+          enabled: false,
+        },
+      }),
+    ],
   };
 });

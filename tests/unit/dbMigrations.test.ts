@@ -4,7 +4,7 @@ import {
   getOpsNormalDbSchemaVersions,
   OPSNORMAL_DB_MIGRATIONS,
   validateOpsNormalDbMigrations,
-  type OpsNormalDbMigration
+  type OpsNormalDbMigration,
 } from '../../src/db/migrations';
 
 describe('OpsNormal database migration registry', () => {
@@ -13,21 +13,21 @@ describe('OpsNormal database migration registry', () => {
       {
         version: 1,
         stores: {
-          dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-        }
+          dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt',
+        },
       },
       {
         version: 2,
         stores: {
-          dailyEntries: '++id, &[date+sectorId]'
-        }
-      }
+          dailyEntries: '++id, &[date+sectorId]',
+        },
+      },
     ]);
   });
 
   it('rejects an empty migration registry', () => {
     expect(() => validateOpsNormalDbMigrations([])).toThrow(
-      'OpsNormal database migration registry cannot be empty.'
+      'OpsNormal database migration registry cannot be empty.',
     );
   });
 
@@ -37,20 +37,20 @@ describe('OpsNormal database migration registry', () => {
         version: 1,
         name: 'initial-schema',
         stores: {
-          dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-        }
+          dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt',
+        },
       },
       {
         version: 1,
         name: 'duplicate-version',
         stores: {
-          dailyEntries: '++id, &[date+sectorId]'
-        }
-      }
+          dailyEntries: '++id, &[date+sectorId]',
+        },
+      },
     ];
 
     expect(() => validateOpsNormalDbMigrations(invalidMigrations)).toThrow(
-      /versions must increase strictly/i
+      /versions must increase strictly/i,
     );
   });
 });

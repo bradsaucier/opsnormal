@@ -1,0 +1,8 @@
+dist
+coverage
+node_modules
+playwright-report
+test-results
+blob-report
+.vite
+package-lock.json

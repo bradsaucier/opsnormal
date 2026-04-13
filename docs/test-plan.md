@@ -3,6 +3,7 @@
 ## Objectives
 
 Prove that the app:
+
 - stores daily entries reliably
 - derives view state correctly
 - survives page reloads
@@ -14,6 +15,7 @@ Prove that the app:
 ## Layers
 
 ### Unit tests
+
 - date formatting and parsing
 - trailing 30-day range generation
 - export formatting
@@ -49,6 +51,7 @@ Prove that the app:
 - targeted vitest-axe checks catch semantic regressions in the direct-select check-in and history surfaces without relying on layout-dependent color contrast rules
 
 ### Integration tests
+
 - Dexie persistence behavior
 - compound key uniqueness
 - cycle sequence correctness
@@ -56,6 +59,7 @@ Prove that the app:
 - post-write verification on the daily check-in write path
 
 ### End-to-end tests
+
 - daily check-in persists through reload
 - synthetic Safari storage warning states drive the correct backup banner, install guidance, and storage-health messaging in Chromium
 - narrow WebKit smoke coverage now gates CI for app boot, Apple WebKit warning rendering, and IndexedDB persistence without claiming eviction simulation
@@ -77,9 +81,15 @@ Prove that the app:
 ## Coverage posture
 
 Target:
+
 - 70 percent or better on core logic
 - 100 percent on date helpers and export helpers
 
+Formatting gate:
+
+- Prettier runs as a standalone repository-wide formatter
+- `npm run format:check` is required locally and in CI before merge
+- Husky plus lint-staged auto-fix staged formatting drift before commit
 
 ## Accessibility automation note
 

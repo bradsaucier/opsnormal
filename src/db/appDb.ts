@@ -6,7 +6,7 @@ import {
   recordStorageConnectionDrop,
   recordStorageReconnectFailure,
   recordStorageReconnectSuccess,
-  recordStorageWriteVerification
+  recordStorageWriteVerification,
 } from '../lib/storage';
 import { reloadCurrentPage } from '../lib/runtime';
 import type { DailyEntry, SectorId, UiStatus } from '../types';
@@ -61,8 +61,12 @@ export const db = new OpsNormalDb();
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
 let databaseUpgradeBlocked = false;
-let databaseRecoveryReloadTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
-let schemaReloadRetryTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+let databaseRecoveryReloadTimeoutId: ReturnType<
+  typeof globalThis.setTimeout
+> | null = null;
+let schemaReloadRetryTimeoutId: ReturnType<
+  typeof globalThis.setTimeout
+> | null = null;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -70,7 +74,11 @@ function delay(ms: number): Promise<void> {
   });
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string,
+): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timeoutId = globalThis.setTimeout(() => {
       reject(new Error(message));
@@ -86,15 +94,20 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
         reject(
           error instanceof Error
             ? error
-            : new Error('Local database operation timed out before a valid failure reason was returned.')
+            : new Error(
+                'Local database operation timed out before a valid failure reason was returned.',
+              ),
         );
-      }
+      },
     );
   });
 }
 
 function scheduleDatabaseRecoveryReload(): void {
-  if (databaseRecoveryReloadTimeoutId !== null || typeof window === 'undefined') {
+  if (
+    databaseRecoveryReloadTimeoutId !== null ||
+    typeof window === 'undefined'
+  ) {
     return;
   }
 
@@ -134,14 +147,14 @@ async function openDatabaseWithTimeout(): Promise<void> {
   await withTimeout(
     db.open(),
     DATABASE_OPEN_TIMEOUT_MS,
-    'Local database reopen stalled. Reload initiated to recover the browser storage connection.'
+    'Local database reopen stalled. Reload initiated to recover the browser storage connection.',
   );
 }
 
 export function shouldBlockVersionChangeReload(
   now: number,
   lastReloadAt: number | null,
-  windowMs = SCHEMA_RELOAD_GUARD_WINDOW_MS
+  windowMs = SCHEMA_RELOAD_GUARD_WINDOW_MS,
 ): boolean {
   return lastReloadAt !== null && now - lastReloadAt < windowMs;
 }
@@ -200,9 +213,12 @@ function dispatchDatabaseUpgradeBlocked(message: string): void {
   }
 
   window.dispatchEvent(
-    new CustomEvent<OpsNormalDbBlockedEventDetail>(OPSNORMAL_DB_BLOCKED_EVENT_NAME, {
-      detail: { message }
-    })
+    new CustomEvent<OpsNormalDbBlockedEventDetail>(
+      OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+      {
+        detail: { message },
+      },
+    ),
   );
 }
 
@@ -224,7 +240,7 @@ function clearDatabaseUpgradeBlockedState(): void {
 }
 
 export function handleDatabaseUpgradeBlocked(
-  message = DATABASE_UPGRADE_BLOCKED_MESSAGE
+  message = DATABASE_UPGRADE_BLOCKED_MESSAGE,
 ): void {
   databaseUpgradeBlocked = true;
   databaseRecoveryRequired = true;
@@ -267,7 +283,7 @@ async function verifyPersistedDailyStatus(
   date: string,
   sectorId: SectorId,
   expectedStatus: UiStatus,
-  expectedUpdatedAt: string | null
+  expectedUpdatedAt: string | null,
 ): Promise<void> {
   let persistedEntry: DailyEntry | undefined;
 
@@ -275,7 +291,7 @@ async function verifyPersistedDailyStatus(
     persistedEntry = await withTimeout(
       db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first(),
       WRITE_VERIFICATION_TIMEOUT_MS,
-      'Local write verification stalled. Confirm the latest check-in, export now, then reload before continuing.'
+      'Local write verification stalled. Confirm the latest check-in, export now, then reload before continuing.',
     );
   } catch (error) {
     recordStorageWriteVerification('failed');
@@ -286,7 +302,7 @@ async function verifyPersistedDailyStatus(
 
     throw new Error(
       'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.',
-      { cause: error }
+      { cause: error },
     );
   }
 
@@ -294,7 +310,7 @@ async function verifyPersistedDailyStatus(
     if (persistedEntry) {
       recordStorageWriteVerification('mismatch');
       throw new Error(
-        'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+        'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.',
       );
     }
 
@@ -309,7 +325,7 @@ async function verifyPersistedDailyStatus(
   if (!matchesExpectedWrite) {
     recordStorageWriteVerification('mismatch');
     throw new Error(
-      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.'
+      'Local write verification failed. Confirm the latest check-in, export now, then reload before continuing.',
     );
   }
 
@@ -341,7 +357,7 @@ function monitorBlockedUpgradeResolution(): void {
     },
     () => {
       // Ignore failed reopen attempts here and let the existing recovery paths surface the failure.
-    }
+    },
   );
 }
 
@@ -354,7 +370,9 @@ db.on('blocked', () => {
   monitorBlockedUpgradeResolution();
 });
 
-export function handleDatabaseVersionChange(now = Date.now()): 'reloading' | 'blocked' | 'noop' {
+export function handleDatabaseVersionChange(
+  now = Date.now(),
+): 'reloading' | 'blocked' | 'noop' {
   closeDatabaseForVersionUpgrade();
 
   if (typeof window === 'undefined') {
@@ -368,8 +386,13 @@ export function handleDatabaseVersionChange(now = Date.now()): 'reloading' | 'bl
     clearSchemaReloadRetry();
 
     if (lastReloadAt !== null) {
-      const remainingWindowMs = Math.max(0, SCHEMA_RELOAD_GUARD_WINDOW_MS - (now - lastReloadAt));
-      scheduleSchemaReloadRetry(remainingWindowMs + SCHEMA_RELOAD_RETRY_BUFFER_MS);
+      const remainingWindowMs = Math.max(
+        0,
+        SCHEMA_RELOAD_GUARD_WINDOW_MS - (now - lastReloadAt),
+      );
+      scheduleSchemaReloadRetry(
+        remainingWindowMs + SCHEMA_RELOAD_RETRY_BUFFER_MS,
+      );
     } else {
       recordSchemaReloadAt(now);
       reloadCurrentPage();
@@ -402,7 +425,7 @@ export async function reopenIfClosed(): Promise<void> {
 
   if (schemaReloadLoopDetected) {
     throw new Error(
-      'Schema upgrade handoff stalled. Close duplicate OpsNormal tabs, reload once, then verify local data before retrying.'
+      'Schema upgrade handoff stalled. Close duplicate OpsNormal tabs, reload once, then verify local data before retrying.',
     );
   }
 
@@ -454,11 +477,13 @@ export async function reopenIfClosed(): Promise<void> {
   recordStorageReconnectFailure(lastError);
   scheduleDatabaseRecoveryReload();
   throw new Error(
-    'Local database connection was interrupted. Recovery reload initiated. Confirm the data view after reload, then export before more edits.'
+    'Local database connection was interrupted. Recovery reload initiated. Confirm the data view after reload, then export before more edits.',
   );
 }
 
-async function runDatabaseOperation<T>(operation: () => Promise<T>): Promise<T> {
+async function runDatabaseOperation<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
   try {
     if (databaseRecoveryRequired || !db.isOpen()) {
       await reopenIfClosed();
@@ -480,21 +505,26 @@ async function runDatabaseOperation<T>(operation: () => Promise<T>): Promise<T> 
   }
 }
 
-export async function runDatabaseWrite<T>(operation: () => Promise<T>): Promise<T> {
+export async function runDatabaseWrite<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
   return runDatabaseOperation(operation);
 }
 
 export async function setDailyStatus(
   date: string,
   sectorId: SectorId,
-  status: UiStatus
+  status: UiStatus,
 ): Promise<UiStatus> {
   return runDatabaseWrite(async () => {
     let savedStatus: UiStatus = status;
     let expectedUpdatedAt: string | null = null;
 
     await db.transaction('rw', db.dailyEntries, async () => {
-      const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+      const existing = await db.dailyEntries
+        .where('[date+sectorId]')
+        .equals([date, sectorId])
+        .first();
 
       if (status === 'unmarked') {
         if (existing?.id !== undefined) {
@@ -512,22 +542,33 @@ export async function setDailyStatus(
         date,
         sectorId,
         status,
-        updatedAt: expectedUpdatedAt
+        updatedAt: expectedUpdatedAt,
       };
 
       await db.dailyEntries.put(payload);
       savedStatus = payload.status;
     });
 
-    await verifyPersistedDailyStatus(date, sectorId, savedStatus, expectedUpdatedAt);
+    await verifyPersistedDailyStatus(
+      date,
+      sectorId,
+      savedStatus,
+      expectedUpdatedAt,
+    );
 
     return savedStatus;
   });
 }
 
-export async function cycleDailyStatus(date: string, sectorId: SectorId): Promise<UiStatus> {
+export async function cycleDailyStatus(
+  date: string,
+  sectorId: SectorId,
+): Promise<UiStatus> {
   return runDatabaseOperation(async () => {
-    const existing = await db.dailyEntries.where('[date+sectorId]').equals([date, sectorId]).first();
+    const existing = await db.dailyEntries
+      .where('[date+sectorId]')
+      .equals([date, sectorId])
+      .first();
 
     if (!existing) {
       return setDailyStatus(date, sectorId, 'nominal');
@@ -542,7 +583,9 @@ export async function cycleDailyStatus(date: string, sectorId: SectorId): Promis
 }
 
 export async function getAllEntries(): Promise<DailyEntry[]> {
-  return runDatabaseOperation(async () => db.dailyEntries.orderBy('[date+sectorId]').toArray());
+  return runDatabaseOperation(async () =>
+    db.dailyEntries.orderBy('[date+sectorId]').toArray(),
+  );
 }
 
 if (typeof window !== 'undefined' && import.meta.env.MODE === 'e2e') {
@@ -552,6 +595,6 @@ if (typeof window !== 'undefined' && import.meta.env.MODE === 'e2e') {
     },
     isRecoveryRequired() {
       return isDatabaseRecoveryRequired();
-    }
+    },
   };
 }

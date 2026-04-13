@@ -5,29 +5,31 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS,
   FOREGROUND_REVALIDATION_THROTTLE_MS,
-  UPDATE_HANDOFF_TIMEOUT_MS
+  UPDATE_HANDOFF_TIMEOUT_MS,
 } from '../../src/features/pwa/pwaUpdateConstants';
 
 const mocks = vi.hoisted(() => ({
   state: {
     needRefresh: true,
-    offlineReady: false
+    offlineReady: false,
   },
   setNeedRefresh: vi.fn(),
   setOfflineReady: vi.fn(),
   registration: {
     installing: null as ServiceWorker | null,
     waiting: {
-      postMessage: vi.fn<(message: unknown) => void>()
-    } as { postMessage: ReturnType<typeof vi.fn<(message: unknown) => void>> } | null,
-    update: vi.fn<() => Promise<void>>().mockResolvedValue()
+      postMessage: vi.fn<(message: unknown) => void>(),
+    } as {
+      postMessage: ReturnType<typeof vi.fn<(message: unknown) => void>>;
+    } | null,
+    update: vi.fn<() => Promise<void>>().mockResolvedValue(),
   },
   getRegistration: vi
     .fn<() => Promise<ServiceWorkerRegistration | null>>()
     .mockResolvedValue(null as ServiceWorkerRegistration | null),
   closeDatabaseForServiceWorkerHandoff: vi.fn(),
   reloadCurrentPage: vi.fn(),
-  suppressControllerReload: vi.fn(() => false)
+  suppressControllerReload: vi.fn(() => false),
 }));
 
 let mockServiceWorkerContainer: EventTarget & {
@@ -65,7 +67,9 @@ class MockBroadcastChannel extends EventTarget {
     }
 
     this.closed = true;
-    MockBroadcastChannel.instances = MockBroadcastChannel.instances.filter((instance) => instance !== this);
+    MockBroadcastChannel.instances = MockBroadcastChannel.instances.filter(
+      (instance) => instance !== this,
+    );
   }
 }
 
@@ -74,32 +78,39 @@ vi.mock('../../src/features/pwa/registerSw', async () => {
 
   return {
     useRegisterSW: ({
-      onRegisteredSW
+      onRegisteredSW,
     }: {
-      onRegisteredSW?: (_swUrl: string, registration?: ServiceWorkerRegistration) => void;
+      onRegisteredSW?: (
+        _swUrl: string,
+        registration?: ServiceWorkerRegistration,
+      ) => void;
     }) => {
       React.useEffect(() => {
-        onRegisteredSW?.('/sw.js', mocks.registration as unknown as ServiceWorkerRegistration);
+        onRegisteredSW?.(
+          '/sw.js',
+          mocks.registration as unknown as ServiceWorkerRegistration,
+        );
       }, [onRegisteredSW]);
 
       return {
         needRefresh: [mocks.state.needRefresh, mocks.setNeedRefresh],
-        offlineReady: [mocks.state.offlineReady, mocks.setOfflineReady]
+        offlineReady: [mocks.state.offlineReady, mocks.setOfflineReady],
       };
-    }
+    },
   };
 });
 
 vi.mock('../../src/db/appDb', () => ({
-  closeDatabaseForServiceWorkerHandoff: mocks.closeDatabaseForServiceWorkerHandoff,
-  shouldSuppressControllerReload: mocks.suppressControllerReload
+  closeDatabaseForServiceWorkerHandoff:
+    mocks.closeDatabaseForServiceWorkerHandoff,
+  shouldSuppressControllerReload: mocks.suppressControllerReload,
 }));
 
 vi.mock('../../src/lib/runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
   return {
     ...actual,
-    reloadCurrentPage: mocks.reloadCurrentPage
+    reloadCurrentPage: mocks.reloadCurrentPage,
   };
 });
 
@@ -127,22 +138,22 @@ describe('usePwaUpdate', () => {
   beforeEach(() => {
     mockServiceWorkerContainer = Object.assign(new EventTarget(), {
       controller: {} as ServiceWorker,
-      getRegistration: mocks.getRegistration
+      getRegistration: mocks.getRegistration,
     });
 
     Object.defineProperty(navigator, 'serviceWorker', {
       configurable: true,
-      value: mockServiceWorkerContainer
+      value: mockServiceWorkerContainer,
     });
 
     Object.defineProperty(window, 'BroadcastChannel', {
       configurable: true,
-      value: MockBroadcastChannel
+      value: MockBroadcastChannel,
     });
 
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
-      value: true
+      value: true,
     });
 
     MockBroadcastChannel.instances = [];
@@ -155,10 +166,12 @@ describe('usePwaUpdate', () => {
     mocks.state.offlineReady = false;
     mocks.registration.installing = null;
     mocks.registration.waiting = {
-      postMessage: vi.fn<(message: unknown) => void>()
+      postMessage: vi.fn<(message: unknown) => void>(),
     };
     mocks.registration.update.mockResolvedValue();
-    mocks.getRegistration.mockResolvedValue(mocks.registration as unknown as ServiceWorkerRegistration);
+    mocks.getRegistration.mockResolvedValue(
+      mocks.registration as unknown as ServiceWorkerRegistration,
+    );
     mocks.setNeedRefresh.mockReset();
     mocks.setOfflineReady.mockReset();
     mocks.suppressControllerReload.mockReturnValue(false);
@@ -225,7 +238,9 @@ describe('usePwaUpdate', () => {
     mocks.state.needRefresh = true;
     mocks.state.offlineReady = false;
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(true);
@@ -243,7 +258,9 @@ describe('usePwaUpdate', () => {
       await Promise.resolve();
     });
 
-    const resurfaceCalls = mocks.setNeedRefresh.mock.calls.filter(([value]) => value === true);
+    const resurfaceCalls = mocks.setNeedRefresh.mock.calls.filter(
+      ([value]) => value === true,
+    );
     expect(resurfaceCalls).toHaveLength(1);
   });
 
@@ -253,7 +270,7 @@ describe('usePwaUpdate', () => {
 
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
-      value: false
+      value: false,
     });
 
     renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
@@ -272,7 +289,7 @@ describe('usePwaUpdate', () => {
 
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
-      value: true
+      value: true,
     });
 
     await act(async () => {
@@ -285,7 +302,9 @@ describe('usePwaUpdate', () => {
   });
 
   it('posts SKIP_WAITING to the waiting worker and stalls if no controller handoff arrives', async () => {
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -293,7 +312,9 @@ describe('usePwaUpdate', () => {
       await Promise.resolve();
     });
 
-    expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(mocks.registration.waiting?.postMessage).toHaveBeenCalledWith({
+      type: 'SKIP_WAITING',
+    });
 
     await advanceClock(UPDATE_HANDOFF_TIMEOUT_MS);
 
@@ -303,17 +324,19 @@ describe('usePwaUpdate', () => {
 
   it('waits for an installing worker to reach installed before posting SKIP_WAITING', async () => {
     const recoveredWaitingWorker = {
-      postMessage: vi.fn<(message: unknown) => void>()
+      postMessage: vi.fn<(message: unknown) => void>(),
     };
 
     const installingWorker = Object.assign(new EventTarget(), {
-      state: 'installing' as ServiceWorkerState
+      state: 'installing' as ServiceWorkerState,
     }) as ServiceWorker;
 
     mocks.registration.waiting = null;
     mocks.registration.installing = installingWorker;
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -325,7 +348,9 @@ describe('usePwaUpdate', () => {
     expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
 
     await act(async () => {
-      Object.assign(installingWorker, { state: 'installed' satisfies ServiceWorkerState });
+      Object.assign(installingWorker, {
+        state: 'installed' satisfies ServiceWorkerState,
+      });
       mocks.registration.installing = null;
       mocks.registration.waiting = recoveredWaitingWorker;
       installingWorker.dispatchEvent(new Event('statechange'));
@@ -334,16 +359,18 @@ describe('usePwaUpdate', () => {
     });
 
     expect(mocks.registration.update).not.toHaveBeenCalled();
-    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({
+      type: 'SKIP_WAITING',
+    });
     expect(result.current.updateStalled).toBe(false);
   });
 
   it('forces one registration revalidation if the waiting worker disappears before apply and then waits for install completion', async () => {
     const recoveredWaitingWorker = {
-      postMessage: vi.fn<(message: unknown) => void>()
+      postMessage: vi.fn<(message: unknown) => void>(),
     };
     const installingWorker = Object.assign(new EventTarget(), {
-      state: 'installing' as ServiceWorkerState
+      state: 'installing' as ServiceWorkerState,
     }) as ServiceWorker;
 
     mocks.registration.waiting = null;
@@ -352,7 +379,9 @@ describe('usePwaUpdate', () => {
       return Promise.resolve();
     });
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -365,7 +394,9 @@ describe('usePwaUpdate', () => {
     expect(recoveredWaitingWorker.postMessage).not.toHaveBeenCalled();
 
     await act(async () => {
-      Object.assign(installingWorker, { state: 'installed' satisfies ServiceWorkerState });
+      Object.assign(installingWorker, {
+        state: 'installed' satisfies ServiceWorkerState,
+      });
       mocks.registration.installing = null;
       mocks.registration.waiting = recoveredWaitingWorker;
       installingWorker.dispatchEvent(new Event('statechange'));
@@ -373,20 +404,26 @@ describe('usePwaUpdate', () => {
       await Promise.resolve();
     });
 
-    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' });
+    expect(recoveredWaitingWorker.postMessage).toHaveBeenCalledWith({
+      type: 'SKIP_WAITING',
+    });
     expect(result.current.updateStalled).toBe(false);
   });
 
   it('keeps the handoff timeout active when apply cannot reacquire a waiting worker', async () => {
     mocks.registration.waiting = null;
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     expect(mocks.registration.update).toHaveBeenCalledTimes(1);
 
     mocks.registration.update.mockClear();
-    mocks.getRegistration.mockResolvedValueOnce(mocks.registration as unknown as ServiceWorkerRegistration);
+    mocks.getRegistration.mockResolvedValueOnce(
+      mocks.registration as unknown as ServiceWorkerRegistration,
+    );
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -405,8 +442,12 @@ describe('usePwaUpdate', () => {
   });
 
   it('surfaces coordinated update-in-progress guidance in a second tab when another tab starts apply', async () => {
-    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const primaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
+    const secondaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await settle();
 
@@ -423,8 +464,12 @@ describe('usePwaUpdate', () => {
   });
 
   it('pins coordinated recovery in a second tab when the initiating tab stalls', async () => {
-    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const primaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
+    const secondaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await settle();
 
@@ -442,8 +487,12 @@ describe('usePwaUpdate', () => {
   });
 
   it('breaks a stale external handoff lock after the dead-man timeout and clears the in-progress flag', async () => {
-    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const primaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
+    const secondaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await settle();
     mocks.registration.update.mockClear();
@@ -463,7 +512,9 @@ describe('usePwaUpdate', () => {
   });
 
   it('closes Dexie and reloads exactly once when controllerchange fires repeatedly in Strict Mode', async () => {
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -481,8 +532,10 @@ describe('usePwaUpdate', () => {
     expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
 
-    const closeCallOrder = mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder[0]!;
-    const reloadCallOrder = mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
+    const closeCallOrder =
+      mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder[0]!;
+    const reloadCallOrder =
+      mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
 
     expect(closeCallOrder).toBeLessThan(reloadCallOrder);
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
@@ -493,7 +546,9 @@ describe('usePwaUpdate', () => {
 
   it('suppresses controllerchange reload when the schema guard reports a recent handoff', async () => {
     mocks.suppressControllerReload.mockReturnValue(true);
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -509,47 +564,75 @@ describe('usePwaUpdate', () => {
 
   it('preserves loop-breaker session markers on mount', async () => {
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+    window.sessionStorage.setItem(
+      'opsnormal-sw-controller-reload-last-at',
+      String(Date.now()),
+    );
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBe('2');
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at')).not.toBeNull();
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-count'),
+    ).toBe('2');
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at'),
+    ).not.toBeNull();
     expect(result.current.needRefresh).toBe(true);
     expect(result.current.offlineReady).toBe(false);
   });
 
   it('clears the loop-breaker session state before the operator-triggered reload path', async () => {
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+    window.sessionStorage.setItem(
+      'opsnormal-sw-controller-reload-last-at',
+      String(Date.now()),
+    );
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     act(() => {
       result.current.handleReloadPage();
     });
 
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBeNull();
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at')).toBeNull();
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-count'),
+    ).toBeNull();
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-last-at'),
+    ).toBeNull();
     expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
 
     await advanceClock(50);
 
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
-    expect(mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder.at(-1)).toBeLessThan(
-      mocks.reloadCurrentPage.mock.invocationCallOrder.at(-1) ?? Number.POSITIVE_INFINITY
+    expect(
+      mocks.closeDatabaseForServiceWorkerHandoff.mock.invocationCallOrder.at(
+        -1,
+      ),
+    ).toBeLessThan(
+      mocks.reloadCurrentPage.mock.invocationCallOrder.at(-1) ??
+        Number.POSITIVE_INFINITY,
     );
   });
 
   it('resets expired loop-breaker state instead of pinning recovery outside the active window', async () => {
     const now = Date.now();
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(now - 15001));
+    window.sessionStorage.setItem(
+      'opsnormal-sw-controller-reload-last-at',
+      String(now - 15001),
+    );
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     expect(result.current.reloadRecoveryRequired).toBe(false);
@@ -558,7 +641,9 @@ describe('usePwaUpdate', () => {
       mockServiceWorkerContainer.dispatchEvent(new Event('controllerchange'));
     });
 
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBe('1');
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-count'),
+    ).toBe('1');
     expect(mocks.closeDatabaseForServiceWorkerHandoff).toHaveBeenCalledTimes(1);
 
     await advanceClock(50);
@@ -568,17 +653,26 @@ describe('usePwaUpdate', () => {
 
   it('broadcasts recovery clear so a second tab does not stay pinned after manual recovery starts', async () => {
     window.sessionStorage.setItem('opsnormal-sw-controller-reload-count', '2');
-    window.sessionStorage.setItem('opsnormal-sw-controller-reload-last-at', String(Date.now()));
+    window.sessionStorage.setItem(
+      'opsnormal-sw-controller-reload-last-at',
+      String(Date.now()),
+    );
 
-    const primaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
-    const secondaryTab = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const primaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
+    const secondaryTab = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     act(() => {
       primaryTab.result.current.handleReloadPage();
     });
 
-    expect(window.sessionStorage.getItem('opsnormal-sw-controller-reload-count')).toBeNull();
+    expect(
+      window.sessionStorage.getItem('opsnormal-sw-controller-reload-count'),
+    ).toBeNull();
     expect(secondaryTab.result.current.reloadRecoveryRequired).toBe(false);
     expect(mocks.setNeedRefresh).toHaveBeenCalledWith(false);
     expect(mocks.setOfflineReady).toHaveBeenCalledWith(false);
@@ -587,7 +681,9 @@ describe('usePwaUpdate', () => {
   it('cleans up the recovery BroadcastChannel across Strict Mode remounts', () => {
     expect(MockBroadcastChannel.instances).toHaveLength(0);
 
-    const mounted = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const mounted = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     expect(MockBroadcastChannel.instances).toHaveLength(2);
 
@@ -600,10 +696,15 @@ describe('usePwaUpdate', () => {
     const setIntervalSpy = vi.spyOn(window, 'setInterval');
     const clearIntervalSpy = vi.spyOn(window, 'clearInterval');
 
-    const firstMount = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const firstMount = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
-    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 60 * 60 * 1000);
+    expect(setIntervalSpy).toHaveBeenCalledWith(
+      expect.any(Function),
+      60 * 60 * 1000,
+    );
 
     firstMount.unmount();
 
@@ -616,7 +717,9 @@ describe('usePwaUpdate', () => {
   });
 
   it('ignores dismiss while stalled update guidance is pinned', async () => {
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
 
     await act(async () => {
       void result.current.handleApplyUpdate();
@@ -642,7 +745,9 @@ describe('usePwaUpdate', () => {
     window.sessionStorage.setItem(countKey, '2');
     window.sessionStorage.setItem(lastAtKey, String(Date.now()));
 
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     const countBefore = window.sessionStorage.getItem(countKey);
@@ -657,7 +762,9 @@ describe('usePwaUpdate', () => {
   });
 
   it('resets the transient state when the banner is dismissed before the handoff stalls', async () => {
-    const { result } = renderHook(() => usePwaUpdate(), { wrapper: strictWrapper });
+    const { result } = renderHook(() => usePwaUpdate(), {
+      wrapper: strictWrapper,
+    });
     await settle();
 
     act(() => {

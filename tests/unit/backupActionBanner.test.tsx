@@ -15,16 +15,17 @@ describe('BackupActionBanner', () => {
         prompt={{
           tone: 'warning',
           title: 'No external JSON backup recorded',
-          detail: 'Create one now before relying on local-only data.'
+          detail: 'Create one now before relying on local-only data.',
         }}
-      />
+      />,
     );
 
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'No external JSON backup recorded' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open backup and recovery' })).toHaveAttribute(
-      'href',
-      '#backup-and-recovery'
-    );
+    expect(
+      screen.getByRole('heading', { name: 'No external JSON backup recorded' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Open backup and recovery' }),
+    ).toHaveAttribute('href', '#backup-and-recovery');
   });
 });

@@ -14,7 +14,7 @@ export function getErrorMessage(error: unknown, fallback: string): string {
 export function reportRuntimeError(
   scope: string,
   error: unknown,
-  errorInfo?: ErrorInfo | ErrorInfoLike
+  errorInfo?: ErrorInfo | ErrorInfoLike,
 ): void {
   const stack = errorInfo?.componentStack?.trim();
 
@@ -28,11 +28,18 @@ export function reportRuntimeError(
 
 export function shouldSuppressRecoverableError(
   error: unknown,
-  errorInfo?: ErrorInfo | ErrorInfoLike
+  errorInfo?: ErrorInfo | ErrorInfoLike,
 ): boolean {
-  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+        ? error
+        : '';
   const stack = errorInfo?.componentStack ?? '';
   const haystack = `${message}\n${stack}`.toLowerCase();
 
-  return RECOVERABLE_EXTENSION_MARKERS.some((marker) => haystack.includes(marker));
+  return RECOVERABLE_EXTENSION_MARKERS.some((marker) =>
+    haystack.includes(marker),
+  );
 }

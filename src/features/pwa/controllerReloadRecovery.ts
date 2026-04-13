@@ -4,9 +4,12 @@ import {
   CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS,
   CONTROLLER_RELOAD_RECOVERY_CHANNEL_NAME,
   CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE,
-  CONTROLLER_RELOAD_WINDOW_MS
+  CONTROLLER_RELOAD_WINDOW_MS,
 } from './pwaUpdateConstants';
-import type { ControllerReloadRecoveryMessage, ControllerReloadState } from './pwaUpdateTypes';
+import type {
+  ControllerReloadRecoveryMessage,
+  ControllerReloadState,
+} from './pwaUpdateTypes';
 
 function readSessionNumber(key: string): number | null {
   if (typeof window === 'undefined') {
@@ -27,20 +30,25 @@ function readSessionNumber(key: string): number | null {
   }
 }
 
-export function readControllerReloadState(now = Date.now()): ControllerReloadState {
-  const count = Math.max(0, readSessionNumber(CONTROLLER_RELOAD_COUNT_KEY) ?? 0);
+export function readControllerReloadState(
+  now = Date.now(),
+): ControllerReloadState {
+  const count = Math.max(
+    0,
+    readSessionNumber(CONTROLLER_RELOAD_COUNT_KEY) ?? 0,
+  );
   const lastAt = readSessionNumber(CONTROLLER_RELOAD_LAST_AT_KEY);
 
   if (lastAt === null || now - lastAt > CONTROLLER_RELOAD_WINDOW_MS) {
     return {
       count: 0,
-      lastAt: null
+      lastAt: null,
     };
   }
 
   return {
     count,
-    lastAt
+    lastAt,
   };
 }
 
@@ -51,7 +59,10 @@ function writeControllerReloadState(count: number, timestamp: number): void {
 
   try {
     window.sessionStorage.setItem(CONTROLLER_RELOAD_COUNT_KEY, String(count));
-    window.sessionStorage.setItem(CONTROLLER_RELOAD_LAST_AT_KEY, String(timestamp));
+    window.sessionStorage.setItem(
+      CONTROLLER_RELOAD_LAST_AT_KEY,
+      String(timestamp),
+    );
   } catch {
     // Ignore sessionStorage access failures during recovery bookkeeping.
   }
@@ -78,11 +89,17 @@ export function recordControllerReloadAttempt(now = Date.now()): number {
 }
 
 export function isControllerReloadRecoveryRequired(now = Date.now()): boolean {
-  return readControllerReloadState(now).count >= CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS;
+  return (
+    readControllerReloadState(now).count >=
+    CONTROLLER_RELOAD_MAX_AUTOMATIC_RELOADS
+  );
 }
 
 function createRecoveryBroadcastChannel(): BroadcastChannel | null {
-  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
+  if (
+    typeof window === 'undefined' ||
+    typeof BroadcastChannel === 'undefined'
+  ) {
     return null;
   }
 
@@ -93,7 +110,9 @@ function createRecoveryBroadcastChannel(): BroadcastChannel | null {
   }
 }
 
-export function isControllerReloadRecoveryMessage(value: unknown): value is ControllerReloadRecoveryMessage {
+export function isControllerReloadRecoveryMessage(
+  value: unknown,
+): value is ControllerReloadRecoveryMessage {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -110,7 +129,9 @@ export function broadcastControllerReloadRecoveryClear(): void {
   }
 
   try {
-    channel.postMessage({ type: CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE } satisfies ControllerReloadRecoveryMessage);
+    channel.postMessage({
+      type: CONTROLLER_RELOAD_RECOVERY_CLEAR_MESSAGE,
+    } satisfies ControllerReloadRecoveryMessage);
   } catch {
     // Ignore channel delivery failures during manual recovery.
   } finally {
@@ -119,7 +140,7 @@ export function broadcastControllerReloadRecoveryClear(): void {
 }
 
 export function subscribeToControllerReloadRecovery(
-  onMessage: (event: MessageEvent<unknown>) => void
+  onMessage: (event: MessageEvent<unknown>) => void,
 ): (() => void) | null {
   const channel = createRecoveryBroadcastChannel();
 

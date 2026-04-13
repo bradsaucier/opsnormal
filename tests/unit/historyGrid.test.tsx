@@ -9,7 +9,7 @@ import {
   computeCheckInStreak,
   computeCompletionState,
   createEntryLookup,
-  getUiStatus
+  getUiStatus,
 } from '../../src/lib/history';
 import type { DailyEntry } from '../../src/types';
 
@@ -20,11 +20,11 @@ type MediaQueryListener = (event: MediaQueryListEvent) => void;
 const DESKTOP_HISTORY_QUERY = '(min-width: 768px)';
 
 const { mockUseEntriesForDateRange } = vi.hoisted(() => ({
-  mockUseEntriesForDateRange: vi.fn<HooksModule['useEntriesForDateRange']>()
+  mockUseEntriesForDateRange: vi.fn<HooksModule['useEntriesForDateRange']>(),
 }));
 
 vi.mock('../../src/db/hooks', () => ({
-  useEntriesForDateRange: mockUseEntriesForDateRange
+  useEntriesForDateRange: mockUseEntriesForDateRange,
 }));
 
 const completeDayEntries: DailyEntry[] = [
@@ -32,32 +32,32 @@ const completeDayEntries: DailyEntry[] = [
     date: '2026-03-29',
     sectorId: 'work-school',
     status: 'nominal',
-    updatedAt: '2026-03-29T08:00:00.000Z'
+    updatedAt: '2026-03-29T08:00:00.000Z',
   },
   {
     date: '2026-03-29',
     sectorId: 'household',
     status: 'degraded',
-    updatedAt: '2026-03-29T08:01:00.000Z'
+    updatedAt: '2026-03-29T08:01:00.000Z',
   },
   {
     date: '2026-03-29',
     sectorId: 'relationships',
     status: 'nominal',
-    updatedAt: '2026-03-29T08:02:00.000Z'
+    updatedAt: '2026-03-29T08:02:00.000Z',
   },
   {
     date: '2026-03-29',
     sectorId: 'body',
     status: 'nominal',
-    updatedAt: '2026-03-29T08:03:00.000Z'
+    updatedAt: '2026-03-29T08:03:00.000Z',
   },
   {
     date: '2026-03-29',
     sectorId: 'rest',
     status: 'degraded',
-    updatedAt: '2026-03-29T08:04:00.000Z'
-  }
+    updatedAt: '2026-03-29T08:04:00.000Z',
+  },
 ];
 
 class MockIntersectionObserver implements IntersectionObserver {
@@ -71,7 +71,9 @@ class MockIntersectionObserver implements IntersectionObserver {
   takeRecords = vi.fn(() => []);
   unobserve = vi.fn();
 
-  constructor(...args: [IntersectionObserverCallback, IntersectionObserverInit?]) {
+  constructor(
+    ...args: [IntersectionObserverCallback, IntersectionObserverInit?]
+  ) {
     void args;
   }
 }
@@ -86,31 +88,35 @@ function installMatchMediaController(initialMatches: boolean) {
     },
     media: DESKTOP_HISTORY_QUERY,
     onchange: null,
-    addEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (eventName !== 'change') {
-        return;
-      }
+    addEventListener: vi.fn(
+      (eventName: string, listener: EventListenerOrEventListenerObject) => {
+        if (eventName !== 'change') {
+          return;
+        }
 
-      if (typeof listener === 'function') {
-        listeners.add(listener as MediaQueryListener);
-      }
-    }),
-    removeEventListener: vi.fn((eventName: string, listener: EventListenerOrEventListenerObject) => {
-      if (eventName !== 'change') {
-        return;
-      }
+        if (typeof listener === 'function') {
+          listeners.add(listener as MediaQueryListener);
+        }
+      },
+    ),
+    removeEventListener: vi.fn(
+      (eventName: string, listener: EventListenerOrEventListenerObject) => {
+        if (eventName !== 'change') {
+          return;
+        }
 
-      if (typeof listener === 'function') {
-        listeners.delete(listener as MediaQueryListener);
-      }
-    }),
+        if (typeof listener === 'function') {
+          listeners.delete(listener as MediaQueryListener);
+        }
+      },
+    ),
     addListener: vi.fn((listener: MediaQueryListener) => {
       listeners.add(listener);
     }),
     removeListener: vi.fn((listener: MediaQueryListener) => {
       listeners.delete(listener);
     }),
-    dispatchEvent: vi.fn()
+    dispatchEvent: vi.fn(),
   };
 
   Object.defineProperty(window, 'matchMedia', {
@@ -118,8 +124,8 @@ function installMatchMediaController(initialMatches: boolean) {
     writable: true,
     value: vi.fn().mockImplementation((query: string) => ({
       ...mediaQueryList,
-      media: query
-    }))
+      media: query,
+    })),
   });
 
   return {
@@ -127,12 +133,12 @@ function installMatchMediaController(initialMatches: boolean) {
       matches = nextMatches;
       const event = {
         matches,
-        media: DESKTOP_HISTORY_QUERY
+        media: DESKTOP_HISTORY_QUERY,
       } as MediaQueryListEvent;
 
       listeners.forEach((listener) => listener(event));
       mediaQueryList.onchange?.(event);
-    }
+    },
   };
 }
 
@@ -153,13 +159,13 @@ describe('history helpers and grid behavior', () => {
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
       configurable: true,
       writable: true,
-      value: vi.fn()
+      value: vi.fn(),
     });
 
     Object.defineProperty(window, 'IntersectionObserver', {
       configurable: true,
       writable: true,
-      value: MockIntersectionObserver
+      value: MockIntersectionObserver,
     });
   });
 
@@ -185,22 +191,27 @@ describe('history helpers and grid behavior', () => {
 
   it('computes completion state for a date', () => {
     const completion = computeCompletionState(completeDayEntries, '2026-03-29');
-    const partialCompletion = computeCompletionState(completeDayEntries.slice(0, 3), '2026-03-29');
+    const partialCompletion = computeCompletionState(
+      completeDayEntries.slice(0, 3),
+      '2026-03-29',
+    );
 
     expect(completion).toEqual({
       markedCount: 5,
       totalCount: 5,
-      isComplete: true
+      isComplete: true,
     });
     expect(partialCompletion).toEqual({
       markedCount: 3,
       totalCount: 5,
-      isComplete: false
+      isComplete: false,
     });
   });
 
   it('returns a zero streak when today is incomplete', () => {
-    expect(computeCheckInStreak(completeDayEntries.slice(0, 4), '2026-03-29')).toBe(0);
+    expect(
+      computeCheckInStreak(completeDayEntries.slice(0, 4), '2026-03-29'),
+    ).toBe(0);
   });
 
   it('counts consecutive complete days and breaks on the first incomplete day', () => {
@@ -209,13 +220,13 @@ describe('history helpers and grid behavior', () => {
       ...completeDayEntries.map((entry) => ({
         ...entry,
         date: '2026-03-28',
-        updatedAt: '2026-03-28T08:00:00.000Z'
+        updatedAt: '2026-03-28T08:00:00.000Z',
       })),
       ...completeDayEntries.slice(0, 4).map((entry) => ({
         ...entry,
         date: '2026-03-27',
-        updatedAt: '2026-03-27T08:00:00.000Z'
-      }))
+        updatedAt: '2026-03-27T08:00:00.000Z',
+      })),
     ];
 
     expect(computeCheckInStreak(entries, '2026-03-29')).toBe(2);
@@ -228,14 +239,21 @@ describe('history helpers and grid behavior', () => {
     render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
 
     const carousel = screen.getByRole('region');
-    const previousWeekButton = screen.getByRole('button', { name: /previous week/i });
+    const previousWeekButton = screen.getByRole('button', {
+      name: /previous week/i,
+    });
     const nextWeekButton = screen.getByRole('button', { name: /next week/i });
     const weekStatus = screen.getByTestId('mobile-history-week-status');
-    const dailyBriefHeading = screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i });
+    const dailyBriefHeading = screen.getByRole('heading', {
+      level: 3,
+      name: /sat, mar 28, 2026/i,
+    });
 
     expect(carousel).toHaveAccessibleName('Weekly readiness history.');
     expect(carousel).not.toHaveAttribute('aria-roledescription');
-    expect(screen.getByRole('navigation', { name: /week navigation/i })).toBeVisible();
+    expect(
+      screen.getByRole('navigation', { name: /week navigation/i }),
+    ).toBeVisible();
     const weekGroups = screen.getAllByRole('group');
     expect(weekGroups).toHaveLength(5);
     weekGroups.forEach((weekGroup) => {
@@ -254,13 +272,17 @@ describe('history helpers and grid behavior', () => {
     await user.click(nextWeekButton);
 
     expect(weekStatus).toHaveTextContent('Week 5 of 5');
-    expect(screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i }),
+    ).toBeVisible();
   });
 
   it('has no accessibility violations in the mobile history view', async () => {
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
 
-    const { container } = render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+    const { container } = render(
+      <HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />,
+    );
 
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -269,7 +291,9 @@ describe('history helpers and grid behavior', () => {
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
     installMatchMediaController(true);
 
-    const { container } = render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+    const { container } = render(
+      <HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />,
+    );
 
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -279,7 +303,9 @@ describe('history helpers and grid behavior', () => {
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
     const matchMediaController = installMatchMediaController(true);
     const firstDateLabel = formatLongDate(dateKeys[0] ?? '2026-02-27');
-    const oneWeekBackDateLabel = formatLongDate(dateKeys[dateKeys.length - 8] ?? '2026-03-21');
+    const oneWeekBackDateLabel = formatLongDate(
+      dateKeys[dateKeys.length - 8] ?? '2026-03-21',
+    );
     const todayLabel = formatLongDate('2026-03-28');
 
     void matchMediaController;
@@ -288,12 +314,21 @@ describe('history helpers and grid behavior', () => {
     const grid = screen.getByRole('grid');
     expect(grid).toHaveAttribute('aria-colcount', '31');
     expect(grid).toHaveAttribute('aria-rowcount', '6');
-    expect(screen.queryByRole('button', { name: /previous week/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /previous week/i }),
+    ).not.toBeInTheDocument();
 
     const initialSelectedCell = getSelectedGridCell();
-    expect(initialSelectedCell).toHaveAttribute('aria-label', `Work or School on ${todayLabel}: UNMARKED.`);
+    expect(initialSelectedCell).toHaveAttribute(
+      'aria-label',
+      `Work or School on ${todayLabel}: UNMARKED.`,
+    );
     expect(initialSelectedCell).toHaveAttribute('tabindex', '0');
-    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .filter((cell) => cell.getAttribute('tabindex') === '0'),
+    ).toHaveLength(1);
 
     act(() => {
       initialSelectedCell.focus();
@@ -303,30 +338,52 @@ describe('history helpers and grid behavior', () => {
     await user.keyboard('{ArrowDown}');
     await waitFor(() => {
       const selectedCell = getSelectedGridCell();
-      expect(selectedCell).toHaveAttribute('aria-label', `Household on ${todayLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveAttribute(
+        'aria-label',
+        `Household on ${todayLabel}: UNMARKED.`,
+      );
       expect(selectedCell).toHaveFocus();
     });
-    expect(screen.getByText(`Household on ${todayLabel} is UNMARKED.`)).toBeVisible();
+    expect(
+      screen.getByText(`Household on ${todayLabel} is UNMARKED.`),
+    ).toBeVisible();
 
     await user.keyboard('{PageUp}');
     await waitFor(() => {
-      expect(getSelectedGridCell()).toHaveAttribute('aria-label', `Household on ${oneWeekBackDateLabel}: UNMARKED.`);
+      expect(getSelectedGridCell()).toHaveAttribute(
+        'aria-label',
+        `Household on ${oneWeekBackDateLabel}: UNMARKED.`,
+      );
     });
-    expect(screen.getByText(`Household on ${oneWeekBackDateLabel} is UNMARKED.`)).toBeVisible();
+    expect(
+      screen.getByText(`Household on ${oneWeekBackDateLabel} is UNMARKED.`),
+    ).toBeVisible();
 
     await user.keyboard('{Home}');
     await waitFor(() => {
-      expect(getSelectedGridCell()).toHaveAttribute('aria-label', `Household on ${firstDateLabel}: UNMARKED.`);
+      expect(getSelectedGridCell()).toHaveAttribute(
+        'aria-label',
+        `Household on ${firstDateLabel}: UNMARKED.`,
+      );
     });
 
     await user.keyboard('{Control>}{End}{/Control}');
     await waitFor(() => {
       const selectedCell = getSelectedGridCell();
-      expect(selectedCell).toHaveAttribute('aria-label', `Rest on ${todayLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveAttribute(
+        'aria-label',
+        `Rest on ${todayLabel}: UNMARKED.`,
+      );
       expect(selectedCell).toHaveAttribute('tabindex', '0');
     });
-    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
-    expect(screen.getByText(`Rest on ${todayLabel} is UNMARKED.`)).toBeVisible();
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .filter((cell) => cell.getAttribute('tabindex') === '0'),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(`Rest on ${todayLabel} is UNMARKED.`),
+    ).toBeVisible();
   });
 
   it('holds selection at the desktop grid boundary when traversal would move past the first cell', async () => {
@@ -346,19 +403,31 @@ describe('history helpers and grid behavior', () => {
     await user.keyboard('{Control>}{Home}{/Control}');
     await waitFor(() => {
       const selectedCell = getSelectedGridCell();
-      expect(selectedCell).toHaveAttribute('aria-label', `Work or School on ${firstDateLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveAttribute(
+        'aria-label',
+        `Work or School on ${firstDateLabel}: UNMARKED.`,
+      );
       expect(selectedCell).toHaveFocus();
     });
 
     await user.keyboard('{ArrowUp}');
     await waitFor(() => {
       const selectedCell = getSelectedGridCell();
-      expect(selectedCell).toHaveAttribute('aria-label', `Work or School on ${firstDateLabel}: UNMARKED.`);
+      expect(selectedCell).toHaveAttribute(
+        'aria-label',
+        `Work or School on ${firstDateLabel}: UNMARKED.`,
+      );
       expect(selectedCell).toHaveFocus();
       expect(selectedCell).toHaveAttribute('tabindex', '0');
     });
-    expect(screen.getAllByRole('gridcell').filter((cell) => cell.getAttribute('tabindex') === '0')).toHaveLength(1);
-    expect(screen.getByText(`Work or School on ${firstDateLabel} is UNMARKED.`)).toBeVisible();
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .filter((cell) => cell.getAttribute('tabindex') === '0'),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(`Work or School on ${firstDateLabel} is UNMARKED.`),
+    ).toBeVisible();
   });
 
   it('switches between mobile and desktop history render paths when the viewport query changes', async () => {
@@ -367,7 +436,9 @@ describe('history helpers and grid behavior', () => {
 
     render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
 
-    expect(screen.getByRole('button', { name: /previous week/i })).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: /previous week/i }),
+    ).toBeVisible();
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
 
     act(() => {
@@ -377,14 +448,18 @@ describe('history helpers and grid behavior', () => {
     await waitFor(() => {
       expect(screen.getByRole('grid')).toBeVisible();
     });
-    expect(screen.queryByRole('button', { name: /previous week/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /previous week/i }),
+    ).not.toBeInTheDocument();
 
     act(() => {
       matchMediaController.setMatches(false);
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /previous week/i })).toBeVisible();
+      expect(
+        screen.getByRole('button', { name: /previous week/i }),
+      ).toBeVisible();
     });
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });

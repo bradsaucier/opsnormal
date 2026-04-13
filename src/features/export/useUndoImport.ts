@@ -13,8 +13,12 @@ interface UseUndoImportResult {
   undoBusy: boolean;
 }
 
-export function useUndoImport({ onStatusMessage }: UseUndoImportOptions): UseUndoImportResult {
-  const [undoImport, setUndoImport] = useState<(() => Promise<void>) | null>(null);
+export function useUndoImport({
+  onStatusMessage,
+}: UseUndoImportOptions): UseUndoImportResult {
+  const [undoImport, setUndoImport] = useState<(() => Promise<void>) | null>(
+    null,
+  );
   const [undoBusy, setUndoBusy] = useState(false);
 
   const canUndoImport = useMemo(() => undoImport !== null, [undoImport]);
@@ -34,12 +38,15 @@ export function useUndoImport({ onStatusMessage }: UseUndoImportOptions): UseUnd
       setUndoImport(null);
       onStatusMessage({
         tone: 'success',
-        text: 'Undo complete. The pre-import database snapshot has been restored.'
+        text: 'Undo complete. The pre-import database snapshot has been restored.',
       });
     } catch (error) {
       onStatusMessage({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Undo failed. Reload the app and verify local data.'
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Undo failed. Reload the app and verify local data.',
       });
     } finally {
       setUndoBusy(false);
@@ -50,6 +57,6 @@ export function useUndoImport({ onStatusMessage }: UseUndoImportOptions): UseUnd
     canUndoImport,
     handleUndoImport,
     stageUndoImport,
-    undoBusy
+    undoBusy,
   };
 }

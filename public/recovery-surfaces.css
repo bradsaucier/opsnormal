@@ -9,7 +9,10 @@
   padding: 2rem;
   background-color: #0a0f0d;
   color: #e4e4e7;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 .ops-boot-fallback-container,

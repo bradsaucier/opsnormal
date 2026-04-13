@@ -6,20 +6,22 @@ import { InstallBanner } from '../../src/features/install/InstallBanner';
 import { useInstallPrompt } from '../../src/features/install/useInstallPrompt';
 
 vi.mock('../../src/features/install/useInstallPrompt', () => ({
-  useInstallPrompt: vi.fn()
+  useInstallPrompt: vi.fn(),
 }));
 
 type InstallPromptState = ReturnType<typeof useInstallPrompt>;
 
 const mockUseInstallPrompt = vi.mocked(useInstallPrompt);
 
-function buildHookState(overrides: Partial<InstallPromptState> = {}): InstallPromptState {
+function buildHookState(
+  overrides: Partial<InstallPromptState> = {},
+): InstallPromptState {
   return {
     isIOS: false,
     isStandalone: false,
     canPromptInstall: false,
     promptInstall: vi.fn().mockResolvedValue(undefined),
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -30,7 +32,9 @@ describe('InstallBanner', () => {
   });
 
   it('does not render when the app is already installed', () => {
-    mockUseInstallPrompt.mockReturnValue(buildHookState({ isStandalone: true }));
+    mockUseInstallPrompt.mockReturnValue(
+      buildHookState({ isStandalone: true }),
+    );
 
     render(<InstallBanner />);
 
@@ -43,11 +47,17 @@ describe('InstallBanner', () => {
     render(<InstallBanner />);
 
     expect(screen.getByText('Install the app')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Install now' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveClass('ops-action-button');
     expect(
-      screen.getByRole('heading', { name: 'Install the app' }).closest('section')
+      screen.queryByRole('button', { name: 'Install now' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveClass(
+      'ops-action-button',
+    );
+    expect(
+      screen
+        .getByRole('heading', { name: 'Install the app' })
+        .closest('section'),
     ).toHaveClass('clip-notched');
   });
 
@@ -58,7 +68,9 @@ describe('InstallBanner', () => {
 
     expect(screen.getByText('Open this page in Safari.')).toBeInTheDocument();
     expect(screen.getByText('Press Share.')).toBeInTheDocument();
-    expect(screen.getByText('Select Install or Add to Home Screen.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Select Install or Add to Home Screen.'),
+    ).toBeInTheDocument();
   });
 
   it('calls promptInstall when the operator presses Install now', async () => {
@@ -66,7 +78,7 @@ describe('InstallBanner', () => {
     const promptInstall = vi.fn().mockResolvedValue(undefined);
 
     mockUseInstallPrompt.mockReturnValue(
-      buildHookState({ canPromptInstall: true, promptInstall })
+      buildHookState({ canPromptInstall: true, promptInstall }),
     );
 
     render(<InstallBanner />);
@@ -78,12 +90,16 @@ describe('InstallBanner', () => {
   it('hides itself after dismissal without mutating hook state', async () => {
     const user = userEvent.setup();
 
-    mockUseInstallPrompt.mockReturnValue(buildHookState({ canPromptInstall: true }));
+    mockUseInstallPrompt.mockReturnValue(
+      buildHookState({ canPromptInstall: true }),
+    );
 
     render(<InstallBanner />);
     await user.click(screen.getByRole('button', { name: 'Dismiss' }));
 
-    expect(window.localStorage.getItem('opsnormal-install-banner-dismissed')).toBe('true');
+    expect(
+      window.localStorage.getItem('opsnormal-install-banner-dismissed'),
+    ).toBe('true');
     expect(screen.queryByText('Install the app')).not.toBeInTheDocument();
   });
 
@@ -96,9 +112,13 @@ describe('InstallBanner', () => {
 
     expect(screen.queryByText('Install the app')).not.toBeInTheDocument();
 
-    mockUseInstallPrompt.mockReturnValue(buildHookState({ isStandalone: true }));
+    mockUseInstallPrompt.mockReturnValue(
+      buildHookState({ isStandalone: true }),
+    );
     rerender(<InstallBanner />);
 
-    expect(window.localStorage.getItem('opsnormal-install-banner-dismissed')).toBeNull();
+    expect(
+      window.localStorage.getItem('opsnormal-install-banner-dismissed'),
+    ).toBeNull();
   });
 });

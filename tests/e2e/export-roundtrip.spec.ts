@@ -26,27 +26,39 @@ function normalizeExportPayload(payload: ExportPayload) {
       const leftKey = `${left.date}:${left.sectorId}`;
       const rightKey = `${right.date}:${right.sectorId}`;
       return leftKey.localeCompare(rightKey);
-    })
+    }),
   };
 }
 
-function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+function sectorRadio(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
+) {
   return page.getByRole('radio', {
-    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i'),
   });
 }
 
 async function expectSectorStatus(
   page: Page,
   sectorLabel: string,
-  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
 ) {
-  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
 }
 
-async function readLocalFileText(page: Page, filePath: string): Promise<string> {
+async function readLocalFileText(
+  page: Page,
+  filePath: string,
+): Promise<string> {
   await page.evaluate(() => {
-    if (document.querySelector('[data-testid="playwright-local-file-reader"]')) {
+    if (
+      document.querySelector('[data-testid="playwright-local-file-reader"]')
+    ) {
       return;
     }
 
@@ -59,7 +71,9 @@ async function readLocalFileText(page: Page, filePath: string): Promise<string> 
     document.body.appendChild(input);
   });
 
-  const fileReaderInput = page.locator('[data-testid="playwright-local-file-reader"]');
+  const fileReaderInput = page.locator(
+    '[data-testid="playwright-local-file-reader"]',
+  );
   await fileReaderInput.setInputFiles(filePath);
 
   return await fileReaderInput.evaluate(async (element) => {
@@ -94,7 +108,7 @@ async function exportPayloadFromCurrentPage(page: Page): Promise<{
   return {
     downloadPath,
     payload: parsed.payload,
-    rawChecksumPayload: parsed.rawChecksumPayload
+    rawChecksumPayload: parsed.rawChecksumPayload,
   };
 }
 
@@ -109,33 +123,51 @@ async function verifyImportRoundTrip(args: {
     statusLabel: 'unmarked' | 'nominal' | 'degraded';
   }>;
 }): Promise<void> {
-  const recoveryContext = await args.browser.newContext({ acceptDownloads: true });
+  const recoveryContext = await args.browser.newContext({
+    acceptDownloads: true,
+  });
 
   try {
     const recoveryPage = await recoveryContext.newPage();
     const appUrl = new URL('/', args.sourcePage.url()).toString();
 
     await recoveryPage.goto(appUrl);
-    await recoveryPage.getByRole('button', { name: /import and restore/i }).click();
-    await recoveryPage.locator('[data-testid="import-file-input"]').setInputFiles(args.sourceDownloadPath);
+    await recoveryPage
+      .getByRole('button', { name: /import and restore/i })
+      .click();
+    await recoveryPage
+      .locator('[data-testid="import-file-input"]')
+      .setInputFiles(args.sourceDownloadPath);
 
-    await expect(recoveryPage.getByRole('heading', { name: /import preview/i })).toBeVisible();
+    await expect(
+      recoveryPage.getByRole('heading', { name: /import preview/i }),
+    ).toBeVisible();
     await expect(recoveryPage.getByText(/integrity verified/i)).toBeVisible();
-    await recoveryPage.getByRole('button', { name: /confirm merge import/i }).click();
+    await recoveryPage
+      .getByRole('button', { name: /confirm merge import/i })
+      .click();
 
     for (const expectedStatus of args.expectedStatuses) {
-      await expectSectorStatus(recoveryPage, expectedStatus.sectorLabel, expectedStatus.statusLabel);
+      await expectSectorStatus(
+        recoveryPage,
+        expectedStatus.sectorLabel,
+        expectedStatus.statusLabel,
+      );
     }
 
     const secondExport = await exportPayloadFromCurrentPage(recoveryPage);
 
-    const firstRecomputedChecksum = await computeJsonExportChecksum(args.expectedChecksumPayload);
-    const secondRecomputedChecksum = await computeJsonExportChecksum(secondExport.rawChecksumPayload);
+    const firstRecomputedChecksum = await computeJsonExportChecksum(
+      args.expectedChecksumPayload,
+    );
+    const secondRecomputedChecksum = await computeJsonExportChecksum(
+      secondExport.rawChecksumPayload,
+    );
 
     expect(args.expectedPayload.checksum).toBe(firstRecomputedChecksum);
     expect(secondExport.payload.checksum).toBe(secondRecomputedChecksum);
     expect(normalizeExportPayload(secondExport.payload)).toEqual(
-      normalizeExportPayload(args.expectedPayload)
+      normalizeExportPayload(args.expectedPayload),
     );
   } finally {
     await recoveryContext.close();
@@ -147,70 +179,101 @@ async function deleteOpsNormalDatabase(page: Page): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       const request = indexedDB.deleteDatabase('opsnormal');
       request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error ?? new Error('Failed to delete OpsNormal database.'));
-      request.onblocked = () => reject(new Error('Deleting OpsNormal database was blocked by another open connection.'));
+      request.onerror = () =>
+        reject(
+          request.error ?? new Error('Failed to delete OpsNormal database.'),
+        );
+      request.onblocked = () =>
+        reject(
+          new Error(
+            'Deleting OpsNormal database was blocked by another open connection.',
+          ),
+        );
     });
   });
 }
 
-async function seedLegacyVersion1Database(page: Page, entries: ExportEntry[]): Promise<void> {
+async function seedLegacyVersion1Database(
+  page: Page,
+  entries: ExportEntry[],
+): Promise<void> {
   await page.goto('/boot-fallback-harness.html');
   await deleteOpsNormalDatabase(page);
 
-  await page.evaluate(async ({ nativeVersion, seedEntries }: { nativeVersion: number; seedEntries: ExportEntry[] }) => {
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open('opsnormal', nativeVersion);
+  await page.evaluate(
+    async ({
+      nativeVersion,
+      seedEntries,
+    }: {
+      nativeVersion: number;
+      seedEntries: ExportEntry[];
+    }) => {
+      await new Promise<void>((resolve, reject) => {
+        const request = indexedDB.open('opsnormal', nativeVersion);
 
-      request.onupgradeneeded = () => {
-        const database = request.result;
-        const store = database.createObjectStore('dailyEntries', {
-          keyPath: 'id',
-          autoIncrement: true
-        });
+        request.onupgradeneeded = () => {
+          const database = request.result;
+          const store = database.createObjectStore('dailyEntries', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
 
-        store.createIndex('[date+sectorId]', ['date', 'sectorId'], { unique: true });
-        store.createIndex('date', 'date', { unique: false });
-        store.createIndex('sectorId', 'sectorId', { unique: false });
-        store.createIndex('updatedAt', 'updatedAt', { unique: false });
-      };
-
-      request.onerror = () => {
-        reject(request.error ?? new Error('Failed to open legacy OpsNormal database.'));
-      };
-
-      request.onsuccess = () => {
-        const database = request.result;
-        const transaction = database.transaction('dailyEntries', 'readwrite');
-        const store = transaction.objectStore('dailyEntries');
-
-        for (const entry of seedEntries) {
-          store.add(entry);
-        }
-
-        transaction.oncomplete = () => {
-          database.close();
-          resolve();
+          store.createIndex('[date+sectorId]', ['date', 'sectorId'], {
+            unique: true,
+          });
+          store.createIndex('date', 'date', { unique: false });
+          store.createIndex('sectorId', 'sectorId', { unique: false });
+          store.createIndex('updatedAt', 'updatedAt', { unique: false });
         };
-        transaction.onerror = () => {
-          database.close();
-          reject(transaction.error ?? new Error('Failed to seed legacy OpsNormal database.'));
+
+        request.onerror = () => {
+          reject(
+            request.error ??
+              new Error('Failed to open legacy OpsNormal database.'),
+          );
         };
-        transaction.onabort = () => {
-          database.close();
-          reject(transaction.error ?? new Error('Legacy OpsNormal seed transaction aborted.'));
+
+        request.onsuccess = () => {
+          const database = request.result;
+          const transaction = database.transaction('dailyEntries', 'readwrite');
+          const store = transaction.objectStore('dailyEntries');
+
+          for (const entry of seedEntries) {
+            store.add(entry);
+          }
+
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+          transaction.onerror = () => {
+            database.close();
+            reject(
+              transaction.error ??
+                new Error('Failed to seed legacy OpsNormal database.'),
+            );
+          };
+          transaction.onabort = () => {
+            database.close();
+            reject(
+              transaction.error ??
+                new Error('Legacy OpsNormal seed transaction aborted.'),
+            );
+          };
         };
-      };
-    });
-  }, {
-    nativeVersion: DEXIE_VERSION_1_NATIVE_INDEXED_DB_VERSION,
-    seedEntries: entries
-  });
+      });
+    },
+    {
+      nativeVersion: DEXIE_VERSION_1_NATIVE_INDEXED_DB_VERSION,
+      seedEntries: entries,
+    },
+  );
 }
 
 test.describe('OpsNormal export recovery', () => {
   test('round-trips a json export through import and re-export without data loss', async ({
     page,
-    browser
+    browser,
   }) => {
     await page.goto('/');
 
@@ -237,14 +300,14 @@ test.describe('OpsNormal export recovery', () => {
       expectedChecksumPayload: firstExport.rawChecksumPayload,
       expectedStatuses: [
         { sectorLabel: 'Work or School', statusLabel: 'degraded' },
-        { sectorLabel: 'Body', statusLabel: 'nominal' }
-      ]
+        { sectorLabel: 'Body', statusLabel: 'nominal' },
+      ],
     });
   });
 
   test('preserves export and import fidelity after opening legacy version 1 IndexedDB state @harness', async ({
     page,
-    browser
+    browser,
   }) => {
     const today = new Date();
     const todayKey = formatDateKey(today);
@@ -257,14 +320,14 @@ test.describe('OpsNormal export recovery', () => {
         date: todayKey,
         sectorId: 'relationships',
         status: 'degraded',
-        updatedAt: `${todayKey}T12:00:00.000Z`
+        updatedAt: `${todayKey}T12:00:00.000Z`,
       },
       {
         date: previousDayKey,
         sectorId: 'rest',
         status: 'nominal',
-        updatedAt: `${previousDayKey}T12:05:00.000Z`
-      }
+        updatedAt: `${previousDayKey}T12:05:00.000Z`,
+      },
     ];
 
     await seedLegacyVersion1Database(page, legacyEntries);
@@ -274,10 +337,12 @@ test.describe('OpsNormal export recovery', () => {
 
     const firstExport = await exportPayloadFromCurrentPage(page);
 
-    const expectedLegacyExportEntries: ExportEntry[] = legacyEntries.map((entry, index) => ({
-      ...entry,
-      id: index + 1
-    }));
+    const expectedLegacyExportEntries: ExportEntry[] = legacyEntries.map(
+      (entry, index) => ({
+        ...entry,
+        id: index + 1,
+      }),
+    );
 
     expect(normalizeExportPayload(firstExport.payload).entries).toEqual(
       normalizeExportPayload({
@@ -285,8 +350,8 @@ test.describe('OpsNormal export recovery', () => {
         schemaVersion: firstExport.payload.schemaVersion,
         exportedAt: firstExport.payload.exportedAt,
         entries: expectedLegacyExportEntries,
-        checksum: firstExport.payload.checksum
-      }).entries
+        checksum: firstExport.payload.checksum,
+      }).entries,
     );
 
     await verifyImportRoundTrip({
@@ -295,7 +360,9 @@ test.describe('OpsNormal export recovery', () => {
       sourceDownloadPath: firstExport.downloadPath,
       expectedPayload: firstExport.payload,
       expectedChecksumPayload: firstExport.rawChecksumPayload,
-      expectedStatuses: [{ sectorLabel: 'Relationships', statusLabel: 'degraded' }]
+      expectedStatuses: [
+        { sectorLabel: 'Relationships', statusLabel: 'degraded' },
+      ],
     });
   });
 });

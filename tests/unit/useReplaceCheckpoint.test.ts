@@ -8,17 +8,19 @@ type ExportCurrentEntriesAsJson = ExportModule['exportCurrentEntriesAsJson'];
 const exportMocks = vi.hoisted(() => ({
   canUseVerifiedFileSave: vi.fn<() => boolean>(() => false),
   checkpointJsonBackupToDisk: vi.fn<CheckpointJsonBackupToDisk>(),
-  exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>()
+  exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>(),
 }));
 
 vi.mock('../../src/lib/export', async () => {
-  const actual = await vi.importActual<typeof import('../../src/lib/export')>('../../src/lib/export');
+  const actual = await vi.importActual<typeof import('../../src/lib/export')>(
+    '../../src/lib/export',
+  );
 
   return {
     ...actual,
     canUseVerifiedFileSave: exportMocks.canUseVerifiedFileSave,
     checkpointJsonBackupToDisk: exportMocks.checkpointJsonBackupToDisk,
-    exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson
+    exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson,
   };
 });
 
@@ -33,7 +35,9 @@ const checkpointJsonBackupToDiskMock = exportMocks.checkpointJsonBackupToDisk;
 const EXPORTED_AT = '2026-04-02T21:00:00.000Z';
 const FILE_NAME = 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json';
 
-function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview {
+function buildPreview(
+  overrides: Partial<JsonExportPayload> = {},
+): ImportPreview {
   return {
     payload: {
       app: 'OpsNormal',
@@ -44,10 +48,10 @@ function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview
           date: '2026-03-28',
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: '2026-03-28T12:00:00.000Z'
-        }
+          updatedAt: '2026-03-28T12:00:00.000Z',
+        },
       ],
-      ...overrides
+      ...overrides,
     },
     integrityStatus: overrides.checksum ? 'verified' : 'legacy-unverified',
     existingEntryCount: 3,
@@ -56,8 +60,8 @@ function buildPreview(overrides: Partial<JsonExportPayload> = {}): ImportPreview
     totalEntries: 1,
     dateRange: {
       start: '2026-03-28',
-      end: '2026-03-28'
-    }
+      end: '2026-03-28',
+    },
   };
 }
 
@@ -65,7 +69,7 @@ function primeExportSnapshot() {
   exportCurrentEntriesAsJsonMock.mockResolvedValue({
     entryCount: 3,
     exportedAt: EXPORTED_AT,
-    payload: '{"app":"OpsNormal"}'
+    payload: '{"app":"OpsNormal"}',
   });
 }
 
@@ -76,21 +80,22 @@ function renderSubject(args: {
   onBackupCompleted?: OnBackupCompleted;
   onStatusMessage?: OnStatusMessage;
 }) {
-  const onBackupCompleted = args.onBackupCompleted ?? vi.fn<OnBackupCompleted>();
+  const onBackupCompleted =
+    args.onBackupCompleted ?? vi.fn<OnBackupCompleted>();
   const onStatusMessage = args.onStatusMessage ?? vi.fn<OnStatusMessage>();
 
   const hook = renderHook(() =>
     useReplaceCheckpoint({
       onBackupCompleted,
       onStatusMessage,
-      pendingImport: buildPreview()
-    })
+      pendingImport: buildPreview(),
+    }),
   );
 
   return {
     ...hook,
     onBackupCompleted,
-    onStatusMessage
+    onStatusMessage,
   };
 }
 
@@ -105,7 +110,7 @@ describe('useReplaceCheckpoint', () => {
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'verified-save-succeeded',
       fileName: FILE_NAME,
-      exportedAt: EXPORTED_AT
+      exportedAt: EXPORTED_AT,
     });
 
     const { result, onBackupCompleted, onStatusMessage } = renderSubject({});
@@ -117,13 +122,13 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceBackupState).toEqual({
       phase: 'ready',
       fileName: FILE_NAME,
-      verification: 'verified'
+      verification: 'verified',
     });
     expect(result.current.replaceReady).toBe(true);
     expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: `Verified pre-replace backup saved as ${FILE_NAME}. 3 current rows secured before restore.`
+      text: `Verified pre-replace backup saved as ${FILE_NAME}. 3 current rows secured before restore.`,
     });
   });
 
@@ -132,7 +137,7 @@ describe('useReplaceCheckpoint', () => {
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'fallback-download-triggered',
       fileName: FILE_NAME,
-      exportedAt: EXPORTED_AT
+      exportedAt: EXPORTED_AT,
     });
 
     const { result, onBackupCompleted, onStatusMessage } = renderSubject({});
@@ -143,13 +148,13 @@ describe('useReplaceCheckpoint', () => {
 
     expect(result.current.replaceBackupState).toEqual({
       phase: 'manual-awaiting-ack',
-      fileName: FILE_NAME
+      fileName: FILE_NAME,
     });
     expect(result.current.replaceReady).toBe(false);
     expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'warning',
-      text: `Backup download triggered for ${FILE_NAME}. Verify the file exists on local disk, then acknowledge before replace unlocks.`
+      text: `Backup download triggered for ${FILE_NAME}. Verify the file exists on local disk, then acknowledge before replace unlocks.`,
     });
 
     act(() => {
@@ -158,7 +163,7 @@ describe('useReplaceCheckpoint', () => {
 
     expect(result.current.replaceBackupState).toEqual({
       phase: 'manual-awaiting-ack',
-      fileName: FILE_NAME
+      fileName: FILE_NAME,
     });
     expect(result.current.replaceReady).toBe(false);
 
@@ -174,13 +179,12 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceBackupState).toEqual({
       phase: 'ready',
       fileName: FILE_NAME,
-      verification: 'manual'
+      verification: 'manual',
     });
     expect(result.current.replaceReady).toBe(true);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'warning',
-      text:
-        'Manual backup checkpoint acknowledged for opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json. Replace is unlocked, but the browser did not verify the disk write.'
+      text: 'Manual backup checkpoint acknowledged for opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json. Replace is unlocked, but the browser did not verify the disk write.',
     });
   });
 
@@ -191,10 +195,10 @@ describe('useReplaceCheckpoint', () => {
         kind: 'save-cancelled',
         fileName: FILE_NAME,
         exportedAt: EXPORTED_AT,
-        message: 'Backup save cancelled. Local data unchanged.'
+        message: 'Backup save cancelled. Local data unchanged.',
       } satisfies BackupCheckpointResult,
       expectedTone: 'warning' as const,
-      expectedMessage: 'Backup save cancelled. Local data unchanged.'
+      expectedMessage: 'Backup save cancelled. Local data unchanged.',
     },
     {
       name: 'save-failed',
@@ -202,11 +206,11 @@ describe('useReplaceCheckpoint', () => {
         kind: 'save-failed',
         fileName: FILE_NAME,
         exportedAt: EXPORTED_AT,
-        message: 'Disk write failed hard.'
+        message: 'Disk write failed hard.',
       } satisfies BackupCheckpointResult,
       expectedTone: 'error' as const,
-      expectedMessage: 'Disk write failed hard.'
-    }
+      expectedMessage: 'Disk write failed hard.',
+    },
   ])(
     'fails closed and resets internal state to idle while surfacing distinct operator messages when checkpoint result is $name',
     async ({ result: checkpointResult, expectedMessage, expectedTone }) => {
@@ -225,7 +229,7 @@ describe('useReplaceCheckpoint', () => {
       expect(onBackupCompleted).not.toHaveBeenCalled();
       expect(onStatusMessage).toHaveBeenLastCalledWith({
         tone: expectedTone,
-        text: expectedMessage
+        text: expectedMessage,
       });
 
       act(() => {
@@ -235,14 +239,14 @@ describe('useReplaceCheckpoint', () => {
       expect(result.current.replaceConfirmState).toBe('idle');
       expect(onStatusMessage).toHaveBeenLastCalledWith({
         tone: 'warning',
-        text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.'
+        text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.',
       });
-    }
+    },
   );
 
   it('fails closed and surfaces an error when snapshot generation throws before any disk write', async () => {
     exportCurrentEntriesAsJsonMock.mockRejectedValue(
-      new Error('Database read failure during snapshot.')
+      new Error('Database read failure during snapshot.'),
     );
 
     const { result, onBackupCompleted, onStatusMessage } = renderSubject({});
@@ -257,7 +261,7 @@ describe('useReplaceCheckpoint', () => {
     expect(checkpointJsonBackupToDiskMock).not.toHaveBeenCalled();
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'error',
-      text: 'Database read failure during snapshot.'
+      text: 'Database read failure during snapshot.',
     });
 
     act(() => {
@@ -267,7 +271,7 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceConfirmState).toBe('idle');
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'warning',
-      text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.'
+      text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.',
     });
   });
 
@@ -276,7 +280,7 @@ describe('useReplaceCheckpoint', () => {
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'fallback-download-triggered',
       fileName: FILE_NAME,
-      exportedAt: EXPORTED_AT
+      exportedAt: EXPORTED_AT,
     });
 
     const { result } = renderSubject({});
@@ -300,7 +304,7 @@ describe('useReplaceCheckpoint', () => {
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'verified-save-succeeded',
       fileName: FILE_NAME,
-      exportedAt: EXPORTED_AT
+      exportedAt: EXPORTED_AT,
     });
 
     const onStatusMessage = vi.fn<OnStatusMessage>();
@@ -324,11 +328,11 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceBackupState).toEqual({
       phase: 'ready',
       fileName: FILE_NAME,
-      verification: 'verified'
+      verification: 'verified',
     });
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'info',
-      text: 'Replace disarmed. Local data unchanged.'
+      text: 'Replace disarmed. Local data unchanged.',
     });
   });
 
@@ -337,7 +341,7 @@ describe('useReplaceCheckpoint', () => {
     checkpointJsonBackupToDiskMock.mockResolvedValue({
       kind: 'verified-save-succeeded',
       fileName: FILE_NAME,
-      exportedAt: EXPORTED_AT
+      exportedAt: EXPORTED_AT,
     });
 
     const onStatusMessage = vi.fn<OnStatusMessage>();

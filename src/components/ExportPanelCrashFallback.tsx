@@ -1,6 +1,9 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 
-import { exportEmergencyCsvBackup, exportEmergencyJsonBackup } from '../lib/emergencyExport';
+import {
+  exportEmergencyCsvBackup,
+  exportEmergencyJsonBackup,
+} from '../lib/emergencyExport';
 import { getErrorMessage } from '../lib/errors';
 import { reloadCurrentPage } from '../lib/runtime';
 
@@ -23,7 +26,7 @@ function formatSkippedCount(count: number): string {
 function formatEmergencyExportMessage(
   formatLabel: 'JSON' | 'CSV',
   recoveredCount: number,
-  skippedCount: number
+  skippedCount: number,
 ): string {
   if (skippedCount === 0) {
     return `Emergency ${formatLabel} export complete. ${formatEntryCount(recoveredCount)}`;
@@ -35,13 +38,14 @@ function formatEmergencyExportMessage(
 export function ExportPanelCrashFallback({
   error,
   componentStack,
-  onRetry
+  onRetry,
 }: ExportPanelCrashFallbackProps) {
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [message, setMessage] = useState(
-    'Backup and restore crashed. Use an emergency export before retrying if you need an external copy of local data.'
+    'Backup and restore crashed. Use an emergency export before retrying if you need an external copy of local data.',
   );
-  const [showManualInspectionGuidance, setShowManualInspectionGuidance] = useState(false);
+  const [showManualInspectionGuidance, setShowManualInspectionGuidance] =
+    useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -54,15 +58,19 @@ export function ExportPanelCrashFallback({
       const result = await exportEmergencyJsonBackup();
       setShowManualInspectionGuidance(false);
       setMessage(
-        formatEmergencyExportMessage('JSON', result.recoveredCount, result.skippedCount)
+        formatEmergencyExportMessage(
+          'JSON',
+          result.recoveredCount,
+          result.skippedCount,
+        ),
       );
     } catch (exportError: unknown) {
       setShowManualInspectionGuidance(true);
       setMessage(
         getErrorMessage(
           exportError,
-          'Emergency JSON export failed. Inspect browser DevTools, then Application, then IndexedDB for manual recovery.'
-        )
+          'Emergency JSON export failed. Inspect browser DevTools, then Application, then IndexedDB for manual recovery.',
+        ),
       );
     } finally {
       setBusyAction(null);
@@ -75,15 +83,19 @@ export function ExportPanelCrashFallback({
       const result = await exportEmergencyCsvBackup();
       setShowManualInspectionGuidance(false);
       setMessage(
-        formatEmergencyExportMessage('CSV', result.recoveredCount, result.skippedCount)
+        formatEmergencyExportMessage(
+          'CSV',
+          result.recoveredCount,
+          result.skippedCount,
+        ),
       );
     } catch (exportError: unknown) {
       setShowManualInspectionGuidance(true);
       setMessage(
         getErrorMessage(
           exportError,
-          'Emergency CSV export failed. Inspect browser DevTools, then Application, then IndexedDB for manual recovery.'
-        )
+          'Emergency CSV export failed. Inspect browser DevTools, then Application, then IndexedDB for manual recovery.',
+        ),
       );
     } finally {
       setBusyAction(null);
@@ -108,7 +120,9 @@ export function ExportPanelCrashFallback({
           Backup and Recovery offline
         </h2>
         <p className="mt-2 text-sm leading-6 text-zinc-400">
-          This panel crashed, but the rest of OpsNormal is still online. Emergency export stays available through the isolated crash-export recovery path.
+          This panel crashed, but the rest of OpsNormal is still online.
+          Emergency export stays available through the isolated crash-export
+          recovery path.
         </p>
         <p className="mt-3 text-sm leading-6 text-zinc-300">{message}</p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -147,7 +161,9 @@ export function ExportPanelCrashFallback({
         </div>
         {showManualInspectionGuidance ? (
           <p className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-300">
-            If emergency export still fails, inspect browser DevTools, then Application, then IndexedDB, then the opsnormal database for manual recovery.
+            If emergency export still fails, inspect browser DevTools, then
+            Application, then IndexedDB, then the opsnormal database for manual
+            recovery.
           </p>
         ) : null}
         <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">
@@ -164,7 +180,12 @@ export function ExportPanelCrashFallback({
           ) : null}
         </details>
       </div>
-      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {message}
       </div>
     </Fragment>

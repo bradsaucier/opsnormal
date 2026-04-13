@@ -22,7 +22,7 @@ function parseTimestamp(value: string | null): number | null {
 function hasRecentJsonBackup(
   lastBackupAt: string | null,
   maxAgeMs: number,
-  nowMs: number
+  nowMs: number,
 ): boolean {
   const parsedLastBackupAt = parseTimestamp(lastBackupAt);
 
@@ -42,13 +42,15 @@ function hasStorageRecoveryWarning(storageHealth: StorageHealth): boolean {
 }
 
 function hasElevatedSafariTabRisk(storageHealth: StorageHealth): boolean {
-  return storageHealth.safari.webKitRisk && !storageHealth.safari.standaloneMode;
+  return (
+    storageHealth.safari.webKitRisk && !storageHealth.safari.standaloneMode
+  );
 }
 
 export function createBackupActionPrompt(
   storageHealth: StorageHealth | null,
   lastBackupAt: string | null,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): BackupActionPrompt | null {
   if (!storageHealth) {
     return null;
@@ -58,7 +60,7 @@ export function createBackupActionPrompt(
   const hasFreshBackupForSafariWindow = hasRecentJsonBackup(
     lastBackupAt,
     SAFARI_EXPORT_REFRESH_WINDOW_MS,
-    nowMs
+    nowMs,
   );
   const hasRecordedBackup = parseTimestamp(lastBackupAt) !== null;
 
@@ -67,26 +69,33 @@ export function createBackupActionPrompt(
       tone: 'warning',
       title: 'Confirm state and refresh the JSON backup',
       detail:
-        'Recent storage diagnostics show a reconnect or write-verification warning. Confirm the latest visible check-in, then create a fresh JSON export before more edits.'
+        'Recent storage diagnostics show a reconnect or write-verification warning. Confirm the latest visible check-in, then create a fresh JSON export before more edits.',
     };
   }
 
-  if (hasElevatedSafariTabRisk(storageHealth) && !hasFreshBackupForSafariWindow) {
+  if (
+    hasElevatedSafariTabRisk(storageHealth) &&
+    !hasFreshBackupForSafariWindow
+  ) {
     return {
       tone: 'warning',
       title: 'Safari tab risk requires a fresh backup',
       detail: storageHealth.safari.installRecommended
         ? 'This session is running in a browser tab on iPhone or iPad rather than an installed Home Screen app. Refresh the JSON export now and install to Home Screen when that path is available.'
-        : 'This session is running in Safari on macOS. Refresh the JSON export now before relying on local-only browser storage.'
+        : 'This session is running in Safari on macOS. Refresh the JSON export now before relying on local-only browser storage.',
     };
   }
 
-  if ((storageHealth.status === 'warning' || storageHealth.status === 'unavailable') && !hasRecordedBackup) {
+  if (
+    (storageHealth.status === 'warning' ||
+      storageHealth.status === 'unavailable') &&
+    !hasRecordedBackup
+  ) {
     return {
       tone: 'warning',
       title: 'No external JSON backup recorded',
       detail:
-        'Browser-managed storage is under elevated risk and this browser has no recorded JSON backup yet. Create one now before relying on local-only data.'
+        'Browser-managed storage is under elevated risk and this browser has no recorded JSON backup yet. Create one now before relying on local-only data.',
     };
   }
 

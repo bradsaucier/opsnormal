@@ -12,11 +12,11 @@ const exportMocks = vi.hoisted(() => ({
   downloadTextFile: vi.fn<DownloadTextFile>(),
   exportCurrentEntriesAsCsv: vi.fn<ExportCurrentEntriesAsCsv>(),
   exportCurrentEntriesAsJson: vi.fn<ExportCurrentEntriesAsJson>(),
-  formatLastExportCompletedAt: vi.fn<(value: string | null) => string>((value) =>
-    value ? `formatted:${value}` : 'formatted:none'
+  formatLastExportCompletedAt: vi.fn<(value: string | null) => string>(
+    (value) => (value ? `formatted:${value}` : 'formatted:none'),
   ),
   getLastExportCompletedAt: vi.fn<GetLastExportCompletedAt>(),
-  recordExportCompleted: vi.fn<RecordExportCompleted>()
+  recordExportCompleted: vi.fn<RecordExportCompleted>(),
 }));
 
 vi.mock('../../src/lib/export', () => ({
@@ -25,7 +25,7 @@ vi.mock('../../src/lib/export', () => ({
   exportCurrentEntriesAsJson: exportMocks.exportCurrentEntriesAsJson,
   formatLastExportCompletedAt: exportMocks.formatLastExportCompletedAt,
   getLastExportCompletedAt: exportMocks.getLastExportCompletedAt,
-  recordExportCompleted: exportMocks.recordExportCompleted
+  recordExportCompleted: exportMocks.recordExportCompleted,
 }));
 
 import { useExportWorkflow } from '../../src/features/export/useExportWorkflow';
@@ -51,12 +51,14 @@ describe('useExportWorkflow', () => {
 
     const { result } = renderHook(() =>
       useExportWorkflow({
-        onStatusMessage: vi.fn()
-      })
+        onStatusMessage: vi.fn(),
+      }),
     );
 
     expect(getLastExportCompletedAtMock).toHaveBeenCalledTimes(1);
-    expect(result.current.backupStatus).toBe('formatted:2026-04-02T21:00:00.000Z');
+    expect(result.current.backupStatus).toBe(
+      'formatted:2026-04-02T21:00:00.000Z',
+    );
   });
 
   it('records a JSON export completion and emits the success message', async () => {
@@ -66,13 +68,13 @@ describe('useExportWorkflow', () => {
     exportCurrentEntriesAsJsonMock.mockResolvedValue({
       entryCount: 3,
       exportedAt: '2026-04-02T21:00:00.000Z',
-      payload: '{"app":"OpsNormal"}'
+      payload: '{"app":"OpsNormal"}',
     });
 
     const { result } = renderHook(() =>
       useExportWorkflow({
-        onStatusMessage
-      })
+        onStatusMessage,
+      }),
     );
 
     await act(async () => {
@@ -82,13 +84,17 @@ describe('useExportWorkflow', () => {
     expect(downloadTextFileMock).toHaveBeenCalledWith(
       'opsnormal-export.json',
       '{"app":"OpsNormal"}',
-      'application/json'
+      'application/json',
     );
-    expect(recordExportCompletedMock).toHaveBeenCalledWith('2026-04-02T21:00:00.000Z');
-    expect(result.current.backupStatus).toBe('formatted:2026-04-02T21:00:00.000Z');
+    expect(recordExportCompletedMock).toHaveBeenCalledWith(
+      '2026-04-02T21:00:00.000Z',
+    );
+    expect(result.current.backupStatus).toBe(
+      'formatted:2026-04-02T21:00:00.000Z',
+    );
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: 'JSON export complete. 3 entries written to disk.'
+      text: 'JSON export complete. 3 entries written to disk.',
     });
   });
 
@@ -98,13 +104,13 @@ describe('useExportWorkflow', () => {
     getLastExportCompletedAtMock.mockReturnValue(null);
     exportCurrentEntriesAsCsvMock.mockResolvedValue({
       entryCount: 5,
-      payload: 'date,sectorId,status,updatedAt'
+      payload: 'date,sectorId,status,updatedAt',
     });
 
     const { result } = renderHook(() =>
       useExportWorkflow({
-        onStatusMessage
-      })
+        onStatusMessage,
+      }),
     );
 
     await act(async () => {
@@ -114,13 +120,13 @@ describe('useExportWorkflow', () => {
     expect(downloadTextFileMock).toHaveBeenCalledWith(
       'opsnormal-export.csv',
       'date,sectorId,status,updatedAt',
-      'text/csv;charset=utf-8'
+      'text/csv;charset=utf-8',
     );
     expect(recordExportCompletedMock).not.toHaveBeenCalled();
     expect(result.current.backupStatus).toBe('formatted:none');
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: 'CSV export complete. 5 entries written to disk.'
+      text: 'CSV export complete. 5 entries written to disk.',
     });
   });
 });

@@ -21,7 +21,9 @@ interface UseImportWorkflowResult {
     onArmReplace: () => void;
     replaceConfirmState: ReplaceConfirmState;
   }) => Promise<void>;
-  handleImportSelection: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleImportSelection: (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => Promise<void>;
   importBusy: boolean;
   importMode: ImportMode;
   pendingFileName: string;
@@ -36,9 +38,11 @@ export function useImportWorkflow({
   onOpenImportSection,
   onOpenUndoSection,
   onReplaceWorkflowResetRequested,
-  onStatusMessage
+  onStatusMessage,
 }: UseImportWorkflowOptions): UseImportWorkflowResult {
-  const [pendingImport, setPendingImport] = useState<ImportPreview | null>(null);
+  const [pendingImport, setPendingImport] = useState<ImportPreview | null>(
+    null,
+  );
   const [pendingFileName, setPendingFileName] = useState('');
   const [pendingFileSize, setPendingFileSize] = useState(0);
   const [importMode, setImportMode] = useState<ImportMode>('merge');
@@ -81,7 +85,9 @@ export function useImportWorkflow({
     onReplaceWorkflowResetRequested();
   }
 
-  async function handleImportSelection(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImportSelection(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
     const [file] = Array.from(event.target.files ?? []);
 
     if (!file) {
@@ -99,7 +105,10 @@ export function useImportWorkflow({
     try {
       const preview = await previewImportFile(file, controller.signal);
 
-      if (controller.signal.aborted || previewRequestIdRef.current !== requestId) {
+      if (
+        controller.signal.aborted ||
+        previewRequestIdRef.current !== requestId
+      ) {
         return;
       }
 
@@ -113,7 +122,7 @@ export function useImportWorkflow({
         text:
           preview.integrityStatus === 'verified'
             ? `Import staged. ${preview.totalEntries} entries validated. Review the preview and confirm the write path.`
-            : `Legacy import staged. ${preview.totalEntries} entries validated, but this file has no integrity checksum. Review the preview and confirm the write path.`
+            : `Legacy import staged. ${preview.totalEntries} entries validated, but this file has no integrity checksum. Review the preview and confirm the write path.`,
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -123,7 +132,8 @@ export function useImportWorkflow({
       clearPendingImport();
       onStatusMessage({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Import preparation failed.'
+        text:
+          error instanceof Error ? error.message : 'Import preparation failed.',
       });
     } finally {
       if (previewAbortRef.current === controller) {
@@ -141,7 +151,10 @@ export function useImportWorkflow({
 
     try {
       setImportBusy(true);
-      const { importedCount, undo } = await applyImport(pendingImport.payload, importMode);
+      const { importedCount, undo } = await applyImport(
+        pendingImport.payload,
+        importMode,
+      );
       onImportApplied(undo);
       clearPendingImport();
       onOpenUndoSection();
@@ -150,13 +163,16 @@ export function useImportWorkflow({
         text:
           importMode === 'replace'
             ? `Replace import complete. ${importedCount} rows restored.`
-            : `Merge import complete. ${importedCount} rows applied.`
+            : `Merge import complete. ${importedCount} rows applied.`,
       });
       onImportCommitted?.();
     } catch (error) {
       onStatusMessage({
         tone: 'error',
-        text: error instanceof Error ? error.message : 'Import failed during database write.'
+        text:
+          error instanceof Error
+            ? error.message
+            : 'Import failed during database write.',
       });
     } finally {
       setImportBusy(false);
@@ -165,7 +181,7 @@ export function useImportWorkflow({
 
   async function handleConfirmImport({
     onArmReplace,
-    replaceConfirmState
+    replaceConfirmState,
   }: {
     onArmReplace: () => void;
     replaceConfirmState: ReplaceConfirmState;
@@ -198,6 +214,6 @@ export function useImportWorkflow({
     pendingFileName,
     pendingFileSize,
     pendingImport,
-    setImportModeWithReset
+    setImportModeWithReset,
   };
 }

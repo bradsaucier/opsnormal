@@ -1,4 +1,5 @@
-export const PWA_UPDATE_COORDINATION_CHANNEL_NAME = 'opsnormal-pwa-update-coordination';
+export const PWA_UPDATE_COORDINATION_CHANNEL_NAME =
+  'opsnormal-pwa-update-coordination';
 
 type PwaUpdateCoordinationMessageType =
   | 'update-handoff-started'
@@ -12,7 +13,10 @@ export interface PwaUpdateCoordinationMessage {
 }
 
 function createCoordinationChannel(): BroadcastChannel | null {
-  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') {
+  if (
+    typeof window === 'undefined' ||
+    typeof BroadcastChannel === 'undefined'
+  ) {
     return null;
   }
 
@@ -24,14 +28,19 @@ function createCoordinationChannel(): BroadcastChannel | null {
 }
 
 export function createPwaUpdateTabId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID();
   }
 
   return `opsnormal-tab-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function isPwaUpdateCoordinationMessage(value: unknown): value is PwaUpdateCoordinationMessage {
+export function isPwaUpdateCoordinationMessage(
+  value: unknown,
+): value is PwaUpdateCoordinationMessage {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -44,7 +53,9 @@ export function isPwaUpdateCoordinationMessage(value: unknown): value is PwaUpda
   );
 }
 
-function broadcastCoordinationMessage(message: PwaUpdateCoordinationMessage): void {
+function broadcastCoordinationMessage(
+  message: PwaUpdateCoordinationMessage,
+): void {
   const channel = createCoordinationChannel();
 
   if (!channel) {
@@ -60,20 +71,41 @@ function broadcastCoordinationMessage(message: PwaUpdateCoordinationMessage): vo
   }
 }
 
-export function broadcastPwaUpdateHandoffStarted(sourceTabId: string, at = Date.now()): void {
-  broadcastCoordinationMessage({ type: 'update-handoff-started', sourceTabId, at });
+export function broadcastPwaUpdateHandoffStarted(
+  sourceTabId: string,
+  at = Date.now(),
+): void {
+  broadcastCoordinationMessage({
+    type: 'update-handoff-started',
+    sourceTabId,
+    at,
+  });
 }
 
-export function broadcastPwaUpdateHandoffStalled(sourceTabId: string, at = Date.now()): void {
-  broadcastCoordinationMessage({ type: 'update-handoff-stalled', sourceTabId, at });
+export function broadcastPwaUpdateHandoffStalled(
+  sourceTabId: string,
+  at = Date.now(),
+): void {
+  broadcastCoordinationMessage({
+    type: 'update-handoff-stalled',
+    sourceTabId,
+    at,
+  });
 }
 
-export function broadcastPwaUpdateHandoffCleared(sourceTabId: string, at = Date.now()): void {
-  broadcastCoordinationMessage({ type: 'update-handoff-cleared', sourceTabId, at });
+export function broadcastPwaUpdateHandoffCleared(
+  sourceTabId: string,
+  at = Date.now(),
+): void {
+  broadcastCoordinationMessage({
+    type: 'update-handoff-cleared',
+    sourceTabId,
+    at,
+  });
 }
 
 export function subscribeToPwaUpdateCoordination(
-  onMessage: (event: MessageEvent<unknown>) => void
+  onMessage: (event: MessageEvent<unknown>) => void,
 ): (() => void) | null {
   const channel = createCoordinationChannel();
 

@@ -1,7 +1,7 @@
 # OpsNormal
 
 ```yaml
-tagline: "Local-only readiness tracking with deliberate constraints and operator-controlled recovery."
+tagline: 'Local-only readiness tracking with deliberate constraints and operator-controlled recovery.'
 ```
 
 [![CI](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
@@ -81,6 +81,7 @@ Local verification and CI are aligned to supported LTS lines. GitHub Actions ver
 <summary>Run the full local verification stack</summary>
 
 ```bash
+npm run format:check
 npm run lint
 npm run typecheck
 npm run test
@@ -90,11 +91,12 @@ npm run build
 npm run test:e2e:smoke
 ```
 
-`npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
+`npm run format:check` verifies repository formatting with Prettier, and `npm run format` applies the repository formatting baseline locally. `npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs. That is the same production-artifact gate used by the GitHub Pages deployment workflow.
 
 </details>
 
 <a id="local-only-and-trust-boundary"></a>
+
 ## Trust and transparency
 
 Local-only means no server can lose your readiness record. It also means no server can save it. Browser-managed storage remains a best-effort environment, not a durable archive.
@@ -149,21 +151,21 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 
 ### Sectors
 
-| Sector | Purpose |
-| --- | --- |
-| Work or School | Daily load from the main duty lane |
-| Household | Home and admin pressure |
-| Relationships | Family, social, and close-support strain |
-| Body | Physical state and recovery |
-| Rest | Sleep, decompression, and reset quality |
+| Sector         | Purpose                                  |
+| -------------- | ---------------------------------------- |
+| Work or School | Daily load from the main duty lane       |
+| Household      | Home and admin pressure                  |
+| Relationships  | Family, social, and close-support strain |
+| Body           | Physical state and recovery              |
+| Rest           | Sleep, decompression, and reset quality  |
 
 ### States
 
-| State | Meaning |
-| --- | --- |
+| State    | Meaning                                        |
+| -------- | ---------------------------------------------- |
 | Unmarked | No status recorded for that sector on that day |
-| Nominal | Holding together |
-| Degraded | Needs attention |
+| Nominal  | Holding together                               |
+| Degraded | Needs attention                                |
 
 ## Built for reliability and accessibility
 
@@ -201,18 +203,18 @@ Quality is enforced through release gates, test coverage, and explicit design co
 
 This README stays focused on orientation and first use. Deeper proof, limits, and design constraints live in the repo docs.
 
-| Document | What it covers |
-| --- | --- |
-| [Architecture overview](./docs/architecture.md) | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits |
-| [Risk register](./docs/risk-register.md) | Known operational risks, browser-storage hazards, and current mitigations |
-| [WebKit CI coverage boundary](./docs/webkit-limitations.md) | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures |
+| Document                                                    | What it covers                                                                                       |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [Architecture overview](./docs/architecture.md)             | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits                   |
+| [Risk register](./docs/risk-register.md)                    | Known operational risks, browser-storage hazards, and current mitigations                            |
+| [WebKit CI coverage boundary](./docs/webkit-limitations.md) | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures         |
 | [Architecture Decision Records](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
-| [Test plan](./docs/test-plan.md) | Verification strategy, release checks, and coverage priorities |
-| [Release checklist](./docs/release-checklist.md) | Pre-release validation and operator-facing quality gates |
-| [Security policy](./SECURITY.md) | Security model, trust boundaries, and accurate claim limits |
-| [Design tokens](./docs/design-tokens.md) | Visual language, structural colors, state colors, and clipped geometry |
-| [Contributing guide](./CONTRIBUTING.md) | Contribution rules that preserve repo scope |
-| [Code of conduct](./CODE_OF_CONDUCT.md) | Expected project conduct |
+| [Test plan](./docs/test-plan.md)                            | Verification strategy, release checks, and coverage priorities                                       |
+| [Release checklist](./docs/release-checklist.md)            | Pre-release validation and operator-facing quality gates                                             |
+| [Security policy](./SECURITY.md)                            | Security model, trust boundaries, and accurate claim limits                                          |
+| [Design tokens](./docs/design-tokens.md)                    | Visual language, structural colors, state colors, and clipped geometry                               |
+| [Contributing guide](./CONTRIBUTING.md)                     | Contribution rules that preserve repo scope                                                          |
+| [Code of conduct](./CODE_OF_CONDUCT.md)                     | Expected project conduct                                                                             |
 
 These docs exist because the constraints are part of the product and should stay visible.
 

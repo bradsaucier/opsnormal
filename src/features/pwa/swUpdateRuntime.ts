@@ -1,9 +1,13 @@
 export function isNavigatorOffline(): boolean {
-  return typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine;
+  return (
+    typeof navigator !== 'undefined' &&
+    'onLine' in navigator &&
+    !navigator.onLine
+  );
 }
 
 export async function resolveServiceWorkerRegistration(
-  currentRegistration: ServiceWorkerRegistration | null
+  currentRegistration: ServiceWorkerRegistration | null,
 ): Promise<ServiceWorkerRegistration | null> {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
     return currentRegistration;
@@ -14,7 +18,9 @@ export async function resolveServiceWorkerRegistration(
   }
 
   try {
-    return (await navigator.serviceWorker.getRegistration()) ?? currentRegistration;
+    return (
+      (await navigator.serviceWorker.getRegistration()) ?? currentRegistration
+    );
   } catch {
     return currentRegistration;
   }
@@ -22,7 +28,7 @@ export async function resolveServiceWorkerRegistration(
 
 function waitForInstallingWorkerToSettle(
   registration: ServiceWorkerRegistration,
-  installingWorker: ServiceWorker
+  installingWorker: ServiceWorker,
 ): Promise<ServiceWorker | null> {
   return new Promise((resolve) => {
     const finalize = (worker: ServiceWorker | null) => {
@@ -64,9 +70,10 @@ function waitForInstallingWorkerToSettle(
 }
 
 export async function resolveWaitingWorkerForApply(
-  registration: ServiceWorkerRegistration | null
+  registration: ServiceWorkerRegistration | null,
 ): Promise<ServiceWorker | null> {
-  const activeRegistration = await resolveServiceWorkerRegistration(registration);
+  const activeRegistration =
+    await resolveServiceWorkerRegistration(registration);
 
   if (!activeRegistration) {
     return null;
@@ -77,7 +84,10 @@ export async function resolveWaitingWorkerForApply(
   }
 
   if (activeRegistration.installing) {
-    return waitForInstallingWorkerToSettle(activeRegistration, activeRegistration.installing);
+    return waitForInstallingWorkerToSettle(
+      activeRegistration,
+      activeRegistration.installing,
+    );
   }
 
   try {
@@ -91,7 +101,10 @@ export async function resolveWaitingWorkerForApply(
   }
 
   if (activeRegistration.installing) {
-    return waitForInstallingWorkerToSettle(activeRegistration, activeRegistration.installing);
+    return waitForInstallingWorkerToSettle(
+      activeRegistration,
+      activeRegistration.installing,
+    );
   }
 
   return null;

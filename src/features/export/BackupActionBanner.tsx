@@ -24,7 +24,9 @@ export function BackupActionBanner({ prompt }: BackupActionBannerProps) {
             >
               {prompt.title}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-orange-50/90">{prompt.detail}</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-orange-50/90">
+              {prompt.detail}
+            </p>
           </div>
 
           <div className="flex flex-wrap gap-3">

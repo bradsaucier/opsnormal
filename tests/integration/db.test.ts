@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  reloadCurrentPage: vi.fn()
+  reloadCurrentPage: vi.fn(),
 }));
 
 vi.mock('../../src/lib/runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/lib/runtime')>();
   return {
     ...actual,
-    reloadCurrentPage: mocks.reloadCurrentPage
+    reloadCurrentPage: mocks.reloadCurrentPage,
   };
 });
 
@@ -26,11 +26,11 @@ import {
   reopenIfClosed,
   setDailyStatus,
   shouldBlockVersionChangeReload,
-  shouldSuppressControllerReload
+  shouldSuppressControllerReload,
 } from '../../src/db/appDb';
 import {
   getStorageDurabilityDiagnostics,
-  resetStorageDurabilityDiagnostics
+  resetStorageDurabilityDiagnostics,
 } from '../../src/lib/storage';
 
 describe('database operations', () => {
@@ -54,19 +54,31 @@ describe('database operations', () => {
   });
 
   it('cycles through nominal, degraded, then unmarked', async () => {
-    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe('nominal');
-    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe('degraded');
-    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe('unmarked');
+    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe(
+      'nominal',
+    );
+    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe(
+      'degraded',
+    );
+    await expect(cycleDailyStatus('2026-03-27', 'body')).resolves.toBe(
+      'unmarked',
+    );
   });
 
   it('stores and removes entries by compound key', async () => {
     await setDailyStatus('2026-03-27', 'rest', 'nominal');
-    let stored = await db.dailyEntries.where('[date+sectorId]').equals(['2026-03-27', 'rest']).first();
+    let stored = await db.dailyEntries
+      .where('[date+sectorId]')
+      .equals(['2026-03-27', 'rest'])
+      .first();
 
     expect(stored?.status).toBe('nominal');
 
     await setDailyStatus('2026-03-27', 'rest', 'unmarked');
-    stored = await db.dailyEntries.where('[date+sectorId]').equals(['2026-03-27', 'rest']).first();
+    stored = await db.dailyEntries
+      .where('[date+sectorId]')
+      .equals(['2026-03-27', 'rest'])
+      .first();
 
     expect(stored).toBeUndefined();
   });
@@ -83,10 +95,15 @@ describe('database operations', () => {
   it('surfaces a blocked schema upgrade and clears the signal once the database becomes ready again', () => {
     const blockedListener = vi.fn();
     const unblockedListener = vi.fn();
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     window.addEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, blockedListener);
-    window.addEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, unblockedListener);
+    window.addEventListener(
+      OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
+      unblockedListener,
+    );
 
     try {
       handleDatabaseUpgradeBlocked();
@@ -94,12 +111,13 @@ describe('database operations', () => {
       expect(isDatabaseUpgradeBlocked()).toBe(true);
       expect(isDatabaseRecoveryRequired()).toBe(true);
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.'
+        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.',
       );
       expect(blockedListener).toHaveBeenCalledTimes(1);
-      expect((blockedListener.mock.calls[0]?.[0] as CustomEvent<{ message: string }>).detail.message).toContain(
-        'Schema upgrade blocked by another OpsNormal tab.'
-      );
+      expect(
+        (blockedListener.mock.calls[0]?.[0] as CustomEvent<{ message: string }>)
+          .detail.message,
+      ).toContain('Schema upgrade blocked by another OpsNormal tab.');
 
       handleDatabaseReady();
 
@@ -107,19 +125,27 @@ describe('database operations', () => {
       expect(isDatabaseRecoveryRequired()).toBe(false);
       expect(unblockedListener).toHaveBeenCalledTimes(1);
     } finally {
-      window.removeEventListener(OPSNORMAL_DB_BLOCKED_EVENT_NAME, blockedListener);
-      window.removeEventListener(OPSNORMAL_DB_UNBLOCKED_EVENT_NAME, unblockedListener);
+      window.removeEventListener(
+        OPSNORMAL_DB_BLOCKED_EVENT_NAME,
+        blockedListener,
+      );
+      window.removeEventListener(
+        OPSNORMAL_DB_UNBLOCKED_EVENT_NAME,
+        unblockedListener,
+      );
     }
   });
 
   it('fails fast with an operator-facing message while a schema upgrade remains blocked', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     try {
       handleDatabaseUpgradeBlocked();
 
       await expect(reopenIfClosed()).rejects.toThrow(
-        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.'
+        'Schema upgrade blocked by another OpsNormal tab. Close duplicate tabs or windows, then return here so the local upgrade can finish safely.',
       );
     } finally {
       handleDatabaseReady();
@@ -144,11 +170,17 @@ describe('database operations', () => {
 
   it('schedules a recovery reload when repeated reopen attempts fail', async () => {
     vi.useFakeTimers();
-    const openSpy = vi.spyOn(db, 'open').mockRejectedValue(new Error('Connection to Indexed Database server lost'));
+    const openSpy = vi
+      .spyOn(db, 'open')
+      .mockRejectedValue(
+        new Error('Connection to Indexed Database server lost'),
+      );
 
     db.close();
 
-    const reopenPromise = expect(reopenIfClosed()).rejects.toThrow('Recovery reload initiated');
+    const reopenPromise = expect(reopenIfClosed()).rejects.toThrow(
+      'Recovery reload initiated',
+    );
 
     await vi.advanceTimersByTimeAsync(450);
     await reopenPromise;
@@ -169,14 +201,22 @@ describe('database operations', () => {
     vi.useFakeTimers();
     const openSpy = vi.spyOn(db, 'open');
 
-    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
-    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
-    openSpy.mockRejectedValueOnce(new Error('Connection to Indexed Database server lost'));
+    openSpy.mockRejectedValueOnce(
+      new Error('Connection to Indexed Database server lost'),
+    );
+    openSpy.mockRejectedValueOnce(
+      new Error('Connection to Indexed Database server lost'),
+    );
+    openSpy.mockRejectedValueOnce(
+      new Error('Connection to Indexed Database server lost'),
+    );
     openSpy.mockResolvedValueOnce(db);
 
     db.close();
 
-    const reopenPromise = expect(reopenIfClosed()).rejects.toThrow('Recovery reload initiated');
+    const reopenPromise = expect(reopenIfClosed()).rejects.toThrow(
+      'Recovery reload initiated',
+    );
 
     await vi.advanceTimersByTimeAsync(450);
     await reopenPromise;
@@ -216,7 +256,9 @@ describe('database operations', () => {
 
     expect(isDatabaseRecoveryRequired()).toBe(true);
     expect(db.isOpen()).toBe(false);
-    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe('10000');
+    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe(
+      '10000',
+    );
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
   });
 
@@ -226,12 +268,15 @@ describe('database operations', () => {
     expect(handleDatabaseVersionChange(10_000)).toBe('reloading');
     expect(isDatabaseRecoveryRequired()).toBe(true);
     expect(db.isOpen()).toBe(false);
-    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe('10000');
+    expect(window.sessionStorage.getItem('opsnormal-schema-reload-guard')).toBe(
+      '10000',
+    );
     expect(closeSpy).toHaveBeenCalledTimes(1);
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
 
     const closeCallOrder = closeSpy.mock.invocationCallOrder[0]!;
-    const reloadCallOrder = mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
+    const reloadCallOrder =
+      mocks.reloadCurrentPage.mock.invocationCallOrder[0]!;
 
     expect(closeCallOrder).toBeLessThan(reloadCallOrder);
   });
@@ -244,7 +289,9 @@ describe('database operations', () => {
 
     expect(handleDatabaseVersionChange(12_000)).toBe('blocked');
     expect(closeSpy).toHaveBeenCalledTimes(1);
-    await expect(reopenIfClosed()).rejects.toThrow('Schema upgrade handoff stalled');
+    await expect(reopenIfClosed()).rejects.toThrow(
+      'Schema upgrade handoff stalled',
+    );
     expect(mocks.reloadCurrentPage).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(3049);
@@ -257,9 +304,11 @@ describe('database operations', () => {
   });
 
   it('fails open with an immediate reload when sessionStorage read throws during schema recovery', () => {
-    const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new DOMException('Blocked', 'SecurityError');
-    });
+    const getItemSpy = vi
+      .spyOn(Storage.prototype, 'getItem')
+      .mockImplementation(() => {
+        throw new DOMException('Blocked', 'SecurityError');
+      });
 
     expect(handleDatabaseVersionChange(10_000)).toBe('reloading');
     expect(getItemSpy).toHaveBeenCalled();
@@ -267,9 +316,11 @@ describe('database operations', () => {
   });
 
   it('pins Chromium transaction durability to strict where supported', () => {
-    const options = (db as typeof db & {
-      _options?: { chromeTransactionDurability?: string };
-    })._options;
+    const options = (
+      db as typeof db & {
+        _options?: { chromeTransactionDurability?: string };
+      }
+    )._options;
 
     expect(options?.chromeTransactionDurability).toBe('strict');
   });

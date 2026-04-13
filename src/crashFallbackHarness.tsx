@@ -24,5 +24,5 @@ createRoot(rootElement).render(
     >
       <CrashHarnessFault />
     </ErrorBoundary>
-  </StrictMode>
+  </StrictMode>,
 );

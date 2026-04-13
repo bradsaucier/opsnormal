@@ -19,12 +19,15 @@ const MOBILE_WEEK_GRID_COLUMN_CLASS = {
   4: 'grid-cols-[minmax(4.5rem,_auto)_repeat(4,_minmax(0,_1fr))]',
   5: 'grid-cols-[minmax(4.5rem,_auto)_repeat(5,_minmax(0,_1fr))]',
   6: 'grid-cols-[minmax(4.5rem,_auto)_repeat(6,_minmax(0,_1fr))]',
-  7: 'grid-cols-[minmax(4.5rem,_auto)_repeat(7,_minmax(0,_1fr))]'
+  7: 'grid-cols-[minmax(4.5rem,_auto)_repeat(7,_minmax(0,_1fr))]',
 } as const;
 
 function getMobileWeekGridColumnsClass(dayCount: number) {
-  return MOBILE_WEEK_GRID_COLUMN_CLASS[dayCount as keyof typeof MOBILE_WEEK_GRID_COLUMN_CLASS]
-    ?? MOBILE_WEEK_GRID_COLUMN_CLASS[7];
+  return (
+    MOBILE_WEEK_GRID_COLUMN_CLASS[
+      dayCount as keyof typeof MOBILE_WEEK_GRID_COLUMN_CLASS
+    ] ?? MOBILE_WEEK_GRID_COLUMN_CLASS[7]
+  );
 }
 
 export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
@@ -47,7 +50,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
     visibleWeekEnd,
     visibleWeekIndex,
     visibleWeekStart,
-    weekGroups
+    weekGroups,
   } = model;
 
   const visibleWeekHeadingId = `${ids.mobileRegionId}-visible-week-heading`;
@@ -57,16 +60,22 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
       <div className="mb-4 flex flex-col gap-3">
         <div className="space-y-1">
           <p className="max-w-2xl text-sm leading-6 text-ops-text-secondary">
-            Mobile holds the history picture one week at a time. Swipe by week or step the window with the week controls. Tap a day column for the daily brief.
+            Mobile holds the history picture one week at a time. Swipe by week
+            or step the window with the week controls. Tap a day column for the
+            daily brief.
           </p>
           <p className="text-xs tracking-[0.14em] text-ops-text-muted uppercase">
-            Week groups snap into place. Explicit previous and next controls keep the path visible when swipe is inconvenient or unavailable.
+            Week groups snap into place. Explicit previous and next controls
+            keep the path visible when swipe is inconvenient or unavailable.
           </p>
         </div>
 
         <div className="flex flex-col gap-3">
           <StatusLegend />
-          <nav aria-label="Week navigation" className="flex flex-wrap items-center gap-2">
+          <nav
+            aria-label="Week navigation"
+            className="flex flex-wrap items-center gap-2"
+          >
             <button
               type="button"
               onClick={handlePreviousWeek}
@@ -86,8 +95,12 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               <span className="block text-[10px] text-ops-text-muted">
                 Week {visibleWeekIndex + 1} of {weekGroups.length}
               </span>
-              <h3 id={visibleWeekHeadingId} className="mt-1 text-left text-xs text-ops-text-primary">
-                Week of {formatDayLabel(visibleWeekStart)} to {formatDayLabel(visibleWeekEnd)}
+              <h3
+                id={visibleWeekHeadingId}
+                className="mt-1 text-left text-xs text-ops-text-primary"
+              >
+                Week of {formatDayLabel(visibleWeekStart)} to{' '}
+                {formatDayLabel(visibleWeekEnd)}
               </h3>
             </div>
             <button
@@ -107,7 +120,9 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         Weekly readiness history.
       </p>
       <p id={ids.instructionsId} className="sr-only">
-        Swipe left or right, or use the previous and next week buttons, to move by week. Activate a day header to open the daily brief for that date. The daily brief lists all five sector states for the selected day.
+        Swipe left or right, or use the previous and next week buttons, to move
+        by week. Activate a day header to open the daily brief for that date.
+        The daily brief lists all five sector states for the selected day.
       </p>
 
       <div className="relative">
@@ -135,7 +150,8 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         >
           {weekGroups.map((weekGroup, weekIndex) => {
             const weekStart = weekGroup[0] ?? selectedCell.dateKey;
-            const weekEnd = weekGroup[weekGroup.length - 1] ?? selectedCell.dateKey;
+            const weekEnd =
+              weekGroup[weekGroup.length - 1] ?? selectedCell.dateKey;
             const weekHeadingId = `${ids.mobileRegionId}-week-heading-${weekIndex}`;
             const weekStateId = `${ids.mobileRegionId}-week-state-${weekIndex}`;
 
@@ -155,11 +171,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
                         Week {weekIndex + 1}
                       </p>
-                      <p id={weekHeadingId} className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+                      <p
+                        id={weekHeadingId}
+                        className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+                      >
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
                     </div>
-                    <div id={weekStateId} className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted">
+                    <div
+                      id={weekStateId}
+                      className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted"
+                    >
                       {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
                     </div>
                   </div>
@@ -188,11 +210,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             isSelectedDay
                               ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                               : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
-                            isToday && !isSelectedDay ? 'ring-1 ring-inset ring-emerald-300/25' : ''
+                            isToday && !isSelectedDay
+                              ? 'ring-1 ring-inset ring-emerald-300/25'
+                              : '',
                           ].join(' ')}
                         >
-                          <span className="block text-[10px] text-ops-text-muted">{formatLongDate(dateKey).split(',')[0]}</span>
-                          <span className="mt-1 block">{formatDayLabel(dateKey)}</span>
+                          <span className="block text-[10px] text-ops-text-muted">
+                            {formatLongDate(dateKey).split(',')[0]}
+                          </span>
+                          <span className="mt-1 block">
+                            {formatDayLabel(dateKey)}
+                          </span>
                         </button>
                       );
                     })}
@@ -206,8 +234,13 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           {sector.shortLabel}
                         </div>,
                         ...weekGroup.map((dateKey) => {
-                          const status = getUiStatus(entryLookup, dateKey, sector.id);
-                          const isSelectedDay = dateKey === selectedCell.dateKey;
+                          const status = getUiStatus(
+                            entryLookup,
+                            dateKey,
+                            sector.id,
+                          );
+                          const isSelectedDay =
+                            dateKey === selectedCell.dateKey;
                           const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
 
                           return (
@@ -215,8 +248,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                               key={`${sector.id}:${dateKey}`}
                               className={[
                                 'ops-notch-chip clip-notched flex min-h-11 items-center justify-center border px-1 py-1 text-[11px] font-semibold tracking-[0.24px] [font-variant-numeric:tabular-nums]',
-                                isSelectedDay ? 'ring-1 ring-inset ring-ops-accent/60' : '',
-                                getCellClassName(status)
+                                isSelectedDay
+                                  ? 'ring-1 ring-inset ring-ops-accent/60'
+                                  : '',
+                                getCellClassName(status),
                               ].join(' ')}
                               title={cellLabel}
                               aria-hidden="true"
@@ -224,7 +259,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                               {getStatusCellText(status)}
                             </div>
                           );
-                        })
+                        }),
                       ];
                     })}
                   </div>
@@ -234,7 +269,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-center gap-2" aria-hidden="true">
+        <div
+          className="mt-3 flex items-center justify-center gap-2"
+          aria-hidden="true"
+        >
           {weekGroups.map((weekGroup, weekIndex) => (
             <span
               key={weekGroup[0] ?? `week-${weekIndex}`}
@@ -242,7 +280,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 'h-2 w-2 rounded-full border',
                 visibleWeekIndex === weekIndex
                   ? 'border-ops-accent bg-ops-accent'
-                  : 'border-ops-border-struct bg-transparent'
+                  : 'border-ops-border-struct bg-transparent',
               ].join(' ')}
             />
           ))}
@@ -263,7 +301,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
               <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
                 {formatLongDate(selectedCell.dateKey)}
               </h3>
-              <p id={ids.statusSummaryId} className="mt-2 text-sm leading-6 text-ops-text-secondary">
+              <p
+                id={ids.statusSummaryId}
+                className="mt-2 text-sm leading-6 text-ops-text-secondary"
+              >
                 {selectedDaySummary}
               </p>
             </div>
@@ -286,7 +327,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     {sector.description}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-ops-text-secondary">
-                    State: <span className="text-ops-text-primary">{getStatusLabel(status)}</span>
+                    State:{' '}
+                    <span className="text-ops-text-primary">
+                      {getStatusLabel(status)}
+                    </span>
                   </p>
                 </div>
                 <StatusBadge status={status} />

@@ -17,20 +17,20 @@ import {
   requestPersistentStorage,
   resetStorageDurabilityDiagnostics,
   setStorageHealthForTesting,
-  subscribeToStorageDiagnostics
+  subscribeToStorageDiagnostics,
 } from '../../src/lib/storage';
 
 function setNavigatorStorage(storage: Partial<StorageManager> | undefined) {
   Object.defineProperty(navigator, 'storage', {
     configurable: true,
-    value: storage
+    value: storage,
   });
 }
 
 function setUserAgent(userAgent: string) {
   Object.defineProperty(window.navigator, 'userAgent', {
     configurable: true,
-    value: userAgent
+    value: userAgent,
   });
 }
 
@@ -43,28 +43,28 @@ function createMatchMediaMock(matches: boolean) {
     removeListener: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn()
+    dispatchEvent: vi.fn(),
   };
 }
 
 function setMatchMedia(matches: boolean) {
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
-    value: vi.fn().mockImplementation(() => createMatchMediaMock(matches))
+    value: vi.fn().mockImplementation(() => createMatchMediaMock(matches)),
   });
 }
 
 function setNavigatorStandalone(standalone: boolean | undefined) {
   Object.defineProperty(window.navigator, 'standalone', {
     configurable: true,
-    value: standalone
+    value: standalone,
   });
 }
 
 function setMaxTouchPoints(maxTouchPoints: number) {
   Object.defineProperty(window.navigator, 'maxTouchPoints', {
     configurable: true,
-    value: maxTouchPoints
+    value: maxTouchPoints,
   });
 }
 
@@ -82,7 +82,7 @@ describe('storage helpers', () => {
 
   it('records a persistence request attempt and returns the browser result', async () => {
     setNavigatorStorage({
-      persist: () => Promise.resolve(true)
+      persist: () => Promise.resolve(true),
     });
 
     await expect(requestPersistentStorage()).resolves.toBe(true);
@@ -95,7 +95,7 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 }),
     });
 
     const health = await getStorageHealth();
@@ -111,7 +111,8 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024 * 1024, quota: 1024 * 1024 * 100 })
+      estimate: () =>
+        Promise.resolve({ usage: 1024 * 1024, quota: 1024 * 1024 * 100 }),
     });
 
     const health = await getStorageHealth({ requestPersistence: true });
@@ -129,7 +130,7 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 }),
     });
     setMatchMedia(false);
 
@@ -148,9 +149,11 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 }),
     });
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    );
     setMatchMedia(false);
 
     await getStorageHealth({ requestPersistence: true });
@@ -173,16 +176,25 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 }),
     });
 
-    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
-    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+    await getStorageHealth({
+      requestPersistence: true,
+      allowRepeatRequest: true,
+    });
+    await getStorageHealth({
+      requestPersistence: true,
+      allowRepeatRequest: true,
+    });
 
     expect(persist).toHaveBeenCalledTimes(1);
 
     vi.setSystemTime(new Date('2026-04-09T12:01:01.000Z'));
-    await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+    await getStorageHealth({
+      requestPersistence: true,
+      allowRepeatRequest: true,
+    });
 
     expect(persist).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
@@ -194,7 +206,7 @@ describe('storage helpers', () => {
     setNavigatorStorage({
       persist,
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 })
+      estimate: () => Promise.resolve({ usage: 1024, quota: 1024 * 1024 }),
     });
 
     localStorage.setItem('opsnormal-storage-persistence-attempted', 'true');
@@ -208,7 +220,8 @@ describe('storage helpers', () => {
   it('builds protected storage health when persistence is already granted', async () => {
     setNavigatorStorage({
       persisted: () => Promise.resolve(true),
-      estimate: () => Promise.resolve({ usage: 1024 * 1024, quota: 1024 * 1024 * 100 })
+      estimate: () =>
+        Promise.resolve({ usage: 1024 * 1024, quota: 1024 * 1024 * 100 }),
     });
 
     const health = await getStorageHealth();
@@ -221,7 +234,7 @@ describe('storage helpers', () => {
   it('warns when storage is not persistent and quota usage is elevated', async () => {
     setNavigatorStorage({
       persisted: () => Promise.resolve(false),
-      estimate: () => Promise.resolve({ usage: 90, quota: 100 })
+      estimate: () => Promise.resolve({ usage: 90, quota: 100 }),
     });
 
     const health = await getStorageHealth();
@@ -232,10 +245,16 @@ describe('storage helpers', () => {
   });
 
   it('elevates iPhone and iPad browser storage to warning when not installed', () => {
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    );
     setMatchMedia(false);
 
-    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+    const health = createStorageHealth(
+      { usage: 100, quota: 1000 },
+      false,
+      true,
+    );
 
     expect(health.status).toBe('warning');
     expect(health.message).toContain('Install to Home Screen');
@@ -243,35 +262,51 @@ describe('storage helpers', () => {
   });
 
   it('does not classify installed iPhone and iPad PWA mode as the same inactivity risk', () => {
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    );
     setMatchMedia(true);
     setNavigatorStandalone(true);
 
-    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+    const health = createStorageHealth(
+      { usage: 100, quota: 1000 },
+      false,
+      true,
+    );
 
     expect(health.status).toBe('monitor');
-    expect(health.message).toContain('Home Screen mode reduces Safari inactivity eviction risk');
+    expect(health.message).toContain(
+      'Home Screen mode reduces Safari inactivity eviction risk',
+    );
     expect(health.safari.standaloneMode).toBe(true);
   });
 
   it('keeps installed iPhone and iPad PWA messaging conservative when protection is granted', () => {
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+    );
     setMatchMedia(true);
     setNavigatorStandalone(true);
 
     const summary = formatStorageSummary(
-      createStorageHealth({ usage: 100, quota: 1000 }, true, true)
+      createStorageHealth({ usage: 100, quota: 1000 }, true, true),
     );
 
     expect(summary).toContain('Best-effort protection active');
   });
 
   it('treats modern iPad desktop user agents with touch input as install-recommended Apple devices', () => {
-    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    );
     setMaxTouchPoints(5);
     setMatchMedia(false);
 
-    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+    const health = createStorageHealth(
+      { usage: 100, quota: 1000 },
+      false,
+      true,
+    );
 
     expect(health.status).toBe('warning');
     expect(health.message).toContain('Install to Home Screen');
@@ -279,26 +314,34 @@ describe('storage helpers', () => {
   });
 
   it('uses conservative protection language on Safari-on-macOS risk platforms', () => {
-    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    );
     setMatchMedia(false);
 
     const summary = formatStorageSummary(
-      createStorageHealth({ usage: 100, quota: 1000 }, true, true)
+      createStorageHealth({ usage: 100, quota: 1000 }, true, true),
     );
 
     expect(summary).toContain('Best-effort protection active');
   });
 
-
   it('returns a synthetic storage-health override for lifecycle harness tests', async () => {
-    const syntheticHealth = createStorageHealth({ usage: 321, quota: 4096 }, false, true);
+    const syntheticHealth = createStorageHealth(
+      { usage: 321, quota: 4096 },
+      false,
+      true,
+    );
     syntheticHealth.status = 'warning';
     syntheticHealth.message = 'Synthetic Safari risk path for test coverage.';
     syntheticHealth.safari.webKitRisk = true;
 
     setStorageHealthForTesting(syntheticHealth);
 
-    const health = await getStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+    const health = await getStorageHealth({
+      requestPersistence: true,
+      allowRepeatRequest: true,
+    });
 
     expect(health).toEqual(syntheticHealth);
 
@@ -313,7 +356,9 @@ describe('storage helpers', () => {
     const listener = vi.fn();
     const unsubscribe = subscribeToStorageDiagnostics(listener);
 
-    setStorageHealthForTesting(createStorageHealth({ usage: 100, quota: 1000 }, false, true));
+    setStorageHealthForTesting(
+      createStorageHealth({ usage: 100, quota: 1000 }, false, true),
+    );
     clearStorageHealthForTesting();
 
     unsubscribe();
@@ -322,10 +367,16 @@ describe('storage helpers', () => {
   });
 
   it('marks desktop Safari tabs as a high-risk posture when persistence is not granted', () => {
-    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15');
+    setUserAgent(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+    );
     setMatchMedia(false);
 
-    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+    const health = createStorageHealth(
+      { usage: 100, quota: 1000 },
+      false,
+      true,
+    );
 
     expect(health.status).toBe('warning');
     expect(health.message).toContain('Safari on macOS');
@@ -338,17 +389,25 @@ describe('storage helpers', () => {
     recordStorageReconnectSuccess();
     recordStorageWriteVerification('verified');
 
-    const health = createStorageHealth({ usage: 100, quota: 1000 }, false, true);
+    const health = createStorageHealth(
+      { usage: 100, quota: 1000 },
+      false,
+      true,
+    );
 
     expect(health.safari.connectionDropsDetected).toBe(1);
     expect(health.safari.reconnectSuccesses).toBe(1);
     expect(health.safari.lastVerificationResult).toBe('verified');
-    expect(formatStorageSummary(health)).toContain('Session reconnect events: 1.');
+    expect(formatStorageSummary(health)).toContain(
+      'Session reconnect events: 1.',
+    );
   });
 
   it('elevates storage health when reconnect recovery fails', () => {
     recordStorageConnectionDrop();
-    recordStorageReconnectFailure(new Error('Connection to Indexed Database server lost'));
+    recordStorageReconnectFailure(
+      new Error('Connection to Indexed Database server lost'),
+    );
 
     const health = createStorageHealth({ usage: 100, quota: 1000 }, true, true);
 
@@ -376,21 +435,21 @@ describe('storage helpers', () => {
       isQuotaExceededError({
         name: 'AbortError',
         inner: {
-          name: 'QuotaExceededError'
-        }
-      })
+          name: 'QuotaExceededError',
+        },
+      }),
     ).toBe(true);
   });
 
   it('formats missing backup metadata with blank-return recovery guidance', () => {
     expect(formatLastExportCompletedAt(null)).toBe(
-      'No external backup recorded on this browser yet. If the app returns blank after Safari inactivity, restore from the latest JSON export immediately.'
+      'No external backup recorded on this browser yet. If the app returns blank after Safari inactivity, restore from the latest JSON export immediately.',
     );
   });
 
   it('formats unreadable backup metadata with immediate restore guidance', () => {
     expect(formatLastExportCompletedAt('garbage')).toBe(
-      'Last backup timestamp is unreadable. Export again to refresh the record, and restore from the latest JSON export immediately if the app returns blank after Safari inactivity.'
+      'Last backup timestamp is unreadable. Export again to refresh the record, and restore from the latest JSON export immediately if the app returns blank after Safari inactivity.',
     );
   });
 
@@ -398,8 +457,8 @@ describe('storage helpers', () => {
     expect(
       isDatabaseClosedError({
         name: 'UnknownError',
-        message: 'Connection to Indexed Database server lost'
-      })
+        message: 'Connection to Indexed Database server lost',
+      }),
     ).toBe(true);
   });
 });

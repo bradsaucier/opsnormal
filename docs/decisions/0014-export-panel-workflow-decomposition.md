@@ -1,6 +1,7 @@
 # ADR 0014 - ExportPanel workflow decomposition
 
 ## Status
+
 Accepted
 
 ## Context
@@ -31,6 +32,7 @@ or persistence semantics.
 ## Decision
 
 Decompose ExportPanel into a rendering shell backed by focused co-located hooks:
+
 - useExportWorkflow owns JSON and CSV export actions and backup-posture refresh
 - useImportWorkflow owns file selection, preview staging, mode selection reset, and confirmed import execution
 - useReplaceCheckpoint owns pre-replace backup gating, manual acknowledgment, destructive arm-disarm state, and replace unlock conditions
@@ -52,12 +54,14 @@ or data shape changes as part of this decomposition.
 ## Consequences
 
 Positive:
+
 - the highest-risk panel now has explicit workflow boundaries
 - future edits can target export, import staging, replace gating, or undo in isolation
 - direct unit tests can validate workflow state machines without mounting the full panel
 - the rendering shell is easier to scan and less likely to hide workflow coupling
 
 Trade-offs:
+
 - the export feature now spans more files
 - contributors must follow the hook boundaries instead of re-consolidating logic into the component shell
 - the component depends on a small composition layer to connect adjacent workflow hooks
