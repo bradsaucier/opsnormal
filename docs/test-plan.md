@@ -102,6 +102,7 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify the installed PWA on physical iPhone hardware keeps the header, footer, and history controls clear of the dynamic island and home indicator
 - verify the installed PWA on physical Android hardware keeps the shell stable through address-bar collapse and software-keyboard transitions
 - verify the mobile history surface snaps cleanly to week boundaries, updates the daily brief after day selection, and does not leak horizontal overscroll into document navigation
+- verify nested support surfaces remain visually distinct from parent shells on desktop and mobile, especially the Today direct-select tray, history detail brief, week-status chip, and footer boundary card
 - verify a deployed service worker update either hands off cleanly or escalates to the pinned manual recovery path when another OpsNormal tab holds the active worker
 - verify repeated controllerchange churn in one tab pins the loop-breaker banner instead of continuing automatic reloads
 - verify manual recovery in one tab clears stale loop-breaker state in another open tab
