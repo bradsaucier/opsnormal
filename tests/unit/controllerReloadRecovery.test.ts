@@ -85,8 +85,12 @@ describe('controller reload recovery helpers', () => {
     recordControllerReloadAttempt(1_000);
     clearControllerReloadState();
 
-    expect(window.sessionStorage.getItem(CONTROLLER_RELOAD_COUNT_KEY)).toBeNull();
-    expect(window.sessionStorage.getItem(CONTROLLER_RELOAD_LAST_AT_KEY)).toBeNull();
+    expect(
+      window.sessionStorage.getItem(CONTROLLER_RELOAD_COUNT_KEY),
+    ).toBeNull();
+    expect(
+      window.sessionStorage.getItem(CONTROLLER_RELOAD_LAST_AT_KEY),
+    ).toBeNull();
   });
 
   it('broadcasts and receives manual recovery clear messages', () => {
