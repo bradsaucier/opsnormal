@@ -143,7 +143,7 @@ export function ImportRestoreSection({
                 <p className="mt-2 text-xs tracking-[0.14em] text-sky-100/75 uppercase">
                   File size - {formatBytes(pendingFileSize)}
                 </p>
-                <dl className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div role="list" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <PreviewFactCard label="Imported rows" value={String(pendingImport.totalEntries)} />
                   <PreviewFactCard
                     label="Current rows"
@@ -170,7 +170,7 @@ export function ImportRestoreSection({
                         : 'All other local rows stay in place.'
                     }
                   />
-                </dl>
+                </div>
               </div>
 
               <NotchedFrame
