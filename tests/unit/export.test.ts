@@ -43,6 +43,10 @@ const sampleCrashDiagnostics = {
 describe('export helpers', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: true,
+    });
   });
 
   it('creates csv with header and rows', () => {
@@ -52,6 +56,22 @@ describe('export helpers', () => {
     expect(csv).toContain(
       '2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z',
     );
+  });
+
+  it('escapes csv cells that contain commas, quotes, or line breaks', () => {
+    const csv = createCsvExport([
+      {
+        id: 2,
+        date: '2026-03-27,pm',
+        sectorId: 'body',
+        status: 'degraded\nneeds-attention',
+        updatedAt: '2026-03-27T12:00:00.000Z"quoted"',
+      },
+    ]);
+
+    expect(csv).toContain('"2026-03-27,pm"');
+    expect(csv).toContain('"degraded\nneeds-attention"');
+    expect(csv).toContain('"2026-03-27T12:00:00.000Z""quoted"""');
   });
 
   it('creates versioned json payload with entries and checksum', async () => {
@@ -136,7 +156,7 @@ describe('export helpers', () => {
     const json = await createJsonExport(sampleEntries, exportedAt);
     const parsed = parseExportPayload(json);
 
-    const recomputedChecksum: string = await computeJsonExportChecksum({
+    const recomputedChecksum = await computeJsonExportChecksum({
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,
@@ -150,7 +170,10 @@ describe('export helpers', () => {
     vi.stubGlobal('crypto', {
       subtle: undefined,
     });
-    vi.stubGlobal('isSecureContext', true);
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: true,
+    });
 
     await expect(
       computeJsonExportChecksum({
@@ -160,6 +183,54 @@ describe('export helpers', () => {
         entries: sampleEntries,
       }),
     ).rejects.toThrow('required Web Crypto API');
+  });
+
+  it('fails cleanly when the page is not running in a secure context', async () => {
+    vi.stubGlobal('crypto', {
+      subtle: undefined,
+    });
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: false,
+    });
+
+    await expect(
+      computeJsonExportChecksum({
+        app: OPSNORMAL_APP_NAME,
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: '2026-03-28T10:11:12.000Z',
+        entries: sampleEntries,
+      }),
+    ).rejects.toThrow('secure HTTPS origin');
+  });
+
+  it('fails cleanly when payload encoding returns no bytes for non-empty content', async () => {
+    vi.stubGlobal('crypto', {
+      subtle: {
+        digest: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
+      },
+    });
+    vi.stubGlobal(
+      'TextEncoder',
+      class {
+        encode() {
+          return new Uint8Array(0);
+        }
+      } as typeof TextEncoder,
+    );
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: true,
+    });
+
+    await expect(
+      computeJsonExportChecksum({
+        app: OPSNORMAL_APP_NAME,
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: '2026-03-28T10:11:12.000Z',
+        entries: sampleEntries,
+      }),
+    ).rejects.toThrow('encoding the backup payload');
   });
 
   it('formats backup status text when no export is recorded', () => {
