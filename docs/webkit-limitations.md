@@ -11,7 +11,7 @@ It does not prove Safari storage policy behavior on Apple hardware.
 2. Safari-family storage-risk messaging still renders in the shell
 3. the core Dexie-backed check-in path persists across a page reload
 4. a fresh recorded backup suppresses the Safari-tab backup banner
-5. after a page-side active service-worker registration is observed and the page reloads under worker control, a fresh page in the same browser context can reopen offline from the cached shell
+5. after a page-side active service-worker registration is observed and the page reloads under worker control, the already controlled document can retrieve the shipped shell asset offline and retain IndexedDB-backed state
 
 ## What the WebKit gate is not allowed to prove
 
@@ -29,8 +29,9 @@ It does not prove Safari storage policy behavior on Apple hardware.
 
 ## Allowed WebKit proof method
 
-Use page-side `navigator.serviceWorker` state and an offline reopen in a fresh page after the page is already controlled by the active worker.
+Use page-side `navigator.serviceWorker` state, confirm page control through `navigator.serviceWorker.controller`, then probe offline retrieval of the shipped shell asset from the already controlled document.
 Do not rely on Playwright service-worker context APIs in this lane because those are Chromium-only and would create a false proof surface.
+Do not rely on offline `page.reload()` or offline `page.goto()` in this lane because Linux WebKit CI has shown internal browser errors on that path.
 
 ## Manual verification remains required
 
