@@ -4,13 +4,13 @@ import { getErrorMessage } from '../../lib/errors';
 import {
   canUseVerifiedFileSave,
   checkpointJsonBackupToDisk,
-  exportCurrentEntriesAsJson
+  exportCurrentEntriesAsJson,
 } from '../../lib/export';
 import type { ImportPreview } from '../../types';
 import type {
   ReplaceBackupState,
   ReplaceConfirmState,
-  StatusMessage
+  StatusMessage,
 } from './workflowTypes';
 
 interface UseReplaceCheckpointOptions {
@@ -42,24 +42,29 @@ function buildPreReplaceBackupFileName(exportedAt: string): string {
 export function useReplaceCheckpoint({
   onBackupCompleted,
   onStatusMessage,
-  pendingImport
+  pendingImport,
 }: UseReplaceCheckpointOptions): UseReplaceCheckpointResult {
-  const [replaceConfirmState, setReplaceConfirmState] = useState<ReplaceConfirmState>('idle');
-  const [replaceBackupState, setReplaceBackupState] = useState<ReplaceBackupState>({ phase: 'idle' });
+  const [replaceConfirmState, setReplaceConfirmState] =
+    useState<ReplaceConfirmState>('idle');
+  const [replaceBackupState, setReplaceBackupState] =
+    useState<ReplaceBackupState>({ phase: 'idle' });
   const [manualBackupConfirmed, setManualBackupConfirmed] = useState(false);
   const replaceActionRef = useRef<HTMLDivElement | null>(null);
 
-  const replaceReady = useMemo(() => replaceBackupState.phase === 'ready', [replaceBackupState]);
+  const replaceReady = useMemo(
+    () => replaceBackupState.phase === 'ready',
+    [replaceBackupState],
+  );
   const supportsVerifiedFileSave = useMemo(() => canUseVerifiedFileSave(), []);
 
   const emitReplaceDisarmedMessage = useCallback(
     (text: string) => {
       onStatusMessage({
         tone: 'info',
-        text
+        text,
       });
     },
-    [onStatusMessage]
+    [onStatusMessage],
   );
 
   const resetReplaceWorkflow = useCallback(() => {
@@ -97,7 +102,7 @@ export function useReplaceCheckpoint({
       if (!replaceActionRef.current?.contains(target)) {
         setReplaceConfirmState('idle');
         emitReplaceDisarmedMessage(
-          'Replace disarmed after focus moved off the destructive control group.'
+          'Replace disarmed after focus moved off the destructive control group.',
         );
       }
     }
@@ -120,22 +125,28 @@ export function useReplaceCheckpoint({
 
     try {
       setReplaceBackupState({ phase: 'saving' });
-      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsJson>> =
-        await exportCurrentEntriesAsJson();
+      const exportResult: Awaited<
+        ReturnType<typeof exportCurrentEntriesAsJson>
+      > = await exportCurrentEntriesAsJson();
       const fileName = buildPreReplaceBackupFileName(exportResult.exportedAt);
-      const checkpointResult: Awaited<ReturnType<typeof checkpointJsonBackupToDisk>> =
-        await checkpointJsonBackupToDisk({
+      const checkpointResult: Awaited<
+        ReturnType<typeof checkpointJsonBackupToDisk>
+      > = await checkpointJsonBackupToDisk({
         fileName,
         exportedAt: exportResult.exportedAt,
-        payload: exportResult.payload
+        payload: exportResult.payload,
       });
 
       if (checkpointResult.kind === 'verified-save-succeeded') {
         onBackupCompleted(exportResult.exportedAt);
-        setReplaceBackupState({ phase: 'ready', fileName, verification: 'verified' });
+        setReplaceBackupState({
+          phase: 'ready',
+          fileName,
+          verification: 'verified',
+        });
         onStatusMessage({
           tone: 'success',
-          text: `Verified pre-replace backup saved as ${fileName}. ${exportResult.entryCount} current rows secured before restore.`
+          text: `Verified pre-replace backup saved as ${fileName}. ${exportResult.entryCount} current rows secured before restore.`,
         });
         return;
       }
@@ -145,7 +156,7 @@ export function useReplaceCheckpoint({
         setReplaceBackupState({ phase: 'manual-awaiting-ack', fileName });
         onStatusMessage({
           tone: 'warning',
-          text: `Backup download triggered for ${fileName}. Verify the file exists on local disk, then acknowledge before replace unlocks.`
+          text: `Backup download triggered for ${fileName}. Verify the file exists on local disk, then acknowledge before replace unlocks.`,
         });
         return;
       }
@@ -153,32 +164,37 @@ export function useReplaceCheckpoint({
       setReplaceBackupState({ phase: 'idle' });
       onStatusMessage({
         tone: checkpointResult.kind === 'save-cancelled' ? 'warning' : 'error',
-        text: checkpointResult.message
+        text: checkpointResult.message,
       });
     } catch (error: unknown) {
       setReplaceBackupState({ phase: 'idle' });
       onStatusMessage({
         tone: 'error',
-        text:
-          getErrorMessage(error, 'Pre-replace backup failed. Local data remains untouched.')
+        text: getErrorMessage(
+          error,
+          'Pre-replace backup failed. Local data remains untouched.',
+        ),
       });
     }
   }, [onBackupCompleted, onStatusMessage, pendingImport]);
 
   const handleAcknowledgeManualBackup = useCallback(() => {
-    if (replaceBackupState.phase !== 'manual-awaiting-ack' || !manualBackupConfirmed) {
+    if (
+      replaceBackupState.phase !== 'manual-awaiting-ack' ||
+      !manualBackupConfirmed
+    ) {
       return;
     }
 
     setReplaceBackupState({
       phase: 'ready',
       fileName: replaceBackupState.fileName,
-      verification: 'manual'
+      verification: 'manual',
     });
     setManualBackupConfirmed(false);
     onStatusMessage({
       tone: 'warning',
-      text: `Manual backup checkpoint acknowledged for ${replaceBackupState.fileName}. Replace is unlocked, but the browser did not verify the disk write.`
+      text: `Manual backup checkpoint acknowledged for ${replaceBackupState.fileName}. Replace is unlocked, but the browser did not verify the disk write.`,
     });
   }, [manualBackupConfirmed, onStatusMessage, replaceBackupState]);
 
@@ -190,7 +206,7 @@ export function useReplaceCheckpoint({
     if (replaceBackupState.phase !== 'ready') {
       onStatusMessage({
         tone: 'warning',
-        text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.'
+        text: 'Replace remains locked. Complete the pre-replace backup checkpoint before arming the destructive path.',
       });
       return;
     }
@@ -198,7 +214,7 @@ export function useReplaceCheckpoint({
     setReplaceConfirmState('armed');
     onStatusMessage({
       tone: 'warning',
-      text: `Replace armed. Executing this path will wipe ${pendingImport.existingEntryCount} current rows and restore ${pendingImport.totalEntries} imported rows. Press Escape, click outside the destructive control group, or use Disarm Replace to stand down.`
+      text: `Replace armed. Executing this path will wipe ${pendingImport.existingEntryCount} current rows and restore ${pendingImport.totalEntries} imported rows. Press Escape, click outside the destructive control group, or use Disarm Replace to stand down.`,
     });
   }, [onStatusMessage, pendingImport, replaceBackupState.phase]);
 
@@ -214,6 +230,6 @@ export function useReplaceCheckpoint({
     replaceReady,
     resetReplaceWorkflow,
     setManualBackupConfirmed,
-    supportsVerifiedFileSave
+    supportsVerifiedFileSave,
   };
 }

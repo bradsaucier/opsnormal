@@ -1,33 +1,49 @@
+import { defineConfig, globalIgnores } from 'eslint/config';
 import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
 
-export default tseslint.config(
-  {
-    ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'eslint.config.js', 'playwright.config.js', 'vite.config.js', 'vitest.config.js', 'playwright.config.d.ts', 'vite.config.d.ts', 'vitest.config.d.ts']
-  },
+export default defineConfig([
+  globalIgnores([
+    'dist',
+    'coverage',
+    'playwright-report',
+    'test-results',
+    'eslint.config.js',
+    'playwright.config.js',
+    'vite.config.js',
+    'vitest.config.js',
+    'playwright.config.d.ts',
+    'vite.config.d.ts',
+    'vitest.config.d.ts',
+  ]),
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.app.json', './tsconfig.node.json']
+        project: ['./tsconfig.app.json', './tsconfig.node.json'],
       },
       globals: {
         ...globals.browser,
-        ...globals.node
-      }
+        ...globals.node,
+      },
     },
     plugins: {
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh
+      'react-refresh': reactRefresh,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }]
-    }
-  }
-);
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+  eslintConfigPrettier,
+]);

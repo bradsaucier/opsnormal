@@ -1,4 +1,5 @@
 ## Status
+
 Accepted
 
 ## Context
@@ -17,6 +18,7 @@ That timestamp can be combined with storage-risk diagnostics to raise a narrow, 
 Add a top-level backup action banner that appears only when the repository has concrete evidence that the operator should refresh the JSON backup now.
 
 The prompt is currently limited to three cases:
+
 - reconnect or write-verification diagnostics indicate recent storage instability
 - Apple WebKit browser-tab risk is active and the recorded JSON backup is older than the six-day warning buffer
 - storage posture is already warning or unavailable and no JSON backup has been recorded on this browser
@@ -28,12 +30,13 @@ Because the banner is injected only when risk becomes concrete, it also carries 
 ## Consequences
 
 Positive:
+
 - elevates the backup boundary into the main shell when risk turns concrete
 - converts passive storage telemetry into a direct operator action
 - keeps backup execution inside one existing surface instead of forking export logic
 
 Trade-offs:
+
 - adds another top-level banner, so the trigger rules must stay narrow to avoid alert fatigue
 - the last-backup timestamp is browser-local metadata, not proof that the file still exists on disk
 - the six-day Safari warning buffer is a safety margin, not a browser guarantee
-

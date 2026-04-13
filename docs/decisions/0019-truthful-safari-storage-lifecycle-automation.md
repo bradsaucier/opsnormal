@@ -1,4 +1,5 @@
 ## Status
+
 Accepted
 Amended by ADR-0020.
 
@@ -27,11 +28,13 @@ Documentation, CI, and release checklists must state that boundary plainly.
 ## Consequences
 
 Positive:
+
 - closes the automated-proof gap around app-controlled Safari risk messaging
 - adds truthful WebKit coverage without inflating confidence beyond what the lane can prove
 - reduces the chance that storage warning regressions slip past CI
 
 Trade-offs:
+
 - adds another Playwright project and CI artifact lane
 - requires synthetic test APIs to drive storage states deterministically
 - still leaves real Safari purge behavior in the manual verification lane

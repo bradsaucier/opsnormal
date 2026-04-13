@@ -15,22 +15,22 @@ const statusContent: Record<
     shortLabel: 'OK',
     cell: 'OK',
     classes: 'ops-status-nominal',
-    srHint: 'Nominal status.'
+    srHint: 'Nominal status.',
   },
   degraded: {
     label: 'DEGRADED',
     shortLabel: 'DG',
     cell: 'DG',
     classes: 'ops-status-degraded',
-    srHint: 'Degraded status.'
+    srHint: 'Degraded status.',
   },
   unmarked: {
     label: 'UNMARKED',
     shortLabel: 'UN',
     cell: 'UN',
     classes: 'ops-status-unmarked',
-    srHint: 'Unmarked status.'
-  }
+    srHint: 'Unmarked status.',
+  },
 };
 
 const cycleOrder: UiStatus[] = ['unmarked', 'nominal', 'degraded'];

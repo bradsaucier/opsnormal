@@ -15,7 +15,7 @@ export function UndoRecoverySection({
   onToggle,
   canUndoImport,
   undoBusy,
-  onUndoImport
+  onUndoImport,
 }: UndoRecoverySectionProps) {
   return (
     <AccordionSection
@@ -30,8 +30,8 @@ export function UndoRecoverySection({
           outerClassName="bg-ops-panel-border"
           innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-4 text-sm leading-6 text-zinc-300"
         >
-          Undo restores the pre-import snapshot for the current session only. Reload the app and
-          that rope is gone. Keep external backups current.
+          Undo restores the pre-import snapshot for the current session only.
+          Reload the app and that rope is gone. Keep external backups current.
         </NotchedFrame>
         <button
           type="button"
@@ -42,7 +42,9 @@ export function UndoRecoverySection({
           {undoBusy ? 'Undoing Import' : 'Undo Last Import'}
         </button>
         {!canUndoImport ? (
-          <p className="text-sm leading-6 text-zinc-400">No import rollback staged in this session.</p>
+          <p className="text-sm leading-6 text-zinc-400">
+            No import rollback staged in this session.
+          </p>
         ) : null}
       </div>
     </AccordionSection>

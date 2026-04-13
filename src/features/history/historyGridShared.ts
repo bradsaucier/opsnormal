@@ -19,7 +19,7 @@ export const HISTORY_GRID_IDS = {
   captionId: 'history-grid-caption',
   instructionsId: 'history-grid-instructions',
   statusSummaryId: 'history-grid-status-summary',
-  mobileRegionId: 'history-mobile-region'
+  mobileRegionId: 'history-mobile-region',
 } as const;
 
 export function getCellClassName(status: UiStatus) {

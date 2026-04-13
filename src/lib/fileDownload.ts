@@ -1,20 +1,25 @@
-type SaveFilePickerWindow = Window & typeof globalThis & {
-  showSaveFilePicker?: (options?: {
-    suggestedName?: string;
-    excludeAcceptAllOption?: boolean;
-    types?: Array<{
-      description?: string;
-      accept: Record<string, string[]>;
+type SaveFilePickerWindow = Window &
+  typeof globalThis & {
+    showSaveFilePicker?: (options?: {
+      suggestedName?: string;
+      excludeAcceptAllOption?: boolean;
+      types?: Array<{
+        description?: string;
+        accept: Record<string, string[]>;
+      }>;
+    }) => Promise<{
+      createWritable: () => Promise<{
+        write: (data: Blob | string) => Promise<void>;
+        close: () => Promise<void>;
+      }>;
     }>;
-  }) => Promise<{
-    createWritable: () => Promise<{
-      write: (data: Blob | string) => Promise<void>;
-      close: () => Promise<void>;
-    }>;
-  }>;
-};
+  };
 
-export function downloadTextFile(fileName: string, content: string, mimeType: string): void {
+export function downloadTextFile(
+  fileName: string,
+  content: string,
+  mimeType: string,
+): void {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -41,11 +46,11 @@ export function canUseVerifiedFileSave(): boolean {
 export async function saveTextFileWithPicker(
   fileName: string,
   content: string,
-  mimeType: string
+  mimeType: string,
 ): Promise<void> {
   if (!canUseVerifiedFileSave()) {
     throw new Error(
-      'Verified file save is unavailable in this browser context. Use the manual backup checkpoint instead.'
+      'Verified file save is unavailable in this browser context. Use the manual backup checkpoint instead.',
     );
   }
 
@@ -57,10 +62,10 @@ export async function saveTextFileWithPicker(
       {
         description: 'OpsNormal backup',
         accept: {
-          [mimeType]: ['.json']
-        }
-      }
-    ]
+          [mimeType]: ['.json'],
+        },
+      },
+    ],
   });
 
   if (!fileHandle) {

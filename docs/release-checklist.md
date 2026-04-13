@@ -3,6 +3,7 @@
 Before tagging a release:
 
 - [ ] npm audit high-severity gate passes
+- [ ] format check passes
 - [ ] lint passes
 - [ ] typecheck passes
 - [ ] unit and integration tests pass

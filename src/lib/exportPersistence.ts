@@ -40,6 +40,6 @@ export function formatLastExportCompletedAt(value: string | null): string {
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
-    minute: '2-digit'
+    minute: '2-digit',
   }).format(parsedDate)}.`;
 }

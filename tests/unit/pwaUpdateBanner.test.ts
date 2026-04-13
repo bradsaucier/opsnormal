@@ -18,8 +18,8 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
     expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
@@ -41,11 +41,13 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload,
         onDismiss,
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Update Ready' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Update Ready' }),
+    ).toBeInTheDocument();
 
     const applyButton = screen.getByRole('button', { name: /apply update/i });
     expect(applyButton).toBeInTheDocument();
@@ -67,12 +69,16 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Offline Ready' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /apply update/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Offline Ready' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /apply update/i }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
   });
 
@@ -90,15 +96,19 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage
-      })
+        onReloadPage,
+      }),
     );
 
-    expect(screen.getByText(/update handoff did not complete/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/update handoff did not complete/i),
+    ).toBeInTheDocument();
 
     const reloadTabButton = screen.getByRole('button', { name: /reload tab/i });
     expect(reloadTabButton).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Dismiss' }),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(reloadTabButton);
     expect(onReloadPage).toHaveBeenCalledTimes(1);
@@ -119,22 +129,32 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage
-      })
+        onReloadPage,
+      }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Update Recovery Required' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Update Recovery Required' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/update loop intercepted/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reload tab/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /apply update/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /reload tab/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /apply update/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Dismiss' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('alert')).toBeEmptyDOMElement();
 
     act(() => {
       vi.runOnlyPendingTimers();
     });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(/update loop intercepted/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /update loop intercepted/i,
+    );
 
     act(() => {
       screen.getByRole('button', { name: /reload tab/i }).click();
@@ -143,7 +163,6 @@ describe('PwaUpdateBanner', () => {
     expect(onReloadPage).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
-
 
   it('pins coordinated update guidance while another tab owns the handoff', () => {
     render(
@@ -157,13 +176,19 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Update In Progress' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /apply update/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Update In Progress' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /apply update/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Dismiss' }),
+    ).not.toBeInTheDocument();
   });
 
   it('pins coordinated recovery when another tab stalls the handoff', () => {
@@ -179,18 +204,24 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: true,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
-    expect(screen.getByRole('heading', { name: 'Update Recovery Required' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /reload tab/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Update Recovery Required' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /reload tab/i }),
+    ).toBeInTheDocument();
 
     act(() => {
       vi.runOnlyPendingTimers();
     });
 
-    expect(screen.getByRole('alert')).toHaveTextContent(/another opsnormal tab started an update handoff/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /another opsnormal tab started an update handoff/i,
+    );
     vi.useRealTimers();
   });
 
@@ -206,13 +237,17 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: true,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
-    expect(screen.getByText(/update handoff did not complete/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/another opsnormal tab started an update handoff, but this tab has not received the new worker/i)
+      screen.getByText(/update handoff did not complete/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /another opsnormal tab started an update handoff, but this tab has not received the new worker/i,
+      ),
     ).not.toBeInTheDocument();
   });
 
@@ -228,11 +263,13 @@ describe('PwaUpdateBanner', () => {
         externalUpdateStalled: false,
         onReload: vi.fn(),
         onDismiss: vi.fn(),
-        onReloadPage: vi.fn()
-      })
+        onReloadPage: vi.fn(),
+      }),
     );
 
     expect(screen.getByRole('button', { name: 'Applying' })).toBeDisabled();
-    expect(screen.queryByRole('button', { name: 'Dismiss' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Dismiss' }),
+    ).not.toBeInTheDocument();
   });
 });

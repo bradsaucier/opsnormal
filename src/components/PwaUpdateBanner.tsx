@@ -30,7 +30,7 @@ export function PwaUpdateBanner({
   externalUpdateStalled,
   onReload,
   onDismiss,
-  onReloadPage
+  onReloadPage,
 }: PwaUpdateBannerProps) {
   const [statusAnnouncement, setStatusAnnouncement] = useState('');
   const [recoveryAnnouncement, setRecoveryAnnouncement] = useState('');
@@ -41,7 +41,7 @@ export function PwaUpdateBanner({
     updateStalled,
     reloadRecoveryRequired,
     externalUpdateInProgress,
-    externalUpdateStalled
+    externalUpdateStalled,
   });
 
   useEffect(() => {
@@ -88,13 +88,21 @@ export function PwaUpdateBanner({
 
   return (
     <>
-      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         {statusAnnouncement}
       </div>
       <div className="sr-only" role="alert" aria-atomic="true">
         {recoveryAnnouncement}
       </div>
-      <section data-testid="pwa-update-banner" className={viewModel.isBannerActive ? '' : 'sr-only'}>
+      <section
+        data-testid="pwa-update-banner"
+        className={viewModel.isBannerActive ? '' : 'sr-only'}
+      >
         {viewModel.isBannerActive ? (
           <NotchedFrame
             outerClassName="bg-[linear-gradient(180deg,rgba(125,211,252,0.34),rgba(255,255,255,0.04))]"
@@ -107,7 +115,9 @@ export function PwaUpdateBanner({
                 </h2>
                 <p className="mt-2">{viewModel.primaryMessage}</p>
                 {viewModel.recoveryMessage ? (
-                  <p className="mt-2 text-sky-50">{viewModel.recoveryMessage}</p>
+                  <p className="mt-2 text-sky-50">
+                    {viewModel.recoveryMessage}
+                  </p>
                 ) : null}
               </div>
               <div className="flex flex-wrap gap-3">

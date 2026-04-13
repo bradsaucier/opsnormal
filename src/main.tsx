@@ -5,7 +5,11 @@ import App from './App';
 import { AppCrashFallback } from './components/AppCrashFallback';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { renderBootFailureFallback } from './lib/bootFallback';
-import { onCaughtError, onRecoverableError, onUncaughtError } from './lib/runtime';
+import {
+  onCaughtError,
+  onRecoverableError,
+  onUncaughtError,
+} from './lib/runtime';
 import './styles/index.css';
 
 const rootElement = document.getElementById('root');
@@ -18,7 +22,7 @@ try {
   createRoot(rootElement, {
     onCaughtError,
     onUncaughtError,
-    onRecoverableError
+    onRecoverableError,
   }).render(
     <StrictMode>
       <ErrorBoundary
@@ -28,7 +32,7 @@ try {
       >
         <App />
       </ErrorBoundary>
-    </StrictMode>
+    </StrictMode>,
   );
 } catch (bootError) {
   console.error('[OpsNormal] Boot failure:', bootError);

@@ -19,7 +19,7 @@ export function AccordionSection({
   summary,
   isOpen,
   onToggle,
-  children
+  children,
 }: AccordionSectionProps) {
   const headerId = useId();
   const panelId = useId();
@@ -42,7 +42,9 @@ export function AccordionSection({
             <span className="block text-xs font-semibold tracking-[0.22em] text-ops-text-muted uppercase">
               {title}
             </span>
-            <span className="mt-2 block text-sm leading-6 text-ops-text-secondary">{summary}</span>
+            <span className="mt-2 block text-sm leading-6 text-ops-text-secondary">
+              {summary}
+            </span>
           </span>
           <span
             aria-hidden="true"
@@ -65,7 +67,9 @@ export function AccordionSection({
   );
 }
 
-function getSignalChromeClasses(tone: 'default' | 'safe' | 'warning' = 'default'): {
+function getSignalChromeClasses(
+  tone: 'default' | 'safe' | 'warning' = 'default',
+): {
   outer: string;
   inner: string;
   label: string;
@@ -80,7 +84,7 @@ function getSignalChromeClasses(tone: 'default' | 'safe' | 'warning' = 'default'
         'bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
       label: 'text-emerald-100/80',
       value: 'text-emerald-50',
-      detail: 'text-emerald-50/80'
+      detail: 'text-emerald-50/80',
     };
   }
 
@@ -92,7 +96,7 @@ function getSignalChromeClasses(tone: 'default' | 'safe' | 'warning' = 'default'
         'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
       label: 'text-amber-100/80',
       value: 'text-amber-50',
-      detail: 'text-amber-50/82'
+      detail: 'text-amber-50/82',
     };
   }
 
@@ -102,7 +106,7 @@ function getSignalChromeClasses(tone: 'default' | 'safe' | 'warning' = 'default'
       'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)]',
     label: 'text-ops-text-muted',
     value: 'text-ops-text-primary',
-    detail: 'text-ops-text-secondary'
+    detail: 'text-ops-text-secondary',
   };
 }
 
@@ -113,7 +117,12 @@ interface SignalCardProps {
   tone?: 'default' | 'safe' | 'warning';
 }
 
-export function SignalCard({ label, value, detail, tone = 'default' }: SignalCardProps) {
+export function SignalCard({
+  label,
+  value,
+  detail,
+  tone = 'default',
+}: SignalCardProps) {
   const chromeClasses = getSignalChromeClasses(tone);
 
   return (
@@ -122,13 +131,19 @@ export function SignalCard({ label, value, detail, tone = 'default' }: SignalCar
         outerClassName={chromeClasses.outer}
         innerClassName={`p-4 ${chromeClasses.inner}`}
       >
-        <p className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}>
+        <p
+          className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}
+        >
           {label}
         </p>
-        <p className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}>
+        <p
+          className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}
+        >
           {value}
         </p>
-        <p className={`mt-2 text-sm leading-6 ${chromeClasses.detail}`}>{detail}</p>
+        <p className={`mt-2 text-sm leading-6 ${chromeClasses.detail}`}>
+          {detail}
+        </p>
       </NotchedFrame>
     </div>
   );
@@ -140,7 +155,11 @@ interface PreviewFactCardProps {
   detail?: string;
 }
 
-export function PreviewFactCard({ label, value, detail }: PreviewFactCardProps) {
+export function PreviewFactCard({
+  label,
+  value,
+  detail,
+}: PreviewFactCardProps) {
   return (
     <div role="listitem" className="panel-shadow">
       <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
@@ -148,8 +167,14 @@ export function PreviewFactCard({ label, value, detail }: PreviewFactCardProps) 
           <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
             {label}
           </p>
-          <p className="mt-1 text-sm font-semibold text-ops-text-primary">{value}</p>
-          {detail ? <p className="mt-2 text-xs leading-5 text-ops-text-muted">{detail}</p> : null}
+          <p className="mt-1 text-sm font-semibold text-ops-text-primary">
+            {value}
+          </p>
+          {detail ? (
+            <p className="mt-2 text-xs leading-5 text-ops-text-muted">
+              {detail}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

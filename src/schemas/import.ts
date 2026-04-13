@@ -4,15 +4,20 @@ import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, SECTORS } from '../types';
 
 const sectorIds = SECTORS.map((sector) => sector.id) as [
   (typeof SECTORS)[number]['id'],
-  ...(typeof SECTORS)[number]['id'][]
+  ...(typeof SECTORS)[number]['id'][],
 ];
 
-const DateKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.');
+const DateKeySchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must use YYYY-MM-DD format.');
 const SectorIdSchema = z.enum(sectorIds);
 const EntryStatusSchema = z.enum(['nominal', 'degraded']);
 const ChecksumSchema = z
   .string()
-  .regex(/^[a-f0-9]{64}$/, 'Checksum must be a 64-character lowercase SHA-256 hex digest.');
+  .regex(
+    /^[a-f0-9]{64}$/,
+    'Checksum must be a 64-character lowercase SHA-256 hex digest.',
+  );
 const CrashDiagnosticsSchema = z
   .object({
     connectionDropsDetected: z.number().int().min(0),
@@ -25,8 +30,13 @@ const CrashDiagnosticsSchema = z
     standaloneMode: z.boolean(),
     installRecommended: z.boolean(),
     webKitRisk: z.boolean(),
-    lastVerificationResult: z.enum(['unknown', 'verified', 'mismatch', 'failed']),
-    lastVerifiedAt: z.string().datetime({ offset: true }).nullable()
+    lastVerificationResult: z.enum([
+      'unknown',
+      'verified',
+      'mismatch',
+      'failed',
+    ]),
+    lastVerifiedAt: z.string().datetime({ offset: true }).nullable(),
   })
   .strict();
 
@@ -36,7 +46,7 @@ export const DailyEntrySchema = z
     date: DateKeySchema,
     sectorId: SectorIdSchema,
     status: EntryStatusSchema,
-    updatedAt: z.string().datetime({ offset: true })
+    updatedAt: z.string().datetime({ offset: true }),
   })
   .strict();
 
@@ -47,7 +57,7 @@ export const JsonImportSchema = z
     exportedAt: z.string().datetime({ offset: true }),
     entries: z.array(DailyEntrySchema).max(10000),
     checksum: ChecksumSchema.optional(),
-    crashDiagnostics: CrashDiagnosticsSchema.optional()
+    crashDiagnostics: CrashDiagnosticsSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -60,7 +70,7 @@ export const JsonImportSchema = z
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['entries', index],
-          message: `Duplicate entry detected for ${compoundKey}.`
+          message: `Duplicate entry detected for ${compoundKey}.`,
         });
         return;
       }

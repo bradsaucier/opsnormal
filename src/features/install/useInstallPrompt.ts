@@ -9,7 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 function subscribeToDisplayModeChanges(
   mediaQuery: MediaQueryList | null,
-  listener: () => void
+  listener: () => void,
 ): () => void {
   if (!mediaQuery) {
     return () => undefined;
@@ -35,8 +35,11 @@ function subscribeToDisplayModeChanges(
 }
 
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [standalone, setStandalone] = useState<boolean>(isStandaloneDisplayMode());
+  const [deferredPrompt, setDeferredPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
+  const [standalone, setStandalone] = useState<boolean>(
+    isStandaloneDisplayMode(),
+  );
 
   useEffect(() => {
     const mediaQuery =
@@ -60,7 +63,7 @@ export function useInstallPrompt() {
 
     const unsubscribeDisplayModeChanges = subscribeToDisplayModeChanges(
       mediaQuery,
-      handleDisplayModeChange
+      handleDisplayModeChange,
     );
 
     window.addEventListener('beforeinstallprompt', handlePrompt);
@@ -73,7 +76,10 @@ export function useInstallPrompt() {
     };
   }, []);
 
-  const canPromptInstall = useMemo(() => Boolean(deferredPrompt), [deferredPrompt]);
+  const canPromptInstall = useMemo(
+    () => Boolean(deferredPrompt),
+    [deferredPrompt],
+  );
 
   async function promptInstall() {
     const promptEvent = deferredPrompt;
@@ -86,7 +92,9 @@ export function useInstallPrompt() {
       await promptEvent.prompt();
       await promptEvent.userChoice;
     } finally {
-      setDeferredPrompt((current) => (current === promptEvent ? null : current));
+      setDeferredPrompt((current) =>
+        current === promptEvent ? null : current,
+      );
     }
   }
 
@@ -94,6 +102,6 @@ export function useInstallPrompt() {
     isIOS: isIOSDevice(),
     isStandalone: standalone,
     canPromptInstall,
-    promptInstall
+    promptInstall,
   };
 }

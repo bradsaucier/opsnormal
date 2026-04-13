@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createBackupActionPrompt,
-  type BackupActionPrompt
+  type BackupActionPrompt,
 } from '../../src/features/export/backupActionPrompt';
 import type { StorageHealth } from '../../src/lib/storage';
 
-function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHealth {
+function buildStorageHealth(
+  overrides: Partial<StorageHealth> = {},
+): StorageHealth {
   return {
     persisted: false,
     persistenceAvailable: true,
@@ -28,9 +30,9 @@ function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHeal
       installRecommended: false,
       webKitRisk: false,
       lastVerificationResult: 'unknown',
-      lastVerifiedAt: null
+      lastVerifiedAt: null,
     },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -42,7 +44,9 @@ function expectPromptTitle(prompt: BackupActionPrompt | null, title: string) {
 const ANCHOR_NOW = new Date('2030-04-10T12:00:00.000Z');
 
 function isoDaysBefore(days: number): string {
-  return new Date(ANCHOR_NOW.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+  return new Date(
+    ANCHOR_NOW.getTime() - days * 24 * 60 * 60 * 1000,
+  ).toISOString();
 }
 
 describe('createBackupActionPrompt', () => {
@@ -51,11 +55,11 @@ describe('createBackupActionPrompt', () => {
       buildStorageHealth({
         safari: {
           ...buildStorageHealth().safari,
-          reconnectState: 'recovering'
-        }
+          reconnectState: 'recovering',
+        },
       }),
       isoDaysBefore(1),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Confirm state and refresh the JSON backup');
@@ -69,11 +73,11 @@ describe('createBackupActionPrompt', () => {
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true,
-          installRecommended: true
-        }
+          installRecommended: true,
+        },
       }),
       isoDaysBefore(9),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
@@ -88,11 +92,11 @@ describe('createBackupActionPrompt', () => {
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true,
-          installRecommended: true
-        }
+          installRecommended: true,
+        },
       }),
       isoDaysBefore(6),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
@@ -105,11 +109,11 @@ describe('createBackupActionPrompt', () => {
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true,
-          installRecommended: true
-        }
+          installRecommended: true,
+        },
       }),
       'corrupted-garbage-string-payload',
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
@@ -121,11 +125,11 @@ describe('createBackupActionPrompt', () => {
         status: 'warning',
         safari: {
           ...buildStorageHealth().safari,
-          webKitRisk: true
-        }
+          webKitRisk: true,
+        },
       }),
       isoDaysBefore(9),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Safari tab risk requires a fresh backup');
@@ -140,11 +144,11 @@ describe('createBackupActionPrompt', () => {
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: true,
-          installRecommended: true
-        }
+          installRecommended: true,
+        },
       }),
       isoDaysBefore(2),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expect(prompt).toBeNull();
@@ -157,11 +161,11 @@ describe('createBackupActionPrompt', () => {
         safari: {
           ...buildStorageHealth().safari,
           webKitRisk: false,
-          standaloneMode: true
-        }
+          standaloneMode: true,
+        },
       }),
       isoDaysBefore(9),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expect(prompt).toBeNull();
@@ -175,11 +179,11 @@ describe('createBackupActionPrompt', () => {
           ...buildStorageHealth().safari,
           reconnectState: 'failed',
           webKitRisk: true,
-          installRecommended: true
-        }
+          installRecommended: true,
+        },
       }),
       isoDaysBefore(9),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'Confirm state and refresh the JSON backup');
@@ -188,10 +192,10 @@ describe('createBackupActionPrompt', () => {
   it('warns when elevated storage risk has no recorded JSON backup', () => {
     const prompt = createBackupActionPrompt(
       buildStorageHealth({
-        status: 'warning'
+        status: 'warning',
       }),
       null,
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expectPromptTitle(prompt, 'No external JSON backup recorded');
@@ -201,10 +205,10 @@ describe('createBackupActionPrompt', () => {
     const prompt = createBackupActionPrompt(
       buildStorageHealth({
         persisted: true,
-        status: 'protected'
+        status: 'protected',
       }),
       isoDaysBefore(1),
-      ANCHOR_NOW
+      ANCHOR_NOW,
     );
 
     expect(prompt).toBeNull();

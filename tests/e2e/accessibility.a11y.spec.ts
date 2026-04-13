@@ -27,49 +27,79 @@ test.describe('OpsNormal accessibility regression coverage', () => {
     await page.clock.setFixedTime(new Date(FIXED_TEST_TIME_ISO));
   });
 
-  test('passes WCAG 2.1 AA checks on the desktop app shell', async ({ page, makeAxeBuilder }) => {
+  test('passes WCAG 2.1 AA checks on the desktop app shell', async ({
+    page,
+    makeAxeBuilder,
+  }) => {
     await page.goto('/');
 
     const results = await makeAxeBuilder().analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
-  test('preserves direct-select radiogroup semantics after a status change', async ({ page, makeAxeBuilder }) => {
+  test('preserves direct-select radiogroup semantics after a status change', async ({
+    page,
+    makeAxeBuilder,
+  }) => {
     await page.goto('/');
 
-    const radiogroup = page.getByRole('radiogroup', { name: /work or school status/i });
-    await page.getByRole('radio', { name: /^Work or School nominal$/i }).click();
+    const radiogroup = page.getByRole('radiogroup', {
+      name: /work or school status/i,
+    });
+    await page
+      .getByRole('radio', { name: /^Work or School nominal$/i })
+      .click();
 
-    await expect(radiogroup).toMatchAriaSnapshot({ name: 'work-or-school-radiogroup.aria.yml' });
+    await expect(radiogroup).toMatchAriaSnapshot({
+      name: 'work-or-school-radiogroup.aria.yml',
+    });
 
-    const results = await makeAxeBuilder().include('[role="radiogroup"]').analyze();
+    const results = await makeAxeBuilder()
+      .include('[role="radiogroup"]')
+      .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('uses standard mobile history region semantics and passes WCAG 2.1 AA checks', async ({
     page,
-    makeAxeBuilder
+    makeAxeBuilder,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    const mobileHistoryRegion = page.getByRole('region', { name: /weekly readiness history/i });
+    const mobileHistoryRegion = page.getByRole('region', {
+      name: /weekly readiness history/i,
+    });
 
     await expect(mobileHistoryRegion).toBeVisible();
-    await expect(mobileHistoryRegion).not.toHaveAttribute('aria-roledescription', 'carousel');
-    await expect(page.getByRole('navigation', { name: /week navigation/i })).toBeVisible();
+    await expect(mobileHistoryRegion).not.toHaveAttribute(
+      'aria-roledescription',
+      'carousel',
+    );
+    await expect(
+      page.getByRole('navigation', { name: /week navigation/i }),
+    ).toBeVisible();
 
     const weekGroups = page.getByRole('group');
     await expect(weekGroups).toHaveCount(5);
 
     for (const weekGroup of await weekGroups.all()) {
-      await expect(weekGroup).not.toHaveAttribute('aria-roledescription', 'slide');
+      await expect(weekGroup).not.toHaveAttribute(
+        'aria-roledescription',
+        'slide',
+      );
     }
 
     const results = await makeAxeBuilder().include('#main-content').analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 });

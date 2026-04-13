@@ -2,7 +2,7 @@ import type { Transaction } from 'dexie';
 
 export type OpsNormalDbStores = Record<string, string | null>;
 export type OpsNormalDbMigrationUpgrade = (
-  transaction: Transaction
+  transaction: Transaction,
 ) => PromiseLike<void> | void;
 
 export interface OpsNormalDbMigration {

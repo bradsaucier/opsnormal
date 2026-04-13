@@ -6,7 +6,8 @@ import { applyOpsNormalDbMigrations } from '../../src/db/migrations';
 import type { DailyEntry } from '../../src/types';
 
 const TEST_DB_NAME = 'opsnormal-db-migration-integration-test';
-const TRANSFORM_TEST_DB_NAME = 'opsnormal-db-migration-transform-integration-test';
+const TRANSFORM_TEST_DB_NAME =
+  'opsnormal-db-migration-transform-integration-test';
 
 class LegacyOpsNormalDbV1 extends Dexie {
   dailyEntries!: EntityTable<DailyEntry, 'id'>;
@@ -14,7 +15,7 @@ class LegacyOpsNormalDbV1 extends Dexie {
   constructor(name: string) {
     super(name);
     this.version(1).stores({
-      dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
+      dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt',
     });
   }
 }
@@ -40,7 +41,7 @@ class LegacyMigrationProbeDbV1 extends Dexie {
   constructor(name: string) {
     super(name);
     this.version(1).stores({
-      records: '++id, name'
+      records: '++id, name',
     });
   }
 }
@@ -55,21 +56,24 @@ class CurrentMigrationProbeDb extends Dexie {
         version: 1,
         name: 'initial-records-schema',
         stores: {
-          records: '++id, name'
-        }
+          records: '++id, name',
+        },
       },
       {
         version: 2,
         name: 'add-default-priority',
         stores: {
-          records: '++id, name, priority'
+          records: '++id, name, priority',
         },
         async upgrade(transaction: Transaction) {
-          await transaction.table('records').toCollection().modify((record: MigrationProbeRecord) => {
-            record.priority = 'medium';
-          });
-        }
-      }
+          await transaction
+            .table('records')
+            .toCollection()
+            .modify((record: MigrationProbeRecord) => {
+              record.priority = 'medium';
+            });
+        },
+      },
     ]);
   }
 }
@@ -90,14 +94,14 @@ describe('database schema migrations', () => {
           date: '2026-03-27',
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: '2026-03-27T12:00:00.000Z'
+          updatedAt: '2026-03-27T12:00:00.000Z',
         },
         {
           date: '2026-03-28',
           sectorId: 'rest',
           status: 'degraded',
-          updatedAt: '2026-03-28T12:05:00.000Z'
-        }
+          updatedAt: '2026-03-28T12:05:00.000Z',
+        },
       ]);
     } finally {
       legacyDb.close();
@@ -108,22 +112,33 @@ describe('database schema migrations', () => {
     try {
       await currentDb.open();
 
-      const entries = await currentDb.dailyEntries.orderBy('[date+sectorId]').toArray();
-      const secondaryIndexes = currentDb.dailyEntries.schema.indexes.map((index) => index.name);
+      const entries = await currentDb.dailyEntries
+        .orderBy('[date+sectorId]')
+        .toArray();
+      const secondaryIndexes = currentDb.dailyEntries.schema.indexes.map(
+        (index) => index.name,
+      );
 
-      expect(entries.map(({ date, sectorId, status, updatedAt }) => ({ date, sectorId, status, updatedAt }))).toEqual([
+      expect(
+        entries.map(({ date, sectorId, status, updatedAt }) => ({
+          date,
+          sectorId,
+          status,
+          updatedAt,
+        })),
+      ).toEqual([
         {
           date: '2026-03-27',
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: '2026-03-27T12:00:00.000Z'
+          updatedAt: '2026-03-27T12:00:00.000Z',
         },
         {
           date: '2026-03-28',
           sectorId: 'rest',
           status: 'degraded',
-          updatedAt: '2026-03-28T12:05:00.000Z'
-        }
+          updatedAt: '2026-03-28T12:05:00.000Z',
+        },
       ]);
       expect(secondaryIndexes).toEqual(['[date+sectorId]']);
     } finally {
@@ -137,7 +152,7 @@ describe('database schema migrations', () => {
     try {
       await legacyDb.open();
       await legacyDb.records.add({
-        name: 'alpha'
+        name: 'alpha',
       });
     } finally {
       legacyDb.close();
@@ -149,14 +164,16 @@ describe('database schema migrations', () => {
       await currentDb.open();
 
       const migratedRecords = await currentDb.records.toArray();
-      const secondaryIndexes = currentDb.records.schema.indexes.map((index) => index.name);
+      const secondaryIndexes = currentDb.records.schema.indexes.map(
+        (index) => index.name,
+      );
 
       expect(migratedRecords).toEqual([
         {
           id: 1,
           name: 'alpha',
-          priority: 'medium'
-        }
+          priority: 'medium',
+        },
       ]);
       expect(secondaryIndexes).toEqual(['name', 'priority']);
     } finally {

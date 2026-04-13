@@ -1,18 +1,22 @@
 import type { DailyEntry } from '../types';
 import { db, reopenIfClosed } from '../db/appDb';
 import { createStorageOperationError } from './storage';
-import { downloadTextFile, canUseVerifiedFileSave, saveTextFileWithPicker } from './fileDownload';
+import {
+  downloadTextFile,
+  canUseVerifiedFileSave,
+  saveTextFileWithPicker,
+} from './fileDownload';
 import {
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
-  computeJsonExportChecksum
+  computeJsonExportChecksum,
 } from './exportSerialization';
 import {
   clearLastExportCompletedAt,
   recordExportCompleted,
   getLastExportCompletedAt,
-  formatLastExportCompletedAt
+  formatLastExportCompletedAt,
 } from './exportPersistence';
 
 // Architecture: ADR-0007, ADR-0008, ADR-0010, and ADR-0012 define the local-only
@@ -25,9 +29,23 @@ interface ExportSnapshotResult {
 
 export type BackupCheckpointResult =
   | { kind: 'verified-save-succeeded'; fileName: string; exportedAt: string }
-  | { kind: 'fallback-download-triggered'; fileName: string; exportedAt: string }
-  | { kind: 'save-cancelled'; fileName: string; exportedAt: string; message: string }
-  | { kind: 'save-failed'; fileName: string; exportedAt: string; message: string };
+  | {
+      kind: 'fallback-download-triggered';
+      fileName: string;
+      exportedAt: string;
+    }
+  | {
+      kind: 'save-cancelled';
+      fileName: string;
+      exportedAt: string;
+      message: string;
+    }
+  | {
+      kind: 'save-failed';
+      fileName: string;
+      exportedAt: string;
+      message: string;
+    };
 
 function isSaveCancellationError(error: unknown): boolean {
   if (error instanceof DOMException && error.name === 'AbortError') {
@@ -44,11 +62,15 @@ export async function checkpointJsonBackupToDisk(args: {
 }): Promise<BackupCheckpointResult> {
   if (canUseVerifiedFileSave()) {
     try {
-      await saveTextFileWithPicker(args.fileName, args.payload, 'application/json');
+      await saveTextFileWithPicker(
+        args.fileName,
+        args.payload,
+        'application/json',
+      );
       return {
         kind: 'verified-save-succeeded',
         fileName: args.fileName,
-        exportedAt: args.exportedAt
+        exportedAt: args.exportedAt,
       };
     } catch (error) {
       if (isSaveCancellationError(error)) {
@@ -56,7 +78,7 @@ export async function checkpointJsonBackupToDisk(args: {
           kind: 'save-cancelled',
           fileName: args.fileName,
           exportedAt: args.exportedAt,
-          message: 'Backup save cancelled. Local data unchanged.'
+          message: 'Backup save cancelled. Local data unchanged.',
         };
       }
 
@@ -67,7 +89,7 @@ export async function checkpointJsonBackupToDisk(args: {
         message:
           error instanceof Error
             ? error.message
-            : 'Pre-replace backup failed. Local data remains untouched.'
+            : 'Pre-replace backup failed. Local data remains untouched.',
       };
     }
   }
@@ -77,7 +99,7 @@ export async function checkpointJsonBackupToDisk(args: {
     return {
       kind: 'fallback-download-triggered',
       fileName: args.fileName,
-      exportedAt: args.exportedAt
+      exportedAt: args.exportedAt,
     };
   } catch (error) {
     return {
@@ -87,7 +109,7 @@ export async function checkpointJsonBackupToDisk(args: {
       message:
         error instanceof Error
           ? error.message
-          : 'Pre-replace backup failed. Local data remains untouched.'
+          : 'Pre-replace backup failed. Local data remains untouched.',
     };
   }
 }
@@ -103,7 +125,7 @@ export async function exportCurrentEntriesAsJson(): Promise<{
   return {
     entryCount: snapshot.entries.length,
     exportedAt: snapshot.exportedAt,
-    payload
+    payload,
   };
 }
 
@@ -115,7 +137,7 @@ export async function exportCurrentEntriesAsCsv(): Promise<{
 
   return {
     entryCount: snapshot.entries.length,
-    payload: createCsvExport(snapshot.entries)
+    payload: createCsvExport(snapshot.entries),
   };
 }
 
@@ -124,12 +146,12 @@ async function readExportSnapshot(): Promise<ExportSnapshotResult> {
     await reopenIfClosed();
 
     const entries = await db.transaction('r', db.dailyEntries, async () =>
-      db.dailyEntries.orderBy('[date+sectorId]').toArray()
+      db.dailyEntries.orderBy('[date+sectorId]').toArray(),
     );
 
     return {
       entries,
-      exportedAt: new Date().toISOString()
+      exportedAt: new Date().toISOString(),
     };
   } catch (error) {
     throw createStorageOperationError(error);
@@ -147,5 +169,5 @@ export {
   formatLastExportCompletedAt,
   getLastExportCompletedAt,
   recordExportCompleted,
-  saveTextFileWithPicker
+  saveTextFileWithPicker,
 };

@@ -17,7 +17,7 @@ async function installCspViolationCollector(page: Page): Promise<void> {
       window.__opsCspViolations?.push({
         blockedURI: event.blockedURI,
         violatedDirective: event.violatedDirective,
-        originalPolicy: event.originalPolicy
+        originalPolicy: event.originalPolicy,
       });
     });
   });
@@ -32,48 +32,72 @@ test.describe('OpsNormal CSP posture', () => {
     await installCspViolationCollector(page);
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'OpsNormal' }),
+    ).toBeVisible();
 
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
-  test('renders the mobile history path without CSP violations in Chromium', async ({ page }) => {
+  test('renders the mobile history path without CSP violations in Chromium', async ({
+    page,
+  }) => {
     await installCspViolationCollector(page);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    await expect(page.getByRole('region', { name: /weekly readiness history/i })).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: /weekly readiness history/i }),
+    ).toBeVisible();
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
-  test('renders the boot fallback surface without CSP violations in Chromium @harness', async ({ page }) => {
+  test('renders the boot fallback surface without CSP violations in Chromium @harness', async ({
+    page,
+  }) => {
     await installCspViolationCollector(page);
 
     await page.goto('/boot-fallback-harness.html');
 
-    await expect(page.locator('.ops-boot-fallback-title')).toHaveText('OpsNormal failed to start');
+    await expect(page.locator('.ops-boot-fallback-title')).toHaveText(
+      'OpsNormal failed to start',
+    );
     await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible();
-    await expect(page.locator('.ops-boot-fallback-shell')).toHaveAttribute('role', 'alert');
-    await expect(page.locator('.ops-boot-fallback-shell')).not.toHaveAttribute('aria-live', /./);
+    await expect(page.locator('.ops-boot-fallback-shell')).toHaveAttribute(
+      'role',
+      'alert',
+    );
+    await expect(page.locator('.ops-boot-fallback-shell')).not.toHaveAttribute(
+      'aria-live',
+      /./,
+    );
 
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
 
-  test('renders the root crash fallback surface without CSP violations in Chromium @harness', async ({ page }) => {
+  test('renders the root crash fallback surface without CSP violations in Chromium @harness', async ({
+    page,
+  }) => {
     await installCspViolationCollector(page);
 
     await page.goto('/crash-fallback-harness.html');
 
-    await expect(page.getByRole('heading', { name: 'OpsNormal stopped rendering' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Export JSON' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'OpsNormal stopped rendering' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export JSON' }),
+    ).toBeVisible();
     await expect(page.locator('[data-testid="app-crash-fallback"]')).toHaveCSS(
       'background-color',
-      'rgb(10, 15, 13)'
+      'rgb(10, 15, 13)',
     );
-    await expect(page.locator('.ops-crash-fallback-title')).toHaveCSS('text-transform', 'uppercase');
+    await expect(page.locator('.ops-crash-fallback-title')).toHaveCSS(
+      'text-transform',
+      'uppercase',
+    );
 
     await expect.poll(() => getCspViolations(page)).toEqual([]);
   });
-
 });

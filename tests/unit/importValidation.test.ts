@@ -2,11 +2,16 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { createJsonExport, computeJsonExportChecksum } from '../../src/lib/export';
+import {
+  createJsonExport,
+  computeJsonExportChecksum,
+} from '../../src/lib/export';
 import { parseImportPayload } from '../../src/services/importValidation';
 import { OPSNORMAL_APP_NAME, type JsonExportPayload } from '../../src/types';
 
-function buildPayload(overrides: Partial<JsonExportPayload> = {}): JsonExportPayload {
+function buildPayload(
+  overrides: Partial<JsonExportPayload> = {},
+): JsonExportPayload {
   return {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: 1,
@@ -17,37 +22,41 @@ function buildPayload(overrides: Partial<JsonExportPayload> = {}): JsonExportPay
         date: '2026-03-28',
         sectorId: 'body',
         status: 'nominal',
-        updatedAt: '2026-03-28T12:00:00.000Z'
-      }
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
     ],
-    ...overrides
+    ...overrides,
   };
 }
 
 describe('shared import validation', () => {
   it('rejects invalid JSON', async () => {
-    await expect(parseImportPayload('{')).rejects.toThrow('Import rejected. File is not valid JSON.');
-  });
-
-  it('rejects a payload missing required fields', async () => {
-    await expect(parseImportPayload(JSON.stringify({ entries: [] }))).rejects.toThrow(
-      'app - Invalid literal value, expected "OpsNormal"'
+    await expect(parseImportPayload('{')).rejects.toThrow(
+      'Import rejected. File is not valid JSON.',
     );
   });
 
+  it('rejects a payload missing required fields', async () => {
+    await expect(
+      parseImportPayload(JSON.stringify({ entries: [] })),
+    ).rejects.toThrow('app - Invalid literal value, expected "OpsNormal"');
+  });
+
   it('rejects blocked keys before schema validation', async () => {
-    const raw = '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"__proto__":{}}';
+    const raw =
+      '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"__proto__":{}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
-      'Import rejected. File contains blocked keys.'
+      'Import rejected. File contains blocked keys.',
     );
   });
 
   it('rejects nested blocked keys before schema validation', async () => {
-    const raw = '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"metadata":{"constructor":{}}}';
+    const raw =
+      '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"metadata":{"constructor":{}}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
-      'Import rejected. File contains blocked keys.'
+      'Import rejected. File contains blocked keys.',
     );
   });
 
@@ -60,10 +69,10 @@ describe('shared import validation', () => {
             date: '2026-03-28',
             sectorId: 'invalid-sector' as never,
             status: 'nominal',
-            updatedAt: '2026-03-28T12:00:00.000Z'
-          }
-        ]
-      })
+            updatedAt: '2026-03-28T12:00:00.000Z',
+          },
+        ],
+      }),
     );
 
     await expect(parseImportPayload(raw)).rejects.toThrow();
@@ -71,11 +80,11 @@ describe('shared import validation', () => {
 
   it('rejects a payload with an invalid checksum format', async () => {
     const payload = buildPayload({
-      checksum: 'abc123'
+      checksum: 'abc123',
     });
 
     await expect(parseImportPayload(JSON.stringify(payload))).rejects.toThrow(
-      'checksum - Checksum must be a 64-character lowercase SHA-256 hex digest.'
+      'checksum - Checksum must be a 64-character lowercase SHA-256 hex digest.',
     );
   });
 
@@ -85,7 +94,7 @@ describe('shared import validation', () => {
       app: payload.app,
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
-      entries: payload.entries
+      entries: payload.entries,
     });
     payload.checksum = checksum;
 
@@ -102,10 +111,10 @@ describe('shared import validation', () => {
           date: '2026-03-28',
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: '2026-03-28T12:00:00.000Z'
-        }
+          updatedAt: '2026-03-28T12:00:00.000Z',
+        },
       ],
-      '2026-03-28T12:00:00.000Z'
+      '2026-03-28T12:00:00.000Z',
     );
 
     const parsed = await parseImportPayload(raw);
@@ -121,19 +130,18 @@ describe('shared import validation', () => {
       app: payload.app,
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
-      entries: payload.entries
+      entries: payload.entries,
     });
     payload.checksum = checksum;
     payload.entries[0] = {
       ...payload.entries[0]!,
-      status: 'degraded'
+      status: 'degraded',
     };
 
     await expect(parseImportPayload(JSON.stringify(payload))).rejects.toThrow(
-      'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
+      'Import rejected. File integrity check failed. The backup may be corrupted or modified.',
     );
   });
-
 
   it('accepts a payload with optional crash diagnostics', async () => {
     const payload = buildPayload({
@@ -149,15 +157,15 @@ describe('shared import validation', () => {
         installRecommended: true,
         webKitRisk: true,
         lastVerificationResult: 'verified',
-        lastVerifiedAt: '2026-03-28T12:00:00.000Z'
-      }
+        lastVerifiedAt: '2026-03-28T12:00:00.000Z',
+      },
     });
     payload.checksum = await computeJsonExportChecksum({
       app: payload.app,
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
       entries: payload.entries,
-      crashDiagnostics: payload.crashDiagnostics
+      crashDiagnostics: payload.crashDiagnostics,
     });
 
     const parsed = await parseImportPayload(JSON.stringify(payload));
@@ -180,8 +188,8 @@ describe('shared import validation', () => {
         installRecommended: true,
         webKitRisk: true,
         lastVerificationResult: 'verified',
-        lastVerifiedAt: '2026-03-28T12:00:00.000Z'
-      }
+        lastVerifiedAt: '2026-03-28T12:00:00.000Z',
+      },
     });
 
     payload.checksum = await computeJsonExportChecksum({
@@ -189,16 +197,16 @@ describe('shared import validation', () => {
       schemaVersion: payload.schemaVersion,
       exportedAt: payload.exportedAt,
       entries: payload.entries,
-      crashDiagnostics: payload.crashDiagnostics
+      crashDiagnostics: payload.crashDiagnostics,
     });
 
     payload.crashDiagnostics = {
       ...payload.crashDiagnostics!,
-      reconnectFailures: 1
+      reconnectFailures: 1,
     };
 
     await expect(parseImportPayload(JSON.stringify(payload))).rejects.toThrow(
-      'Import rejected. File integrity check failed. The backup may be corrupted or modified.'
+      'Import rejected. File integrity check failed. The backup may be corrupted or modified.',
     );
   });
 

@@ -25,6 +25,8 @@
     "preview": "vite preview",
     "preview:e2e": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
     "test:unit:storage": "vitest run tests/unit/storage.test.ts tests/unit/backupActionPrompt.test.ts",
@@ -32,7 +34,8 @@
     "test:e2e": "npm run build:e2e && playwright test --project=chromium --project=chromium-a11y",
     "test:e2e:smoke": "playwright test --project=chromium --grep-invert @harness",
     "test:e2e:webkit": "npm run build:e2e && playwright test --project=webkit",
-    "audit:security": "npm audit --audit-level=high"
+    "audit:security": "npm audit --audit-level=high",
+    "prepare": "husky"
   },
   "dependencies": {
     "dexie": "^4.4.2",
@@ -68,7 +71,11 @@
     "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.4",
     "vitest-axe": "^0.1.0",
-    "workbox-window": "^7.4.0"
+    "workbox-window": "^7.4.0",
+    "eslint-config-prettier": "10.1.8",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.2"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5",
@@ -78,5 +85,14 @@
     "vite-plugin-pwa": {
       "vite": "$vite"
     }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,json,md,yml,yaml,html}": [
+      "prettier --write"
+    ]
   }
 }

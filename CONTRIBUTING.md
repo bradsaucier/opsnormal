@@ -20,11 +20,14 @@ npm ci
 npm run dev
 ```
 
+A pre-commit hook runs `lint-staged` automatically after install. It fixes staged formatting drift before commit and blocks the commit if ESLint leaves unresolved errors. Use `npm run format` for a full local rewrite and `npm run format:check` for the non-mutating gate.
+
 ## Quality gates
 
 Run these before opening a pull request:
 
 ```bash
+npm run format:check
 npm run lint
 npm run typecheck
 npm run test

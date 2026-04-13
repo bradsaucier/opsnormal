@@ -7,6 +7,7 @@ It covers the structural palette, clipped geometry, shared chrome utilities, and
 ## Scope boundary
 
 In scope:
+
 - base and surface colors that establish the core cockpit palette
 - structural border values used to frame primary panels and inset support surfaces
 - notch sizes used by the shared clipped panel language
@@ -15,6 +16,7 @@ In scope:
 - readiness state colors used by badges and history cells
 
 Out of scope:
+
 - full typography redesign
 - generic typography utilities
 - any new branding system or marketing layer
@@ -42,6 +44,7 @@ Out of scope:
 - `--color-ops-accent-border`: `#6ee7b724`
 
 Application rules:
+
 - Prefer `surface-1` for the main shell and primary section bodies.
 - Prefer `surface-2` or `surface-raised` when a card needs to lift visually above the parent section.
 - Prefer `surface-overlay` for nested decision zones, detail briefs, support strips, and subordinate notes.
@@ -53,17 +56,21 @@ Application rules:
 These shared classes live in `src/styles/index.css` and should be preferred over ad hoc surface stacks.
 
 Primary shells:
+
 - `.tactical-panel`
 - `.panel-shadow`
 
 Inset support surfaces:
+
 - `.tactical-subpanel`
 - `.tactical-subpanel-strong`
 
 Compact support surfaces:
+
 - `.tactical-chip-panel`
 
 Application rules:
+
 - Use `tactical-panel` for major clipped shells that define the page rhythm.
 - Use `tactical-subpanel` for secondary decision zones and narrative guidance inside a section.
 - Use `tactical-subpanel-strong` when a detail brief or selected-state summary should read one step higher than surrounding support strips.
@@ -96,6 +103,7 @@ clip-path: polygon(
 ```
 
 Application rules:
+
 - Primary shells use a clipped outer frame plus a clipped inner surface.
 - Status badges and compact history controls use the chip notch.
 - Buttons inside the chrome system use the chip notch and inset focus rings.
@@ -117,9 +125,11 @@ They are available for future rollouts even where core Tailwind spacing utilitie
 Clipped action buttons are defined centrally so install, update, export, import, and recovery controls present the same geometry.
 
 Base class:
+
 - `.ops-action-button`
 
 Tone classes:
+
 - `.ops-action-button-subtle`
 - `.ops-action-button-neutral`
 - `.ops-action-button-sky`
@@ -131,6 +141,7 @@ Tone classes:
 - `.ops-action-button-red`
 
 Guidance:
+
 - Use `ops-action-button` as the base class for structural controls.
 - Default button notch is `--ops-notch-chip`.
 - Use semantic tone modifiers rather than ad hoc border and background values.
@@ -143,16 +154,19 @@ These values are for readiness signaling only.
 Do not use them as general decorative accents.
 
 Nominal:
+
 - `--ops-status-nominal-border`: `rgba(110, 231, 183, 0.56)`
 - `--ops-status-nominal-bg`: `rgba(110, 231, 183, 0.14)`
 - `--ops-status-nominal-text`: `#c9fae4`
 
 Degraded:
+
 - `--ops-status-degraded-border`: `rgba(245, 158, 11, 0.56)`
 - `--ops-status-degraded-bg`: `rgba(245, 158, 11, 0.14)`
 - `--ops-status-degraded-text`: `#fde7b0`
 
 Unmarked:
+
 - `--ops-status-unmarked-border`: `rgba(255, 255, 255, 0.16)`
 - `--ops-status-unmarked-bg`: `rgba(36, 48, 42, 0.72)`
 - `--ops-status-unmarked-text`: `#96a39d`
@@ -160,6 +174,7 @@ Unmarked:
 ## Enforcement guidance
 
 Use these tokens and utilities in:
+
 - `StatusBadge`
 - history state cells
 - structural shells that define the cockpit silhouette

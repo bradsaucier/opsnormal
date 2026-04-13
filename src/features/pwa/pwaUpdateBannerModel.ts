@@ -38,7 +38,7 @@ const EXTERNAL_STALL_ANNOUNCEMENT =
   'Another OpsNormal tab started an update handoff, but this tab did not receive the new worker. Close the other tabs, then reload here.';
 
 export function derivePwaUpdateBannerViewModel(
-  input: PwaUpdateBannerDerivationInput
+  input: PwaUpdateBannerDerivationInput,
 ): PwaUpdateBannerViewModel {
   const mode = resolveBannerMode(input);
 
@@ -48,7 +48,8 @@ export function derivePwaUpdateBannerViewModel(
         mode,
         isBannerActive: true,
         heading: 'Offline Ready',
-        primaryMessage: 'The service worker is active. OpsNormal can now reopen offline after first load.',
+        primaryMessage:
+          'The service worker is active. OpsNormal can now reopen offline after first load.',
         recoveryMessage: null,
         showApplyButton: false,
         applyButtonLabel: 'Apply update',
@@ -56,7 +57,7 @@ export function derivePwaUpdateBannerViewModel(
         showDismissButton: true,
         statusAnnouncement:
           'Offline Ready. The service worker is active. OpsNormal can now reopen offline after first load.',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
     case 'update-ready':
       return {
@@ -72,7 +73,7 @@ export function derivePwaUpdateBannerViewModel(
         showDismissButton: true,
         statusAnnouncement:
           'Update Ready. A newer build is available. Apply the update to hand control to the waiting service worker.',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
     case 'applying':
       return {
@@ -88,7 +89,7 @@ export function derivePwaUpdateBannerViewModel(
         showDismissButton: false,
         statusAnnouncement:
           'Update Ready. A newer build is available. Apply the update to hand control to the waiting service worker.',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
     case 'stalled':
       return {
@@ -105,7 +106,7 @@ export function derivePwaUpdateBannerViewModel(
         showDismissButton: false,
         statusAnnouncement:
           'Update Ready. A newer build is available. Apply the update to hand control to the waiting service worker. Update handoff did not complete. Another OpsNormal tab may still be holding the active worker. Close the other OpsNormal tabs, then reload this tab and apply the update again.',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
     case 'reload-recovery':
       return {
@@ -120,7 +121,7 @@ export function derivePwaUpdateBannerViewModel(
         showReloadButton: true,
         showDismissButton: false,
         statusAnnouncement: '',
-        recoveryAnnouncement: LOOP_RECOVERY_ANNOUNCEMENT
+        recoveryAnnouncement: LOOP_RECOVERY_ANNOUNCEMENT,
       };
     case 'external-applying':
       return {
@@ -137,7 +138,7 @@ export function derivePwaUpdateBannerViewModel(
         showDismissButton: false,
         statusAnnouncement:
           'Update In Progress. Another OpsNormal tab initiated the update handoff. This tab will reload when the new worker takes control. Keep one tab driving the handoff. If the update stalls, close the other OpsNormal tabs and reload here.',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
     case 'external-stalled':
       return {
@@ -153,7 +154,7 @@ export function derivePwaUpdateBannerViewModel(
         showReloadButton: true,
         showDismissButton: false,
         statusAnnouncement: '',
-        recoveryAnnouncement: EXTERNAL_STALL_ANNOUNCEMENT
+        recoveryAnnouncement: EXTERNAL_STALL_ANNOUNCEMENT,
       };
     case 'hidden':
     default:
@@ -168,12 +169,14 @@ export function derivePwaUpdateBannerViewModel(
         showReloadButton: false,
         showDismissButton: false,
         statusAnnouncement: '',
-        recoveryAnnouncement: ''
+        recoveryAnnouncement: '',
       };
   }
 }
 
-function resolveBannerMode(input: PwaUpdateBannerDerivationInput): PwaUpdateBannerMode {
+function resolveBannerMode(
+  input: PwaUpdateBannerDerivationInput,
+): PwaUpdateBannerMode {
   if (input.reloadRecoveryRequired) {
     return 'reload-recovery';
   }

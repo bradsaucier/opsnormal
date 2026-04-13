@@ -6,14 +6,18 @@ interface StatusMessageRegionsProps {
   statusMessage: StatusMessage;
 }
 
-function getPassiveToneClasses(isSuccess: boolean): { outer: string; inner: string; text: string } {
+function getPassiveToneClasses(isSuccess: boolean): {
+  outer: string;
+  inner: string;
+  text: string;
+} {
   if (isSuccess) {
     return {
       outer:
         'bg-[linear-gradient(180deg,rgba(110,231,183,0.34),rgba(255,255,255,0.04))]',
       inner:
         'bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-      text: 'text-emerald-50'
+      text: 'text-emerald-50',
     };
   }
 
@@ -21,18 +25,22 @@ function getPassiveToneClasses(isSuccess: boolean): { outer: string; inner: stri
     outer: 'bg-ops-border-soft',
     inner:
       'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-overlay)]',
-    text: 'text-ops-text-secondary'
+    text: 'text-ops-text-secondary',
   };
 }
 
-function getAlertToneClasses(isError: boolean): { outer: string; inner: string; text: string } {
+function getAlertToneClasses(isError: boolean): {
+  outer: string;
+  inner: string;
+  text: string;
+} {
   if (isError) {
     return {
       outer:
         'bg-[linear-gradient(180deg,rgba(248,113,113,0.34),rgba(255,255,255,0.04))]',
       inner:
         'bg-[linear-gradient(180deg,rgba(239,68,68,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-      text: 'text-red-100'
+      text: 'text-red-100',
     };
   }
 
@@ -41,17 +49,25 @@ function getAlertToneClasses(isError: boolean): { outer: string; inner: string; 
       'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
     inner:
       'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    text: 'text-amber-100'
+    text: 'text-amber-100',
   };
 }
 
-export function StatusMessageRegions({ statusMessage }: StatusMessageRegionsProps) {
+export function StatusMessageRegions({
+  statusMessage,
+}: StatusMessageRegionsProps) {
   const passiveStatusText =
-    statusMessage.tone === 'info' || statusMessage.tone === 'success' ? statusMessage.text : '';
+    statusMessage.tone === 'info' || statusMessage.tone === 'success'
+      ? statusMessage.text
+      : '';
   const alertStatusText =
-    statusMessage.tone === 'warning' || statusMessage.tone === 'error' ? statusMessage.text : '';
+    statusMessage.tone === 'warning' || statusMessage.tone === 'error'
+      ? statusMessage.text
+      : '';
 
-  const passiveToneClasses = getPassiveToneClasses(statusMessage.tone === 'success');
+  const passiveToneClasses = getPassiveToneClasses(
+    statusMessage.tone === 'success',
+  );
   const alertToneClasses = getAlertToneClasses(statusMessage.tone === 'error');
 
   return (

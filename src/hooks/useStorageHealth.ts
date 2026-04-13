@@ -4,26 +4,34 @@ import {
   getStorageHealth,
   subscribeToStorageDiagnostics,
   type StorageHealth,
-  type StorageHealthOptions
+  type StorageHealthOptions,
 } from '../lib/storage';
 
 interface UseStorageHealthResult {
   storageHealth: StorageHealth | null;
-  refreshStorageHealth: (options?: StorageHealthOptions) => Promise<StorageHealth>;
+  refreshStorageHealth: (
+    options?: StorageHealthOptions,
+  ) => Promise<StorageHealth>;
   requestStorageProtection: () => Promise<StorageHealth>;
   isRequestingStorageProtection: boolean;
 }
 
 export function useStorageHealth(): UseStorageHealthResult {
-  const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(null);
-  const [isRequestingStorageProtection, setIsRequestingStorageProtection] = useState(false);
+  const [storageHealth, setStorageHealth] = useState<StorageHealth | null>(
+    null,
+  );
+  const [isRequestingStorageProtection, setIsRequestingStorageProtection] =
+    useState(false);
   const requestInFlightRef = useRef(false);
 
-  const refreshStorageHealth = useCallback(async (options: StorageHealthOptions = {}) => {
-    const nextHealth = await getStorageHealth(options);
-    setStorageHealth(nextHealth);
-    return nextHealth;
-  }, []);
+  const refreshStorageHealth = useCallback(
+    async (options: StorageHealthOptions = {}) => {
+      const nextHealth = await getStorageHealth(options);
+      setStorageHealth(nextHealth);
+      return nextHealth;
+    },
+    [],
+  );
 
   const requestStorageProtection = useCallback(async () => {
     if (requestInFlightRef.current) {
@@ -34,7 +42,10 @@ export function useStorageHealth(): UseStorageHealthResult {
     setIsRequestingStorageProtection(true);
 
     try {
-      return await refreshStorageHealth({ requestPersistence: true, allowRepeatRequest: true });
+      return await refreshStorageHealth({
+        requestPersistence: true,
+        allowRepeatRequest: true,
+      });
     } finally {
       requestInFlightRef.current = false;
       setIsRequestingStorageProtection(false);
@@ -56,8 +67,13 @@ export function useStorageHealth(): UseStorageHealthResult {
       }
     }
 
-    const unsubscribeDiagnostics = subscribeToStorageDiagnostics(handleForegroundRefresh);
-    const intervalId = window.setInterval(handleForegroundRefresh, 5 * 60 * 1000);
+    const unsubscribeDiagnostics = subscribeToStorageDiagnostics(
+      handleForegroundRefresh,
+    );
+    const intervalId = window.setInterval(
+      handleForegroundRefresh,
+      5 * 60 * 1000,
+    );
     window.addEventListener('focus', handleForegroundRefresh);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -103,6 +119,6 @@ export function useStorageHealth(): UseStorageHealthResult {
     storageHealth,
     refreshStorageHealth,
     requestStorageProtection,
-    isRequestingStorageProtection
+    isRequestingStorageProtection,
   };
 }

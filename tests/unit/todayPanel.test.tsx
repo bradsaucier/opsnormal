@@ -5,20 +5,21 @@ import { TodayPanel } from '../../src/features/checkin/TodayPanel';
 import { axe } from '../setup';
 import type { DailyEntry } from '../../src/types';
 
-type UseEntriesForDate = typeof import('../../src/db/hooks')['useEntriesForDate'];
-type SetDailyStatus = typeof import('../../src/db/appDb')['setDailyStatus'];
+type UseEntriesForDate =
+  (typeof import('../../src/db/hooks'))['useEntriesForDate'];
+type SetDailyStatus = (typeof import('../../src/db/appDb'))['setDailyStatus'];
 
 const { mockUseEntriesForDate, mockSetDailyStatus } = vi.hoisted(() => ({
   mockUseEntriesForDate: vi.fn<UseEntriesForDate>(),
-  mockSetDailyStatus: vi.fn<SetDailyStatus>()
+  mockSetDailyStatus: vi.fn<SetDailyStatus>(),
 }));
 
 vi.mock('../../src/db/hooks', () => ({
-  useEntriesForDate: mockUseEntriesForDate
+  useEntriesForDate: mockUseEntriesForDate,
 }));
 
 vi.mock('../../src/db/appDb', () => ({
-  setDailyStatus: mockSetDailyStatus
+  setDailyStatus: mockSetDailyStatus,
 }));
 
 describe('TodayPanel', () => {
@@ -48,7 +49,9 @@ describe('TodayPanel', () => {
     render(<TodayPanel todayKey="2026-03-27" />);
 
     expect(screen.getAllByRole('radio')).toHaveLength(15);
-    expect(screen.getByRole('radiogroup', { name: /work or school status/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('radiogroup', { name: /work or school status/i }),
+    ).toBeInTheDocument();
   });
 
   it('keeps the fallback live-region announcement mounted after a save', async () => {
@@ -76,12 +79,14 @@ describe('TodayPanel', () => {
 
     mockUseEntriesForDate.mockImplementation(() => entries);
     mockSetDailyStatus.mockImplementation((dateKey, sectorId) => {
-      entries = [{
-        date: dateKey,
-        sectorId,
-        status: 'nominal',
-        updatedAt: '2026-03-27T12:00:00.000Z'
-      }];
+      entries = [
+        {
+          date: dateKey,
+          sectorId,
+          status: 'nominal',
+          updatedAt: '2026-03-27T12:00:00.000Z',
+        },
+      ];
 
       return new Promise((resolve) => {
         resolveWrite = resolve;
@@ -90,20 +95,28 @@ describe('TodayPanel', () => {
 
     render(<TodayPanel todayKey="2026-03-27" />);
 
-    const workUnmarked = screen.getByRole('radio', { name: /work or school unmarked/i });
+    const workUnmarked = screen.getByRole('radio', {
+      name: /work or school unmarked/i,
+    });
     expect(workUnmarked).toHaveAttribute('tabindex', '0');
-    expect(screen.getByRole('radio', { name: /work or school nominal/i })).toHaveAttribute('tabindex', '-1');
+    expect(
+      screen.getByRole('radio', { name: /work or school nominal/i }),
+    ).toHaveAttribute('tabindex', '-1');
 
     act(() => {
       fireEvent.keyDown(workUnmarked, { key: 'ArrowRight' });
     });
 
-    const workNominal = screen.getByRole('radio', { name: /work or school nominal/i });
+    const workNominal = screen.getByRole('radio', {
+      name: /work or school nominal/i,
+    });
     expect(workNominal).toHaveFocus();
     expect(workNominal).toHaveAttribute('aria-checked', 'true');
     expect(workNominal).toBeDisabled();
     expect(workNominal).toHaveAttribute('tabindex', '0');
-    expect(screen.getByRole('radio', { name: /work or school unmarked/i })).toHaveAttribute('tabindex', '-1');
+    expect(
+      screen.getByRole('radio', { name: /work or school unmarked/i }),
+    ).toHaveAttribute('tabindex', '-1');
 
     await act(async () => {
       resolveWrite?.('nominal');
@@ -116,16 +129,24 @@ describe('TodayPanel', () => {
 
     const onDateRollover = vi.fn();
 
-    render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
+    render(
+      <TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />,
+    );
 
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('radio', { name: /work or school nominal/i }));
+      fireEvent.click(
+        screen.getByRole('radio', { name: /work or school nominal/i }),
+      );
       await vi.runAllTimersAsync();
     });
 
-    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-28', 'work-school', 'nominal');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith(
+      '2026-03-28',
+      'work-school',
+      'nominal',
+    );
     expect(onDateRollover).toHaveBeenCalledTimes(1);
   });
 
@@ -134,14 +155,20 @@ describe('TodayPanel', () => {
 
     const onDateRollover = vi.fn();
 
-    render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
+    render(
+      <TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />,
+    );
 
     await act(async () => {
       fireEvent.click(screen.getByRole('radio', { name: /body nominal/i }));
       await vi.runAllTimersAsync();
     });
 
-    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-27', 'body', 'nominal');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith(
+      '2026-03-27',
+      'body',
+      'nominal',
+    );
     expect(onDateRollover).not.toHaveBeenCalled();
   });
 
@@ -152,17 +179,25 @@ describe('TodayPanel', () => {
 
     mockSetDailyStatus.mockRejectedValue(new Error('Storage quota exceeded'));
 
-    render(<TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />);
+    render(
+      <TodayPanel todayKey="2026-03-27" onDateRollover={onDateRollover} />,
+    );
 
     vi.setSystemTime(new Date('2026-03-28T00:00:05'));
-    const bodyNominalRadio = screen.getByRole('radio', { name: /body nominal/i });
+    const bodyNominalRadio = screen.getByRole('radio', {
+      name: /body nominal/i,
+    });
 
     await act(async () => {
       fireEvent.click(bodyNominalRadio);
       await vi.runAllTimersAsync();
     });
 
-    expect(mockSetDailyStatus).toHaveBeenCalledWith('2026-03-28', 'body', 'nominal');
+    expect(mockSetDailyStatus).toHaveBeenCalledWith(
+      '2026-03-28',
+      'body',
+      'nominal',
+    );
     expect(onDateRollover).not.toHaveBeenCalled();
     expect(screen.getByText('Storage quota exceeded')).toBeInTheDocument();
     expect(bodyNominalRadio).not.toBeDisabled();

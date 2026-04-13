@@ -61,7 +61,11 @@ interface ErrorLike {
 
 const storageDiagnosticsState: Omit<
   SafariStorageDiagnostics,
-  'standaloneMode' | 'installRecommended' | 'webKitRisk' | 'persistAttempted' | 'persistGranted'
+  | 'standaloneMode'
+  | 'installRecommended'
+  | 'webKitRisk'
+  | 'persistAttempted'
+  | 'persistGranted'
 > = {
   connectionDropsDetected: 0,
   reconnectSuccesses: 0,
@@ -69,7 +73,7 @@ const storageDiagnosticsState: Omit<
   reconnectState: 'steady',
   lastReconnectError: null,
   lastVerificationResult: 'unknown',
-  lastVerifiedAt: null
+  lastVerifiedAt: null,
 };
 
 let storageHealthTestOverride: StorageHealth | null = null;
@@ -78,8 +82,8 @@ function cloneStorageHealth(storageHealth: StorageHealth): StorageHealth {
   return {
     ...storageHealth,
     safari: {
-      ...storageHealth.safari
-    }
+      ...storageHealth.safari,
+    },
   };
 }
 
@@ -100,7 +104,7 @@ function emitStorageDiagnosticsChanged(): void {
 }
 
 function updateStorageDiagnosticsState(
-  updater: (current: typeof storageDiagnosticsState) => void
+  updater: (current: typeof storageDiagnosticsState) => void,
 ): void {
   updater(storageDiagnosticsState);
   emitStorageDiagnosticsChanged();
@@ -148,7 +152,10 @@ function getPersistentStorageAttemptContext(): PersistentStorageAttemptContext |
     const requestedAt = candidate.requestedAt;
     const standaloneMode = candidate.standaloneMode;
 
-    if (typeof requestedAt !== 'string' || typeof standaloneMode !== 'boolean') {
+    if (
+      typeof requestedAt !== 'string' ||
+      typeof standaloneMode !== 'boolean'
+    ) {
       return null;
     }
 
@@ -158,7 +165,7 @@ function getPersistentStorageAttemptContext(): PersistentStorageAttemptContext |
 
     return {
       requestedAt,
-      standaloneMode
+      standaloneMode,
     };
   } catch {
     return null;
@@ -168,11 +175,14 @@ function getPersistentStorageAttemptContext(): PersistentStorageAttemptContext |
 function recordPersistentStorageAttempt(): void {
   const attemptContext: PersistentStorageAttemptContext = {
     requestedAt: new Date().toISOString(),
-    standaloneMode: isStandaloneDisplayMode()
+    standaloneMode: isStandaloneDisplayMode(),
   };
 
   writeLocalStorageItem(STORAGE_PERSISTENCE_FLAG, 'true');
-  writeLocalStorageItem(STORAGE_PERSISTENCE_CONTEXT_KEY, JSON.stringify(attemptContext));
+  writeLocalStorageItem(
+    STORAGE_PERSISTENCE_CONTEXT_KEY,
+    JSON.stringify(attemptContext),
+  );
 }
 
 function hasAttemptedPersistentStorageInCurrentContext(): boolean {
@@ -202,7 +212,10 @@ function getPersistentStorageRetryCooldownRemainingMs(): number {
     return 0;
   }
 
-  return Math.max(0, PERSISTENT_STORAGE_REQUEST_COOLDOWN_MS - (Date.now() - requestedAtMs));
+  return Math.max(
+    0,
+    PERSISTENT_STORAGE_REQUEST_COOLDOWN_MS - (Date.now() - requestedAtMs),
+  );
 }
 
 function resolveErrorMessage(error: unknown): string | null {
@@ -220,7 +233,7 @@ function resolveErrorMessage(error: unknown): string | null {
 function hasErrorMatch(
   error: unknown,
   predicate: (candidate: ErrorLike) => boolean,
-  seen = new Set<unknown>()
+  seen = new Set<unknown>(),
 ): boolean {
   if (!error || typeof error !== 'object' || seen.has(error)) {
     return false;
@@ -235,11 +248,15 @@ function hasErrorMatch(
   }
 
   return (
-    hasErrorMatch(candidate.inner, predicate, seen) || hasErrorMatch(candidate.cause, predicate, seen)
+    hasErrorMatch(candidate.inner, predicate, seen) ||
+    hasErrorMatch(candidate.cause, predicate, seen)
   );
 }
 
-function resolvePercentUsed(usageBytes: number | null, quotaBytes: number | null): number | null {
+function resolvePercentUsed(
+  usageBytes: number | null,
+  quotaBytes: number | null,
+): number | null {
   if (usageBytes === null || quotaBytes === null || quotaBytes <= 0) {
     return null;
   }
@@ -254,7 +271,8 @@ function isDesktopSafariBrowser(): boolean {
 
   const userAgent = navigator.userAgent;
   const isSafari = /safari/i.test(userAgent);
-  const isExcluded = /chrome|crios|chromium|android|edg|opr|fxios|firefox/i.test(userAgent);
+  const isExcluded =
+    /chrome|crios|chromium|android|edg|opr|fxios|firefox/i.test(userAgent);
 
   return isSafari && !isExcluded && !isIOSDevice();
 }
@@ -291,11 +309,13 @@ function buildStorageDiagnostics(persisted = false): SafariStorageDiagnostics {
     persistGranted: persisted,
     standaloneMode,
     installRecommended: isIOSDevice() && !standaloneMode,
-    webKitRisk
+    webKitRisk,
   };
 }
 
-export function subscribeToStorageDiagnostics(listener: () => void): () => void {
+export function subscribeToStorageDiagnostics(
+  listener: () => void,
+): () => void {
   if (typeof window === 'undefined') {
     return () => undefined;
   }
@@ -308,7 +328,9 @@ export function subscribeToStorageDiagnostics(listener: () => void): () => void 
   };
 }
 
-export function getStorageDurabilityDiagnostics(persisted = false): SafariStorageDiagnostics {
+export function getStorageDurabilityDiagnostics(
+  persisted = false,
+): SafariStorageDiagnostics {
   return buildStorageDiagnostics(persisted);
 }
 
@@ -337,7 +359,7 @@ export function recordStorageReconnectFailure(error: unknown): void {
 }
 
 export function recordStorageWriteVerification(
-  result: Exclude<StorageWriteVerificationResult, 'unknown'>
+  result: Exclude<StorageWriteVerificationResult, 'unknown'>,
 ): void {
   updateStorageDiagnosticsState((current) => {
     current.lastVerificationResult = result;
@@ -359,8 +381,12 @@ export function resetStorageDurabilityDiagnostics(): void {
   });
 }
 
-export function setStorageHealthForTesting(storageHealth: StorageHealth | null): void {
-  storageHealthTestOverride = storageHealth ? cloneStorageHealth(storageHealth) : null;
+export function setStorageHealthForTesting(
+  storageHealth: StorageHealth | null,
+): void {
+  storageHealthTestOverride = storageHealth
+    ? cloneStorageHealth(storageHealth)
+    : null;
   emitStorageDiagnosticsChanged();
 }
 
@@ -444,10 +470,13 @@ export function formatBytes(bytes: number): string {
 export function createStorageHealth(
   estimate: StorageEstimate | null,
   persisted: boolean,
-  persistenceAvailable = canUseStorageApi() && typeof getStorageManager()?.persist === 'function'
+  persistenceAvailable = canUseStorageApi() &&
+    typeof getStorageManager()?.persist === 'function',
 ): StorageHealth {
-  const usageBytes = typeof estimate?.usage === 'number' ? estimate.usage : null;
-  const quotaBytes = typeof estimate?.quota === 'number' ? estimate.quota : null;
+  const usageBytes =
+    typeof estimate?.usage === 'number' ? estimate.usage : null;
+  const quotaBytes =
+    typeof estimate?.quota === 'number' ? estimate.quota : null;
   const percentUsed = resolvePercentUsed(usageBytes, quotaBytes);
   const estimateAvailable = quotaBytes !== null || usageBytes !== null;
   const standaloneIOSPwa = isStandaloneIOSPwa();
@@ -481,10 +510,15 @@ export function createStorageHealth(
     } else if (webKitEvictionRisk) {
       message =
         'Best-effort storage protection is active, but Safari on macOS can still evict local data. Keep routine exports and verify the installed path when available.';
-    } else if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
+    } else if (
+      estimateAvailable &&
+      usageBytes !== null &&
+      quotaBytes !== null
+    ) {
       message = `Persistent storage active. ${formatBytes(usageBytes)} used of ${formatBytes(quotaBytes)} quota.`;
     } else {
-      message = 'Persistent storage active. Quota telemetry unavailable on this browser.';
+      message =
+        'Persistent storage active. Quota telemetry unavailable on this browser.';
     }
   } else if (iOSNotInstalledRisk) {
     status = 'warning';
@@ -505,8 +539,12 @@ export function createStorageHealth(
       'High-risk storage posture in Safari on macOS. Local browser data can disappear without backup. Export routinely.';
   } else if (!persistenceAvailable && !estimateAvailable) {
     status = 'unavailable';
-    message = 'Storage telemetry unavailable on this browser. Export routinely as the external backup.';
-  } else if (percentUsed !== null && percentUsed >= HIGH_STORAGE_USAGE_THRESHOLD) {
+    message =
+      'Storage telemetry unavailable on this browser. Export routinely as the external backup.';
+  } else if (
+    percentUsed !== null &&
+    percentUsed >= HIGH_STORAGE_USAGE_THRESHOLD
+  ) {
     status = 'warning';
     message = `Persistent storage not granted. ${formatBytes(usageBytes ?? 0)} used of ${formatBytes(quotaBytes ?? 0)} quota. Export now.`;
   } else {
@@ -515,13 +553,15 @@ export function createStorageHealth(
     if (estimateAvailable && usageBytes !== null && quotaBytes !== null) {
       message = `Persistent storage not granted. ${formatBytes(usageBytes)} used of ${formatBytes(quotaBytes)} quota. Export routinely.`;
     } else {
-      message = 'Persistent storage not granted. Quota telemetry unavailable. Export routinely as the external backup.';
+      message =
+        'Persistent storage not granted. Quota telemetry unavailable. Export routinely as the external backup.';
     }
   }
 
   if (diagnostics.reconnectState === 'recovering' && status !== 'warning') {
     status = 'monitor';
-    message = 'Recent local database interruption detected. Recovery is in progress. Confirm the latest check-in and export routinely.';
+    message =
+      'Recent local database interruption detected. Recovery is in progress. Confirm the latest check-in and export routinely.';
   }
 
   return {
@@ -533,22 +573,30 @@ export function createStorageHealth(
     percentUsed,
     status,
     message,
-    safari: diagnostics
+    safari: diagnostics,
   };
 }
 
-export async function getStorageHealth(options: StorageHealthOptions = {}): Promise<StorageHealth> {
+export async function getStorageHealth(
+  options: StorageHealthOptions = {},
+): Promise<StorageHealth> {
   if (storageHealthTestOverride) {
     return cloneStorageHealth(storageHealthTestOverride);
   }
 
   let persisted = await isPersistentStorageGranted();
 
-  const currentContextAttempted = hasAttemptedPersistentStorageInCurrentContext();
+  const currentContextAttempted =
+    hasAttemptedPersistentStorageInCurrentContext();
   const cooldownRemainingMs = getPersistentStorageRetryCooldownRemainingMs();
-  const canRepeatRequest = options.allowRepeatRequest && cooldownRemainingMs === 0;
+  const canRepeatRequest =
+    options.allowRepeatRequest && cooldownRemainingMs === 0;
 
-  if (options.requestPersistence && !persisted && (!currentContextAttempted || canRepeatRequest)) {
+  if (
+    options.requestPersistence &&
+    !persisted &&
+    (!currentContextAttempted || canRepeatRequest)
+  ) {
     persisted = await requestPersistentStorage();
 
     if (!persisted) {
@@ -561,7 +609,10 @@ export async function getStorageHealth(options: StorageHealthOptions = {}): Prom
   return createStorageHealth(estimate, persisted);
 }
 
-export function formatStorageHint(estimate: StorageEstimate | null, persisted: boolean): string {
+export function formatStorageHint(
+  estimate: StorageEstimate | null,
+  persisted: boolean,
+): string {
   return createStorageHealth(estimate, persisted).message;
 }
 
@@ -598,7 +649,9 @@ export function isDatabaseClosedError(error: unknown): boolean {
     return (
       normalizedName === 'databaseclosederror' ||
       normalizedMessage.includes('databaseclosederror') ||
-      normalizedMessage.includes('connection to indexed database server lost') ||
+      normalizedMessage.includes(
+        'connection to indexed database server lost',
+      ) ||
       normalizedMessage.includes('database connection is closing') ||
       normalizedMessage.includes('database is closed')
     );
@@ -608,13 +661,13 @@ export function isDatabaseClosedError(error: unknown): boolean {
 export function createStorageOperationError(error: unknown): Error {
   if (isQuotaExceededError(error)) {
     return new Error(
-      'Local storage quota reached. Export now, reduce browser storage pressure, then retry.'
+      'Local storage quota reached. Export now, reduce browser storage pressure, then retry.',
     );
   }
 
   if (isDatabaseClosedError(error)) {
     return new Error(
-      'Local database connection was interrupted. Reload the app, confirm the data view, then retry.'
+      'Local database connection was interrupted. Reload the app, confirm the data view, then retry.',
     );
   }
 
@@ -622,7 +675,9 @@ export function createStorageOperationError(error: unknown): Error {
     return error;
   }
 
-  return new Error('Local database operation failed. Export your data, then reload the app.');
+  return new Error(
+    'Local database operation failed. Export your data, then reload the app.',
+  );
 }
 
 export function isStandaloneDisplayMode(): boolean {
@@ -650,7 +705,8 @@ export function isIOSDevice(): boolean {
 
   const userAgent = navigator.userAgent;
   const isIOSUserAgent = /iphone|ipad|ipod/i.test(userAgent);
-  const isMacTouch = /macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
+  const isMacTouch =
+    /macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1;
 
   return isIOSUserAgent || isMacTouch;
 }

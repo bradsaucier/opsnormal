@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { deleteOpsNormalDatabase, readCrashExportSnapshot } from '../lib/crashExport';
+import {
+  deleteOpsNormalDatabase,
+  readCrashExportSnapshot,
+} from '../lib/crashExport';
 import { getErrorMessage } from '../lib/errors';
 import { downloadTextFile } from '../lib/fileDownload';
 import { recordExportCompleted } from '../lib/exportPersistence';
-import { createCrashJsonExport, createCsvExport } from '../lib/exportSerialization';
+import {
+  createCrashJsonExport,
+  createCsvExport,
+} from '../lib/exportSerialization';
 import { reloadCurrentPage } from '../lib/runtime';
 import type { CrashExportSnapshot } from '../lib/crashExport';
 
@@ -27,10 +33,11 @@ function formatSkippedCount(count: number): string {
 function formatCrashExportMessage(
   formatLabel: 'JSON' | 'CSV',
   recoveredCount: number,
-  skippedCount: number
+  skippedCount: number,
 ): string {
   const recoveredMessage = formatEntryCount(recoveredCount);
-  const diagnosticsSuffix = formatLabel === 'JSON' ? ' Crash diagnostics captured.' : '';
+  const diagnosticsSuffix =
+    formatLabel === 'JSON' ? ' Crash diagnostics captured.' : '';
 
   if (skippedCount === 0) {
     return `${formatLabel} export complete. ${recoveredMessage}${diagnosticsSuffix}`;
@@ -42,10 +49,12 @@ function formatCrashExportMessage(
 export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
   const [hasExported, setHasExported] = useState(false);
-  const [manualDeleteAcknowledged, setManualDeleteAcknowledged] = useState(false);
-  const [clearConfirmState, setClearConfirmState] = useState<ClearConfirmState>('idle');
+  const [manualDeleteAcknowledged, setManualDeleteAcknowledged] =
+    useState(false);
+  const [clearConfirmState, setClearConfirmState] =
+    useState<ClearConfirmState>('idle');
   const [message, setMessage] = useState(
-    'The display crashed but your data may still be intact in local storage. Export it now before reloading.'
+    'The display crashed but your data may still be intact in local storage. Export it now before reloading.',
   );
   const clearActionRef = useRef<HTMLDivElement | null>(null);
   const primaryClearButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -53,12 +62,13 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
 
   const faultMessage = useMemo(
     () => getErrorMessage(error, 'Unknown render failure.'),
-    [error]
+    [error],
   );
 
   const recoveryControlsDisabled = busyAction !== null;
   const clearDataUnlocked = hasExported || manualDeleteAcknowledged;
-  const clearDataButtonDisabled = recoveryControlsDisabled || !clearDataUnlocked;
+  const clearDataButtonDisabled =
+    recoveryControlsDisabled || !clearDataUnlocked;
 
   const disarmClearData = useCallback((nextMessage: string) => {
     if (busyActionRef.current !== null) {
@@ -86,7 +96,9 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
         return;
       }
 
-      disarmClearData('Clear-data reset disarmed. Local data remains untouched.');
+      disarmClearData(
+        'Clear-data reset disarmed. Local data remains untouched.',
+      );
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -98,7 +110,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
 
       if (!clearActionRef.current?.contains(target)) {
         disarmClearData(
-          'Clear-data reset disarmed after focus moved off the destructive control group.'
+          'Clear-data reset disarmed after focus moved off the destructive control group.',
         );
       }
     }
@@ -120,14 +132,26 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       const payload: string = await createCrashJsonExport(
         snapshot.entries,
         snapshot.storageDiagnostics,
-        exportedAt
+        exportedAt,
       );
-      downloadTextFile('opsnormal-crash-export.json', payload, 'application/json');
+      downloadTextFile(
+        'opsnormal-crash-export.json',
+        payload,
+        'application/json',
+      );
       recordExportCompleted(exportedAt);
       setHasExported(true);
-      setMessage(formatCrashExportMessage('JSON', snapshot.entries.length, snapshot.skippedCount));
+      setMessage(
+        formatCrashExportMessage(
+          'JSON',
+          snapshot.entries.length,
+          snapshot.skippedCount,
+        ),
+      );
     } catch (error: unknown) {
-      setMessage(getErrorMessage(error, 'JSON export failed. Try reloading first.'));
+      setMessage(
+        getErrorMessage(error, 'JSON export failed. Try reloading first.'),
+      );
     } finally {
       setBusyAction(null);
     }
@@ -139,12 +163,24 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       const snapshot: CrashExportSnapshot = await readCrashExportSnapshot();
       const payload: string = createCsvExport(snapshot.entries);
       const exportedAt = new Date().toISOString();
-      downloadTextFile('opsnormal-crash-export.csv', payload, 'text/csv;charset=utf-8');
+      downloadTextFile(
+        'opsnormal-crash-export.csv',
+        payload,
+        'text/csv;charset=utf-8',
+      );
       recordExportCompleted(exportedAt);
       setHasExported(true);
-      setMessage(formatCrashExportMessage('CSV', snapshot.entries.length, snapshot.skippedCount));
+      setMessage(
+        formatCrashExportMessage(
+          'CSV',
+          snapshot.entries.length,
+          snapshot.skippedCount,
+        ),
+      );
     } catch (error: unknown) {
-      setMessage(getErrorMessage(error, 'CSV export failed. Try reloading first.'));
+      setMessage(
+        getErrorMessage(error, 'CSV export failed. Try reloading first.'),
+      );
     } finally {
       setBusyAction(null);
     }
@@ -158,14 +194,16 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
     if (clearConfirmState !== 'armed') {
       setClearConfirmState('armed');
       setMessage(
-        'Clear-data reset armed. Press the button again to delete all local OpsNormal data and reload, or press Escape to stand down.'
+        'Clear-data reset armed. Press the button again to delete all local OpsNormal data and reload, or press Escape to stand down.',
       );
       return;
     }
 
     try {
       setBusyAction('clear');
-      setMessage('Deleting all local OpsNormal data now. The page will reload after the reset completes.');
+      setMessage(
+        'Deleting all local OpsNormal data now. The page will reload after the reset completes.',
+      );
       await deleteOpsNormalDatabase();
       reloadCurrentPage();
     } catch (error: unknown) {
@@ -173,8 +211,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       setMessage(
         getErrorMessage(
           error,
-          'Local data reset failed. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.'
-        )
+          'Local data reset failed. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.',
+        ),
       );
     } finally {
       setBusyAction(null);
@@ -185,7 +223,9 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
     <div className="ops-crash-fallback-shell" data-testid="app-crash-fallback">
       <div className="ops-crash-fallback-container">
         <p className="ops-crash-fallback-eyebrow">Render fault</p>
-        <h1 className="ops-crash-fallback-title">OpsNormal stopped rendering</h1>
+        <h1 className="ops-crash-fallback-title">
+          OpsNormal stopped rendering
+        </h1>
         <p
           className="ops-crash-fallback-status"
           role="status"
@@ -238,10 +278,13 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
         </div>
 
         <div ref={clearActionRef} className="ops-crash-fallback-danger-zone">
-          <p className="ops-crash-fallback-danger-label">Destructive recovery</p>
+          <p className="ops-crash-fallback-danger-label">
+            Destructive recovery
+          </p>
           <p className="ops-crash-fallback-danger-copy">
-            Use this only if export, retry, and reload still leave OpsNormal stuck in a repeat crash loop.
-            This action permanently deletes all local data stored on this device for this app.
+            Use this only if export, retry, and reload still leave OpsNormal
+            stuck in a repeat crash loop. This action permanently deletes all
+            local data stored on this device for this app.
           </p>
           <label className="ops-crash-fallback-checkbox-row">
             <input
@@ -254,7 +297,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               disabled={recoveryControlsDisabled || hasExported}
             />
             <span>
-              I understand this will permanently delete local data and should only be used after I export a recovery file.
+              I understand this will permanently delete local data and should
+              only be used after I export a recovery file.
             </span>
           </label>
           <div className="ops-crash-fallback-actions">
@@ -276,7 +320,9 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
                 className="ops-crash-fallback-button ops-crash-fallback-button-muted"
                 type="button"
                 onClick={() => {
-                  disarmClearData('Clear-data reset disarmed. Local data remains untouched.');
+                  disarmClearData(
+                    'Clear-data reset disarmed. Local data remains untouched.',
+                  );
                 }}
                 disabled={recoveryControlsDisabled}
               >
@@ -286,7 +332,8 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
           </div>
           {!clearDataUnlocked ? (
             <p className="ops-crash-fallback-danger-note">
-              Unlock requires either a successful export in this crash session or the explicit delete acknowledgment above.
+              Unlock requires either a successful export in this crash session
+              or the explicit delete acknowledgment above.
             </p>
           ) : null}
         </div>

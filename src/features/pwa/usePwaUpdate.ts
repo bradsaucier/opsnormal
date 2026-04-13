@@ -3,7 +3,7 @@ import { useRegisterSW } from './registerSw';
 
 import {
   closeDatabaseForServiceWorkerHandoff,
-  shouldSuppressControllerReload
+  shouldSuppressControllerReload,
 } from '../../db/appDb';
 import { reloadCurrentPage } from '../../lib/runtime';
 import {
@@ -12,7 +12,7 @@ import {
   isControllerReloadRecoveryMessage,
   isControllerReloadRecoveryRequired,
   recordControllerReloadAttempt,
-  subscribeToControllerReloadRecovery
+  subscribeToControllerReloadRecovery,
 } from './controllerReloadRecovery';
 import {
   broadcastPwaUpdateHandoffCleared,
@@ -20,7 +20,7 @@ import {
   broadcastPwaUpdateHandoffStarted,
   createPwaUpdateTabId,
   isPwaUpdateCoordinationMessage,
-  subscribeToPwaUpdateCoordination
+  subscribeToPwaUpdateCoordination,
 } from './pwaUpdateCoordination';
 import {
   CONTROLLER_RELOAD_DELAY_MS,
@@ -28,13 +28,13 @@ import {
   EXTERNAL_UPDATE_HANDOFF_DEADMAN_TIMEOUT_MS,
   FOREGROUND_REVALIDATION_THROTTLE_MS,
   UPDATE_HANDOFF_TIMEOUT_MS,
-  UPDATE_REVALIDATION_INTERVAL_MS
+  UPDATE_REVALIDATION_INTERVAL_MS,
 } from './pwaUpdateConstants';
 import type { PwaUpdateController } from './pwaUpdateTypes';
 import {
   isNavigatorOffline,
   resolveServiceWorkerRegistration,
-  resolveWaitingWorkerForApply
+  resolveWaitingWorkerForApply,
 } from './swUpdateRuntime';
 
 // Architecture: ADR-0015 keeps service-worker updates in prompt mode with multi-tab
@@ -45,11 +45,13 @@ export function usePwaUpdate(): PwaUpdateController {
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const [isApplyingUpdate, setIsApplyingUpdate] = useState(false);
   const [updateStalled, setUpdateStalled] = useState(false);
-  const [externalUpdateInProgress, setExternalUpdateInProgress] = useState(false);
+  const [externalUpdateInProgress, setExternalUpdateInProgress] =
+    useState(false);
   const [externalUpdateStalled, setExternalUpdateStalled] = useState(false);
-  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [swRegistration, setSwRegistration] =
+    useState<ServiceWorkerRegistration | null>(null);
   const [reloadRecoveryRequired, setReloadRecoveryRequired] = useState(() =>
-    isControllerReloadRecoveryRequired()
+    isControllerReloadRecoveryRequired(),
   );
   const isMountedRef = useRef(true);
   const tabIdRef = useRef(createPwaUpdateTabId());
@@ -98,14 +100,14 @@ export function usePwaUpdate(): PwaUpdateController {
     (_swUrl: string, registration?: ServiceWorkerRegistration) => {
       setSwRegistration(registration ?? null);
     },
-    []
+    [],
   );
 
   const {
     needRefresh: [needRefresh, setNeedRefresh],
-    offlineReady: [rawOfflineReady, setOfflineReady]
+    offlineReady: [rawOfflineReady, setOfflineReady],
   } = useRegisterSW({
-    onRegisteredSW: handleRegisteredSW
+    onRegisteredSW: handleRegisteredSW,
   });
 
   const surfaceUpdateReady = useCallback(() => {
@@ -151,7 +153,7 @@ export function usePwaUpdate(): PwaUpdateController {
       setExternalUpdateInProgress(!stalled);
       setExternalUpdateStalled(stalled);
     },
-    [setNeedRefresh, setOfflineReady]
+    [setNeedRefresh, setOfflineReady],
   );
 
   const clearBannerState = useCallback(() => {
@@ -165,21 +167,29 @@ export function usePwaUpdate(): PwaUpdateController {
 
   const surfaceWaitingWorker = useCallback(
     (waitingWorker: ServiceWorker, options: { force?: boolean } = {}) => {
-      if (!options.force && dismissedWaitingWorkerRef.current === waitingWorker) {
+      if (
+        !options.force &&
+        dismissedWaitingWorkerRef.current === waitingWorker
+      ) {
         return;
       }
 
       dismissedWaitingWorkerRef.current = null;
       surfaceUpdateReady();
     },
-    [surfaceUpdateReady]
+    [surfaceUpdateReady],
   );
 
   const revalidateRegistration = useCallback(
     async (options: { force?: boolean } = {}) => {
-      const activeRegistration = await resolveServiceWorkerRegistration(swRegistration);
+      const activeRegistration =
+        await resolveServiceWorkerRegistration(swRegistration);
 
-      if (activeRegistration && activeRegistration !== swRegistration && isMountedRef.current) {
+      if (
+        activeRegistration &&
+        activeRegistration !== swRegistration &&
+        isMountedRef.current
+      ) {
         setSwRegistration(activeRegistration);
       }
 
@@ -202,7 +212,8 @@ export function usePwaUpdate(): PwaUpdateController {
 
       if (
         !options.force &&
-        now - lastRegistrationRevalidationAtRef.current < FOREGROUND_REVALIDATION_THROTTLE_MS
+        now - lastRegistrationRevalidationAtRef.current <
+          FOREGROUND_REVALIDATION_THROTTLE_MS
       ) {
         return;
       }
@@ -221,7 +232,7 @@ export function usePwaUpdate(): PwaUpdateController {
 
       surfaceWaitingWorker(activeRegistration.waiting, options);
     },
-    [surfaceWaitingWorker, swRegistration]
+    [surfaceWaitingWorker, swRegistration],
   );
 
   useEffect(() => {
@@ -266,10 +277,16 @@ export function usePwaUpdate(): PwaUpdateController {
     }
 
     const handleForegroundRevalidation = () => {
-      if (import.meta.env.MODE === 'e2e' && syntheticForegroundUpdateReadyRef.current) {
+      if (
+        import.meta.env.MODE === 'e2e' &&
+        syntheticForegroundUpdateReadyRef.current
+      ) {
         const now = Date.now();
 
-        if (now - lastRegistrationRevalidationAtRef.current < FOREGROUND_REVALIDATION_THROTTLE_MS) {
+        if (
+          now - lastRegistrationRevalidationAtRef.current <
+          FOREGROUND_REVALIDATION_THROTTLE_MS
+        ) {
           return;
         }
 
@@ -314,7 +331,10 @@ export function usePwaUpdate(): PwaUpdateController {
       syntheticUpdateModeRef.current = false;
       clearUpdateTimeout();
 
-      if (!isMountedRef.current || (!reloadRecoveryRequired && !updateStalled && !externalUpdateStalled)) {
+      if (
+        !isMountedRef.current ||
+        (!reloadRecoveryRequired && !updateStalled && !externalUpdateStalled)
+      ) {
         return;
       }
 
@@ -328,12 +348,15 @@ export function usePwaUpdate(): PwaUpdateController {
     clearUpdateTimeout,
     externalUpdateStalled,
     reloadRecoveryRequired,
-    updateStalled
+    updateStalled,
   ]);
 
   useEffect(() => {
     const unsubscribe = subscribeToPwaUpdateCoordination((event) => {
-      if (!isPwaUpdateCoordinationMessage(event.data) || event.data.sourceTabId === tabIdRef.current) {
+      if (
+        !isPwaUpdateCoordinationMessage(event.data) ||
+        event.data.sourceTabId === tabIdRef.current
+      ) {
         return;
       }
 
@@ -370,7 +393,7 @@ export function usePwaUpdate(): PwaUpdateController {
     clearExternalUpdateState,
     clearUpdateTimeout,
     pinExternalUpdateState,
-    revalidateRegistration
+    revalidateRegistration,
   ]);
 
   useEffect(() => {
@@ -384,7 +407,11 @@ export function usePwaUpdate(): PwaUpdateController {
         return;
       }
 
-      if (controllerReloadInFlight || reloadRecoveryRequired || shouldSuppressControllerReload()) {
+      if (
+        controllerReloadInFlight ||
+        reloadRecoveryRequired ||
+        shouldSuppressControllerReload()
+      ) {
         return;
       }
 
@@ -424,17 +451,23 @@ export function usePwaUpdate(): PwaUpdateController {
       scheduleReload();
     };
 
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+    navigator.serviceWorker.addEventListener(
+      'controllerchange',
+      handleControllerChange,
+    );
 
     return () => {
-      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      navigator.serviceWorker.removeEventListener(
+        'controllerchange',
+        handleControllerChange,
+      );
     };
   }, [
     clearBannerState,
     clearUpdateTimeout,
     pinReloadRecovery,
     reloadRecoveryRequired,
-    scheduleReload
+    scheduleReload,
   ]);
 
   useEffect(() => {
@@ -456,13 +489,16 @@ export function usePwaUpdate(): PwaUpdateController {
         return syntheticForegroundRevalidationCountRef.current;
       },
       dispatchControllerChange() {
-        if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+        if (
+          typeof navigator === 'undefined' ||
+          !('serviceWorker' in navigator)
+        ) {
           return;
         }
 
         hadControllerRef.current = true;
         navigator.serviceWorker.dispatchEvent(new Event('controllerchange'));
-      }
+      },
     };
 
     return () => {
@@ -524,7 +560,12 @@ export function usePwaUpdate(): PwaUpdateController {
         broadcastPwaUpdateHandoffStalled(tabIdRef.current);
       }
     })();
-  }, [clearExternalUpdateState, clearUpdateTimeout, resetTransientState, swRegistration]);
+  }, [
+    clearExternalUpdateState,
+    clearUpdateTimeout,
+    resetTransientState,
+    swRegistration,
+  ]);
 
   const handleDismissBanner = useCallback(() => {
     if (
@@ -555,7 +596,7 @@ export function usePwaUpdate(): PwaUpdateController {
     setNeedRefresh,
     setOfflineReady,
     swRegistration,
-    updateStalled
+    updateStalled,
   ]);
 
   const handleReloadPage = useCallback(() => {
@@ -578,7 +619,10 @@ export function usePwaUpdate(): PwaUpdateController {
 
   return {
     needRefresh:
-      needRefresh || reloadRecoveryRequired || externalUpdateInProgress || externalUpdateStalled,
+      needRefresh ||
+      reloadRecoveryRequired ||
+      externalUpdateInProgress ||
+      externalUpdateStalled,
     offlineReady:
       rawOfflineReady &&
       !offlineBannerDismissed &&
@@ -586,11 +630,17 @@ export function usePwaUpdate(): PwaUpdateController {
       !externalUpdateInProgress &&
       !externalUpdateStalled,
     isApplyingUpdate:
-      needRefresh && !reloadRecoveryRequired && !externalUpdateInProgress && !externalUpdateStalled
+      needRefresh &&
+      !reloadRecoveryRequired &&
+      !externalUpdateInProgress &&
+      !externalUpdateStalled
         ? isApplyingUpdate
         : false,
     updateStalled:
-      needRefresh && !reloadRecoveryRequired && !externalUpdateInProgress && !externalUpdateStalled
+      needRefresh &&
+      !reloadRecoveryRequired &&
+      !externalUpdateInProgress &&
+      !externalUpdateStalled
         ? updateStalled
         : false,
     reloadRecoveryRequired,
@@ -598,6 +648,6 @@ export function usePwaUpdate(): PwaUpdateController {
     externalUpdateStalled,
     handleApplyUpdate,
     handleDismissBanner,
-    handleReloadPage
+    handleReloadPage,
   };
 }

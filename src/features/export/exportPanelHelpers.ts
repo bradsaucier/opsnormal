@@ -1,8 +1,10 @@
 import type { ImportMode, ImportPreview } from '../../types';
 import type { StatusMessage } from './workflowTypes';
 
-
-export function getImportImpactText(preview: ImportPreview, mode: ImportMode): string {
+export function getImportImpactText(
+  preview: ImportPreview,
+  mode: ImportMode,
+): string {
   if (mode === 'replace') {
     return `Replace ${preview.existingEntryCount} current rows with ${preview.totalEntries} imported rows.`;
   }
@@ -13,6 +15,6 @@ export function getImportImpactText(preview: ImportPreview, mode: ImportMode): s
 export function getDefaultStatusMessage(): StatusMessage {
   return {
     tone: 'info',
-    text: 'Backup and recovery are local actions. No cloud sync. No account system.'
+    text: 'Backup and recovery are local actions. No cloud sync. No account system.',
   };
 }

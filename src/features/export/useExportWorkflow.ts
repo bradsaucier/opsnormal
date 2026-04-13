@@ -7,7 +7,7 @@ import {
   exportCurrentEntriesAsJson,
   formatLastExportCompletedAt,
   getLastExportCompletedAt,
-  recordExportCompleted
+  recordExportCompleted,
 } from '../../lib/export';
 import type { StatusMessage } from './workflowTypes';
 
@@ -25,11 +25,16 @@ interface UseExportWorkflowResult {
 
 export function useExportWorkflow({
   onBackupCompleted = () => undefined,
-  onStatusMessage
+  onStatusMessage,
 }: UseExportWorkflowOptions): UseExportWorkflowResult {
-  const [lastBackupAt, setLastBackupAt] = useState<string | null>(getLastExportCompletedAt());
+  const [lastBackupAt, setLastBackupAt] = useState<string | null>(
+    getLastExportCompletedAt(),
+  );
 
-  const backupStatus = useMemo(() => formatLastExportCompletedAt(lastBackupAt), [lastBackupAt]);
+  const backupStatus = useMemo(
+    () => formatLastExportCompletedAt(lastBackupAt),
+    [lastBackupAt],
+  );
 
   function markBackupCompleted(exportedAt: string) {
     recordExportCompleted(exportedAt);
@@ -39,35 +44,51 @@ export function useExportWorkflow({
 
   async function handleJsonExport() {
     try {
-      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsJson>> =
-        await exportCurrentEntriesAsJson();
-      downloadTextFile('opsnormal-export.json', exportResult.payload, 'application/json');
+      const exportResult: Awaited<
+        ReturnType<typeof exportCurrentEntriesAsJson>
+      > = await exportCurrentEntriesAsJson();
+      downloadTextFile(
+        'opsnormal-export.json',
+        exportResult.payload,
+        'application/json',
+      );
       markBackupCompleted(exportResult.exportedAt);
       onStatusMessage({
         tone: 'success',
-        text: `JSON export complete. ${exportResult.entryCount} entries written to disk.`
+        text: `JSON export complete. ${exportResult.entryCount} entries written to disk.`,
       });
     } catch (error: unknown) {
       onStatusMessage({
         tone: 'error',
-        text: getErrorMessage(error, 'JSON export failed. Reload the app and try again.')
+        text: getErrorMessage(
+          error,
+          'JSON export failed. Reload the app and try again.',
+        ),
       });
     }
   }
 
   async function handleCsvExport() {
     try {
-      const exportResult: Awaited<ReturnType<typeof exportCurrentEntriesAsCsv>> =
-        await exportCurrentEntriesAsCsv();
-      downloadTextFile('opsnormal-export.csv', exportResult.payload, 'text/csv;charset=utf-8');
+      const exportResult: Awaited<
+        ReturnType<typeof exportCurrentEntriesAsCsv>
+      > = await exportCurrentEntriesAsCsv();
+      downloadTextFile(
+        'opsnormal-export.csv',
+        exportResult.payload,
+        'text/csv;charset=utf-8',
+      );
       onStatusMessage({
         tone: 'success',
-        text: `CSV export complete. ${exportResult.entryCount} entries written to disk.`
+        text: `CSV export complete. ${exportResult.entryCount} entries written to disk.`,
       });
     } catch (error: unknown) {
       onStatusMessage({
         tone: 'error',
-        text: getErrorMessage(error, 'CSV export failed. Reload the app and try again.')
+        text: getErrorMessage(
+          error,
+          'CSV export failed. Reload the app and try again.',
+        ),
       });
     }
   }
@@ -76,6 +97,6 @@ export function useExportWorkflow({
     backupStatus,
     handleCsvExport,
     handleJsonExport,
-    markBackupCompleted
+    markBackupCompleted,
   };
 }

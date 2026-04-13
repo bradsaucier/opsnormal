@@ -19,12 +19,14 @@ function getInstallStateLabel(storageHealth: StorageHealth): string {
     return 'Installed path active';
   }
 
-  return storageHealth.safari.installRecommended ? 'Browser tab - install recommended' : 'Browser tab';
+  return storageHealth.safari.installRecommended
+    ? 'Browser tab - install recommended'
+    : 'Browser tab';
 }
 
 function getPersistenceLabel(
   storageHealth: StorageHealth,
-  hasRequestedDurableStorage: boolean
+  hasRequestedDurableStorage: boolean,
 ): string {
   if (storageHealth.persisted) {
     return 'Best-effort protection active';
@@ -81,7 +83,7 @@ function getDurabilityHelperText(storageHealth: StorageHealth): string {
 function getRequestButtonLabel(
   storageHealth: StorageHealth,
   isCoolingDown: boolean,
-  hasRequestedDurableStorage: boolean
+  hasRequestedDurableStorage: boolean,
 ): string {
   if (isCoolingDown) {
     return 'Request denied by browser';
@@ -109,7 +111,7 @@ function getToneClasses(storageHealth: StorageHealth | null): {
         'bg-[linear-gradient(180deg,rgba(249,115,22,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
       text: 'text-orange-100',
       muted: 'text-orange-100/78',
-      definition: 'text-orange-50/88'
+      definition: 'text-orange-50/88',
     };
   }
 
@@ -121,7 +123,7 @@ function getToneClasses(storageHealth: StorageHealth | null): {
         'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
       text: 'text-amber-50',
       muted: 'text-amber-100/76',
-      definition: 'text-amber-50/88'
+      definition: 'text-amber-50/88',
     };
   }
 
@@ -131,22 +133,26 @@ function getToneClasses(storageHealth: StorageHealth | null): {
       'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-raised)]',
     text: 'text-ops-text-primary',
     muted: 'text-ops-text-muted',
-    definition: 'text-ops-text-secondary'
+    definition: 'text-ops-text-secondary',
   };
 }
 
 export function StorageHealthIndicator({
   storageHealth,
   onRequestStorageProtection,
-  isRequestingStorageProtection = false
+  isRequestingStorageProtection = false,
 }: StorageHealthIndicatorProps) {
   const [cooldownUntilMs, setCooldownUntilMs] = useState<number | null>(null);
   const [currentTimeMs, setCurrentTimeMs] = useState(() => Date.now());
-  const [hasManualRequestAttempted, setHasManualRequestAttempted] = useState(false);
+  const [hasManualRequestAttempted, setHasManualRequestAttempted] =
+    useState(false);
 
-  const effectiveCooldownUntilMs = storageHealth?.persisted ? null : cooldownUntilMs;
+  const effectiveCooldownUntilMs = storageHealth?.persisted
+    ? null
+    : cooldownUntilMs;
   const hasRequestedDurableStorage =
-    hasManualRequestAttempted || Boolean(storageHealth?.safari.persistAttempted);
+    hasManualRequestAttempted ||
+    Boolean(storageHealth?.safari.persistAttempted);
 
   useEffect(() => {
     if (effectiveCooldownUntilMs === null) {
@@ -169,17 +175,23 @@ export function StorageHealthIndicator({
   }, [currentTimeMs, effectiveCooldownUntilMs]);
 
   const isCoolingDown =
-    effectiveCooldownUntilMs !== null && effectiveCooldownUntilMs > currentTimeMs;
+    effectiveCooldownUntilMs !== null &&
+    effectiveCooldownUntilMs > currentTimeMs;
   const canRequestStorageProtection = Boolean(
     storageHealth &&
-      !storageHealth.persisted &&
-      storageHealth.persistenceAvailable &&
-      onRequestStorageProtection
+    !storageHealth.persisted &&
+    storageHealth.persistenceAvailable &&
+    onRequestStorageProtection,
   );
   const toneClasses = getToneClasses(storageHealth);
 
   async function handleRequestStorageProtection() {
-    if (!canRequestStorageProtection || !onRequestStorageProtection || isRequestingStorageProtection || isCoolingDown) {
+    if (
+      !canRequestStorageProtection ||
+      !onRequestStorageProtection ||
+      isRequestingStorageProtection ||
+      isCoolingDown
+    ) {
       return;
     }
 
@@ -199,7 +211,9 @@ export function StorageHealthIndicator({
       innerClassName={`p-4 ${toneClasses.inner}`}
     >
       <div role="status" aria-live="polite" aria-atomic="true">
-        <p className={`text-xs font-semibold tracking-[0.16em] uppercase ${toneClasses.muted}`}>
+        <p
+          className={`text-xs font-semibold tracking-[0.16em] uppercase ${toneClasses.muted}`}
+        >
           Storage durability
         </p>
         <p className={`mt-2 text-sm leading-6 ${toneClasses.text}`}>
@@ -222,32 +236,52 @@ export function StorageHealthIndicator({
             >
               {isRequestingStorageProtection
                 ? 'Requesting durable storage'
-                : getRequestButtonLabel(storageHealth, isCoolingDown, hasRequestedDurableStorage)}
+                : getRequestButtonLabel(
+                    storageHealth,
+                    isCoolingDown,
+                    hasRequestedDurableStorage,
+                  )}
             </button>
           </div>
         ) : null}
         {storageHealth ? (
-          <dl className={`mt-3 grid gap-2 text-xs leading-5 sm:grid-cols-2 ${toneClasses.definition}`}>
+          <dl
+            className={`mt-3 grid gap-2 text-xs leading-5 sm:grid-cols-2 ${toneClasses.definition}`}
+          >
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">Install path</dt>
+              <dt className="font-semibold tracking-[0.12em] uppercase">
+                Install path
+              </dt>
               <dd className="mt-1">{getInstallStateLabel(storageHealth)}</dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">Persistence</dt>
-              <dd className="mt-1">{getPersistenceLabel(storageHealth, hasRequestedDurableStorage)}</dd>
+              <dt className="font-semibold tracking-[0.12em] uppercase">
+                Persistence
+              </dt>
+              <dd className="mt-1">
+                {getPersistenceLabel(storageHealth, hasRequestedDurableStorage)}
+              </dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">Reconnect state</dt>
+              <dt className="font-semibold tracking-[0.12em] uppercase">
+                Reconnect state
+              </dt>
               <dd className="mt-1">{getReconnectLabel(storageHealth)}</dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">Write verify</dt>
+              <dt className="font-semibold tracking-[0.12em] uppercase">
+                Write verify
+              </dt>
               <dd className="mt-1">{getVerificationLabel(storageHealth)}</dd>
             </div>
           </dl>
         ) : null}
-        <p className={`mt-3 text-xs tracking-[0.14em] uppercase ${toneClasses.muted}`}>
-          {storageHealth ? formatStorageSummary(storageHealth) : 'Telemetry pending'}
+        <p
+          className={`mt-3 text-xs tracking-[0.14em] uppercase ${toneClasses.muted}`}
+        >
+          {storageHealth
+            ? formatStorageSummary(storageHealth)
+            : 'Telemetry pending'}
         </p>
       </div>
     </NotchedFrame>

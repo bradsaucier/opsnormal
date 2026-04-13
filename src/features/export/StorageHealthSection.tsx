@@ -17,7 +17,7 @@ export function StorageHealthSection({
   onToggle,
   storageHealth,
   onRequestStorageProtection,
-  isRequestingStorageProtection = false
+  isRequestingStorageProtection = false,
 }: StorageHealthSectionProps) {
   return (
     <AccordionSection
@@ -37,7 +37,10 @@ export function StorageHealthSection({
           outerClassName="bg-ops-panel-border"
           innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-4 text-sm leading-6 text-zinc-300"
         >
-          The browser automatically manages local storage. You can manually request exemption from automatic deletion, though browsers may deny this silently. Always rely on routine exports to secure your critical data.
+          The browser automatically manages local storage. You can manually
+          request exemption from automatic deletion, though browsers may deny
+          this silently. Always rely on routine exports to secure your critical
+          data.
         </NotchedFrame>
       </div>
     </AccordionSection>

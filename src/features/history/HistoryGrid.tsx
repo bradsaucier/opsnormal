@@ -23,7 +23,11 @@ export function HistoryGrid(props: HistoryGridProps) {
         </div>
       }
     >
-      {model.isDesktopHistory ? <DesktopHistoryGrid model={model} /> : <MobileHistoryGrid model={model} />}
+      {model.isDesktopHistory ? (
+        <DesktopHistoryGrid model={model} />
+      ) : (
+        <MobileHistoryGrid model={model} />
+      )}
     </SectionCard>
   );
 }

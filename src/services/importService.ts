@@ -1,11 +1,16 @@
 import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
 import type { ParsedJsonImport } from '../schemas/import';
-import type { DailyEntry, ImportMode, ImportPreview, JsonExportPayload } from '../types';
+import type {
+  DailyEntry,
+  ImportMode,
+  ImportPreview,
+  JsonExportPayload,
+} from '../types';
 import {
   parseImportPayload,
   summarizeParsedPayload,
   type ParsedImportSummary,
-  validateImportFileSize
+  validateImportFileSize,
 } from './importValidation';
 
 interface WorkerPreviewRequest {
@@ -33,33 +38,37 @@ function getCompoundKey(entry: Pick<DailyEntry, 'date' | 'sectorId'>): string {
 function normalizeImportedEntries(
   entries: ParsedJsonImport['entries'],
   existingEntries: DailyEntry[],
-  mode: ImportMode
+  mode: ImportMode,
 ): DailyEntry[] {
   const existingByCompoundKey = new Map(
-    existingEntries.map((entry) => [getCompoundKey(entry), entry])
+    existingEntries.map((entry) => [getCompoundKey(entry), entry]),
   );
 
   return entries.map((entry) => {
-    const existing = mode === 'merge' ? existingByCompoundKey.get(getCompoundKey(entry)) : undefined;
+    const existing =
+      mode === 'merge'
+        ? existingByCompoundKey.get(getCompoundKey(entry))
+        : undefined;
 
     return {
       id: existing?.id ?? entry.id,
       date: entry.date,
       sectorId: entry.sectorId,
       status: entry.status,
-      updatedAt: entry.updatedAt
+      updatedAt: entry.updatedAt,
     };
   });
 }
 
-
 function buildPreviewFromSummary(
   summary: ParsedImportSummary,
-  existingEntries: DailyEntry[]
+  existingEntries: DailyEntry[],
 ): ImportPreview {
-  const existingKeys = new Set(existingEntries.map((entry) => getCompoundKey(entry)));
+  const existingKeys = new Set(
+    existingEntries.map((entry) => getCompoundKey(entry)),
+  );
   const overwriteCount = summary.payload.entries.filter((entry) =>
-    existingKeys.has(getCompoundKey(entry))
+    existingKeys.has(getCompoundKey(entry)),
   ).length;
 
   return {
@@ -69,20 +78,22 @@ function buildPreviewFromSummary(
     overwriteCount,
     newEntryCount: summary.payload.entries.length - overwriteCount,
     totalEntries: summary.totalEntries,
-    dateRange: summary.dateRange
+    dateRange: summary.dateRange,
   };
 }
 
 function buildExpectedFinalEntries(
   snapshot: DailyEntry[],
   normalizedEntries: DailyEntry[],
-  mode: ImportMode
+  mode: ImportMode,
 ): DailyEntry[] {
   if (mode === 'replace') {
     return normalizedEntries;
   }
 
-  const byCompoundKey = new Map(snapshot.map((entry) => [getCompoundKey(entry), entry]));
+  const byCompoundKey = new Map(
+    snapshot.map((entry) => [getCompoundKey(entry), entry]),
+  );
 
   for (const entry of normalizedEntries) {
     byCompoundKey.set(getCompoundKey(entry), entry);
@@ -100,17 +111,23 @@ function createComparableEntry(entry: DailyEntry) {
     date: entry.date,
     sectorId: entry.sectorId,
     status: entry.status,
-    updatedAt: entry.updatedAt
+    updatedAt: entry.updatedAt,
   };
 }
 
-function hasMatchingEntrySet(expectedEntries: DailyEntry[], actualEntries: DailyEntry[]): boolean {
+function hasMatchingEntrySet(
+  expectedEntries: DailyEntry[],
+  actualEntries: DailyEntry[],
+): boolean {
   if (expectedEntries.length !== actualEntries.length) {
     return false;
   }
 
   const actualByCompoundKey = new Map(
-    actualEntries.map((entry) => [getCompoundKey(entry), createComparableEntry(entry)])
+    actualEntries.map((entry) => [
+      getCompoundKey(entry),
+      createComparableEntry(entry),
+    ]),
   );
 
   return expectedEntries.every((entry) => {
@@ -120,13 +137,15 @@ function hasMatchingEntrySet(expectedEntries: DailyEntry[], actualEntries: Daily
       return false;
     }
 
-    return JSON.stringify(actual) === JSON.stringify(createComparableEntry(entry));
+    return (
+      JSON.stringify(actual) === JSON.stringify(createComparableEntry(entry))
+    );
   });
 }
 
 function getFirstMismatchCompoundKey(
   expectedEntries: DailyEntry[],
-  actualEntries: DailyEntry[]
+  actualEntries: DailyEntry[],
 ): string | null {
   if (expectedEntries.length !== actualEntries.length) {
     const expectedKeys = new Set(expectedEntries.map(getCompoundKey));
@@ -153,14 +172,20 @@ function getFirstMismatchCompoundKey(
   }
 
   const actualByCompoundKey = new Map(
-    actualEntries.map((entry) => [getCompoundKey(entry), createComparableEntry(entry)])
+    actualEntries.map((entry) => [
+      getCompoundKey(entry),
+      createComparableEntry(entry),
+    ]),
   );
 
   for (const entry of expectedEntries) {
     const compoundKey = getCompoundKey(entry);
     const actual = actualByCompoundKey.get(compoundKey);
 
-    if (!actual || JSON.stringify(actual) !== JSON.stringify(createComparableEntry(entry))) {
+    if (
+      !actual ||
+      JSON.stringify(actual) !== JSON.stringify(createComparableEntry(entry))
+    ) {
       return compoundKey;
     }
   }
@@ -183,7 +208,7 @@ async function restoreUndoSnapshot(snapshot: DailyEntry[]): Promise<void> {
       if (snapshot.length > 0) {
         await bulkPutEntries(snapshot);
       }
-    })
+    }),
   );
 }
 
@@ -192,9 +217,14 @@ export async function readImportFile(file: File): Promise<string> {
   return file.text();
 }
 
-export async function previewImportPayload(payload: JsonExportPayload): Promise<ImportPreview> {
+export async function previewImportPayload(
+  payload: JsonExportPayload,
+): Promise<ImportPreview> {
   const existingEntries = await getAllEntries();
-  return buildPreviewFromSummary(summarizeParsedPayload(payload), existingEntries);
+  return buildPreviewFromSummary(
+    summarizeParsedPayload(payload),
+    existingEntries,
+  );
 }
 
 function createImportPreviewAbortError(): Error {
@@ -211,7 +241,7 @@ function throwIfPreviewAborted(signal?: AbortSignal): void {
 
 async function parseImportFileWithWorker(
   file: File,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<ParsedImportSummary> {
   validateImportFileSize(file);
   throwIfPreviewAborted(signal);
@@ -220,9 +250,12 @@ async function parseImportFileWithWorker(
   throwIfPreviewAborted(signal);
 
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./importPreviewWorker.ts', import.meta.url), {
-      type: 'module'
-    });
+    const worker = new Worker(
+      new URL('./importPreviewWorker.ts', import.meta.url),
+      {
+        type: 'module',
+      },
+    );
 
     const cleanup = () => {
       worker.onmessage = null;
@@ -236,7 +269,9 @@ async function parseImportFileWithWorker(
       reject(createImportPreviewAbortError());
     };
 
-    worker.onmessage = (event: MessageEvent<WorkerSuccessMessage | WorkerErrorMessage>) => {
+    worker.onmessage = (
+      event: MessageEvent<WorkerSuccessMessage | WorkerErrorMessage>,
+    ) => {
       cleanup();
 
       if (event.data.ok) {
@@ -256,7 +291,7 @@ async function parseImportFileWithWorker(
 
     const request: WorkerPreviewRequest = {
       buffer,
-      size: file.size
+      size: file.size,
     };
 
     worker.postMessage(request, [buffer]);
@@ -265,11 +300,14 @@ async function parseImportFileWithWorker(
 
 async function parseImportFileForPreview(
   file: File,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<ParsedImportSummary> {
   validateImportFileSize(file);
 
-  if (typeof Worker !== 'undefined' && file.size >= IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES) {
+  if (
+    typeof Worker !== 'undefined' &&
+    file.size >= IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES
+  ) {
     return parseImportFileWithWorker(file, signal);
   }
 
@@ -282,11 +320,11 @@ async function parseImportFileForPreview(
 
 export async function previewImportFile(
   file: File,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<ImportPreview> {
   const [summary, existingEntries] = await Promise.all([
     parseImportFileForPreview(file, signal),
-    getAllEntries()
+    getAllEntries(),
   ]);
 
   return buildPreviewFromSummary(summary, existingEntries);
@@ -294,12 +332,20 @@ export async function previewImportFile(
 
 export async function applyImport(
   payload: JsonExportPayload,
-  mode: ImportMode
+  mode: ImportMode,
 ): Promise<{ importedCount: number; undo: () => Promise<void> }> {
   const snapshot = await getAllEntries();
   const undoSnapshot = snapshot.map((entry) => ({ ...entry }));
-  const normalizedEntries = normalizeImportedEntries(payload.entries, snapshot, mode);
-  const expectedFinalEntries = buildExpectedFinalEntries(snapshot, normalizedEntries, mode);
+  const normalizedEntries = normalizeImportedEntries(
+    payload.entries,
+    snapshot,
+    mode,
+  );
+  const expectedFinalEntries = buildExpectedFinalEntries(
+    snapshot,
+    normalizedEntries,
+    mode,
+  );
 
   await runDatabaseWrite(async () =>
     db.transaction('rw', db.dailyEntries, async () => {
@@ -311,28 +357,30 @@ export async function applyImport(
         await bulkPutEntries(normalizedEntries);
       }
 
-      const actualEntries = await db.dailyEntries.orderBy('[date+sectorId]').toArray();
+      const actualEntries = await db.dailyEntries
+        .orderBy('[date+sectorId]')
+        .toArray();
 
       if (!hasMatchingEntrySet(expectedFinalEntries, actualEntries)) {
         const firstMismatchCompoundKey = getFirstMismatchCompoundKey(
           expectedFinalEntries,
-          actualEntries
+          actualEntries,
         );
         const mismatchHint = firstMismatchCompoundKey
           ? ` First mismatch near [${firstMismatchCompoundKey}].`
           : '';
 
         throw new Error(
-          `Import post-write verification failed. IndexedDB transaction aborted before commit.${mismatchHint}`
+          `Import post-write verification failed. IndexedDB transaction aborted before commit.${mismatchHint}`,
         );
       }
-    })
+    }),
   );
 
   return {
     importedCount: normalizedEntries.length,
     undo: async () => {
       await restoreUndoSnapshot(undoSnapshot);
-    }
+    },
   };
 }

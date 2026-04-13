@@ -29,14 +29,18 @@ export function ExportPanel({
   onBackupCompleted = () => undefined,
   onRequestStorageProtection,
   isRequestingStorageProtection = false,
-  onImportCommitted = () => undefined
+  onImportCommitted = () => undefined,
 }: ExportPanelProps) {
-  const [statusMessage, setStatusMessage] = useState<StatusMessage>(() => getDefaultStatusMessage());
-  const [expandedSections, setExpandedSections] = useState<Record<AccordionSectionKey, boolean>>({
+  const [statusMessage, setStatusMessage] = useState<StatusMessage>(() =>
+    getDefaultStatusMessage(),
+  );
+  const [expandedSections, setExpandedSections] = useState<
+    Record<AccordionSectionKey, boolean>
+  >({
     export: true,
     import: false,
     undo: false,
-    storage: false
+    storage: false,
   });
 
   function updateStatusMessage(nextMessage: StatusMessage) {
@@ -46,32 +50,37 @@ export function ExportPanel({
   function toggleSection(sectionKey: AccordionSectionKey) {
     setExpandedSections((current) => ({
       ...current,
-      [sectionKey]: !current[sectionKey]
+      [sectionKey]: !current[sectionKey],
     }));
   }
 
   function openImportSection() {
     setExpandedSections((current) => ({
       ...current,
-      import: true
+      import: true,
     }));
   }
 
   function openUndoSection() {
     setExpandedSections((current) => ({
       ...current,
-      undo: true
+      undo: true,
     }));
   }
 
-  const { backupStatus, handleCsvExport, handleJsonExport, markBackupCompleted } =
-    useExportWorkflow({
-      onBackupCompleted,
-      onStatusMessage: updateStatusMessage
-    });
-  const { canUndoImport, handleUndoImport, stageUndoImport, undoBusy } = useUndoImport({
-    onStatusMessage: updateStatusMessage
+  const {
+    backupStatus,
+    handleCsvExport,
+    handleJsonExport,
+    markBackupCompleted,
+  } = useExportWorkflow({
+    onBackupCompleted,
+    onStatusMessage: updateStatusMessage,
   });
+  const { canUndoImport, handleUndoImport, stageUndoImport, undoBusy } =
+    useUndoImport({
+      onStatusMessage: updateStatusMessage,
+    });
   const {
     clearPendingImport,
     fileInputId,
@@ -83,7 +92,7 @@ export function ExportPanel({
     pendingFileName,
     pendingFileSize,
     pendingImport,
-    setImportModeWithReset
+    setImportModeWithReset,
   } = useImportWorkflow({
     onImportApplied: stageUndoImport,
     onImportCommitted,
@@ -92,7 +101,7 @@ export function ExportPanel({
     onReplaceWorkflowResetRequested: () => {
       resetReplaceWorkflow();
     },
-    onStatusMessage: updateStatusMessage
+    onStatusMessage: updateStatusMessage,
   });
   const {
     handleAcknowledgeManualBackup,
@@ -106,24 +115,24 @@ export function ExportPanel({
     replaceReady,
     resetReplaceWorkflow,
     setManualBackupConfirmed,
-    supportsVerifiedFileSave
+    supportsVerifiedFileSave,
   } = useReplaceCheckpoint({
     onBackupCompleted: markBackupCompleted,
     onStatusMessage: updateStatusMessage,
-    pendingImport
+    pendingImport,
   });
 
   async function confirmImport() {
     await handleConfirmImport({
       onArmReplace: handleArmReplace,
-      replaceConfirmState
+      replaceConfirmState,
     });
   }
 
   function cancelPendingImport() {
     clearPendingImport({
       tone: 'info',
-      text: 'Import staging cleared. Local data unchanged.'
+      text: 'Import staging cleared. Local data unchanged.',
     });
   }
 
@@ -131,11 +140,15 @@ export function ExportPanel({
     <SectionCard eyebrow="Data Sovereignty" title="Backup and Recovery">
       <div className="space-y-4">
         <p className="max-w-3xl text-sm leading-6 text-zinc-300">
-          Local-first only works if recovery is real. Safe actions stay forward. Destructive
-          restore paths stay collapsed until you deliberately open, stage, and confirm them.
+          Local-first only works if recovery is real. Safe actions stay forward.
+          Destructive restore paths stay collapsed until you deliberately open,
+          stage, and confirm them.
         </p>
 
-        <BackupSummarySignals backupStatus={backupStatus} canUndoImport={canUndoImport} />
+        <BackupSummarySignals
+          backupStatus={backupStatus}
+          canUndoImport={canUndoImport}
+        />
 
         <ExportBackupSection
           isOpen={expandedSections.export}

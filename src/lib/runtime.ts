@@ -3,7 +3,7 @@ const EXTENSION_NOISE_PATTERNS: RegExp[] = [
   /failed to execute 'insertBefore' on 'Node'/i,
   /can't access dead object/i,
   /hydrat/i,
-  /extension/i
+  /extension/i,
 ];
 
 export function reloadCurrentPage(): void {
@@ -15,34 +15,50 @@ export function isExtensionNoise(error: unknown): boolean {
     return false;
   }
 
-  return EXTENSION_NOISE_PATTERNS.some((pattern) => pattern.test(error.message));
+  return EXTENSION_NOISE_PATTERNS.some((pattern) =>
+    pattern.test(error.message),
+  );
 }
 
-function getComponentStack(errorInfo: { componentStack?: string | undefined }): string | undefined {
+function getComponentStack(errorInfo: {
+  componentStack?: string | undefined;
+}): string | undefined {
   return errorInfo.componentStack;
 }
 
 export function onCaughtError(
   error: unknown,
-  errorInfo: { componentStack?: string | undefined; errorBoundary?: unknown }
+  errorInfo: { componentStack?: string | undefined; errorBoundary?: unknown },
 ): void {
-  console.error('[OpsNormal] Caught error:', error, getComponentStack(errorInfo));
+  console.error(
+    '[OpsNormal] Caught error:',
+    error,
+    getComponentStack(errorInfo),
+  );
 }
 
 export function onUncaughtError(
   error: unknown,
-  errorInfo: { componentStack?: string | undefined }
+  errorInfo: { componentStack?: string | undefined },
 ): void {
-  console.error('[OpsNormal] Uncaught error:', error, getComponentStack(errorInfo));
+  console.error(
+    '[OpsNormal] Uncaught error:',
+    error,
+    getComponentStack(errorInfo),
+  );
 }
 
 export function onRecoverableError(
   error: unknown,
-  errorInfo: { componentStack?: string | undefined }
+  errorInfo: { componentStack?: string | undefined },
 ): void {
   if (isExtensionNoise(error)) {
     return;
   }
 
-  console.warn('[OpsNormal] Recoverable error:', error, getComponentStack(errorInfo));
+  console.warn(
+    '[OpsNormal] Recoverable error:',
+    error,
+    getComponentStack(errorInfo),
+  );
 }

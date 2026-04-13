@@ -13,11 +13,18 @@ interface DomainCardProps {
 
 const STATUS_OPTIONS: UiStatus[] = ['unmarked', 'nominal', 'degraded'];
 
-export function DomainCard({ sector, status, busy = false, onSelect }: DomainCardProps) {
+export function DomainCard({
+  sector,
+  status,
+  busy = false,
+  onSelect,
+}: DomainCardProps) {
   const groupId = useId();
   const hintId = `${groupId}-hint`;
   const radioRefs = useRef(new Map<UiStatus, HTMLButtonElement>());
-  const [optimisticStatus, setOptimisticStatus] = useState<UiStatus | null>(null);
+  const [optimisticStatus, setOptimisticStatus] = useState<UiStatus | null>(
+    null,
+  );
 
   const resolvedStatus = busy ? (optimisticStatus ?? status) : status;
   const statusLabel = getStatusLabel(resolvedStatus);
@@ -26,7 +33,10 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
     : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-emerald-200/16 focus-within:bg-emerald-200/20';
 
-  function registerRadioRef(option: UiStatus, element: HTMLButtonElement | null) {
+  function registerRadioRef(
+    option: UiStatus,
+    element: HTMLButtonElement | null,
+  ) {
     if (!element) {
       radioRefs.current.delete(option);
       return;
@@ -35,7 +45,10 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
     radioRefs.current.set(option, element);
   }
 
-  function handleRadioKeyDown(event: KeyboardEvent<HTMLButtonElement>, optionIndex: number) {
+  function handleRadioKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    optionIndex: number,
+  ) {
     if (busy) {
       return;
     }
@@ -53,7 +66,8 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
         break;
       case 'ArrowLeft':
       case 'ArrowUp':
-        nextIndex = (optionIndex - 1 + STATUS_OPTIONS.length) % STATUS_OPTIONS.length;
+        nextIndex =
+          (optionIndex - 1 + STATUS_OPTIONS.length) % STATUS_OPTIONS.length;
         break;
       case 'Home':
         nextIndex = 0;
@@ -91,7 +105,9 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
             <h3 className="mt-2 text-base font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
               {sector.label}
             </h3>
-            <p className="mt-3 text-sm leading-6 text-ops-text-secondary">{sector.description}</p>
+            <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
+              {sector.description}
+            </p>
           </div>
           <StatusBadge status={resolvedStatus} />
         </div>
@@ -102,7 +118,10 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
             <span>{statusLabel}</span>
           </div>
 
-          <p id={hintId} className="mt-3 text-xs leading-5 text-ops-text-secondary">
+          <p
+            id={hintId}
+            className="mt-3 text-xs leading-5 text-ops-text-secondary"
+          >
             {busy
               ? 'Saving local write. Stand by.'
               : 'Choose a state directly. Arrow keys move inside the control group.'}
@@ -137,7 +156,7 @@ export function DomainCard({ sector, status, busy = false, onSelect }: DomainCar
                     'clip-notched tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition motion-safe:duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent disabled:cursor-wait disabled:opacity-70',
                     isSelected
                       ? `${content.classes} ring-2 ring-inset ring-ops-accent/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
-                      : 'text-ops-text-secondary hover:border-ops-border-struct hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]'
+                      : 'text-ops-text-secondary hover:border-ops-border-struct hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]',
                   ].join(' ')}
                 >
                   {content.shortLabel}

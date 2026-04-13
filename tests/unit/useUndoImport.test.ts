@@ -10,8 +10,8 @@ describe('useUndoImport', () => {
 
     const { result } = renderHook(() =>
       useUndoImport({
-        onStatusMessage
-      })
+        onStatusMessage,
+      }),
     );
 
     act(() => {
@@ -28,7 +28,7 @@ describe('useUndoImport', () => {
     expect(result.current.canUndoImport).toBe(false);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: 'Undo complete. The pre-import database snapshot has been restored.'
+      text: 'Undo complete. The pre-import database snapshot has been restored.',
     });
   });
 
@@ -38,8 +38,8 @@ describe('useUndoImport', () => {
 
     const { result } = renderHook(() =>
       useUndoImport({
-        onStatusMessage: vi.fn()
-      })
+        onStatusMessage: vi.fn(),
+      }),
     );
 
     act(() => {

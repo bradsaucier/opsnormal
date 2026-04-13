@@ -3,13 +3,21 @@ import { expect, test } from '@playwright/test';
 test.describe('OpsNormal mobile history', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('renders week-paginated history, supports explicit week controls, and updates the daily brief', async ({ page }) => {
+  test('renders week-paginated history, supports explicit week controls, and updates the daily brief', async ({
+    page,
+  }) => {
     await page.goto('/');
 
-    await expect(page.getByText(/mobile holds the history picture one week at a time/i)).toBeVisible();
+    await expect(
+      page.getByText(/mobile holds the history picture one week at a time/i),
+    ).toBeVisible();
     await expect(page.getByText('Daily brief', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /previous week/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /next week/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /previous week/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /next week/i }),
+    ).toBeVisible();
 
     const weekCards = page.locator('.history-week-card');
     await expect(weekCards).toHaveCount(5);
@@ -21,10 +29,14 @@ test.describe('OpsNormal mobile history', () => {
     await expect(allDayButtons).toHaveCount(30);
 
     const weekStatus = page.getByTestId('mobile-history-week-status');
-    const previousWeekButton = page.getByRole('button', { name: /previous week/i });
+    const previousWeekButton = page.getByRole('button', {
+      name: /previous week/i,
+    });
     const nextWeekButton = page.getByRole('button', { name: /next week/i });
     const dailyBrief = page.locator('#mobile-history-daily-brief');
-    const dailyBriefHeading = dailyBrief.getByRole('heading', { level: 3 }).first();
+    const dailyBriefHeading = dailyBrief
+      .getByRole('heading', { level: 3 })
+      .first();
     const initialHeading = (await dailyBriefHeading.textContent()) ?? '';
 
     await expect(nextWeekButton).toBeDisabled();

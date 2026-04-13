@@ -3,22 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { db, setDailyStatus } from '../../src/db/appDb';
 import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from '../../src/db/schema';
-import { exportEmergencyCsvBackup, exportEmergencyJsonBackup } from '../../src/lib/emergencyExport';
+import {
+  exportEmergencyCsvBackup,
+  exportEmergencyJsonBackup,
+} from '../../src/lib/emergencyExport';
 
 const TEST_DATE_KEY = '2026-03-28';
 const TEST_UPDATED_AT = '2026-03-28T12:00:00.000Z';
 
 const mocks = vi.hoisted(() => ({
-  downloadTextFile: vi.fn<(fileName: string, content: string, mimeType: string) => void>(),
-  recordExportCompleted: vi.fn<(exportedAt: string) => void>()
+  downloadTextFile:
+    vi.fn<(fileName: string, content: string, mimeType: string) => void>(),
+  recordExportCompleted: vi.fn<(exportedAt: string) => void>(),
 }));
 
 vi.mock('../../src/lib/fileDownload', () => ({
-  downloadTextFile: mocks.downloadTextFile
+  downloadTextFile: mocks.downloadTextFile,
 }));
 
 vi.mock('../../src/lib/exportPersistence', () => ({
-  recordExportCompleted: mocks.recordExportCompleted
+  recordExportCompleted: mocks.recordExportCompleted,
 }));
 
 describe('emergencyExport', () => {
@@ -44,13 +48,19 @@ describe('emergencyExport', () => {
     expect(result.skippedCount).toBe(0);
     expect(mocks.downloadTextFile).toHaveBeenCalledTimes(1);
 
-    const [fileName, payload, mimeType] = mocks.downloadTextFile.mock.calls[0] as [string, string, string];
+    const [fileName, payload, mimeType] = mocks.downloadTextFile.mock
+      .calls[0] as [string, string, string];
 
     expect(fileName).toBe('test-emergency.json');
     expect(mimeType).toBe('application/json');
 
     const parsed = JSON.parse(payload) as {
-      entries: Array<{ date: string; sectorId: string; status: string; updatedAt: string }>;
+      entries: Array<{
+        date: string;
+        sectorId: string;
+        status: string;
+        updatedAt: string;
+      }>;
       crashDiagnostics: unknown;
       exportedAt: string;
       checksum: string;
@@ -60,12 +70,12 @@ describe('emergencyExport', () => {
     expect(parsed.entries[0]).toMatchObject({
       date: TEST_DATE_KEY,
       sectorId: 'body',
-      status: 'nominal'
+      status: 'nominal',
     });
     expect(parsed.entries[1]).toMatchObject({
       date: TEST_DATE_KEY,
       sectorId: 'rest',
-      status: 'degraded'
+      status: 'degraded',
     });
     expect(typeof parsed.entries[0]?.updatedAt).toBe('string');
     expect(typeof parsed.entries[1]?.updatedAt).toBe('string');
@@ -85,14 +95,14 @@ describe('emergencyExport', () => {
           date: TEST_DATE_KEY,
           sectorId: 'body',
           status: 'nominal',
-          updatedAt: TEST_UPDATED_AT
+          updatedAt: TEST_UPDATED_AT,
         },
         {
           date: TEST_DATE_KEY,
           sectorId: 'household',
           status: 'invalid-status',
-          updatedAt: TEST_UPDATED_AT
-        }
+          updatedAt: TEST_UPDATED_AT,
+        },
       ]);
     } finally {
       tempDb.close();
@@ -106,7 +116,7 @@ describe('emergencyExport', () => {
     expect(mocks.downloadTextFile).toHaveBeenCalledWith(
       'test-emergency.csv',
       'date,sectorId,status,updatedAt\n2026-03-28,body,nominal,2026-03-28T12:00:00.000Z',
-      'text/csv;charset=utf-8'
+      'text/csv;charset=utf-8',
     );
     expect(mocks.recordExportCompleted).toHaveBeenCalledWith(result.exportedAt);
   });

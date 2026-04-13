@@ -5,12 +5,12 @@ import { db, setDailyStatus } from '../../src/db/appDb';
 import {
   applyOpsNormalDbSchema,
   OPSNORMAL_DB_NAME,
-  OPSNORMAL_DB_SCHEMA_VERSIONS
+  OPSNORMAL_DB_SCHEMA_VERSIONS,
 } from '../../src/db/schema';
 import {
   deleteOpsNormalDatabase,
   readCrashExportSnapshot,
-  readEntriesForCrashExport
+  readEntriesForCrashExport,
 } from '../../src/lib/crashExport';
 import { resetStorageDurabilityDiagnostics } from '../../src/lib/storage';
 
@@ -46,11 +46,11 @@ describe('crash export isolation', () => {
       snapshot.entries.map((entry) => ({
         date: entry.date,
         sectorId: entry.sectorId,
-        status: entry.status
-      }))
+        status: entry.status,
+      })),
     ).toEqual([
       { date: TEST_DATE_KEY, sectorId: 'body', status: 'nominal' },
-      { date: TEST_DATE_KEY, sectorId: 'rest', status: 'degraded' }
+      { date: TEST_DATE_KEY, sectorId: 'rest', status: 'degraded' },
     ]);
   });
 
@@ -63,20 +63,20 @@ describe('crash export isolation', () => {
         date: TEST_DATE_KEY,
         sectorId: 'body',
         status: 'nominal',
-        updatedAt: TEST_UPDATED_AT
+        updatedAt: TEST_UPDATED_AT,
       },
       {
         date: TEST_DATE_KEY,
         sectorId: 'household',
         status: 'invalid-status',
-        updatedAt: TEST_UPDATED_AT
+        updatedAt: TEST_UPDATED_AT,
       },
       {
         date: 'bad-date',
         sectorId: 'rest',
         status: 'degraded',
-        updatedAt: TEST_UPDATED_AT
-      }
+        updatedAt: TEST_UPDATED_AT,
+      },
     ];
 
     try {
@@ -93,10 +93,12 @@ describe('crash export isolation', () => {
         date: TEST_DATE_KEY,
         sectorId: 'body',
         status: 'nominal',
-        updatedAt: TEST_UPDATED_AT
-      }
+        updatedAt: TEST_UPDATED_AT,
+      },
     ]);
-    await expect(readEntriesForCrashExport()).resolves.toEqual(snapshot.entries);
+    await expect(readEntriesForCrashExport()).resolves.toEqual(
+      snapshot.entries,
+    );
   });
 
   it('deletes the OpsNormal database through the isolated crash-recovery helper', async () => {
@@ -124,12 +126,12 @@ describe('crash export isolation', () => {
   it('fails deterministically when database deletion stays blocked past the timeout window', async () => {
     vi.useFakeTimers();
     vi.spyOn(Dexie, 'delete').mockImplementationOnce(
-      () => new Promise<void>(() => undefined)
+      () => new Promise<void>(() => undefined),
     );
 
     const deletionOutcome = deleteOpsNormalDatabase().then(
       () => ({ status: 'resolved' as const }),
-      (error: unknown) => ({ status: 'rejected' as const, error })
+      (error: unknown) => ({ status: 'rejected' as const, error }),
     );
 
     await vi.advanceTimersByTimeAsync(3000);
@@ -140,7 +142,7 @@ describe('crash export isolation', () => {
     if (result.status === 'rejected') {
       expect(result.error).toBeInstanceOf(Error);
       expect((result.error as Error).message).toBe(
-        'Local data reset timed out. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.'
+        'Local data reset timed out. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.',
       );
     }
   });
@@ -156,17 +158,19 @@ describe('crash export isolation', () => {
         {
           version: 1,
           stores: {
-            dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt'
-          }
+            dailyEntries: '++id, &[date+sectorId], date, sectorId, updatedAt',
+          },
         },
         {
           version: 2,
           stores: {
-            dailyEntries: '++id, &[date+sectorId]'
-          }
-        }
+            dailyEntries: '++id, &[date+sectorId]',
+          },
+        },
       ]);
-      expect(tempDb.tables.map((table) => table.name)).toEqual(['dailyEntries']);
+      expect(tempDb.tables.map((table) => table.name)).toEqual([
+        'dailyEntries',
+      ]);
     } finally {
       tempDb.close();
       await Dexie.delete('opsnormal-crash-export-schema-test');

@@ -1,6 +1,7 @@
 # ADR 0013 - Week-paginated mobile history grid
 
 ## Status
+
 Accepted
 
 ## Context
@@ -18,6 +19,7 @@ and stay inside the product boundary of a narrow local-first tracker.
 ## Decision
 
 Use two responsive history surfaces backed by the same data:
+
 - keep the full 30-column grid at and above the 768px desktop breakpoint
 - collapse the mobile history view into week-sized snap groups
 - make day selection the primary mobile interaction and show a daily brief for all five sectors beneath the weekly view
@@ -29,12 +31,14 @@ Use two responsive history surfaces backed by the same data:
 ## Consequences
 
 Positive:
+
 - mobile history stays readable without reducing the product to a gimmick heatmap
 - weekly snap groups make horizontal movement discoverable and controlled
 - daily detail remains available without forcing thirty columns into a phone viewport
 - desktop keeps the denser operator picture and keyboard contract
 
 Trade-offs:
+
 - the history surface now has separate mobile and desktop render paths
 - test coverage must prove both layouts stay aligned on the same underlying data
 - mobile history emphasizes day-level review instead of cell-by-cell keyboard navigation

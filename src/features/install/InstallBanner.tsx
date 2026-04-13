@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import {
   clearInstallBannerDismissal,
   hasDismissedInstallBanner,
-  recordInstallBannerDismissal
+  recordInstallBannerDismissal,
 } from './installBannerState';
 import { useInstallPrompt } from './useInstallPrompt';
 
@@ -11,7 +11,8 @@ const actionButtonClasses =
   'ops-action-button clip-notched ops-notch-chip px-4 py-2 text-xs font-semibold tracking-[0.16em] uppercase';
 
 export function InstallBanner() {
-  const { isIOS, isStandalone, canPromptInstall, promptInstall } = useInstallPrompt();
+  const { isIOS, isStandalone, canPromptInstall, promptInstall } =
+    useInstallPrompt();
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -38,9 +39,9 @@ export function InstallBanner() {
                 Install the app
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-ops-text-secondary">
-                Your data stays on this device. Installing improves offline reopen behavior and
-                storage durability, especially in Safari on macOS and browser tabs on iPhone or
-                iPad.
+                Your data stays on this device. Installing improves offline
+                reopen behavior and storage durability, especially in Safari on
+                macOS and browser tabs on iPhone or iPad.
               </p>
 
               {isIOS ? (

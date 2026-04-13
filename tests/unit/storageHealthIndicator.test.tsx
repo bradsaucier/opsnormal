@@ -5,7 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { StorageHealthIndicator } from '../../src/components/StorageHealthIndicator';
 import type { StorageHealth } from '../../src/lib/storage';
 
-function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHealth {
+function buildStorageHealth(
+  overrides: Partial<StorageHealth> = {},
+): StorageHealth {
   return {
     persisted: false,
     persistenceAvailable: true,
@@ -27,9 +29,9 @@ function buildStorageHealth(overrides: Partial<StorageHealth> = {}): StorageHeal
       installRecommended: false,
       webKitRisk: false,
       lastVerificationResult: 'unknown',
-      lastVerifiedAt: null
+      lastVerifiedAt: null,
     },
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -42,13 +44,16 @@ describe('StorageHealthIndicator', () => {
     render(
       <StorageHealthIndicator
         storageHealth={buildStorageHealth()}
-        onRequestStorageProtection={vi.fn().mockResolvedValue(buildStorageHealth())}
-      />
+        onRequestStorageProtection={vi
+          .fn()
+          .mockResolvedValue(buildStorageHealth())}
+      />,
     );
 
-    expect(screen.getByRole('button', { name: 'Request durable storage' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Request durable storage' }),
+    ).toBeInTheDocument();
   });
-
 
   it('does not render the request button when persistence is already granted', () => {
     render(
@@ -56,44 +61,54 @@ describe('StorageHealthIndicator', () => {
         storageHealth={buildStorageHealth({ persisted: true })}
         onRequestStorageProtection={vi.fn()}
         isRequestingStorageProtection={false}
-      />
+      />,
     );
 
-    expect(screen.queryByRole('button', { name: /durable storage/i })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /durable storage/i }),
+    ).toBeNull();
   });
 
   it('enforces a visible cooldown after a denied manual request', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-09T12:00:00.000Z'));
 
-    const onRequestStorageProtection = vi.fn().mockResolvedValue(buildStorageHealth({
-      safari: {
-        ...buildStorageHealth().safari,
-        persistAttempted: true
-      }
-    }));
+    const onRequestStorageProtection = vi.fn().mockResolvedValue(
+      buildStorageHealth({
+        safari: {
+          ...buildStorageHealth().safari,
+          persistAttempted: true,
+        },
+      }),
+    );
 
     render(
       <StorageHealthIndicator
         storageHealth={buildStorageHealth()}
         onRequestStorageProtection={onRequestStorageProtection}
-      />
+      />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Request durable storage' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Request durable storage' }),
+    );
 
     await act(async () => {
       await Promise.resolve();
     });
 
     expect(onRequestStorageProtection).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Request denied by browser' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Request denied by browser' }),
+    ).toBeDisabled();
 
     act(() => {
       vi.advanceTimersByTime(61_000);
     });
 
-    expect(screen.getByRole('button', { name: 'Retry durable storage request' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Retry durable storage request' }),
+    ).toBeEnabled();
   });
 
   it('shows install-specific helper text on iPhone and iPad browser risk paths', () => {
@@ -102,14 +117,16 @@ describe('StorageHealthIndicator', () => {
         storageHealth={buildStorageHealth({
           safari: {
             ...buildStorageHealth().safari,
-            installRecommended: true
-          }
+            installRecommended: true,
+          },
         })}
-      />
+      />,
     );
 
     expect(
-      screen.getByText('Install to Home Screen, then request durable storage again. On iPhone and iPad, installation is the strongest protection path for local data.')
+      screen.getByText(
+        'Install to Home Screen, then request durable storage again. On iPhone and iPad, installation is the strongest protection path for local data.',
+      ),
     ).toBeInTheDocument();
   });
 });

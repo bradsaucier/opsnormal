@@ -17,7 +17,7 @@ export function ExportBackupSection({
   onToggle,
   backupStatus,
   onJsonExport,
-  onCsvExport
+  onCsvExport,
 }: ExportBackupSectionProps) {
   return (
     <AccordionSection
@@ -35,7 +35,9 @@ export function ExportBackupSection({
                 <p className="text-xs font-semibold tracking-[0.16em] text-ops-text-muted uppercase">
                   Backup posture
                 </p>
-                <p className="mt-2 text-sm leading-6 text-ops-text-secondary">{backupStatus}</p>
+                <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+                  {backupStatus}
+                </p>
                 <p className="mt-2 text-xs leading-5 text-ops-text-muted">
                   Export is the primary safe recovery path. Run it routinely.
                 </p>
@@ -64,8 +66,9 @@ export function ExportBackupSection({
         <div className="panel-shadow">
           <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
             <div className="clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-raised)] p-4 text-sm leading-6 text-ops-text-secondary">
-              Export produces the recovery file. Run it routinely, especially in Safari on macOS and
-              browser tabs on iPhone or iPad where browser-managed storage can disappear.
+              Export produces the recovery file. Run it routinely, especially in
+              Safari on macOS and browser tabs on iPhone or iPad where
+              browser-managed storage can disappear.
             </div>
           </div>
         </div>

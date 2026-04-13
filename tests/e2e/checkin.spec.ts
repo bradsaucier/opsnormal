@@ -1,8 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
-function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+function sectorRadio(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
+) {
   return page.getByRole('radio', {
-    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i'),
   });
 }
 
@@ -19,10 +23,14 @@ test.describe('OpsNormal', () => {
   test('persists a check-in across reloads', async ({ page }) => {
     await page.goto('/');
 
-    const storageHealthToggle = page.getByRole('button', { name: /storage health/i });
+    const storageHealthToggle = page.getByRole('button', {
+      name: /storage health/i,
+    });
     await expect(storageHealthToggle).toBeVisible();
     await storageHealthToggle.click();
-    await expect(page.getByText('Storage durability', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('Storage durability', { exact: true }),
+    ).toBeVisible();
 
     const workNominal = sectorRadio(page, 'Work or School', 'nominal');
     const workDegraded = sectorRadio(page, 'Work or School', 'degraded');
@@ -39,14 +47,20 @@ test.describe('OpsNormal', () => {
     await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
   });
 
-  test('keeps inset focus styling and prevents page scroll on keyboard selection', async ({ page }) => {
+  test('keeps inset focus styling and prevents page scroll on keyboard selection', async ({
+    page,
+  }) => {
     await page.goto('/');
 
     const workUnmarked = sectorRadio(page, 'Work or School', 'unmarked');
     const workNominal = sectorRadio(page, 'Work or School', 'nominal');
 
     for (let attempt = 0; attempt < 20; attempt += 1) {
-      if (await workUnmarked.evaluate((element) => document.activeElement === element)) {
+      if (
+        await workUnmarked.evaluate(
+          (element) => document.activeElement === element,
+        )
+      ) {
         break;
       }
 
@@ -56,7 +70,7 @@ test.describe('OpsNormal', () => {
     await expect(workUnmarked).toBeFocused();
 
     const focusShadow = await workUnmarked.evaluate(
-      (element) => window.getComputedStyle(element).boxShadow
+      (element) => window.getComputedStyle(element).boxShadow,
     );
     expect(focusShadow.toLowerCase()).toContain('inset');
 
@@ -65,7 +79,9 @@ test.describe('OpsNormal', () => {
     await expect(workNominal).toHaveAttribute('aria-checked', 'true');
     await page.keyboard.press('Space');
     await expect(workNominal).toHaveAttribute('aria-checked', 'true');
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(initialScrollY);
+    await expect
+      .poll(() => page.evaluate(() => window.scrollY))
+      .toBe(initialScrollY);
   });
 
   test('can reopen offline after first load', async ({ page, context }) => {
@@ -76,6 +92,8 @@ test.describe('OpsNormal', () => {
     await context.setOffline(true);
     await page.reload();
 
-    await expect(page.getByRole('heading', { name: 'OpsNormal' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'OpsNormal' }),
+    ).toBeVisible();
   });
 });

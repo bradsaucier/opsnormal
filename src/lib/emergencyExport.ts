@@ -10,20 +10,27 @@ export interface EmergencyExportResult {
   exportedAt: string;
 }
 
-function buildEmergencyExportResult(snapshot: CrashExportSnapshot, exportedAt: string): EmergencyExportResult {
+function buildEmergencyExportResult(
+  snapshot: CrashExportSnapshot,
+  exportedAt: string,
+): EmergencyExportResult {
   return {
     recoveredCount: snapshot.entries.length,
     skippedCount: snapshot.skippedCount,
-    exportedAt
+    exportedAt,
   };
 }
 
 export async function exportEmergencyJsonBackup(
-  fileName = 'opsnormal-emergency-export.json'
+  fileName = 'opsnormal-emergency-export.json',
 ): Promise<EmergencyExportResult> {
   const snapshot = await readCrashExportSnapshot();
   const exportedAt = new Date().toISOString();
-  const payload = await createCrashJsonExport(snapshot.entries, snapshot.storageDiagnostics, exportedAt);
+  const payload = await createCrashJsonExport(
+    snapshot.entries,
+    snapshot.storageDiagnostics,
+    exportedAt,
+  );
 
   downloadTextFile(fileName, payload, 'application/json');
   recordExportCompleted(exportedAt);
@@ -32,7 +39,7 @@ export async function exportEmergencyJsonBackup(
 }
 
 export async function exportEmergencyCsvBackup(
-  fileName = 'opsnormal-emergency-export.csv'
+  fileName = 'opsnormal-emergency-export.csv',
 ): Promise<EmergencyExportResult> {
   const snapshot = await readCrashExportSnapshot();
   const exportedAt = new Date().toISOString();

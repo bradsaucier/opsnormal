@@ -11,7 +11,7 @@ export function useEntriesForDate(date: string) {
         .between([date, Dexie.minKey], [date, Dexie.maxKey], true, true)
         .toArray(),
     [date],
-    []
+    [],
   );
 }
 
@@ -23,6 +23,6 @@ export function useEntriesForDateRange(startDate: string, endDate: string) {
         .between([startDate, Dexie.minKey], [endDate, Dexie.maxKey], true, true)
         .toArray(),
     [startDate, endDate],
-    []
+    [],
   );
 }

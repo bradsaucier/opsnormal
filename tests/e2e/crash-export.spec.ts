@@ -1,15 +1,24 @@
 import { readFile } from 'node:fs/promises';
 
-import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import {
+  expect,
+  test,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from '@playwright/test';
 
 import { computeJsonExportChecksum } from '../../src/lib/export';
-import { parseExportPayloadDetails, type ParsedExportPayloadDetails } from '../helpers/exportPayload';
+import {
+  parseExportPayloadDetails,
+  type ParsedExportPayloadDetails,
+} from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   type EntryStatus,
   type JsonExportPayload,
-  type SectorId
+  type SectorId,
 } from '../../src/types';
 
 const FIXED_TEST_TIME_ISO = '2026-03-28T12:00:00.000Z';
@@ -32,14 +41,14 @@ const EXPECTED_CRASH_EXPORT_ENTRIES: CrashEntry[] = [
     date: FIXED_TEST_DATE_KEY,
     sectorId: 'rest',
     status: 'degraded',
-    updatedAt: FIXED_TEST_TIME_ISO
+    updatedAt: FIXED_TEST_TIME_ISO,
   },
   {
     date: FIXED_TEST_DATE_KEY,
     sectorId: 'work-school',
     status: 'nominal',
-    updatedAt: FIXED_TEST_TIME_ISO
-  }
+    updatedAt: FIXED_TEST_TIME_ISO,
+  },
 ];
 
 function requireDownloadPath(path: string | null): string {
@@ -54,24 +63,31 @@ async function readLocalFileText(filePath: string): Promise<string> {
   return await readFile(filePath, 'utf8');
 }
 
-function sectorRadio(page: Page, sectorLabel: string, statusLabel: 'unmarked' | 'nominal' | 'degraded') {
+function sectorRadio(
+  page: Page,
+  sectorLabel: string,
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
+) {
   return page.getByRole('radio', {
-    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i')
+    name: new RegExp(`^${sectorLabel} ${statusLabel}$`, 'i'),
   });
 }
 
 async function expectSectorStatus(
   page: Page,
   sectorLabel: string,
-  statusLabel: 'unmarked' | 'nominal' | 'degraded'
+  statusLabel: 'unmarked' | 'nominal' | 'degraded',
 ) {
-  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute('aria-checked', 'true');
+  await expect(sectorRadio(page, sectorLabel, statusLabel)).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
 }
 
 async function waitForStoredStatus(
   page: Page,
   sectorId: string,
-  expectedStatus: 'nominal' | 'degraded'
+  expectedStatus: 'nominal' | 'degraded',
 ): Promise<void> {
   await page.waitForFunction(
     async ({ dateKey, expectedSectorId, expectedStatus: status }) => {
@@ -97,7 +113,8 @@ async function waitForStoredStatus(
               status?: string;
             }>;
             const match = entries.find(
-              (entry) => entry.date === dateKey && entry.sectorId === expectedSectorId
+              (entry) =>
+                entry.date === dateKey && entry.sectorId === expectedSectorId,
             );
 
             database.close();
@@ -106,7 +123,11 @@ async function waitForStoredStatus(
         };
       });
     },
-    { dateKey: FIXED_TEST_DATE_KEY, expectedSectorId: sectorId, expectedStatus }
+    {
+      dateKey: FIXED_TEST_DATE_KEY,
+      expectedSectorId: sectorId,
+      expectedStatus,
+    },
   );
 }
 
@@ -116,19 +137,26 @@ function normalizeEntries(entries: JsonExportPayload['entries']): CrashEntry[] {
       date: entry.date,
       sectorId: entry.sectorId,
       status: entry.status,
-      updatedAt: entry.updatedAt
+      updatedAt: entry.updatedAt,
     }))
-    .sort((left, right) => `${left.date}:${left.sectorId}`.localeCompare(`${right.date}:${right.sectorId}`));
+    .sort((left, right) =>
+      `${left.date}:${left.sectorId}`.localeCompare(
+        `${right.date}:${right.sectorId}`,
+      ),
+    );
 }
 
-async function expectExportPayloadIntegrity(parsedPayload: ParsedExportPayloadDetails): Promise<void> {
+async function expectExportPayloadIntegrity(
+  parsedPayload: ParsedExportPayloadDetails,
+): Promise<void> {
   const { payload, rawChecksumPayload } = parsedPayload;
 
   expect(payload.app).toBe(OPSNORMAL_APP_NAME);
   expect(payload.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
   expect(payload.checksum).toMatch(/^[a-f0-9]{64}$/);
 
-  const recomputedChecksum: string = await computeJsonExportChecksum(rawChecksumPayload);
+  const recomputedChecksum: string =
+    await computeJsonExportChecksum(rawChecksumPayload);
 
   expect(payload.checksum).toBe(recomputedChecksum);
 }
@@ -159,7 +187,12 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
         const request = window.indexedDB.open('opsnormal');
 
         request.onerror = () => {
-          reject(request.error ?? new Error('Failed to open IndexedDB for malformed crash export seed.'));
+          reject(
+            request.error ??
+              new Error(
+                'Failed to open IndexedDB for malformed crash export seed.',
+              ),
+          );
         };
 
         request.onsuccess = () => {
@@ -171,7 +204,7 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
             date: dateKey,
             sectorId: 'household',
             status: 'invalid-status',
-            updatedAt
+            updatedAt,
           });
 
           transaction.oncomplete = () => {
@@ -181,14 +214,16 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
 
           transaction.onerror = () => {
             const transactionError =
-              transaction.error ?? new Error('Failed to seed malformed crash export row.');
+              transaction.error ??
+              new Error('Failed to seed malformed crash export row.');
             database.close();
             reject(transactionError);
           };
 
           transaction.onabort = () => {
             const transactionError =
-              transaction.error ?? new Error('Malformed crash export row was aborted.');
+              transaction.error ??
+              new Error('Malformed crash export row was aborted.');
             database.close();
             reject(transactionError);
           };
@@ -197,8 +232,8 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
     },
     {
       dateKey: FIXED_TEST_DATE_KEY,
-      updatedAt: FIXED_TEST_TIME_ISO
-    }
+      updatedAt: FIXED_TEST_TIME_ISO,
+    },
   );
 }
 
@@ -206,8 +241,12 @@ async function openCrashFallbackHarness(page: Page): Promise<void> {
   await page.goto('/crash-fallback-harness.html');
 
   await expect(page).toHaveTitle('OpsNormal Crash Fallback Harness');
-  await expect(page.getByRole('heading', { name: 'OpsNormal stopped rendering' })).toBeVisible();
-  await expect(page.getByText(/crash fallback harness injected render fault/i)).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'OpsNormal stopped rendering' }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/crash fallback harness injected render fault/i),
+  ).toBeVisible();
 }
 
 async function exportCrashJson(page: Page): Promise<CrashJsonExportResult> {
@@ -219,7 +258,7 @@ async function exportCrashJson(page: Page): Promise<CrashJsonExportResult> {
 
   return {
     rawText,
-    parsed: parseExportPayloadDetails(rawText)
+    parsed: parseExportPayloadDetails(rawText),
   };
 }
 
@@ -233,24 +272,31 @@ async function exportCrashCsv(page: Page): Promise<string> {
 }
 
 async function ensureImportPanelOpen(page: Page): Promise<void> {
-  const importToggle = page.getByRole('button', { name: /import and restore/i });
+  const importToggle = page.getByRole('button', {
+    name: /import and restore/i,
+  });
 
   if ((await importToggle.getAttribute('aria-expanded')) !== 'true') {
     await importToggle.click();
   }
 }
 
-async function importCrashJsonPayload(page: Page, payloadText: string): Promise<void> {
+async function importCrashJsonPayload(
+  page: Page,
+  payloadText: string,
+): Promise<void> {
   await ensureImportPanelOpen(page);
   await page.locator('[data-testid="import-file-input"]').setInputFiles({
     name: 'opsnormal-crash-export.json',
     mimeType: 'application/json',
-    buffer: Buffer.from(payloadText, 'utf8')
+    buffer: Buffer.from(payloadText, 'utf8'),
   });
   await page.getByRole('button', { name: /confirm merge import/i }).click();
 }
 
-async function createCleanImportContext(browser: Browser): Promise<BrowserContext> {
+async function createCleanImportContext(
+  browser: Browser,
+): Promise<BrowserContext> {
   return await browser.newContext();
 }
 
@@ -263,7 +309,7 @@ test.describe('OpsNormal crash export recovery @harness', () => {
 
   test('exports valid crash-state JSON that can be imported into a clean browser context', async ({
     browser,
-    page
+    page,
   }) => {
     test.slow();
 
@@ -273,8 +319,12 @@ test.describe('OpsNormal crash export recovery @harness', () => {
     const exported = await exportCrashJson(page);
 
     await expectExportPayloadIntegrity(exported.parsed);
-    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
-    await expect(page.getByText('JSON export complete. 2 entries recovered.')).toBeVisible();
+    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(
+      EXPECTED_CRASH_EXPORT_ENTRIES,
+    );
+    await expect(
+      page.getByText('JSON export complete. 2 entries recovered.'),
+    ).toBeVisible();
 
     const importContext = await createCleanImportContext(browser);
 
@@ -294,7 +344,7 @@ test.describe('OpsNormal crash export recovery @harness', () => {
 
   test('skips malformed stored rows and still exports importable crash-state JSON', async ({
     browser,
-    page
+    page,
   }) => {
     test.slow();
 
@@ -305,9 +355,13 @@ test.describe('OpsNormal crash export recovery @harness', () => {
     const exported = await exportCrashJson(page);
 
     await expectExportPayloadIntegrity(exported.parsed);
-    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(EXPECTED_CRASH_EXPORT_ENTRIES);
+    expect(normalizeEntries(exported.parsed.payload.entries)).toEqual(
+      EXPECTED_CRASH_EXPORT_ENTRIES,
+    );
     await expect(
-      page.getByText('JSON export complete. 2 entries recovered. 1 malformed row skipped.')
+      page.getByText(
+        'JSON export complete. 2 entries recovered. 1 malformed row skipped.',
+      ),
     ).toBeVisible();
 
     const importContext = await createCleanImportContext(browser);
@@ -327,7 +381,9 @@ test.describe('OpsNormal crash export recovery @harness', () => {
     }
   });
 
-  test('exports crash-state CSV from the root fallback surface', async ({ page }) => {
+  test('exports crash-state CSV from the root fallback surface', async ({
+    page,
+  }) => {
     await seedCrashExportEntries(page);
     await openCrashFallbackHarness(page);
 
@@ -336,8 +392,10 @@ test.describe('OpsNormal crash export recovery @harness', () => {
     expect(csv.trim().split('\n')).toEqual([
       'date,sectorId,status,updatedAt',
       `${FIXED_TEST_DATE_KEY},rest,degraded,${FIXED_TEST_TIME_ISO}`,
-      `${FIXED_TEST_DATE_KEY},work-school,nominal,${FIXED_TEST_TIME_ISO}`
+      `${FIXED_TEST_DATE_KEY},work-school,nominal,${FIXED_TEST_TIME_ISO}`,
     ]);
-    await expect(page.getByText('CSV export complete. 2 entries recovered.')).toBeVisible();
+    await expect(
+      page.getByText('CSV export complete. 2 entries recovered.'),
+    ).toBeVisible();
   });
 });

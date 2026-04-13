@@ -3,7 +3,10 @@ import Dexie from 'dexie';
 import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from '../db/schema';
 import { DailyEntrySchema } from '../schemas/import';
 import type { CrashStorageDiagnostics, DailyEntry } from '../types';
-import { getStorageDurabilityDiagnostics, isPersistentStorageGranted } from './storage';
+import {
+  getStorageDurabilityDiagnostics,
+  isPersistentStorageGranted,
+} from './storage';
 
 export interface CrashExportSnapshot {
   entries: DailyEntry[];
@@ -17,7 +20,9 @@ function compareEntries(left: DailyEntry, right: DailyEntry): number {
   return leftKey.localeCompare(rightKey);
 }
 
-function sanitizeCrashExportEntries(rawEntries: unknown[]): Pick<CrashExportSnapshot, 'entries' | 'skippedCount'> {
+function sanitizeCrashExportEntries(
+  rawEntries: unknown[],
+): Pick<CrashExportSnapshot, 'entries' | 'skippedCount'> {
   const entries: DailyEntry[] = [];
   let skippedCount = 0;
 
@@ -34,7 +39,7 @@ function sanitizeCrashExportEntries(rawEntries: unknown[]): Pick<CrashExportSnap
       date,
       sectorId,
       status,
-      updatedAt
+      updatedAt,
     });
   }
 
@@ -42,7 +47,7 @@ function sanitizeCrashExportEntries(rawEntries: unknown[]): Pick<CrashExportSnap
 
   return {
     entries,
-    skippedCount
+    skippedCount,
   };
 }
 
@@ -56,13 +61,15 @@ export async function readCrashExportSnapshot(): Promise<CrashExportSnapshot> {
   applyOpsNormalDbSchema(tempDb);
 
   try {
-    const rawEntries = (await tempDb.table('dailyEntries').toArray()) as unknown[];
+    const rawEntries = (await tempDb
+      .table('dailyEntries')
+      .toArray()) as unknown[];
     const snapshot = sanitizeCrashExportEntries(rawEntries);
     const storageDiagnostics = await readCrashStorageDiagnostics();
 
     return {
       ...snapshot,
-      storageDiagnostics
+      storageDiagnostics,
     };
   } finally {
     tempDb.close();
@@ -78,7 +85,7 @@ const DELETE_DATABASE_TIMEOUT_MS = 3000;
 
 function createDeleteDatabaseTimeoutError(): Error {
   return new Error(
-    'Local data reset timed out. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.'
+    'Local data reset timed out. Close duplicate OpsNormal tabs, then retry or clear site data manually through the browser.',
   );
 }
 
@@ -92,7 +99,7 @@ export async function deleteOpsNormalDatabase(): Promise<void> {
         timeoutId = setTimeout(() => {
           reject(createDeleteDatabaseTimeoutError());
         }, DELETE_DATABASE_TIMEOUT_MS);
-      })
+      }),
     ]);
   } finally {
     if (timeoutId !== undefined) {

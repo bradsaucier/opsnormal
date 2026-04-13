@@ -14,7 +14,7 @@ export function SectionCrashFallback({
   sectionName,
   error,
   componentStack,
-  onRetry
+  onRetry,
 }: SectionCrashFallbackProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -37,7 +37,9 @@ export function SectionCrashFallback({
         {sectionName} offline
       </h2>
       <p className="mt-2 text-sm leading-6 text-zinc-400">
-        This section crashed, but the rest of OpsNormal is still online. Retry the section or reload the page. Local data on this device remains under the normal browser storage limits and risks.
+        This section crashed, but the rest of OpsNormal is still online. Retry
+        the section or reload the page. Local data on this device remains under
+        the normal browser storage limits and risks.
       </p>
       <p className="mt-3 font-mono text-xs leading-5 text-orange-300/80 break-words">
         {getErrorMessage(error, 'Unknown render failure.')}
