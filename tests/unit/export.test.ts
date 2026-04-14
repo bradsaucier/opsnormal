@@ -64,14 +64,14 @@ describe('export helpers', () => {
         id: 2,
         date: '2026-03-27,pm',
         sectorId: 'body',
-        status: 'degraded\nneeds-attention',
-        updatedAt: '2026-03-27T12:00:00.000Z"quoted"',
+        status: 'degraded',
+        updatedAt: '2026-03-27T12:00:00.000Z\n"quoted"',
       },
     ]);
 
     expect(csv).toContain('"2026-03-27,pm"');
-    expect(csv).toContain('"degraded\nneeds-attention"');
-    expect(csv).toContain('"2026-03-27T12:00:00.000Z""quoted"""');
+    expect(csv).toContain('degraded');
+    expect(csv).toContain('"2026-03-27T12:00:00.000Z\n""quoted"""');
   });
 
   it('creates versioned json payload with entries and checksum', async () => {
