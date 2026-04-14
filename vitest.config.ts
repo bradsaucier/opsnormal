@@ -30,6 +30,8 @@ export default defineConfig({
       reportsDirectory: './coverage',
       reportOnFailure: true,
       thresholds: {
+        // Coverage stays incremental on purpose. The targeted module list marks
+        // the repo's highest-risk logic until broader thresholds are justified.
         lines: 70,
         functions: 70,
         statements: 70,
