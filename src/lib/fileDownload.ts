@@ -27,8 +27,7 @@ export class SaveVerificationUnavailableError extends Error {
   cause: unknown;
 
   constructor(
-    message =
-      'Backup save completed, but the browser could not read the saved file back for verification.',
+    message = 'Backup save completed, but the browser could not read the saved file back for verification.',
     options?: { cause?: unknown },
   ) {
     super(message);
@@ -39,8 +38,7 @@ export class SaveVerificationUnavailableError extends Error {
 
 export class SaveVerificationMismatchError extends Error {
   constructor(
-    message =
-      'Backup save verification failed. The saved file did not match the expected backup payload.',
+    message = 'Backup save verification failed. The saved file did not match the expected backup payload.',
   ) {
     super(message);
     this.name = 'SaveVerificationMismatchError';
