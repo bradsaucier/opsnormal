@@ -167,13 +167,10 @@ describe('exportSerialization', () => {
     ).rejects.toThrow('required Web Crypto API');
   });
 
-  it('reports missing Web Crypto when no secure-context hint is available', async () => {
+  it('reports missing Web Crypto when no secure-context hint is available anywhere', async () => {
     vi.stubGlobal('crypto', { subtle: undefined });
-
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: undefined,
-    });
+    vi.stubGlobal('window', undefined);
+    vi.stubGlobal('isSecureContext', undefined);
 
     await expect(
       computeJsonExportChecksum({
