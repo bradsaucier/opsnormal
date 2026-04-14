@@ -8,6 +8,8 @@ OpsNormal is maintained on the `main` branch. Security fixes are applied there f
 
 Use GitHub private vulnerability reporting for issues that could affect user safety, data integrity, or the published build.
 
+Direct link: https://github.com/bradsaucier/opsnormal/security/advisories/new
+
 Include:
 
 1. A clear description of the issue
@@ -74,13 +76,21 @@ Current repo controls include:
 
 ## Dependency maintenance posture
 
-Current repo policy for dependency hygiene is intentionally conservative.
+Current repo policy for dependency hygiene is intentionally conservative, with one explicit lint-stack exception recorded in ADR-0023.
 
 - Direct dependency ranges should not lag behind the audited lockfile floor without a reason
 - CI and deploy now fail on high-severity npm advisories through `npm audit --audit-level=high`
 - The `serialize-javascript` override stays in place until the Workbox dependency chain absorbs a fixed release
-- `eslint-plugin-react-hooks` stays on the React canary line until a stable release fully supports ESLint 10
+- `eslint-plugin-react-hooks` stays on the React canary line until a stable release fully supports ESLint 10, because the current stable release line still peers only through ESLint 9
 - Zod remains on the validated 3.x line until a separate migration proves 4.x behavior across import, export, and recovery schemas
+
+## GitHub Actions policy
+
+The workflow files pin third-party actions to immutable commit SHAs.
+
+- Keep the SHA comment aligned to the human-readable release tag
+- Update action SHAs through reviewable pull requests instead of silent tag drift
+- Treat workflow changes as supply-chain changes and review them with the same discipline as application dependencies
 
 ## Honest limits
 
