@@ -1,7 +1,7 @@
-import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { useViewportMatch } from '../../src/features/history/useViewportMatch';
+import { useViewportMatch } from "../../src/features/history/useViewportMatch";
 
 type ChangeListener = (event: MediaQueryListEvent) => void;
 
@@ -16,13 +16,13 @@ function installMatchMediaController(
     get matches() {
       return matches;
     },
-    media: '(min-width: 48rem)',
+    media: "(min-width: 48rem)",
     onchange: null,
     addEventListener: useLegacyListeners
       ? undefined
       : vi.fn(
           (eventName: string, listener: EventListenerOrEventListenerObject) => {
-            if (eventName === 'change' && typeof listener === 'function') {
+            if (eventName === "change" && typeof listener === "function") {
               listeners.add(listener as ChangeListener);
             }
           },
@@ -31,7 +31,7 @@ function installMatchMediaController(
       ? undefined
       : vi.fn(
           (eventName: string, listener: EventListenerOrEventListenerObject) => {
-            if (eventName === 'change' && typeof listener === 'function') {
+            if (eventName === "change" && typeof listener === "function") {
               listeners.delete(listener as ChangeListener);
             }
           },
@@ -45,7 +45,7 @@ function installMatchMediaController(
     dispatchEvent: vi.fn(),
   } as unknown as MediaQueryList;
 
-  Object.defineProperty(window, 'matchMedia', {
+  Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: vi.fn(() => mediaQueryList),
   });
@@ -56,7 +56,7 @@ function installMatchMediaController(
       matches = nextMatches;
       const event = {
         matches,
-        media: '(min-width: 48rem)',
+        media: "(min-width: 48rem)",
       } as MediaQueryListEvent;
 
       for (const listener of listeners) {
@@ -66,14 +66,14 @@ function installMatchMediaController(
   };
 }
 
-describe('useViewportMatch', () => {
+describe("useViewportMatch", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('tracks viewport state through matchMedia change events', () => {
+  it("tracks viewport state through matchMedia change events", () => {
     const controller = installMatchMediaController(false);
-    const { result } = renderHook(() => useViewportMatch('(min-width: 48rem)'));
+    const { result } = renderHook(() => useViewportMatch("(min-width: 48rem)"));
 
     expect(result.current).toBe(false);
 
@@ -82,13 +82,15 @@ describe('useViewportMatch', () => {
     });
 
     expect(result.current).toBe(true);
-    expect(controller.mediaQueryList.addEventListener).toHaveBeenCalledTimes(1);
+    expect(controller.mediaQueryList.addEventListener.mock.calls).toHaveLength(
+      1,
+    );
   });
 
-  it('falls back to legacy addListener and removeListener support', () => {
+  it("falls back to legacy addListener and removeListener support", () => {
     const controller = installMatchMediaController(false, true);
     const { result, unmount } = renderHook(() =>
-      useViewportMatch('(min-width: 48rem)'),
+      useViewportMatch("(min-width: 48rem)"),
     );
 
     expect(result.current).toBe(false);
@@ -98,10 +100,10 @@ describe('useViewportMatch', () => {
     });
 
     expect(result.current).toBe(true);
-    expect(controller.mediaQueryList.addListener).toHaveBeenCalledTimes(1);
+    expect(controller.mediaQueryList.addListener.mock.calls).toHaveLength(1);
 
     unmount();
 
-    expect(controller.mediaQueryList.removeListener).toHaveBeenCalledTimes(1);
+    expect(controller.mediaQueryList.removeListener.mock.calls).toHaveLength(1);
   });
 });
