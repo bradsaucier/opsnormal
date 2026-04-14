@@ -1,3 +1,4 @@
+import { copyFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import react from '@vitejs/plugin-react';
@@ -29,6 +30,19 @@ export default defineConfig(({ mode }) => {
     /[.*+?^${}()|[\]\\]/g,
     '\\$&',
   );
+  const emitPages404 =
+    !isE2E &&
+    ({
+      name: 'emit-pages-404-fallback',
+      closeBundle() {
+        const builtIndex = resolve(__dirname, 'dist/index.html');
+        const built404 = resolve(__dirname, 'dist/404.html');
+
+        if (existsSync(builtIndex)) {
+          copyFileSync(builtIndex, built404);
+        }
+      },
+    } satisfies import('vite').Plugin);
 
   return {
     base: basePath,
@@ -40,11 +54,11 @@ export default defineConfig(({ mode }) => {
               main: resolve(__dirname, 'index.html'),
               bootFallbackHarness: resolve(
                 __dirname,
-                'boot-fallback-harness.html',
+                'tests/harness/boot-fallback-harness.html',
               ),
               crashFallbackHarness: resolve(
                 __dirname,
-                'crash-fallback-harness.html',
+                'tests/harness/crash-fallback-harness.html',
               ),
             },
           }
@@ -107,6 +121,7 @@ export default defineConfig(({ mode }) => {
           enabled: false,
         },
       }),
+      ...(emitPages404 ? [emitPages404] : []),
     ],
   };
 });

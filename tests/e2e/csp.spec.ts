@@ -58,7 +58,7 @@ test.describe('OpsNormal CSP posture', () => {
   }) => {
     await installCspViolationCollector(page);
 
-    await page.goto('/boot-fallback-harness.html');
+    await page.goto('/tests/harness/boot-fallback-harness.html');
 
     await expect(page.locator('.ops-boot-fallback-title')).toHaveText(
       'OpsNormal failed to start',
@@ -81,7 +81,7 @@ test.describe('OpsNormal CSP posture', () => {
   }) => {
     await installCspViolationCollector(page);
 
-    await page.goto('/crash-fallback-harness.html');
+    await page.goto('/tests/harness/crash-fallback-harness.html');
 
     await expect(
       page.getByRole('heading', { name: 'OpsNormal stopped rendering' }),

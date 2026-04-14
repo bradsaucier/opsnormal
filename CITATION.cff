@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+title: OpsNormal
+message: 'If you use OpsNormal in research, operations, or published work, please cite the software using this metadata.'
+type: software
+version: 1.0.0
+date-released: 2026-04-14
+license: MIT
+abstract: 'Local-only readiness tracking with deliberate constraints and operator-controlled recovery.'
+repository-code: 'https://github.com/bradsaucier/opsnormal'
+url: 'https://opsnormal.app/'
+authors:
+  - family-names: Saucier
+    given-names: Bradley
+    alias: bradsaucier

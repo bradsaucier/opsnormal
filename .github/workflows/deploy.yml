@@ -1,4 +1,4 @@
-name: 'Pipeline: Release Provenance'
+name: 'Pipeline: Pages Release'
 
 on:
   workflow_run:
@@ -12,11 +12,6 @@ on:
 permissions:
   actions: read
   contents: read
-
-env:
-  # Remove after GitHub's JavaScript actions default to Node 24 on 2026-06-02.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  HUSKY: 0
 
 concurrency:
   group: pages-release-pipeline
@@ -34,22 +29,24 @@ jobs:
 
     steps:
       - name: Checkout release SHA
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        env:
+          HUSKY: 0
         run: npm ci
 
       - name: Download CI-verified production artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dist-ci-verified
           path: ./dist
@@ -58,7 +55,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.4
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-release-${{ hashFiles('package-lock.json') }}
@@ -96,7 +93,7 @@ jobs:
 
     steps:
       - name: Download CI-verified production artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dist-ci-verified
           path: ./dist
@@ -105,10 +102,10 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5.0.0
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5.0.0
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

@@ -4,6 +4,10 @@
 
 OpsNormal exists to provide a sub-10-second daily readiness check that remains usable when the operator is overloaded.
 
+## Decision anchors
+
+The current release posture and trust boundary are grounded in ADR-0005, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0014, ADR-0017, ADR-0020, ADR-0021, ADR-0022, and ADR-0023.
+
 ## Product boundary
 
 OpsNormal is intentionally narrow.
@@ -168,6 +172,7 @@ OpsNormal is built with Vite, React 19, TypeScript, Tailwind CSS 4, Dexie 4, and
 Deployment posture:
 
 - Static hosting on GitHub Pages
+- The production build emits `dist/404.html` from the shipped `dist/index.html` so GitHub Pages preserves the SPA fallback without a second build path
 - PWA manifest and service worker generated at build time
 - App shell cached for offline reopen after first successful load
 - Service worker update checks performed during long-lived sessions, on foreground return, and when connectivity resumes

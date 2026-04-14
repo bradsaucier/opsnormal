@@ -11,6 +11,14 @@ const baseURL = env?.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
 const webServerCommand =
   env?.PLAYWRIGHT_WEB_SERVER_CMD ?? 'npm run preview:e2e';
 const skipWebServer = env?.PLAYWRIGHT_SKIP_WEBSERVER === '1';
+const webkitSmokeProject = {
+  testMatch: /.*webkit-smoke\.spec\.ts/,
+  retries: 2,
+  workers: 1,
+  use: {
+    ...devices['Desktop Safari'],
+  },
+};
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -47,21 +55,13 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      testMatch: /.*webkit-smoke\.spec\.ts/,
-      retries: 2,
-      workers: 1,
-      use: {
-        ...devices['Desktop Safari'],
-      },
+      ...webkitSmokeProject,
     },
     {
+      // Separate project name keeps the release-artifact smoke lane easy to
+      // distinguish in CI reports without changing the browser contract.
       name: 'webkit-release',
-      testMatch: /.*webkit-smoke\.spec\.ts/,
-      retries: 2,
-      workers: 1,
-      use: {
-        ...devices['Desktop Safari'],
-      },
+      ...webkitSmokeProject,
     },
   ],
 });

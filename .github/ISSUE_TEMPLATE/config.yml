@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security advisories
+    url: https://github.com/bradsaucier/opsnormal/security/advisories/new
+    about: Report vulnerabilities through GitHub private vulnerability reporting.
+  - name: Support policy
+    url: https://github.com/bradsaucier/opsnormal/blob/main/SUPPORT.md
+    about: Read the support channels, response expectations, and funding posture before filing.
