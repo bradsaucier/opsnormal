@@ -53,6 +53,39 @@ function getModeOptionClasses(isSelected: boolean, mode: ImportMode): string {
   return 'clip-notched ops-notch-chip border border-emerald-400/35 bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-emerald-50';
 }
 
+function getReplaceCheckpointStepTwoText(
+  replaceBackupState: ReplaceBackupState,
+  supportsVerifiedFileSave: boolean,
+): string {
+  if (replaceBackupState.phase === 'ready') {
+    return replaceBackupState.verification === 'verified'
+      ? 'Step 2 - browser read-back proof complete.'
+      : 'Step 2 - manual local-disk check acknowledged.';
+  }
+
+  if (replaceBackupState.phase === 'manual-awaiting-ack') {
+    return replaceBackupState.reason === 'readback-unavailable'
+      ? 'Step 2 - browser read-back proof unavailable. Verify the file exists on local disk and acknowledge before replace can unlock.'
+      : 'Step 2 - backup download triggered. Verify the file exists on local disk and acknowledge before replace can unlock.';
+  }
+
+  return supportsVerifiedFileSave
+    ? 'Step 2 - the browser must read the saved file back before replace can unlock.'
+    : 'Step 2 - verify the file exists on local disk and acknowledge before replace can unlock.';
+}
+
+function getManualBackupInstructionText(
+  replaceBackupState: ReplaceBackupState,
+): string {
+  if (replaceBackupState.phase !== 'manual-awaiting-ack') {
+    return '';
+  }
+
+  return replaceBackupState.reason === 'readback-unavailable'
+    ? 'Browser read-back proof unavailable. Verify the saved file exists on local disk, then acknowledge before replace unlocks.'
+    : 'Backup download triggered. Verify the saved file exists on local disk, then acknowledge before replace unlocks.';
+}
+
 export function ImportRestoreSection({
   isOpen,
   onToggle,
@@ -83,6 +116,15 @@ export function ImportRestoreSection({
       ? 'Integrity verified. Embedded SHA-256 checksum matched before write staging.'
       : 'Legacy backup detected. Structure validated, but this file has no integrity checksum.'
     : '';
+
+  const replaceCheckpointStepTwoText = getReplaceCheckpointStepTwoText(
+    replaceBackupState,
+    supportsVerifiedFileSave,
+  );
+
+  const manualBackupInstructionText = getManualBackupInstructionText(
+    replaceBackupState,
+  );
 
   return (
     <AccordionSection
@@ -266,11 +308,7 @@ export function ImportRestoreSection({
                       <div className="panel-shadow">
                         <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
                           <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-amber-50">
-                            Step 1 - secure a pre-replace backup. Step 2 -
-                            verify that the backup file exists on local disk if
-                            the browser cannot prove the write. Step 3 - arm the
-                            destructive path. Step 4 - execute the replace only
-                            if the preview still matches intent.
+                            Step 1 - secure a pre-replace backup. {replaceCheckpointStepTwoText} Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
                           </div>
                         </div>
                       </div>
@@ -280,6 +318,9 @@ export function ImportRestoreSection({
                           <div className="panel-shadow">
                             <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
                               <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.14),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3">
+                                <p className="mb-3 text-sm leading-6 text-amber-100">
+                                  {manualBackupInstructionText}
+                                </p>
                                 <label className="flex items-start gap-3 text-sm leading-6 text-amber-100">
                                   <input
                                     type="checkbox"
@@ -323,7 +364,7 @@ export function ImportRestoreSection({
                             {replaceBackupState.phase === 'saving'
                               ? 'Writing Backup'
                               : supportsVerifiedFileSave
-                                ? 'Write Verified Pre-Replace Backup'
+                                ? 'Write and Verify Pre-Replace Backup'
                                 : 'Export Pre-Replace Backup'}
                           </button>
                         )}
@@ -334,8 +375,8 @@ export function ImportRestoreSection({
                               <p className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-base)] px-3 py-3 text-sm leading-6 text-ops-text-primary">
                                 Backup ready - {replaceBackupState.fileName}.{' '}
                                 {replaceBackupState.verification === 'verified'
-                                  ? 'Disk write verified before replace unlock.'
-                                  : 'Disk write acknowledged manually before replace unlock.'}
+                                  ? 'Disk write read-back verified before replace unlock.'
+                                  : 'Manual local-disk check acknowledged before replace unlock.'}
                               </p>
                             </div>
                           </div>
