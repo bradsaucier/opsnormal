@@ -551,7 +551,9 @@ describe('ExportPanel import warnings', () => {
       screen.getByText(/step 2 - browser read-back proof complete\./i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/disk write read-back verified before replace unlock\./i),
+      screen.getByText(
+        /disk write read-back verified before replace unlock\./i,
+      ),
     ).toBeInTheDocument();
   });
 });
