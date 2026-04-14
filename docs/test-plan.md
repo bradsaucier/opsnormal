@@ -23,8 +23,10 @@ Prove that the app:
 - export checksum verification, including crash-state diagnostics when present
 - legacy import warning path
 - destructive replace arm-disarm path without a timer
-- verified save path before full replace when the browser exposes a save picker
-- manual backup acknowledgment fallback before full replace when verified save is unavailable
+- read-back verified save path before full replace when the browser exposes a save picker
+- manual backup acknowledgment fallback before full replace when verified save is unavailable or cannot be read back for proof
+- picker read-back permission failure preserves the underlying DOMException cause for local debugging
+- fallback Blob download keeps the object URL alive on a conservative delayed-revoke path before cleanup
 - replace checkpoint resets if the operator leaves replace mode and comes back
 - live status and alert regions stay mounted with aria-atomic set
 - stalled service worker update handoff surfaces pinned recovery guidance and a direct reload path
@@ -125,4 +127,4 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify Chrome DevTools "Update on reload" is disabled before manual service-worker handoff checks so the smoke test reflects normal operator behavior
 - expect up to a 5000 millisecond guard-window delay before a blocked duplicate tab finishes schema-recovery reload
 
-- Backup checkpoint tests should assert explicit result-state handling so verified save, fallback download trigger, user cancellation, and hard failure cannot collapse into the same control path.
+- Backup checkpoint tests should assert explicit result-state handling so read-back verified save, manual-verification fallback, download fallback, user cancellation, and hard failure cannot collapse into the same control path.
