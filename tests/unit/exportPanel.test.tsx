@@ -55,7 +55,11 @@ vi.mock('../../src/lib/export', async () => {
 
 import { ExportPanel } from '../../src/features/export/ExportPanel';
 import { type BackupCheckpointResult } from '../../src/lib/export';
-import type { ImportPreview, JsonExportPayload } from '../../src/types';
+import type {
+  ImportPreview,
+  JsonExportPayload,
+  SuccessfulImportPreview,
+} from '../../src/types';
 
 const previewImportFileMock = importServiceMocks.previewImportFile;
 const applyImportMock = importServiceMocks.applyImport;
@@ -94,8 +98,9 @@ const backupPreparationFailureCases: BackupPreparationFailureCase[] = [
 
 function buildPreview(
   overrides: Partial<JsonExportPayload> = {},
-): ImportPreview {
+): SuccessfulImportPreview {
   return {
+    kind: overrides.checksum ? 'good' : 'legacy-unverified',
     payload: {
       app: 'OpsNormal',
       schemaVersion: 1,
@@ -115,6 +120,8 @@ function buildPreview(
     overwriteCount: 0,
     newEntryCount: 1,
     totalEntries: 1,
+    exportedAt: '2026-03-28T12:00:00.000Z',
+    ageMs: 0,
     dateRange: {
       start: '2026-03-28',
       end: '2026-03-28',
@@ -122,8 +129,40 @@ function buildPreview(
   };
 }
 
+function buildRejectedPreview(kind: ImportPreview['kind']): ImportPreview {
+  switch (kind) {
+    case 'checksum-failed':
+      return { kind };
+    case 'incompatible':
+      return {
+        kind,
+        reason: 'schema-version',
+        detectedAppName: 'OpsNormal',
+        detectedSchemaVersion: 2,
+      };
+    case 'oversize':
+      return { kind, maxBytes: 5 * 1024 * 1024 };
+    case 'blocked-key':
+      return { kind, blockedKey: '__proto__' };
+    case 'invalid':
+      return {
+        kind,
+        issuePath: 'entries.0.sectorId',
+        issueMessage: 'Invalid sector.',
+      };
+    case 'unreadable':
+      return { kind };
+    case 'good':
+    case 'stale':
+    case 'legacy-unverified':
+      return buildPreview({ checksum: 'a'.repeat(64) });
+  }
+}
+
 function primeReplacePreview() {
-  previewImportFileMock.mockResolvedValue(buildPreview());
+  previewImportFileMock.mockResolvedValue(
+    buildPreview({ checksum: 'a'.repeat(64) }),
+  );
   exportCurrentEntriesAsJsonMock.mockResolvedValue({
     entryCount: 3,
     exportedAt: EXPORTED_AT,
@@ -270,7 +309,7 @@ describe('ExportPanel import warnings', () => {
     expect(importPanel).not.toHaveAttribute('hidden');
   });
 
-  it('flags legacy imports as unverified before confirm', async () => {
+  it('flags legacy imports as unverified and keeps confirm locked until acknowledged', async () => {
     previewImportFileMock.mockResolvedValue(buildPreview());
 
     render(<ExportPanel storageHealth={null} />);
@@ -288,7 +327,22 @@ describe('ExportPanel import warnings', () => {
     expect(
       await screen.findByRole('heading', { name: 'Import preview' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/legacy backup detected/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/legacy backup\. structure validated/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /confirm merge import/i }),
+    ).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('checkbox', {
+        name: /i understand this backup has no checksum/i,
+      }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: /confirm merge import/i }),
+    ).toBeEnabled();
   });
 
   it('shows verified status text when checksum validation is present', async () => {
@@ -315,6 +369,141 @@ describe('ExportPanel import warnings', () => {
         ),
       ).toBeInTheDocument(),
     );
+  });
+
+  it('locks stale backups until the operator acknowledges the staged file risk', async () => {
+    previewImportFileMock.mockResolvedValue({
+      ...buildPreview({ checksum: 'a'.repeat(64) }),
+      kind: 'stale',
+      ageMs: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /import and restore/i }),
+    );
+
+    await userEvent.upload(
+      screen.getByTestId('import-file-input'),
+      new File(['{}'], 'stale-export.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(
+      screen.getByText(/backup file is older than the freshness buffer/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /confirm merge import/i }),
+    ).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('checkbox', {
+        name: /i reviewed the export time and date range/i,
+      }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: /confirm merge import/i }),
+    ).toBeEnabled();
+  });
+
+  it('clears the stale-file acknowledgment when the operator switches from merge to replace', async () => {
+    previewImportFileMock.mockResolvedValue({
+      ...buildPreview({ checksum: 'a'.repeat(64) }),
+      kind: 'stale',
+      ageMs: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /import and restore/i }),
+    );
+
+    await userEvent.upload(
+      screen.getByTestId('import-file-input'),
+      new File(['{}'], 'stale-export.json', {
+        type: 'application/json',
+      }),
+    );
+
+    const acknowledgment = screen.getByRole('checkbox', {
+      name: /i reviewed the export time and date range/i,
+    });
+
+    await userEvent.click(acknowledgment);
+
+    expect(acknowledgment).toBeChecked();
+    expect(
+      screen.getByRole('button', { name: /confirm merge import/i }),
+    ).toBeEnabled();
+
+    await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
+
+    expect(acknowledgment).not.toBeChecked();
+    expect(
+      screen.getByRole('button', { name: /export pre-replace backup/i }),
+    ).toBeDisabled();
+  });
+
+  it('renders incompatible backups in read-only preview mode', async () => {
+    previewImportFileMock.mockResolvedValue(
+      buildRejectedPreview('incompatible'),
+    );
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /import and restore/i }),
+    );
+
+    await userEvent.upload(
+      screen.getByTestId('import-file-input'),
+      new File(['{}'], 'future-schema.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(
+      screen.getByText(/this backup declares schema version 2/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('radio', { name: /merge/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /confirm merge import/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders checksum-failed backups in read-only preview mode', async () => {
+    previewImportFileMock.mockResolvedValue(
+      buildRejectedPreview('checksum-failed'),
+    );
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /import and restore/i }),
+    );
+
+    await userEvent.upload(
+      screen.getByTestId('import-file-input'),
+      new File(['{}'], 'checksum-failed.json', {
+        type: 'application/json',
+      }),
+    );
+
+    expect(
+      screen.getByText(/embedded sha-256 checksum did not match/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /confirm merge import/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /clear preview/i }),
+    ).toBeInTheDocument();
   });
 
   it('requires a backup checkpoint before destructive replace import runs', async () => {
@@ -471,7 +660,9 @@ describe('ExportPanel import warnings', () => {
   );
 
   it('keeps replace locked and surfaces an error when data snapshot generation fails', async () => {
-    previewImportFileMock.mockResolvedValue(buildPreview());
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
     exportCurrentEntriesAsJsonMock.mockRejectedValue(
       new Error('Database read failure during snapshot.'),
     );
