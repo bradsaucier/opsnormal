@@ -55,6 +55,13 @@ describe('StorageHealthIndicator', () => {
     ).toBeInTheDocument();
   });
 
+  it('preserves the polite status-region contract for storage posture guidance', () => {
+    render(<StorageHealthIndicator storageHealth={buildStorageHealth()} />);
+
+    expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-atomic', 'true');
+  });
+
   it('does not render the request button when persistence is already granted', () => {
     render(
       <StorageHealthIndicator
