@@ -22,6 +22,8 @@ npm run dev
 
 A pre-commit hook runs `lint-staged` automatically after install. It fixes staged formatting drift before commit and blocks the commit if ESLint leaves unresolved errors. Use `npm run format` for a full local rewrite and `npm run format:check` for the non-mutating gate.
 
+`npm run build` emits `dist/404.html` from the built `dist/index.html` so GitHub Pages keeps the SPA route fallback aligned to the exact shipped artifact without a second build step.
+
 ## Quality gates
 
 Run these before opening a pull request:
