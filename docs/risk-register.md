@@ -1,5 +1,7 @@
 # Risk Register
 
+Key decision anchors for this register: ADR-0007, ADR-0008, ADR-0009, ADR-0017, ADR-0019, ADR-0020, ADR-0021, ADR-0022, and ADR-0023.
+
 ## High severity
 
 ### Apple WebKit browser-tab storage eviction
