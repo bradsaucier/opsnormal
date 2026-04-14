@@ -7,13 +7,13 @@ import {
   createJsonExport,
   formatLastExportCompletedAt,
 } from '../../src/lib/export';
+import { parseImportPayload } from '../../src/services/importValidation';
+import { parseExportPayload } from '../helpers/exportPayload';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   type DailyEntry,
 } from '../../src/types';
-import { parseImportPayload } from '../../src/services/importValidation';
-import { parseExportPayload } from '../helpers/exportPayload';
 
 const sampleEntries: DailyEntry[] = [
   {
@@ -164,7 +164,7 @@ describe('export helpers', () => {
 
   it('formats backup status text when no export is recorded', () => {
     expect(formatLastExportCompletedAt(null)).toBe(
-      'No external backup recorded on this browser yet.',
+      'No external backup recorded on this browser yet. If the app returns blank after Safari inactivity, restore from the latest JSON export immediately.',
     );
   });
 });
