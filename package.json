@@ -35,7 +35,7 @@
     "test:e2e": "npm run build:e2e && playwright test --project=chromium --project=chromium-a11y",
     "test:e2e:smoke": "playwright test --project=chromium --grep-invert @harness",
     "test:e2e:webkit": "npm run build:e2e && playwright test --project=webkit",
-    "test:e2e:webkit:smoke": "playwright test --project=webkit-release",
+    "test:e2e:webkit:smoke": "playwright test tests/e2e/webkit-release-smoke.spec.ts --project=webkit-release",
     "audit:security": "npm audit --audit-level=high",
     "prepare": "husky"
   },
