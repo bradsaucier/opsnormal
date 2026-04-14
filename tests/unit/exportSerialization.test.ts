@@ -169,7 +169,12 @@ describe('exportSerialization', () => {
 
   it('reports missing Web Crypto when no secure-context hint is available anywhere', async () => {
     vi.stubGlobal('crypto', { subtle: undefined });
-    vi.stubGlobal('window', undefined);
+
+    Object.defineProperty(window, 'isSecureContext', {
+      configurable: true,
+      value: undefined,
+    });
+
     vi.stubGlobal('isSecureContext', undefined);
 
     await expect(
