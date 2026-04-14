@@ -33,6 +33,16 @@ function buildPayload(
   };
 }
 
+async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error: unknown) {
+    return error;
+  }
+
+  throw new Error('Expected promise to reject.');
+}
+
 describe('shared import validation', () => {
   it('rejects invalid JSON', async () => {
     await expect(parseImportPayload('{')).rejects.toThrow(
@@ -184,15 +194,17 @@ describe('shared import validation', () => {
       status: 'degraded',
     };
 
-    const incompatibleError = await parseImportPayload(
-      JSON.stringify({
-        ...buildPayload(),
-        schemaVersion: 2,
-      }),
-    ).catch((error) => error);
-    const checksumError = await parseImportPayload(
-      JSON.stringify(checksumPayload),
-    ).catch((error) => error);
+    const incompatibleError = await captureRejection(
+      parseImportPayload(
+        JSON.stringify({
+          ...buildPayload(),
+          schemaVersion: 2,
+        }),
+      ),
+    );
+    const checksumError = await captureRejection(
+      parseImportPayload(JSON.stringify(checksumPayload)),
+    );
 
     expect(createRejectedImportPreview(incompatibleError)).toEqual({
       kind: 'incompatible',
