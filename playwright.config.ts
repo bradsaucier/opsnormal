@@ -8,7 +8,8 @@ const env = (
 
 const isCI = Boolean(env?.CI);
 const baseURL = env?.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
-const webServerCommand = env?.PLAYWRIGHT_WEB_SERVER_CMD ?? 'npm run preview:e2e';
+const webServerCommand =
+  env?.PLAYWRIGHT_WEB_SERVER_CMD ?? 'npm run preview:e2e';
 const skipWebServer = env?.PLAYWRIGHT_SKIP_WEBSERVER === '1';
 
 export default defineConfig({
