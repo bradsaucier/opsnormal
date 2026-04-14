@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Offline-first personal readiness tracker for daily balance across work, home, relationships, body, and rest.",
+  "description": "Local-only operator readiness tracking with deliberate constraints and integrity-verified recovery.",
   "homepage": "https://opsnormal.app/",
   "repository": {
     "type": "git",
