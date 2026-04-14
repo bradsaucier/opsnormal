@@ -3,7 +3,7 @@ import {
   OPSNORMAL_APP_NAME,
   type CrashStorageDiagnostics,
   type DailyEntry,
-  type JsonExportPayload,
+  type JsonExportPayload
 } from '../types';
 
 interface ChecksumPayload {
@@ -20,51 +20,41 @@ function buildChecksumPayload(payload: ChecksumPayload): ChecksumPayload {
     schemaVersion: payload.schemaVersion,
     exportedAt: payload.exportedAt,
     entries: payload.entries,
-    ...(payload.crashDiagnostics
-      ? { crashDiagnostics: payload.crashDiagnostics }
-      : {}),
+    ...(payload.crashDiagnostics ? { crashDiagnostics: payload.crashDiagnostics } : {})
   };
 }
 
 export async function createJsonExport(
   entries: DailyEntry[],
-  exportedAt: string = new Date().toISOString(),
+  exportedAt: string = new Date().toISOString()
 ): Promise<string> {
   const payload: ChecksumPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
-    entries,
+    entries
   };
 
   const checksum = await computeJsonExportChecksum(payload);
 
-  return JSON.stringify(
-    { ...buildChecksumPayload(payload), checksum },
-    null,
-    2,
-  );
+  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
 }
 
 export async function createCrashJsonExport(
   entries: DailyEntry[],
   crashDiagnostics: CrashStorageDiagnostics,
-  exportedAt: string = new Date().toISOString(),
+  exportedAt: string = new Date().toISOString()
 ): Promise<string> {
   const payload: ChecksumPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
     entries,
-    crashDiagnostics,
+    crashDiagnostics
   };
   const checksum = await computeJsonExportChecksum(payload);
 
-  return JSON.stringify(
-    { ...buildChecksumPayload(payload), checksum },
-    null,
-    2,
-  );
+  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
 }
 
 export function createCsvExport(entries: DailyEntry[]): string {
@@ -76,18 +66,14 @@ export function createCsvExport(entries: DailyEntry[]): string {
   return [header.join(','), ...rows].join('\n');
 }
 
-export async function computeJsonExportChecksum(
-  payload: ChecksumPayload,
-): Promise<string> {
+export async function computeJsonExportChecksum(payload: ChecksumPayload): Promise<string> {
   const subtleCrypto = getSubtleCrypto();
   const serialized = JSON.stringify(buildChecksumPayload(payload));
   const bytes = encodeChecksumInput(serialized);
   const digestInput = toDigestBuffer(bytes);
   const digest = await subtleCrypto.digest('SHA-256', digestInput);
 
-  return Array.from(new Uint8Array(digest), (value) =>
-    value.toString(16).padStart(2, '0'),
-  ).join('');
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 function getSubtleCrypto(): SubtleCrypto {
@@ -104,12 +90,12 @@ function getSubtleCrypto(): SubtleCrypto {
 
   if (!secureContextHint) {
     throw new Error(
-      'Export integrity check unavailable. Open the app from a secure HTTPS origin, then retry the export.',
+      'Export integrity check unavailable. Open the app from a secure HTTPS origin, then retry the export.'
     );
   }
 
   throw new Error(
-    'Export integrity check unavailable. This browser does not expose the required Web Crypto API.',
+    'Export integrity check unavailable. This browser does not expose the required Web Crypto API.'
   );
 }
 
@@ -118,7 +104,7 @@ function encodeChecksumInput(serialized: string): Uint8Array {
 
   if (serialized.length > 0 && bytes.length === 0) {
     throw new Error(
-      'Export integrity check failed while encoding the backup payload. Retry the export before trusting the file.',
+      'Export integrity check failed while encoding the backup payload. Retry the export before trusting the file.'
     );
   }
 
