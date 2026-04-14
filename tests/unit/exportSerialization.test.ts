@@ -1,25 +1,25 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   computeJsonExportChecksum,
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
-} from '../../src/lib/exportSerialization';
+} from "../../src/lib/exportSerialization";
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   type CrashStorageDiagnostics,
   type DailyEntry,
-} from '../../src/types';
+} from "../../src/types";
 
 const sampleEntries: DailyEntry[] = [
   {
     id: 1,
-    date: '2026-03-27',
-    sectorId: 'work-school',
-    status: 'nominal',
-    updatedAt: '2026-03-27T12:00:00.000Z',
+    date: "2026-03-27",
+    sectorId: "work-school",
+    status: "nominal",
+    updatedAt: "2026-03-27T12:00:00.000Z",
   },
 ];
 
@@ -27,15 +27,15 @@ const sampleCrashDiagnostics: CrashStorageDiagnostics = {
   connectionDropsDetected: 1,
   reconnectSuccesses: 1,
   reconnectFailures: 0,
-  reconnectState: 'steady',
+  reconnectState: "steady",
   lastReconnectError: null,
   persistAttempted: true,
   persistGranted: false,
   standaloneMode: false,
   installRecommended: true,
   webKitRisk: true,
-  lastVerificationResult: 'verified',
-  lastVerifiedAt: '2026-03-28T10:11:12.000Z',
+  lastVerificationResult: "verified",
+  lastVerifiedAt: "2026-03-28T10:11:12.000Z",
 };
 
 function createPayload(overrides?: {
@@ -45,7 +45,7 @@ function createPayload(overrides?: {
   return {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
-    exportedAt: overrides?.exportedAt ?? '2026-03-28T10:11:12.000Z',
+    exportedAt: overrides?.exportedAt ?? "2026-03-28T10:11:12.000Z",
     entries: sampleEntries,
     ...(overrides?.crashDiagnostics
       ? { crashDiagnostics: overrides.crashDiagnostics }
@@ -53,17 +53,17 @@ function createPayload(overrides?: {
   };
 }
 
-describe('exportSerialization', () => {
+describe("exportSerialization", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
-  it('creates a standard json export without crash diagnostics', async () => {
+  it("creates a standard json export without crash diagnostics", async () => {
     const json = await createJsonExport(
       sampleEntries,
-      '2026-03-28T10:11:12.000Z',
+      "2026-03-28T10:11:12.000Z",
     );
     const parsed = JSON.parse(json) as {
       app: string;
@@ -76,17 +76,17 @@ describe('exportSerialization', () => {
 
     expect(parsed.app).toBe(OPSNORMAL_APP_NAME);
     expect(parsed.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
-    expect(parsed.exportedAt).toBe('2026-03-28T10:11:12.000Z');
+    expect(parsed.exportedAt).toBe("2026-03-28T10:11:12.000Z");
     expect(parsed.entries).toEqual(sampleEntries);
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
-    expect('crashDiagnostics' in parsed).toBe(false);
+    expect("crashDiagnostics" in parsed).toBe(false);
   });
 
-  it('creates a crash json export with crash diagnostics included', async () => {
+  it("creates a crash json export with crash diagnostics included", async () => {
     const json = await createCrashJsonExport(
       sampleEntries,
       sampleCrashDiagnostics,
-      '2026-03-28T10:11:12.000Z',
+      "2026-03-28T10:11:12.000Z",
     );
     const parsed = JSON.parse(json) as {
       crashDiagnostics: CrashStorageDiagnostics;
@@ -97,9 +97,9 @@ describe('exportSerialization', () => {
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
   });
 
-  it('uses the current time when exportedAt is omitted', async () => {
+  it("uses the current time when exportedAt is omitted", async () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-04-14T01:02:03.000Z'));
+    vi.setSystemTime(new Date("2026-04-14T01:02:03.000Z"));
 
     const standardJson = await createJsonExport(sampleEntries);
     const crashJson = await createCrashJsonExport(
@@ -107,11 +107,13 @@ describe('exportSerialization', () => {
       sampleCrashDiagnostics,
     );
 
-    expect(JSON.parse(standardJson).exportedAt).toBe('2026-04-14T01:02:03.000Z');
-    expect(JSON.parse(crashJson).exportedAt).toBe('2026-04-14T01:02:03.000Z');
+    expect(JSON.parse(standardJson).exportedAt).toBe(
+      "2026-04-14T01:02:03.000Z",
+    );
+    expect(JSON.parse(crashJson).exportedAt).toBe("2026-04-14T01:02:03.000Z");
   });
 
-  it('computes deterministic checksums and changes them when crash diagnostics are added', async () => {
+  it("computes deterministic checksums and changes them when crash diagnostics are added", async () => {
     const basePayload = createPayload();
     const crashPayload = createPayload({
       crashDiagnostics: sampleCrashDiagnostics,
@@ -127,26 +129,26 @@ describe('exportSerialization', () => {
     expect(crashChecksum).not.toBe(baseChecksumA);
   });
 
-  it('leaves ordinary csv cells unquoted', () => {
+  it("leaves ordinary csv cells unquoted", () => {
     const csv = createCsvExport(sampleEntries);
 
     expect(csv).toContain(
-      '2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z',
+      "2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z",
     );
   });
 
-  it('quotes csv cells that contain commas', () => {
+  it("quotes csv cells that contain commas", () => {
     const csv = createCsvExport([
       {
         ...sampleEntries[0],
-        updatedAt: '2026-03-27T12:00:00.000Z,comma',
+        updatedAt: "2026-03-27T12:00:00.000Z,comma",
       },
     ]);
 
     expect(csv).toContain('"2026-03-27T12:00:00.000Z,comma"');
   });
 
-  it('quotes csv cells that contain quotation marks', () => {
+  it("quotes csv cells that contain quotation marks", () => {
     const csv = createCsvExport([
       {
         ...sampleEntries[0],
@@ -157,81 +159,72 @@ describe('exportSerialization', () => {
     expect(csv).toContain('"2026-03-27T12:00:00.000Z ""quoted"""');
   });
 
-  it('quotes csv cells that contain newlines', () => {
+  it("quotes csv cells that contain newlines", () => {
     const csv = createCsvExport([
       {
         ...sampleEntries[0],
-        updatedAt: '2026-03-27T12:00:00.000Z\nnext-line',
+        updatedAt: "2026-03-27T12:00:00.000Z\nnext-line",
       },
     ]);
 
     expect(csv).toContain('"2026-03-27T12:00:00.000Z\nnext-line"');
   });
 
-  it('throws the secure-origin error when window reports an insecure context', async () => {
-    vi.stubGlobal('crypto', { subtle: undefined } as unknown as Crypto);
-    vi.stubGlobal(
-      'window',
-      { isSecureContext: false } as unknown as Window & typeof globalThis,
-    );
+  it("throws the secure-origin error when window reports an insecure context", async () => {
+    vi.stubGlobal("crypto", { subtle: undefined } as unknown as Crypto);
+    vi.stubGlobal("window", { isSecureContext: false } as unknown as Window &
+      typeof globalThis);
 
     await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-      'secure HTTPS origin',
+      "secure HTTPS origin",
     );
   });
 
-  it('throws the missing Web Crypto error when window reports a secure context', async () => {
-    vi.stubGlobal('crypto', { subtle: undefined } as unknown as Crypto);
-    vi.stubGlobal(
-      'window',
-      { isSecureContext: true } as unknown as Window & typeof globalThis,
-    );
+  it("throws the missing Web Crypto error when window reports a secure context", async () => {
+    vi.stubGlobal("crypto", { subtle: undefined } as unknown as Crypto);
+    vi.stubGlobal("window", { isSecureContext: true } as unknown as Window &
+      typeof globalThis);
 
     await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-      'required Web Crypto API',
+      "required Web Crypto API",
     );
   });
 
-  it('falls back to the global secure-context hint when window does not provide a boolean', async () => {
-    vi.stubGlobal('crypto', { subtle: undefined } as unknown as Crypto);
-    vi.stubGlobal(
-      'window',
-      { isSecureContext: 'unknown' } as unknown as Window & typeof globalThis,
-    );
-    vi.stubGlobal('isSecureContext', false as unknown as boolean);
+  it("falls back to the global secure-context hint when window does not provide a boolean", async () => {
+    vi.stubGlobal("crypto", { subtle: undefined } as unknown as Crypto);
+    vi.stubGlobal("window", {
+      isSecureContext: "unknown",
+    } as unknown as Window & typeof globalThis);
+    vi.stubGlobal("isSecureContext", false as unknown as boolean);
 
     await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-      'secure HTTPS origin',
+      "secure HTTPS origin",
     );
   });
 
-  it('uses the global secure-context hint when it is true', async () => {
-    vi.stubGlobal('crypto', { subtle: undefined } as unknown as Crypto);
-    vi.stubGlobal(
-      'window',
-      { isSecureContext: 'unknown' } as unknown as Window & typeof globalThis,
-    );
-    vi.stubGlobal('isSecureContext', true as unknown as boolean);
+  it("uses the global secure-context hint when it is true", async () => {
+    vi.stubGlobal("crypto", { subtle: undefined } as unknown as Crypto);
+    vi.stubGlobal("window", {
+      isSecureContext: "unknown",
+    } as unknown as Window & typeof globalThis);
+    vi.stubGlobal("isSecureContext", true as unknown as boolean);
 
     await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-      'required Web Crypto API',
+      "required Web Crypto API",
     );
   });
 
-  it('defaults to the missing Web Crypto error when neither window nor global secure-context hints are available', async () => {
-    vi.stubGlobal('crypto', { subtle: undefined } as unknown as Crypto);
-    vi.stubGlobal(
-      'window',
-      undefined as unknown as Window & typeof globalThis,
-    );
-    vi.stubGlobal('isSecureContext', undefined as unknown as boolean);
+  it("defaults to the missing Web Crypto error when neither window nor global secure-context hints are available", async () => {
+    vi.stubGlobal("crypto", { subtle: undefined } as unknown as Crypto);
+    vi.stubGlobal("window", undefined as unknown as Window & typeof globalThis);
+    vi.stubGlobal("isSecureContext", undefined as unknown as boolean);
 
     await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-      'required Web Crypto API',
+      "required Web Crypto API",
     );
   });
 
-  it('throws when payload encoding unexpectedly returns no bytes', async () => {
+  it("throws when payload encoding unexpectedly returns no bytes", async () => {
     const originalTextEncoder = globalThis.TextEncoder;
 
     class BrokenTextEncoder {
@@ -240,14 +233,14 @@ describe('exportSerialization', () => {
       }
     }
 
-    vi.stubGlobal('TextEncoder', BrokenTextEncoder as typeof TextEncoder);
+    vi.stubGlobal("TextEncoder", BrokenTextEncoder as typeof TextEncoder);
 
     try {
       await expect(computeJsonExportChecksum(createPayload())).rejects.toThrow(
-        'failed while encoding the backup payload',
+        "failed while encoding the backup payload",
       );
     } finally {
-      vi.stubGlobal('TextEncoder', originalTextEncoder);
+      vi.stubGlobal("TextEncoder", originalTextEncoder);
     }
   });
 });
