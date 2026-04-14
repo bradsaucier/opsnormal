@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible defect in the current product boundary.
+title: '[Bug]: '
+labels:
+  - type: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Stay inside the repo boundary.
+        Use GitHub private vulnerability reporting for security issues instead of a public bug.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: State the defect and the operational impact.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: List the exact steps needed to reproduce the issue.
+      placeholder: |
+        1. Open ...
+        2. Record ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Safari 17.6, Chrome 135, Firefox 138
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: macOS 15.4, Windows 11, iPhone iOS 18.4
+    validations:
+      required: true
+  - type: textarea
+    id: backups
+    attributes:
+      label: Backup and recovery context
+      description: Note whether the issue occurred during check-in, export, import, replace, or recovery.
