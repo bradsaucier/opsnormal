@@ -238,7 +238,7 @@ async function seedMalformedCrashExportEntry(page: Page): Promise<void> {
 }
 
 async function openCrashFallbackHarness(page: Page): Promise<void> {
-  await page.goto('/crash-fallback-harness.html');
+  await page.goto('/tests/harness/crash-fallback-harness.html');
 
   await expect(page).toHaveTitle('OpsNormal Crash Fallback Harness');
   await expect(
