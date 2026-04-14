@@ -12,15 +12,20 @@ import {
   previewImportFile,
 } from '../../src/services/importService';
 import { useImportWorkflow } from '../../src/features/export/useImportWorkflow';
-import type { ImportPreview, JsonExportPayload } from '../../src/types';
+import type {
+  ImportPreview,
+  JsonExportPayload,
+  SuccessfulImportPreview,
+} from '../../src/types';
 
 const applyImportMock = vi.mocked(applyImport);
 const previewImportFileMock = vi.mocked(previewImportFile);
 
 function buildPreview(
   overrides: Partial<JsonExportPayload> = {},
-): ImportPreview {
+): SuccessfulImportPreview {
   return {
+    kind: overrides.checksum ? 'good' : 'legacy-unverified',
     payload: {
       app: 'OpsNormal',
       schemaVersion: 1,
@@ -40,11 +45,49 @@ function buildPreview(
     overwriteCount: 0,
     newEntryCount: 1,
     totalEntries: 1,
+    exportedAt: '2026-03-28T12:00:00.000Z',
+    ageMs: 0,
     dateRange: {
       start: '2026-03-28',
       end: '2026-03-28',
     },
   };
+}
+
+function buildRejectedPreview(kind: ImportPreview['kind']): ImportPreview {
+  switch (kind) {
+    case 'checksum-failed':
+      return { kind };
+    case 'incompatible':
+      return {
+        kind,
+        reason: 'schema-version',
+        detectedAppName: 'OpsNormal',
+        detectedSchemaVersion: 2,
+      };
+    case 'oversize':
+      return {
+        kind,
+        maxBytes: 5 * 1024 * 1024,
+      };
+    case 'blocked-key':
+      return {
+        kind,
+        blockedKey: '__proto__',
+      };
+    case 'invalid':
+      return {
+        kind,
+        issuePath: 'entries.0.sectorId',
+        issueMessage: 'Invalid sector.',
+      };
+    case 'unreadable':
+      return { kind };
+    case 'good':
+    case 'stale':
+    case 'legacy-unverified':
+      return buildPreview({ checksum: 'a'.repeat(64) });
+  }
 }
 
 function createFileSelectionEvent(file: File): ChangeEvent<HTMLInputElement> {
@@ -94,9 +137,13 @@ describe('useImportWorkflow', () => {
       );
     });
 
-    expect(result.current.pendingImport?.integrityStatus).toBe('verified');
+    expect(result.current.pendingImport).toMatchObject({
+      kind: 'good',
+      integrityStatus: 'verified',
+    });
     expect(result.current.pendingFileName).toBe('verified-export.json');
     expect(result.current.importMode).toBe('merge');
+    expect(result.current.pendingImportCanCommit).toBe(true);
     expect(onOpenImportSection).toHaveBeenCalledTimes(1);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
@@ -157,8 +204,273 @@ describe('useImportWorkflow', () => {
       await firstSelection;
     });
 
-    expect(result.current.pendingImport?.integrityStatus).toBe('verified');
+    expect(result.current.pendingImport).toMatchObject({
+      kind: 'good',
+      integrityStatus: 'verified',
+    });
     expect(result.current.pendingFileName).toBe('second.json');
+  });
+
+  it('locks risky imports until the operator acknowledges the staged file risk', async () => {
+    const onStatusMessage = vi.fn();
+
+    previewImportFileMock.mockResolvedValue({
+      ...buildPreview({ checksum: 'a'.repeat(64) }),
+      kind: 'stale',
+      ageMs: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested: vi.fn(),
+        onStatusMessage,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'stale.json', { type: 'application/json' }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingImport?.kind).toBe('stale');
+    expect(result.current.pendingImportRequiresAcknowledgment).toBe(true);
+    expect(result.current.pendingImportCanCommit).toBe(false);
+
+    await act(async () => {
+      await result.current.handleConfirmImport({
+        onArmReplace: vi.fn(),
+        replaceConfirmState: 'idle',
+      });
+    });
+
+    expect(applyImportMock).not.toHaveBeenCalled();
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'warning',
+      text: 'Import remains locked. Review the staged risk and acknowledge it before the write path unlocks.',
+    });
+
+    act(() => {
+      result.current.setRiskyImportAcknowledged(true);
+    });
+
+    expect(result.current.pendingImportCanCommit).toBe(true);
+  });
+
+  it('locks legacy-unverified imports until the operator acknowledges the staged file risk', async () => {
+    previewImportFileMock.mockResolvedValue(buildPreview());
+
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested: vi.fn(),
+        onStatusMessage: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'legacy.json', { type: 'application/json' }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingImport?.kind).toBe('legacy-unverified');
+    expect(result.current.pendingImportRequiresAcknowledgment).toBe(true);
+    expect(result.current.pendingImportCanCommit).toBe(false);
+
+    act(() => {
+      result.current.setRiskyImportAcknowledged(true);
+    });
+
+    expect(result.current.pendingImportCanCommit).toBe(true);
+  });
+
+  it('clears the risky-file acknowledgment when the operator changes import mode', async () => {
+    previewImportFileMock.mockResolvedValue({
+      ...buildPreview({ checksum: 'a'.repeat(64) }),
+      kind: 'stale',
+      ageMs: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    const onReplaceWorkflowResetRequested = vi.fn();
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested,
+        onStatusMessage: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'stale.json', { type: 'application/json' }),
+        ),
+      );
+    });
+
+    act(() => {
+      result.current.setRiskyImportAcknowledged(true);
+    });
+
+    expect(result.current.pendingImportCanCommit).toBe(true);
+
+    act(() => {
+      result.current.setImportModeWithReset('replace');
+    });
+
+    expect(result.current.importMode).toBe('replace');
+    expect(result.current.riskyImportAcknowledged).toBe(false);
+    expect(result.current.pendingImportCanCommit).toBe(false);
+    expect(onReplaceWorkflowResetRequested).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears the risky-file acknowledgment when a new file is selected', async () => {
+    previewImportFileMock
+      .mockResolvedValueOnce({
+        ...buildPreview({ checksum: 'a'.repeat(64) }),
+        kind: 'stale',
+        ageMs: 7 * 24 * 60 * 60 * 1000,
+      })
+      .mockResolvedValueOnce({
+        ...buildPreview({ checksum: 'b'.repeat(64) }),
+        kind: 'stale',
+        ageMs: 8 * 24 * 60 * 60 * 1000,
+      });
+
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested: vi.fn(),
+        onStatusMessage: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'stale-a.json', { type: 'application/json' }),
+        ),
+      );
+    });
+
+    act(() => {
+      result.current.setRiskyImportAcknowledged(true);
+    });
+
+    expect(result.current.pendingImportCanCommit).toBe(true);
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'stale-b.json', { type: 'application/json' }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingFileName).toBe('stale-b.json');
+    expect(result.current.riskyImportAcknowledged).toBe(false);
+    expect(result.current.pendingImport?.kind).toBe('stale');
+    expect(result.current.pendingImportCanCommit).toBe(false);
+  });
+
+  it('stages checksum-failed files in read-only preview mode', async () => {
+    const onStatusMessage = vi.fn();
+
+    previewImportFileMock.mockResolvedValue(
+      buildRejectedPreview('checksum-failed'),
+    );
+
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested: vi.fn(),
+        onStatusMessage,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'checksum-failed.json', {
+            type: 'application/json',
+          }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingImport).toEqual({
+      kind: 'checksum-failed',
+    });
+    expect(result.current.pendingImportCanCommit).toBe(false);
+    expect(result.current.pendingImportRequiresAcknowledgment).toBe(false);
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'error',
+      text: 'Backup file failed the integrity check. Local data unchanged.',
+    });
+  });
+
+  it('recovers from a rejected preview when the operator selects a valid file next', async () => {
+    previewImportFileMock
+      .mockResolvedValueOnce(buildRejectedPreview('checksum-failed'))
+      .mockResolvedValueOnce(buildPreview({ checksum: 'a'.repeat(64) }));
+
+    const { result } = renderHook(() =>
+      useImportWorkflow({
+        onImportApplied: vi.fn(),
+        onOpenImportSection: vi.fn(),
+        onOpenUndoSection: vi.fn(),
+        onReplaceWorkflowResetRequested: vi.fn(),
+        onStatusMessage: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'checksum-failed.json', {
+            type: 'application/json',
+          }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingImport).toEqual({
+      kind: 'checksum-failed',
+    });
+    expect(result.current.pendingImportCanCommit).toBe(false);
+
+    await act(async () => {
+      await result.current.handleImportSelection(
+        createFileSelectionEvent(
+          new File(['{}'], 'verified.json', {
+            type: 'application/json',
+          }),
+        ),
+      );
+    });
+
+    expect(result.current.pendingImport).toMatchObject({
+      kind: 'good',
+      integrityStatus: 'verified',
+    });
+    expect(result.current.pendingFileName).toBe('verified.json');
+    expect(result.current.pendingImportCanCommit).toBe(true);
   });
 
   it('applies merge imports and stages undo without changing the workflow contract', async () => {
@@ -166,7 +478,9 @@ describe('useImportWorkflow', () => {
     const onOpenUndoSection = vi.fn();
     const onStatusMessage = vi.fn();
 
-    previewImportFileMock.mockResolvedValue(buildPreview());
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
     applyImportMock.mockResolvedValue({
       importedCount: 1,
       undo: vi.fn(() => Promise.resolve()),
@@ -190,7 +504,10 @@ describe('useImportWorkflow', () => {
       );
     });
 
-    const stagedPayload = result.current.pendingImport?.payload;
+    const stagedPayload =
+      result.current.pendingImport && 'payload' in result.current.pendingImport
+        ? result.current.pendingImport.payload
+        : undefined;
 
     await act(async () => {
       await result.current.handleConfirmImport({
@@ -211,7 +528,9 @@ describe('useImportWorkflow', () => {
   it('arms replace first, then executes replace on the confirmed path', async () => {
     const onArmReplace = vi.fn();
 
-    previewImportFileMock.mockResolvedValue(buildPreview());
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
     applyImportMock.mockResolvedValue({
       importedCount: 1,
       undo: vi.fn(() => Promise.resolve()),
