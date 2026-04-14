@@ -22,6 +22,8 @@ Prove that the app:
 - shared import validation under native SubtleCrypto in a node-environment unit path
 - export checksum verification, including crash-state diagnostics when present
 - legacy import warning path
+- stale verified import warning and acknowledgment gate
+- incompatible and checksum-failed import preview rejection states
 - destructive replace arm-disarm path without a timer
 - read-back verified save path before full replace when the browser exposes a save picker
 - manual backup acknowledgment fallback before full replace when verified save is unavailable or cannot be read back for proof
@@ -68,6 +70,8 @@ Prove that the app:
 - production preview can reopen offline after first load
 - JSON export can be imported into a clean browser context and re-exported without data loss
 - import preview and staged merge path hold under the accordion backup panel
+- stale verified backups stay locked until the operator acknowledges the staged file risk
+- incompatible and checksum-failed backups stay in read-only preview mode with no write path
 - replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
 - mobile history week pagination, daily brief selection, and week-navigation semantics hold under a narrow viewport
 - CSP-sensitive runtime paths do not emit browser refusal errors during normal boot in Chromium, including the narrow mobile history path

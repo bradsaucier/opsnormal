@@ -5,8 +5,13 @@ import type {
   ImportMode,
   ImportPreview,
   JsonExportPayload,
+  RejectedImportPreview,
+  SuccessfulImportPreview,
 } from '../types';
 import {
+  createRejectedImportPreview,
+  getImportAgeMs,
+  getSuccessfulImportPreviewKind,
   parseImportPayload,
   summarizeParsedPayload,
   type ParsedImportSummary,
@@ -23,13 +28,19 @@ interface WorkerSuccessMessage {
   summary: ParsedImportSummary;
 }
 
-interface WorkerErrorMessage {
+interface WorkerRejectedMessage {
   ok: false;
-  error: string;
+  preview: RejectedImportPreview;
 }
 
 const IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES = 256 * 1024;
 const IMPORT_BATCH_SIZE = 500;
+
+function isRejectedImportPreview(
+  previewResult: ParsedImportSummary | RejectedImportPreview,
+): previewResult is RejectedImportPreview {
+  return 'kind' in previewResult;
+}
 
 function getCompoundKey(entry: Pick<DailyEntry, 'date' | 'sectorId'>): string {
   return `${entry.date}:${entry.sectorId}`;
@@ -63,21 +74,25 @@ function normalizeImportedEntries(
 function buildPreviewFromSummary(
   summary: ParsedImportSummary,
   existingEntries: DailyEntry[],
-): ImportPreview {
+): SuccessfulImportPreview {
   const existingKeys = new Set(
     existingEntries.map((entry) => getCompoundKey(entry)),
   );
   const overwriteCount = summary.payload.entries.filter((entry) =>
     existingKeys.has(getCompoundKey(entry)),
   ).length;
+  const ageMs = getImportAgeMs(summary.payload.exportedAt);
 
   return {
+    kind: getSuccessfulImportPreviewKind(summary.payload),
     payload: summary.payload,
     integrityStatus: summary.integrityStatus,
     existingEntryCount: existingEntries.length,
     overwriteCount,
     newEntryCount: summary.payload.entries.length - overwriteCount,
     totalEntries: summary.totalEntries,
+    exportedAt: summary.payload.exportedAt,
+    ageMs,
     dateRange: summary.dateRange,
   };
 }
@@ -219,7 +234,7 @@ export async function readImportFile(file: File): Promise<string> {
 
 export async function previewImportPayload(
   payload: JsonExportPayload,
-): Promise<ImportPreview> {
+): Promise<SuccessfulImportPreview> {
   const existingEntries = await getAllEntries();
   return buildPreviewFromSummary(
     summarizeParsedPayload(payload),
@@ -242,7 +257,7 @@ function throwIfPreviewAborted(signal?: AbortSignal): void {
 async function parseImportFileWithWorker(
   file: File,
   signal?: AbortSignal,
-): Promise<ParsedImportSummary> {
+): Promise<ParsedImportSummary | RejectedImportPreview> {
   validateImportFileSize(file);
   throwIfPreviewAborted(signal);
 
@@ -270,7 +285,7 @@ async function parseImportFileWithWorker(
     };
 
     worker.onmessage = (
-      event: MessageEvent<WorkerSuccessMessage | WorkerErrorMessage>,
+      event: MessageEvent<WorkerSuccessMessage | WorkerRejectedMessage>,
     ) => {
       cleanup();
 
@@ -279,7 +294,7 @@ async function parseImportFileWithWorker(
         return;
       }
 
-      reject(new Error(event.data.error));
+      resolve(event.data.preview);
     };
 
     worker.onerror = () => {
@@ -301,7 +316,7 @@ async function parseImportFileWithWorker(
 async function parseImportFileForPreview(
   file: File,
   signal?: AbortSignal,
-): Promise<ParsedImportSummary> {
+): Promise<ParsedImportSummary | RejectedImportPreview> {
   validateImportFileSize(file);
 
   if (
@@ -314,20 +329,33 @@ async function parseImportFileForPreview(
   throwIfPreviewAborted(signal);
   const rawText = await file.text();
   throwIfPreviewAborted(signal);
-  const payload = await parseImportPayload(rawText);
-  return summarizeParsedPayload(payload);
+
+  try {
+    const payload = await parseImportPayload(rawText);
+    return summarizeParsedPayload(payload);
+  } catch (error) {
+    const rejectedPreview = createRejectedImportPreview(error);
+
+    if (rejectedPreview) {
+      return rejectedPreview;
+    }
+
+    throw error;
+  }
 }
 
 export async function previewImportFile(
   file: File,
   signal?: AbortSignal,
 ): Promise<ImportPreview> {
-  const [summary, existingEntries] = await Promise.all([
-    parseImportFileForPreview(file, signal),
-    getAllEntries(),
-  ]);
+  const previewResult = await parseImportFileForPreview(file, signal);
 
-  return buildPreviewFromSummary(summary, existingEntries);
+  if (isRejectedImportPreview(previewResult)) {
+    return previewResult;
+  }
+
+  const existingEntries = await getAllEntries();
+  return buildPreviewFromSummary(previewResult, existingEntries);
 }
 
 export async function applyImport(

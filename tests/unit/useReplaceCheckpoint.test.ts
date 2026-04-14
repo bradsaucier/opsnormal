@@ -27,7 +27,10 @@ vi.mock('../../src/lib/export', async () => {
 import { type BackupCheckpointResult } from '../../src/lib/export';
 import { useReplaceCheckpoint } from '../../src/features/export/useReplaceCheckpoint';
 import type { StatusMessage } from '../../src/features/export/workflowTypes';
-import type { ImportPreview, JsonExportPayload } from '../../src/types';
+import type {
+  JsonExportPayload,
+  SuccessfulImportPreview,
+} from '../../src/types';
 
 const exportCurrentEntriesAsJsonMock = exportMocks.exportCurrentEntriesAsJson;
 const checkpointJsonBackupToDiskMock = exportMocks.checkpointJsonBackupToDisk;
@@ -37,8 +40,9 @@ const FILE_NAME = 'opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json';
 
 function buildPreview(
   overrides: Partial<JsonExportPayload> = {},
-): ImportPreview {
+): SuccessfulImportPreview {
   return {
+    kind: overrides.checksum ? 'good' : 'legacy-unverified',
     payload: {
       app: 'OpsNormal',
       schemaVersion: 1,
@@ -58,6 +62,8 @@ function buildPreview(
     overwriteCount: 0,
     newEntryCount: 1,
     totalEntries: 1,
+    exportedAt: '2026-03-28T12:00:00.000Z',
+    ageMs: 0,
     dateRange: {
       start: '2026-03-28',
       end: '2026-03-28',

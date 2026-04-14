@@ -6,7 +6,11 @@ import {
   createJsonExport,
   computeJsonExportChecksum,
 } from '../../src/lib/export';
-import { parseImportPayload } from '../../src/services/importValidation';
+import {
+  createRejectedImportPreview,
+  getSuccessfulImportPreviewKind,
+  parseImportPayload,
+} from '../../src/services/importValidation';
 import { OPSNORMAL_APP_NAME, type JsonExportPayload } from '../../src/types';
 
 function buildPayload(
@@ -29,6 +33,16 @@ function buildPayload(
   };
 }
 
+async function captureRejection(promise: Promise<unknown>): Promise<unknown> {
+  try {
+    await promise;
+  } catch (error: unknown) {
+    return error;
+  }
+
+  throw new Error('Expected promise to reject.');
+}
+
 describe('shared import validation', () => {
   it('rejects invalid JSON', async () => {
     await expect(parseImportPayload('{')).rejects.toThrow(
@@ -47,7 +61,7 @@ describe('shared import validation', () => {
       '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"__proto__":{}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
-      'Import rejected. File contains blocked keys.',
+      'Import rejected. File contains blocked key "__proto__".',
     );
   });
 
@@ -56,7 +70,20 @@ describe('shared import validation', () => {
       '{"app":"OpsNormal","schemaVersion":1,"exportedAt":"2026-03-28T12:00:00.000Z","entries":[],"metadata":{"constructor":{}}}';
 
     await expect(parseImportPayload(raw)).rejects.toThrow(
-      'Import rejected. File contains blocked keys.',
+      'Import rejected. File contains blocked key "constructor".',
+    );
+  });
+
+  it('rejects incompatible schema versions before write', async () => {
+    await expect(
+      parseImportPayload(
+        JSON.stringify({
+          ...buildPayload(),
+          schemaVersion: 2,
+        }),
+      ),
+    ).rejects.toThrow(
+      'Import rejected. Backup schema version is incompatible with this build.',
     );
   });
 
@@ -141,6 +168,53 @@ describe('shared import validation', () => {
     await expect(parseImportPayload(JSON.stringify(payload))).rejects.toThrow(
       'Import rejected. File integrity check failed. The backup may be corrupted or modified.',
     );
+  });
+
+  it('classifies stale verified backups as risky preview candidates', () => {
+    const kind = getSuccessfulImportPreviewKind({
+      ...buildPayload({
+        checksum: 'a'.repeat(64),
+        exportedAt: '2026-03-20T12:00:00.000Z',
+      }),
+    });
+
+    expect(kind).toBe('stale');
+  });
+
+  it('serializes incompatible and checksum-failed paths into read-only preview states', async () => {
+    const checksumPayload = buildPayload();
+    checksumPayload.checksum = await computeJsonExportChecksum({
+      app: checksumPayload.app,
+      schemaVersion: checksumPayload.schemaVersion,
+      exportedAt: checksumPayload.exportedAt,
+      entries: checksumPayload.entries,
+    });
+    checksumPayload.entries[0] = {
+      ...checksumPayload.entries[0]!,
+      status: 'degraded',
+    };
+
+    const incompatibleError = await captureRejection(
+      parseImportPayload(
+        JSON.stringify({
+          ...buildPayload(),
+          schemaVersion: 2,
+        }),
+      ),
+    );
+    const checksumError = await captureRejection(
+      parseImportPayload(JSON.stringify(checksumPayload)),
+    );
+
+    expect(createRejectedImportPreview(incompatibleError)).toEqual({
+      kind: 'incompatible',
+      reason: 'schema-version',
+      detectedAppName: 'OpsNormal',
+      detectedSchemaVersion: 2,
+    });
+    expect(createRejectedImportPreview(checksumError)).toEqual({
+      kind: 'checksum-failed',
+    });
   });
 
   it('accepts a payload with optional crash diagnostics', async () => {

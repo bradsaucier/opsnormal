@@ -1,7 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { applyImport, previewImportFile } from '../../services/importService';
-import type { ImportMode, ImportPreview } from '../../types';
+import {
+  isSuccessfulImportPreview,
+  requiresImportRiskAcknowledgment,
+  type ImportMode,
+  type ImportPreview,
+} from '../../types';
+import { getImportPreviewStatusMessage } from './exportPanelHelpers';
 import type { ReplaceConfirmState, StatusMessage } from './workflowTypes';
 
 interface UseImportWorkflowOptions {
@@ -29,6 +35,10 @@ interface UseImportWorkflowResult {
   pendingFileName: string;
   pendingFileSize: number;
   pendingImport: ImportPreview | null;
+  pendingImportCanCommit: boolean;
+  pendingImportRequiresAcknowledgment: boolean;
+  riskyImportAcknowledged: boolean;
+  setRiskyImportAcknowledged: (checked: boolean) => void;
   setImportModeWithReset: (nextMode: ImportMode) => void;
 }
 
@@ -47,6 +57,7 @@ export function useImportWorkflow({
   const [pendingFileSize, setPendingFileSize] = useState(0);
   const [importMode, setImportMode] = useState<ImportMode>('merge');
   const [importBusy, setImportBusy] = useState(false);
+  const [riskyImportAcknowledged, setRiskyImportAcknowledged] = useState(false);
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewAbortRef = useRef<AbortController | null>(null);
@@ -60,6 +71,20 @@ export function useImportWorkflow({
     };
   }, []);
 
+  function canCommitImport(
+    preview: ImportPreview | null,
+    acknowledged: boolean,
+  ): preview is Extract<
+    ImportPreview,
+    { kind: 'good' | 'stale' | 'legacy-unverified' }
+  > {
+    return (
+      preview !== null &&
+      isSuccessfulImportPreview(preview) &&
+      (!requiresImportRiskAcknowledgment(preview) || acknowledged)
+    );
+  }
+
   function clearPendingImport(nextMessage?: StatusMessage) {
     previewAbortRef.current?.abort();
     previewAbortRef.current = null;
@@ -69,6 +94,7 @@ export function useImportWorkflow({
     setPendingFileName('');
     setPendingFileSize(0);
     setImportMode('merge');
+    setRiskyImportAcknowledged(false);
     onReplaceWorkflowResetRequested();
 
     if (fileInputRef.current) {
@@ -82,6 +108,7 @@ export function useImportWorkflow({
 
   function setImportModeWithReset(nextMode: ImportMode) {
     setImportMode(nextMode);
+    setRiskyImportAcknowledged(false);
     onReplaceWorkflowResetRequested();
   }
 
@@ -116,14 +143,9 @@ export function useImportWorkflow({
       setPendingFileName(file.name);
       setPendingFileSize(file.size);
       setImportMode('merge');
+      setRiskyImportAcknowledged(false);
       onOpenImportSection();
-      onStatusMessage({
-        tone: preview.integrityStatus === 'verified' ? 'success' : 'warning',
-        text:
-          preview.integrityStatus === 'verified'
-            ? `Import staged. ${preview.totalEntries} entries validated. Review the preview and confirm the write path.`
-            : `Legacy import staged. ${preview.totalEntries} entries validated, but this file has no integrity checksum. Review the preview and confirm the write path.`,
-      });
+      onStatusMessage(getImportPreviewStatusMessage(preview));
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         return;
@@ -145,7 +167,7 @@ export function useImportWorkflow({
   }
 
   async function runConfirmedImport() {
-    if (!pendingImport) {
+    if (!canCommitImport(pendingImport, riskyImportAcknowledged)) {
       return;
     }
 
@@ -190,6 +212,25 @@ export function useImportWorkflow({
       return;
     }
 
+    if (!isSuccessfulImportPreview(pendingImport)) {
+      onStatusMessage({
+        tone: 'error',
+        text: 'Import remains blocked. Select a compatible backup file before writing local data.',
+      });
+      return;
+    }
+
+    if (
+      requiresImportRiskAcknowledgment(pendingImport) &&
+      !riskyImportAcknowledged
+    ) {
+      onStatusMessage({
+        tone: 'warning',
+        text: 'Import remains locked. Review the staged risk and acknowledge it before the write path unlocks.',
+      });
+      return;
+    }
+
     if (importMode === 'replace') {
       if (replaceConfirmState !== 'armed') {
         onArmReplace();
@@ -203,6 +244,13 @@ export function useImportWorkflow({
     await runConfirmedImport();
   }
 
+  const pendingImportRequiresAcknowledgment =
+    requiresImportRiskAcknowledgment(pendingImport);
+  const pendingImportCanCommit = canCommitImport(
+    pendingImport,
+    riskyImportAcknowledged,
+  );
+
   return {
     clearPendingImport,
     fileInputId,
@@ -214,6 +262,10 @@ export function useImportWorkflow({
     pendingFileName,
     pendingFileSize,
     pendingImport,
+    pendingImportCanCommit,
+    pendingImportRequiresAcknowledgment,
+    riskyImportAcknowledged,
+    setRiskyImportAcknowledged,
     setImportModeWithReset,
   };
 }

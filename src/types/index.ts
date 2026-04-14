@@ -41,6 +41,18 @@ export type EntryStatus = 'nominal' | 'degraded';
 export type UiStatus = EntryStatus | 'unmarked';
 export type ImportMode = 'merge' | 'replace';
 export type ImportIntegrityStatus = 'verified' | 'legacy-unverified';
+export type ImportPreviewKind =
+  | 'good'
+  | 'stale'
+  | 'legacy-unverified'
+  | 'incompatible'
+  | 'checksum-failed'
+  | 'oversize'
+  | 'blocked-key'
+  | 'invalid'
+  | 'unreadable';
+
+export const STALE_IMPORT_BUFFER_MS = 6 * 24 * 60 * 60 * 1000;
 
 export interface DailyEntry {
   id?: number;
@@ -74,15 +86,75 @@ export interface JsonExportPayload {
   crashDiagnostics?: CrashStorageDiagnostics;
 }
 
-export interface ImportPreview {
+export interface SuccessfulImportPreview {
+  kind: 'good' | 'stale' | 'legacy-unverified';
   payload: JsonExportPayload;
   integrityStatus: ImportIntegrityStatus;
   existingEntryCount: number;
   overwriteCount: number;
   newEntryCount: number;
   totalEntries: number;
+  exportedAt: string;
+  ageMs: number;
   dateRange: {
     start: string;
     end: string;
   } | null;
+}
+
+export interface IncompatibleImportPreview {
+  kind: 'incompatible';
+  reason: 'app' | 'schema-version';
+  detectedAppName: string | null;
+  detectedSchemaVersion: number | null;
+}
+
+export interface ChecksumFailedImportPreview {
+  kind: 'checksum-failed';
+}
+
+export interface OversizeImportPreview {
+  kind: 'oversize';
+  maxBytes: number;
+}
+
+export interface BlockedKeyImportPreview {
+  kind: 'blocked-key';
+  blockedKey: string;
+}
+
+export interface InvalidImportPreview {
+  kind: 'invalid';
+  issuePath: string | null;
+  issueMessage: string;
+}
+
+export interface UnreadableImportPreview {
+  kind: 'unreadable';
+}
+
+export type RejectedImportPreview =
+  | IncompatibleImportPreview
+  | ChecksumFailedImportPreview
+  | OversizeImportPreview
+  | BlockedKeyImportPreview
+  | InvalidImportPreview
+  | UnreadableImportPreview;
+
+export type ImportPreview = SuccessfulImportPreview | RejectedImportPreview;
+
+export function isSuccessfulImportPreview(
+  preview: ImportPreview | null,
+): preview is SuccessfulImportPreview {
+  return (
+    preview?.kind === 'good' ||
+    preview?.kind === 'stale' ||
+    preview?.kind === 'legacy-unverified'
+  );
+}
+
+export function requiresImportRiskAcknowledgment(
+  preview: ImportPreview | null,
+): preview is SuccessfulImportPreview {
+  return preview?.kind === 'stale' || preview?.kind === 'legacy-unverified';
 }

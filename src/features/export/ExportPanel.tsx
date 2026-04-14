@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { SectionCard } from '../../components/SectionCard';
 import type { StorageHealth } from '../../lib/storage';
+import { isSuccessfulImportPreview } from '../../types';
 import { BackupSummarySignals } from './BackupSummarySignals';
 import { ExportBackupSection } from './ExportBackupSection';
 import { ImportRestoreSection } from './ImportRestoreSection';
@@ -92,6 +93,10 @@ export function ExportPanel({
     pendingFileName,
     pendingFileSize,
     pendingImport,
+    pendingImportCanCommit,
+    pendingImportRequiresAcknowledgment,
+    riskyImportAcknowledged,
+    setRiskyImportAcknowledged,
     setImportModeWithReset,
   } = useImportWorkflow({
     onImportApplied: stageUndoImport,
@@ -119,7 +124,9 @@ export function ExportPanel({
   } = useReplaceCheckpoint({
     onBackupCompleted: markBackupCompleted,
     onStatusMessage: updateStatusMessage,
-    pendingImport,
+    pendingImport: isSuccessfulImportPreview(pendingImport)
+      ? pendingImport
+      : null,
   });
 
   async function confirmImport() {
@@ -169,6 +176,12 @@ export function ExportPanel({
           pendingFileSize={pendingFileSize}
           importBusy={importBusy}
           importMode={importMode}
+          pendingImportCanCommit={pendingImportCanCommit}
+          pendingImportRequiresAcknowledgment={
+            pendingImportRequiresAcknowledgment
+          }
+          riskyImportAcknowledged={riskyImportAcknowledged}
+          onRiskyImportAcknowledgedChange={setRiskyImportAcknowledged}
           onImportModeChange={setImportModeWithReset}
           onConfirmImport={confirmImport}
           onCancelImport={cancelPendingImport}
