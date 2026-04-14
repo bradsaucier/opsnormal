@@ -24,6 +24,7 @@
     "build:e2e": "tsc -b && vite build --mode e2e",
     "preview": "vite preview",
     "preview:e2e": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "preview:prod": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -34,6 +35,7 @@
     "test:e2e": "npm run build:e2e && playwright test --project=chromium --project=chromium-a11y",
     "test:e2e:smoke": "playwright test --project=chromium --grep-invert @harness",
     "test:e2e:webkit": "npm run build:e2e && playwright test --project=webkit",
+    "test:e2e:webkit:smoke": "playwright test --project=webkit-release",
     "audit:security": "npm audit --audit-level=high",
     "prepare": "husky"
   },
