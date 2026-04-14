@@ -9,6 +9,7 @@ Before tagging a release:
 - [ ] unit and integration tests pass
 - [ ] Playwright Chromium tests pass
 - [ ] Playwright WebKit smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/webkit-limitations.md
+- [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke and WebKit release smoke against that artifact, and only then publishes
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
 - [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project
 - [ ] direct-select radiogroup ARIA snapshot passes and only changes when the intended accessibility tree changes
