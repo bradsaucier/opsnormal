@@ -39,6 +39,7 @@ Before tagging a release:
 - [ ] storage durability indicator verified for install path, reconnect state, write verification state, and the synthetic Safari warning matrix
 - [ ] backup action banner verified for Safari-tab risk, reconnect or write-verification diagnostics, first-backup warning conditions, and fresh-backup suppression inside the six-day buffer
 - [ ] backup action banner announces through the accessibility tree as an alert when it mounts
+- [ ] all five alert and banner surfaces render uniformly at panel notch scale
 - [ ] forced close recovery verified with bounded reopen and operator-visible guidance
 - [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
 - [ ] JSON and CSV export verified on live build

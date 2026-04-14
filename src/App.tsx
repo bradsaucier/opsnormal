@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { AlertSurface } from './components/AlertSurface';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportPanelCrashFallback } from './components/ExportPanelCrashFallback';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
@@ -266,24 +267,14 @@ function App() {
           onReloadPage={handleReloadPage}
         />
         {databaseBlockedMessage ? (
-          <div className="clip-notched ops-notch-shell-outer bg-amber-400/40 p-px">
-            <section
-              className="clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(251,191,36,0.14),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-4"
-              role="alert"
-              aria-atomic="true"
-              aria-labelledby="database-upgrade-blocked-title"
-            >
-              <p
-                id="database-upgrade-blocked-title"
-                className="text-xs font-semibold tracking-[0.18em] text-amber-200 uppercase"
-              >
-                Database Upgrade Blocked
-              </p>
-              <p className="mt-2 text-sm leading-6 text-zinc-200">
-                {databaseBlockedMessage}
-              </p>
-            </section>
-          </div>
+          <AlertSurface
+            tone="attention"
+            title="Database Upgrade Blocked"
+            description={databaseBlockedMessage}
+            role="alert"
+            aria-atomic="true"
+            titleId="database-upgrade-blocked-title"
+          />
         ) : null}
         <BackupActionBanner prompt={backupActionPrompt} />
 

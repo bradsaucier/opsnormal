@@ -80,6 +80,9 @@ describe('PwaUpdateBanner', () => {
       screen.queryByRole('button', { name: /apply update/i }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Offline Ready' }).closest('section'),
+    ).not.toHaveAttribute('role');
   });
 
   it('renders stalled update recovery guidance and pins the banner until reload', async () => {

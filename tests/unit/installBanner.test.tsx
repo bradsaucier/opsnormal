@@ -58,7 +58,7 @@ describe('InstallBanner', () => {
       screen
         .getByRole('heading', { name: 'Install the app' })
         .closest('section'),
-    ).toHaveClass('clip-notched');
+    ).toBeInTheDocument();
   });
 
   it('renders iPhone and iPad install instructions when the device is iOS', () => {

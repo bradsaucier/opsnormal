@@ -12,6 +12,8 @@ Every change should preserve these boundaries:
 3. Preserve the fixed five-sector model in the current product scope.
 4. Preserve offline-first behavior and export as the recovery path.
 5. Do not rely on color alone to communicate state.
+6. New alert-like surfaces must compose `AlertSurface`; do not inline clip-notched banner scaffolding.
+7. Field-level validation should stay inline. Reserve `AlertSurface` for page-level, section-level, and support-banner surfaces.
 
 ## Local setup
 

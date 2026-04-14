@@ -148,6 +148,27 @@ Guidance:
 - Keep focus indication inside the clipped geometry with the shared inset focus treatment.
 - Avoid rounded button chrome inside primary tactical panels.
 
+## Alert surface tones
+
+Alert-like banners are centralized in `src/components/AlertSurface.tsx`.
+New alert surfaces should compose that primitive instead of inlining clipped shell scaffolding.
+The tone map is intentionally six-part. `success` and `neutral` stay distinct so setup guidance does not collapse into the same framing as steady-state support cards.
+
+- `info`: sky outer gradient and sky raised inner gradient for update and system-notice surfaces
+- `success`: emerald accent outer gradient and emerald-raised inner gradient for install and positive-setup surfaces
+- `attention`: amber outer gradient and amber raised inner gradient for monitor states that need eyes-on without declaring active failure
+- `warning`: orange outer gradient and orange raised inner gradient for elevated recovery or backup risk
+- `danger`: red outer gradient and red raised inner gradient for destructive or hard-stop alert states
+- `neutral`: structural outer border and neutral raised inner gradient for steady-state support cards
+
+Application rules:
+
+- Keep alert surfaces at panel notch scale through `NotchedFrame`.
+- Use the shared alert heading tracking value of `0.16em`.
+- Preserve consumer-specific `role`, `aria-live`, `aria-atomic`, `aria-labelledby`, and `data-testid` wiring when composing the primitive.
+- Prefer the alert tone's mapped action-button variant for the primary action in that surface.
+- Reserve `AlertSurface` for page-level, section-level, and support-banner surfaces. Field-level validation should stay inline.
+
 ## Readiness state colors
 
 These values are for readiness signaling only.
