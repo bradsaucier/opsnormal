@@ -197,7 +197,7 @@ async function seedLegacyVersion1Database(
   page: Page,
   entries: ExportEntry[],
 ): Promise<void> {
-  await page.goto('/boot-fallback-harness.html');
+  await page.goto('/tests/harness/boot-fallback-harness.html');
   await deleteOpsNormalDatabase(page);
 
   await page.evaluate(
