@@ -1,4 +1,4 @@
-name: CI
+name: 'Pipeline: Mainline Integrity'
 
 on:
   pull_request:
@@ -57,7 +57,19 @@ jobs:
         run: npm run test
 
       - name: Production build
-        run: npm run build
+        env:
+          VITE_BASE_PATH: /
+        run: |
+          npm run build
+          cp dist/index.html dist/404.html
+
+      - name: Upload CI-verified production artifact
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-ci-verified
+          path: ./dist
+          retention-days: 7
 
       - name: Install Playwright browsers
         if: matrix.node-version == 22
