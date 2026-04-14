@@ -146,17 +146,35 @@ export function useReplaceCheckpoint({
         });
         onStatusMessage({
           tone: 'success',
-          text: `Verified pre-replace backup saved as ${fileName}. ${exportResult.entryCount} current rows secured before restore.`,
+          text: `Read-back verified pre-replace backup saved as ${fileName}. ${exportResult.entryCount} current rows secured before restore.`,
         });
         return;
       }
 
       if (checkpointResult.kind === 'fallback-download-triggered') {
         onBackupCompleted(exportResult.exportedAt);
-        setReplaceBackupState({ phase: 'manual-awaiting-ack', fileName });
+        setReplaceBackupState({
+          phase: 'manual-awaiting-ack',
+          fileName,
+          reason: 'download-triggered',
+        });
         onStatusMessage({
           tone: 'warning',
           text: `Backup download triggered for ${fileName}. Verify the file exists on local disk, then acknowledge before replace unlocks.`,
+        });
+        return;
+      }
+
+      if (checkpointResult.kind === 'manual-verification-required') {
+        onBackupCompleted(exportResult.exportedAt);
+        setReplaceBackupState({
+          phase: 'manual-awaiting-ack',
+          fileName,
+          reason: 'readback-unavailable',
+        });
+        onStatusMessage({
+          tone: 'warning',
+          text: `Backup saved as ${fileName}, but the browser could not read it back for verification. Confirm the file on local disk, then acknowledge before replace unlocks.`,
         });
         return;
       }
@@ -194,7 +212,7 @@ export function useReplaceCheckpoint({
     setManualBackupConfirmed(false);
     onStatusMessage({
       tone: 'warning',
-      text: `Manual backup checkpoint acknowledged for ${replaceBackupState.fileName}. Replace is unlocked, but the browser did not verify the disk write.`,
+      text: `Manual backup checkpoint acknowledged for ${replaceBackupState.fileName}. Replace is unlocked, but the browser did not provide read-back proof for the saved file.`,
     });
   }, [manualBackupConfirmed, onStatusMessage, replaceBackupState]);
 
