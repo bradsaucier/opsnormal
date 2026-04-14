@@ -137,10 +137,11 @@ describe('service worker update runtime helpers', () => {
   });
 
   it('falls back to update() and returns null when no waiting worker appears', async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined);
     const registration = {
       waiting: null,
       installing: null,
-      update: vi.fn().mockResolvedValue(undefined),
+      update: updateMock,
     } as unknown as ServiceWorkerRegistration;
 
     Object.defineProperty(navigator, 'serviceWorker', {
@@ -153,7 +154,7 @@ describe('service worker update runtime helpers', () => {
     await expect(
       resolveWaitingWorkerForApply(registration),
     ).resolves.toBeNull();
-    expect(registration.update.mock.calls).toHaveLength(1);
+    expect(updateMock).toHaveBeenCalledTimes(1);
   });
 
   it('returns the current waiting worker when update() throws after registration lookup', async () => {
