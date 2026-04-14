@@ -50,14 +50,18 @@ function buildStorageHealth(
 }
 
 function installDisplayModeQuery(useLegacyListeners = false) {
+  const addEventListenerMock = useLegacyListeners ? undefined : vi.fn();
+  const removeEventListenerMock = useLegacyListeners ? undefined : vi.fn();
+  const addListenerMock = vi.fn();
+  const removeListenerMock = vi.fn();
   const mediaQueryList = {
     matches: false,
     media: '(display-mode: standalone)',
     onchange: null,
-    addEventListener: useLegacyListeners ? undefined : vi.fn(),
-    removeEventListener: useLegacyListeners ? undefined : vi.fn(),
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
+    addEventListener: addEventListenerMock,
+    removeEventListener: removeEventListenerMock,
+    addListener: addListenerMock,
+    removeListener: removeListenerMock,
     dispatchEvent: vi.fn(),
   } as unknown as MediaQueryList;
 
@@ -66,7 +70,13 @@ function installDisplayModeQuery(useLegacyListeners = false) {
     value: vi.fn(() => mediaQueryList),
   });
 
-  return mediaQueryList;
+  return {
+    mediaQueryList,
+    addEventListenerMock,
+    removeEventListenerMock,
+    addListenerMock,
+    removeListenerMock,
+  };
 }
 
 describe('useStorageHealth', () => {
@@ -189,13 +199,13 @@ describe('useStorageHealth', () => {
   });
 
   it('falls back to legacy media-query listeners and removes them on unmount', () => {
-    const mediaQueryList = installDisplayModeQuery(true);
+    const { addListenerMock, removeListenerMock } = installDisplayModeQuery(true);
     const { unmount } = renderHook(() => useStorageHealth());
 
-    expect(mediaQueryList.addListener.mock.calls).toHaveLength(1);
+    expect(addListenerMock).toHaveBeenCalledTimes(1);
 
     unmount();
 
-    expect(mediaQueryList.removeListener.mock.calls).toHaveLength(1);
+    expect(removeListenerMock).toHaveBeenCalledTimes(1);
   });
 });
