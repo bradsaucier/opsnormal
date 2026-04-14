@@ -26,6 +26,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0018 | Database schema versioning and migration framework              |
 | 0019 | Truthful Safari storage lifecycle automation                    |
 | 0020 | Promote WebKit smoke to a gating compatibility check            |
+| 0021 | Gate release on WebKit smoke and CI-verified artifact       |
 
 ## Operating rule
 
