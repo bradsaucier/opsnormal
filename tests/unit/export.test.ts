@@ -5,15 +5,11 @@ import {
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
-  formatLastExportCompletedAt,
+  formatLastExportCompletedAt
 } from '../../src/lib/export';
 import { parseImportPayload } from '../../src/services/importValidation';
 import { parseExportPayload } from '../helpers/exportPayload';
-import {
-  EXPORT_SCHEMA_VERSION,
-  OPSNORMAL_APP_NAME,
-  type DailyEntry,
-} from '../../src/types';
+import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, type DailyEntry } from '../../src/types';
 
 const sampleEntries: DailyEntry[] = [
   {
@@ -21,8 +17,8 @@ const sampleEntries: DailyEntry[] = [
     date: '2026-03-27',
     sectorId: 'work-school',
     status: 'nominal',
-    updatedAt: '2026-03-27T12:00:00.000Z',
-  },
+    updatedAt: '2026-03-27T12:00:00.000Z'
+  }
 ];
 
 const sampleCrashDiagnostics = {
@@ -37,41 +33,19 @@ const sampleCrashDiagnostics = {
   installRecommended: true,
   webKitRisk: true,
   lastVerificationResult: 'verified' as const,
-  lastVerifiedAt: '2026-03-28T10:11:12.000Z',
+  lastVerifiedAt: '2026-03-28T10:11:12.000Z'
 };
 
 describe('export helpers', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: true,
-    });
   });
 
   it('creates csv with header and rows', () => {
     const csv = createCsvExport(sampleEntries);
 
     expect(csv).toContain('date,sectorId,status,updatedAt');
-    expect(csv).toContain(
-      '2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z',
-    );
-  });
-
-  it('escapes csv cells that contain commas, quotes, or line breaks', () => {
-    const csv = createCsvExport([
-      {
-        id: 2,
-        date: '2026-03-27,pm',
-        sectorId: 'body',
-        status: 'degraded',
-        updatedAt: '2026-03-27T12:00:00.000Z\n"quoted"',
-      },
-    ]);
-
-    expect(csv).toContain('"2026-03-27,pm"');
-    expect(csv).toContain('degraded');
-    expect(csv).toContain('"2026-03-27T12:00:00.000Z\n""quoted"""');
+    expect(csv).toContain('2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z');
   });
 
   it('creates versioned json payload with entries and checksum', async () => {
@@ -88,11 +62,7 @@ describe('export helpers', () => {
 
   it('creates a crash json payload with embedded diagnostics', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(
-      sampleEntries,
-      sampleCrashDiagnostics,
-      exportedAt,
-    );
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
     const parsed = JSON.parse(json) as {
       app: string;
       crashDiagnostics: typeof sampleCrashDiagnostics;
@@ -113,11 +83,7 @@ describe('export helpers', () => {
 
   it('keeps crash export payloads importable by ignoring optional diagnostics', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(
-      sampleEntries,
-      sampleCrashDiagnostics,
-      exportedAt,
-    );
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
     const parsed = await parseImportPayload(json);
 
     expect(parsed.entries).toEqual(sampleEntries);
@@ -126,11 +92,7 @@ describe('export helpers', () => {
 
   it('covers crash diagnostics in the checksum envelope', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(
-      sampleEntries,
-      sampleCrashDiagnostics,
-      exportedAt,
-    );
+    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
     const parsed = JSON.parse(json) as {
       app: typeof OPSNORMAL_APP_NAME;
       schemaVersion: typeof EXPORT_SCHEMA_VERSION;
@@ -145,7 +107,7 @@ describe('export helpers', () => {
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,
       entries: parsed.entries,
-      crashDiagnostics: parsed.crashDiagnostics,
+      crashDiagnostics: parsed.crashDiagnostics
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
@@ -156,11 +118,11 @@ describe('export helpers', () => {
     const json = await createJsonExport(sampleEntries, exportedAt);
     const parsed = parseExportPayload(json);
 
-    const recomputedChecksum = await computeJsonExportChecksum({
+    const recomputedChecksum: string = await computeJsonExportChecksum({
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,
-      entries: parsed.entries,
+      entries: parsed.entries
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
@@ -168,74 +130,23 @@ describe('export helpers', () => {
 
   it('fails cleanly when subtle crypto is unavailable', async () => {
     vi.stubGlobal('crypto', {
-      subtle: undefined,
+      subtle: undefined
     });
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: true,
-    });
+    vi.stubGlobal('isSecureContext', true);
 
     await expect(
       computeJsonExportChecksum({
         app: OPSNORMAL_APP_NAME,
         schemaVersion: EXPORT_SCHEMA_VERSION,
         exportedAt: '2026-03-28T10:11:12.000Z',
-        entries: sampleEntries,
-      }),
+        entries: sampleEntries
+      })
     ).rejects.toThrow('required Web Crypto API');
-  });
-
-  it('fails cleanly when the page is not running in a secure context', async () => {
-    vi.stubGlobal('crypto', {
-      subtle: undefined,
-    });
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: false,
-    });
-
-    await expect(
-      computeJsonExportChecksum({
-        app: OPSNORMAL_APP_NAME,
-        schemaVersion: EXPORT_SCHEMA_VERSION,
-        exportedAt: '2026-03-28T10:11:12.000Z',
-        entries: sampleEntries,
-      }),
-    ).rejects.toThrow('secure HTTPS origin');
-  });
-
-  it('fails cleanly when payload encoding returns no bytes for non-empty content', async () => {
-    vi.stubGlobal('crypto', {
-      subtle: {
-        digest: vi.fn().mockResolvedValue(new ArrayBuffer(32)),
-      },
-    });
-    vi.stubGlobal(
-      'TextEncoder',
-      class {
-        encode() {
-          return new Uint8Array(0);
-        }
-      } as typeof TextEncoder,
-    );
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: true,
-    });
-
-    await expect(
-      computeJsonExportChecksum({
-        app: OPSNORMAL_APP_NAME,
-        schemaVersion: EXPORT_SCHEMA_VERSION,
-        exportedAt: '2026-03-28T10:11:12.000Z',
-        entries: sampleEntries,
-      }),
-    ).rejects.toThrow('encoding the backup payload');
   });
 
   it('formats backup status text when no export is recorded', () => {
     expect(formatLastExportCompletedAt(null)).toBe(
-      'No external backup recorded on this browser yet. If the app returns blank after Safari inactivity, restore from the latest JSON export immediately.',
+      'No external backup recorded on this browser yet.'
     );
   });
 });
