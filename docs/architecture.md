@@ -110,7 +110,9 @@ Export and import are integrity-sensitive paths. The implementation is intention
 - Import preview validates structure before any write can stage
 - Large-file preview can move parsing to a worker to keep the main UI responsive
 - File size is capped and entry count is bounded
+- Rejected files stay staged in a read-only preview with plain-language failure reasons instead of collapsing into a transient status only
 - Legacy checksum-free payloads are allowed but flagged as unverified during preview
+- Old but otherwise valid checksum-backed payloads are flagged as stale during preview and require explicit operator acknowledgment before import unlocks
 - Merge and replace both compute the expected final state before commit
 - Replace requires a pre-replace backup checkpoint plus separate arm and execute actions
 - If the browser cannot read the saved file back for proof, replace falls back to an explicit manual acknowledgment path instead of claiming a verified write
