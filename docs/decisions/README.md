@@ -27,6 +27,8 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0019 | Truthful Safari storage lifecycle automation                    |
 | 0020 | Promote WebKit smoke to a gating compatibility check            |
 | 0021 | Gate release on WebKit smoke and CI-verified artifact           |
+| 0022 | Public release scope and repo-surface requirements              |
+| 0023 | Temporary React hooks lint canary exception                     |
 
 ## Operating rule
 
