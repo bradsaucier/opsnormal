@@ -32,6 +32,10 @@ type InvalidImportPayload = {
   }>;
 };
 
+type IncompatibleImportPayload = Omit<ImportPayload, 'schemaVersion'> & {
+  schemaVersion: number;
+};
+
 const FIXED_TEST_TIME_ISO = '2026-03-28T12:00:00.000Z';
 
 function currentDateKey(): string {
@@ -114,6 +118,22 @@ function buildInvalidImportPayload(): InvalidImportPayload {
         status: 'nominal',
         updatedAt: '2026-03-28T12:00:00.000Z',
       },
+    ],
+  };
+}
+
+function buildIncompatibleImportPayload(): IncompatibleImportPayload {
+  return {
+    app: OPSNORMAL_APP_NAME,
+    schemaVersion: 2,
+    exportedAt: FIXED_TEST_TIME_ISO,
+    entries: [
+      createImportEntry({
+        date: currentDateKey(),
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: FIXED_TEST_TIME_ISO,
+      }),
     ],
   };
 }
@@ -218,7 +238,7 @@ async function stageImportJson(
 async function stageImportPreview(
   page: Page,
   fileName: string,
-  payload: ImportPayload | InvalidImportPayload,
+  payload: ImportPayload | InvalidImportPayload | IncompatibleImportPayload,
 ): Promise<void> {
   await ensureImportPanelOpen(page);
   await stageImportJson(page, fileName, JSON.stringify(payload));
@@ -226,6 +246,18 @@ async function stageImportPreview(
 
 async function confirmMergeImport(page: Page): Promise<void> {
   await page.getByRole('button', { name: /confirm merge import/i }).click();
+}
+
+async function acknowledgeRiskyImport(page: Page): Promise<void> {
+  const riskyAcknowledgment = page.getByRole('checkbox', {
+    name: /reviewed the export time|understand this backup has no checksum/i,
+  });
+
+  if ((await riskyAcknowledgment.count()) === 0) {
+    return;
+  }
+
+  await riskyAcknowledgment.first().check();
 }
 
 async function switchToReplaceMode(page: Page): Promise<void> {
@@ -289,7 +321,10 @@ test.describe('OpsNormal import workflow', () => {
     await expect(
       page.getByRole('heading', { name: /import preview/i }),
     ).toBeVisible();
-    await expect(page.getByText(/legacy backup detected/i)).toBeVisible();
+    await expect(
+      page.getByText(/legacy backup\. structure validated/i),
+    ).toBeVisible();
+    await acknowledgeRiskyImport(page);
     await confirmMergeImport(page);
 
     await expectSectorStatus(page, 'Body', 'degraded');
@@ -303,11 +338,110 @@ test.describe('OpsNormal import workflow', () => {
     await stageImportPreview(page, 'opsnormal-invalid.json', invalidPayload);
 
     await expect(
-      page.getByText(/import rejected|entries\.0\.sectorId/i),
+      page.getByRole('heading', { name: /import preview/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: /import preview/i }),
+      page.getByText(/backup did not validate\. entries\.0\.sectorid/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /clear preview/i }),
+    ).toBeVisible();
+  });
+
+  test('requires acknowledgment before a stale verified backup can import', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    const stalePayload = await buildVerifiedImportPayload([
+      createImportEntry({
+        date: currentDateKey(),
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-20T12:00:00.000Z',
+      }),
+    ]);
+    stalePayload.exportedAt = '2026-03-20T12:00:00.000Z';
+    stalePayload.checksum = await computeJsonExportChecksum({
+      app: stalePayload.app,
+      schemaVersion: stalePayload.schemaVersion,
+      exportedAt: stalePayload.exportedAt,
+      entries: stalePayload.entries,
+    });
+
+    await stageImportPreview(page, 'opsnormal-stale.json', stalePayload);
+
+    await expect(
+      page.getByText(/backup file is older than the freshness buffer/i),
+    ).toBeVisible();
+
+    const confirmMergeButton = page.getByRole('button', {
+      name: /confirm merge import/i,
+    });
+    await expect(confirmMergeButton).toBeDisabled();
+
+    await page
+      .getByRole('checkbox', {
+        name: /i reviewed the export time and date range/i,
+      })
+      .check();
+    await expect(confirmMergeButton).toBeEnabled();
+
+    await confirmMergeImport(page);
+    await expectSectorStatus(page, 'Body', 'degraded');
+  });
+
+  test('surfaces incompatible backups in read-only preview mode', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await stageImportPreview(
+      page,
+      'opsnormal-incompatible.json',
+      buildIncompatibleImportPayload(),
+    );
+
+    await expect(
+      page.getByText(/this backup declares schema version 2/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /clear preview/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /confirm merge import/i }),
     ).toHaveCount(0);
+  });
+
+  test('surfaces checksum-failed backups in read-only preview mode', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    const payload = await buildVerifiedImportPayload([
+      createImportEntry({
+        date: currentDateKey(),
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: FIXED_TEST_TIME_ISO,
+      }),
+    ]);
+    payload.entries[0] = {
+      ...payload.entries[0]!,
+      status: 'degraded',
+    };
+
+    await stageImportPreview(page, 'opsnormal-checksum-failed.json', payload);
+
+    await expect(
+      page.getByText(/embedded sha-256 checksum did not match/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /clear preview/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /confirm merge import/i }),
+    ).toHaveCount(0);
+    await expectSectorStatus(page, 'Body', 'unmarked');
   });
 
   test('keeps replace locked until the manual backup checkpoint completes', async ({
