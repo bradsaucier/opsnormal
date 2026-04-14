@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a scoped improvement that preserves the repo boundary.
+title: '[Feature]: '
+labels:
+  - type: enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep requests inside the product boundary.
+        No accounts, analytics, cloud sync, or backend services.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the operational problem you want solved.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful change.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Boundary check
+      description: Explain how the proposal preserves the local-only model and current trust boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
