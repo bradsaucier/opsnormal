@@ -5,7 +5,7 @@ tagline: 'Local-only readiness tracking with deliberate constraints and operator
 ```
 
 [![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
-[![Pipeline: Release Provenance](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
+[![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
 [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-and-transparency)
 
@@ -13,6 +13,10 @@ tagline: 'Local-only readiness tracking with deliberate constraints and operator
   <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop interface displaying a 30-day readiness grid across five sectors and a detailed daily summary.">
 </p>
 <p align="center">Desktop view: 30-day trailing grid and daily summary.</p>
+<p align="center">
+  <img src="./docs/images/desktop-daily-checkin.png" width="920" alt="Desktop interface displaying the direct daily check-in surface across the five fixed readiness sectors.">
+</p>
+<p align="center">Today panel: direct daily check-in across the five fixed sectors.</p>
 
 OpsNormal is a local-only Progressive Web App for fast daily readiness tracking across five fixed sectors: Work or School, Household, Relationships, Body, and Rest.
 
@@ -59,12 +63,13 @@ These are not missing features. They are deliberate choices that protect the ope
 ### Use the deployed app
 
 1. Open `https://opsnormal.app`
-2. On Apple devices, decide first where you will rely on the app. Ordinary Safari tabs are subject to WebKit's seven-day storage purge after seven days of Safari use without user interaction on the site.
-3. If you plan to rely on the app on iPhone or iPad, install it to Home Screen before entering data. Safari browser tabs and installed Home Screen apps keep isolated website data on Apple platforms.
-4. If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file. Installation does not migrate Safari-tab data into the installed app automatically.
-5. Record an initial status across the five fixed sectors in the environment you intend to keep using
-6. Run a test JSON export and keep the file somewhere you control
-7. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
+2. If you are validating a Pages rollout or DNS cutover, the fallback deployment URL is `https://bradsaucier.github.io/opsnormal/`
+3. On Apple devices, decide first where you will rely on the app. Ordinary Safari tabs are subject to WebKit's seven-day storage purge after seven days of Safari use without user interaction on the site.
+4. If you plan to rely on the app on iPhone or iPad, install it to Home Screen before entering data. Safari browser tabs and installed Home Screen apps keep isolated website data on Apple platforms.
+5. If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file. Installation does not migrate Safari-tab data into the installed app automatically.
+6. Record an initial status across the five fixed sectors in the environment you intend to keep using
+7. Run a test JSON export and keep the file somewhere you control
+8. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
 
 ### Run locally
 
@@ -133,6 +138,18 @@ You are responsible for exporting and backing up the data you intend to keep. Ru
 - Desktop 30-day history grid for pattern recognition
 - Week-paginated mobile history with a daily brief on narrow screens
 - Export and import surface for backup, recovery, preview, merge, replace, and undo flows
+
+## Browser compatibility
+
+OpsNormal keeps browser claims narrow and tied to actual repo evidence.
+
+| Browser surface             | Current posture        | Verification truth                                                                  |
+| --------------------------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| Chromium-based browsers     | Supported              | Full Playwright Chromium coverage, production-artifact smoke, and release gating    |
+| Safari and other WebKit UIs | Supported with caveats | Merge-blocking and release WebKit smoke lanes prove engine compatibility only       |
+| Firefox current release     | Expected to work       | Manual verification recommended because there is no dedicated Firefox CI lane today |
+
+Read [WebKit CI coverage boundary](./docs/webkit-limitations.md) before making stronger Safari claims than the repo proves.
 
 ## Responsive history proof
 
@@ -212,9 +229,11 @@ This README stays focused on orientation and first use. Deeper proof, limits, an
 | [Architecture Decision Records](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
 | [Test plan](./docs/test-plan.md)                            | Verification strategy, release checks, and coverage priorities                                       |
 | [Release checklist](./docs/release-checklist.md)            | Pre-release validation and operator-facing quality gates                                             |
+| [Changelog](./CHANGELOG.md)                                 | Public release history                                                                               |
 | [Security policy](./SECURITY.md)                            | Security model, trust boundaries, and accurate claim limits                                          |
 | [Design tokens](./docs/design-tokens.md)                    | Visual language, structural colors, state colors, and clipped geometry                               |
 | [Contributing guide](./CONTRIBUTING.md)                     | Contribution rules that preserve repo scope                                                          |
+| [Support policy](./SUPPORT.md)                              | Question paths, vulnerability reporting, and funding posture                                         |
 | [Code of conduct](./CODE_OF_CONDUCT.md)                     | Expected project conduct                                                                             |
 
 These docs exist because the constraints are part of the product and should stay visible.
