@@ -127,14 +127,11 @@ describe('exportSerialization', () => {
     ).rejects.toThrow('required Web Crypto API');
   });
 
-  it('falls back to the global secure-context hint when window does not expose one', async () => {
+  it('falls back to globalThis.isSecureContext when window does not expose a boolean', async () => {
     vi.stubGlobal('crypto', { subtle: undefined });
-
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: undefined,
+    vi.stubGlobal('window', {
+      isSecureContext: undefined,
     });
-
     vi.stubGlobal('isSecureContext', false);
 
     await expect(
@@ -149,12 +146,9 @@ describe('exportSerialization', () => {
 
   it('uses the global secure-context hint when it is explicitly true', async () => {
     vi.stubGlobal('crypto', { subtle: undefined });
-
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: undefined,
+    vi.stubGlobal('window', {
+      isSecureContext: undefined,
     });
-
     vi.stubGlobal('isSecureContext', true);
 
     await expect(
@@ -167,14 +161,11 @@ describe('exportSerialization', () => {
     ).rejects.toThrow('required Web Crypto API');
   });
 
-  it('reports missing Web Crypto when no secure-context hint is available anywhere', async () => {
+  it('reports missing Web Crypto when no secure-context hint is available', async () => {
     vi.stubGlobal('crypto', { subtle: undefined });
-
-    Object.defineProperty(window, 'isSecureContext', {
-      configurable: true,
-      value: undefined,
+    vi.stubGlobal('window', {
+      isSecureContext: undefined,
     });
-
     vi.stubGlobal('isSecureContext', undefined);
 
     await expect(
