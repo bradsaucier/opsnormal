@@ -58,7 +58,6 @@ export async function createCrashJsonExport(
     entries,
     crashDiagnostics,
   };
-
   const checksum = await computeJsonExportChecksum(payload);
 
   return JSON.stringify(
@@ -96,7 +95,14 @@ function getSubtleCrypto(): SubtleCrypto {
     return globalThis.crypto.subtle;
   }
 
-  if (!isSecureContextAvailable()) {
+  const secureContextHint =
+    typeof window !== 'undefined' && typeof window.isSecureContext === 'boolean'
+      ? window.isSecureContext
+      : typeof globalThis.isSecureContext === 'boolean'
+        ? globalThis.isSecureContext
+        : true;
+
+  if (!secureContextHint) {
     throw new Error(
       'Export integrity check unavailable. Open the app from a secure HTTPS origin, then retry the export.',
     );
@@ -105,21 +111,6 @@ function getSubtleCrypto(): SubtleCrypto {
   throw new Error(
     'Export integrity check unavailable. This browser does not expose the required Web Crypto API.',
   );
-}
-
-function isSecureContextAvailable(): boolean {
-  if (
-    typeof window !== 'undefined' &&
-    typeof window.isSecureContext === 'boolean'
-  ) {
-    return window.isSecureContext;
-  }
-
-  if (typeof globalThis.isSecureContext === 'boolean') {
-    return globalThis.isSecureContext;
-  }
-
-  return true;
 }
 
 function encodeChecksumInput(serialized: string): Uint8Array {
@@ -134,7 +125,7 @@ function encodeChecksumInput(serialized: string): Uint8Array {
   return bytes;
 }
 
-function toDigestBuffer(bytes: Uint8Array): BufferSource {
+function toDigestBuffer(bytes: Uint8Array): Uint8Array<ArrayBuffer> {
   const digestInput = new Uint8Array(new ArrayBuffer(bytes.byteLength));
   digestInput.set(bytes);
   return digestInput;
