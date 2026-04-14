@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const LAST_EXPORT_AT_KEY = 'opsnormal-last-export-at';
+
 async function openStorageHealth(page: Page) {
   const storageHealthToggle = page.getByRole('button', {
     name: /storage health/i,
@@ -20,7 +22,7 @@ function sectorRadio(
   });
 }
 
-test.describe('OpsNormal WebKit smoke', () => {
+test.describe('OpsNormal WebKit release smoke', () => {
   test('loads the shell and surfaces the natural Apple WebKit backup prompt', async ({
     page,
   }) => {
@@ -50,7 +52,7 @@ test.describe('OpsNormal WebKit smoke', () => {
     await expect(page.getByText('Browser tab', { exact: true })).toBeVisible();
   });
 
-  test('persists a check-in across reload in the WebKit smoke lane', async ({
+  test('persists a check-in across reload in the WebKit release smoke lane', async ({
     page,
   }) => {
     await page.goto('/');
@@ -65,17 +67,22 @@ test.describe('OpsNormal WebKit smoke', () => {
     await expect(workDegraded).toHaveAttribute('aria-checked', 'true');
   });
 
-  test('clears the Safari-tab backup banner after recording a fresh backup timestamp', async ({
+  test('suppresses the Safari-tab backup banner when a fresh backup timestamp already exists in browser storage', async ({
     page,
   }) => {
-    await page.goto('/');
+    const freshBackupAt = new Date().toISOString();
 
-    await page.evaluate(async () => {
-      window.__opsNormalStorageTestApi__?.setLastBackupAt(
-        new Date().toISOString(),
-      );
-      await window.__opsNormalStorageTestApi__?.refreshStorageHealth();
-    });
+    await page.addInitScript(
+      ({ storageKey, timestamp }) => {
+        window.localStorage.setItem(storageKey, timestamp);
+      },
+      {
+        storageKey: LAST_EXPORT_AT_KEY,
+        timestamp: freshBackupAt,
+      },
+    );
+
+    await page.goto('/');
 
     await expect(
       page.getByRole('heading', {
