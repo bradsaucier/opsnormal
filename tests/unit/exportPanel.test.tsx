@@ -349,6 +349,11 @@ describe('ExportPanel import warnings', () => {
     });
     expect(unlockButton).toBeDisabled();
     expect(armButton).toBeDisabled();
+    expect(
+      screen.getByText(
+        /backup download triggered\. verify the saved file exists on local disk, then acknowledge before replace unlocks\./i,
+      ),
+    ).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole('checkbox', {
@@ -486,6 +491,33 @@ describe('ExportPanel import warnings', () => {
     expect(checkpointJsonBackupToDiskMock).not.toHaveBeenCalled();
   });
 
+  it('surfaces distinct operator guidance when picker save completes without browser read-back proof', async () => {
+    primeReplacePreview();
+    canUseVerifiedFileSaveMock.mockReturnValue(true);
+    checkpointJsonBackupToDiskMock.mockResolvedValue({
+      kind: 'manual-verification-required',
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT,
+      message:
+        'Backup save completed, but the browser could not read the saved file back for verification. Confirm the file on local disk before replace unlocks.',
+    });
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await stageReplacePreview();
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: /write and verify pre-replace backup/i,
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        /browser read-back proof unavailable\. verify the saved file exists on local disk, then acknowledge before replace unlocks\./i,
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('uses verified file save when the browser exposes a save picker', async () => {
     primeReplacePreview();
     canUseVerifiedFileSaveMock.mockReturnValue(true);
@@ -500,7 +532,7 @@ describe('ExportPanel import warnings', () => {
     await stageReplacePreview();
     await userEvent.click(
       screen.getByRole('button', {
-        name: /write verified pre-replace backup/i,
+        name: /write and verify pre-replace backup/i,
       }),
     );
 
@@ -516,7 +548,10 @@ describe('ExportPanel import warnings', () => {
       }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/disk write verified before replace unlock\./i),
+      screen.getByText(/step 2 - browser read-back proof complete\./i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/disk write read-back verified before replace unlock\./i),
     ).toBeInTheDocument();
   });
 });
