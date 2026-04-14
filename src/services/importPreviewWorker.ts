@@ -1,4 +1,5 @@
 import {
+  createRejectedImportPreview,
   parseImportPayload,
   summarizeParsedPayload,
   validateImportFileSize,
@@ -32,10 +33,24 @@ self.onmessage = async (event: MessageEvent<WorkerPreviewRequest>) => {
       summary: summarizeParsedPayload(payload),
     });
   } catch (error) {
+    const rejectedPreview = createRejectedImportPreview(error);
+
+    if (rejectedPreview) {
+      self.postMessage({
+        ok: false,
+        preview: rejectedPreview,
+      });
+      return;
+    }
+
     self.postMessage({
       ok: false,
-      error:
-        error instanceof Error ? error.message : 'Import preparation failed.',
+      preview: {
+        kind: 'invalid',
+        issuePath: null,
+        issueMessage:
+          error instanceof Error ? error.message : 'Import preparation failed.',
+      },
     });
   }
 };
