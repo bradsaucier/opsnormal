@@ -132,7 +132,6 @@ describe('useReplaceCheckpoint', () => {
     });
   });
 
-
   it('drops to manual acknowledgment when the picker write succeeds but read-back verification is unavailable', async () => {
     primeExportSnapshot();
     checkpointJsonBackupToDiskMock.mockResolvedValue({
