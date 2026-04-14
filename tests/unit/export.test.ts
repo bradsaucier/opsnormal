@@ -5,11 +5,15 @@ import {
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
-  formatLastExportCompletedAt
+  formatLastExportCompletedAt,
 } from '../../src/lib/export';
+import {
+  EXPORT_SCHEMA_VERSION,
+  OPSNORMAL_APP_NAME,
+  type DailyEntry,
+} from '../../src/types';
 import { parseImportPayload } from '../../src/services/importValidation';
 import { parseExportPayload } from '../helpers/exportPayload';
-import { EXPORT_SCHEMA_VERSION, OPSNORMAL_APP_NAME, type DailyEntry } from '../../src/types';
 
 const sampleEntries: DailyEntry[] = [
   {
@@ -17,8 +21,8 @@ const sampleEntries: DailyEntry[] = [
     date: '2026-03-27',
     sectorId: 'work-school',
     status: 'nominal',
-    updatedAt: '2026-03-27T12:00:00.000Z'
-  }
+    updatedAt: '2026-03-27T12:00:00.000Z',
+  },
 ];
 
 const sampleCrashDiagnostics = {
@@ -33,7 +37,7 @@ const sampleCrashDiagnostics = {
   installRecommended: true,
   webKitRisk: true,
   lastVerificationResult: 'verified' as const,
-  lastVerifiedAt: '2026-03-28T10:11:12.000Z'
+  lastVerifiedAt: '2026-03-28T10:11:12.000Z',
 };
 
 describe('export helpers', () => {
@@ -45,7 +49,9 @@ describe('export helpers', () => {
     const csv = createCsvExport(sampleEntries);
 
     expect(csv).toContain('date,sectorId,status,updatedAt');
-    expect(csv).toContain('2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z');
+    expect(csv).toContain(
+      '2026-03-27,work-school,nominal,2026-03-27T12:00:00.000Z',
+    );
   });
 
   it('creates versioned json payload with entries and checksum', async () => {
@@ -62,7 +68,11 @@ describe('export helpers', () => {
 
   it('creates a crash json payload with embedded diagnostics', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const json = await createCrashJsonExport(
+      sampleEntries,
+      sampleCrashDiagnostics,
+      exportedAt,
+    );
     const parsed = JSON.parse(json) as {
       app: string;
       crashDiagnostics: typeof sampleCrashDiagnostics;
@@ -83,7 +93,11 @@ describe('export helpers', () => {
 
   it('keeps crash export payloads importable by ignoring optional diagnostics', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const json = await createCrashJsonExport(
+      sampleEntries,
+      sampleCrashDiagnostics,
+      exportedAt,
+    );
     const parsed = await parseImportPayload(json);
 
     expect(parsed.entries).toEqual(sampleEntries);
@@ -92,7 +106,11 @@ describe('export helpers', () => {
 
   it('covers crash diagnostics in the checksum envelope', async () => {
     const exportedAt = '2026-03-28T10:11:12.000Z';
-    const json = await createCrashJsonExport(sampleEntries, sampleCrashDiagnostics, exportedAt);
+    const json = await createCrashJsonExport(
+      sampleEntries,
+      sampleCrashDiagnostics,
+      exportedAt,
+    );
     const parsed = JSON.parse(json) as {
       app: typeof OPSNORMAL_APP_NAME;
       schemaVersion: typeof EXPORT_SCHEMA_VERSION;
@@ -107,7 +125,7 @@ describe('export helpers', () => {
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,
       entries: parsed.entries,
-      crashDiagnostics: parsed.crashDiagnostics
+      crashDiagnostics: parsed.crashDiagnostics,
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
@@ -122,7 +140,7 @@ describe('export helpers', () => {
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
       exportedAt: parsed.exportedAt,
-      entries: parsed.entries
+      entries: parsed.entries,
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
@@ -130,7 +148,7 @@ describe('export helpers', () => {
 
   it('fails cleanly when subtle crypto is unavailable', async () => {
     vi.stubGlobal('crypto', {
-      subtle: undefined
+      subtle: undefined,
     });
     vi.stubGlobal('isSecureContext', true);
 
@@ -139,14 +157,14 @@ describe('export helpers', () => {
         app: OPSNORMAL_APP_NAME,
         schemaVersion: EXPORT_SCHEMA_VERSION,
         exportedAt: '2026-03-28T10:11:12.000Z',
-        entries: sampleEntries
-      })
+        entries: sampleEntries,
+      }),
     ).rejects.toThrow('required Web Crypto API');
   });
 
   it('formats backup status text when no export is recorded', () => {
     expect(formatLastExportCompletedAt(null)).toBe(
-      'No external backup recorded on this browser yet.'
+      'No external backup recorded on this browser yet.',
     );
   });
 });
