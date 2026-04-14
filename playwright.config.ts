@@ -34,11 +34,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: [
-        /.*\.a11y\.spec\.ts/,
-        /.*webkit-smoke\.spec\.ts/,
-        /.*webkit-release-smoke\.spec\.ts/,
-      ],
+      testIgnore: [/.*\.a11y\.spec\.ts/, /.*webkit-smoke\.spec\.ts/],
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -60,7 +56,7 @@ export default defineConfig({
     },
     {
       name: 'webkit-release',
-      testMatch: /.*webkit-release-smoke\.spec\.ts/,
+      testMatch: /.*webkit-smoke\.spec\.ts/,
       retries: 2,
       workers: 1,
       use: {
