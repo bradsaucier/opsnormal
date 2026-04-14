@@ -26,7 +26,7 @@ function createMockWorker(state: ServiceWorkerState) {
         listener(new Event(eventName));
       }
     },
-  } as ServiceWorker & { dispatch: (eventName: string) => void };
+  } as unknown as ServiceWorker & { dispatch: (eventName: string) => void };
 }
 
 describe('service worker update runtime helpers', () => {
@@ -113,7 +113,7 @@ describe('service worker update runtime helpers', () => {
       waiting: null,
       installing: installingWorker,
       update: vi.fn().mockResolvedValue(undefined),
-    } as ServiceWorkerRegistration & {
+    } as unknown as ServiceWorkerRegistration & {
       waiting: ServiceWorker | null;
       installing:
         | (ServiceWorker & { dispatch: (eventName: string) => void })
