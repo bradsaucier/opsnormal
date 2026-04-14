@@ -195,6 +195,7 @@ Quality is enforced through release gates, test coverage, and explicit design co
 - GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a merge-blocking Playwright WebKit smoke lane, and build validation
 - GitHub Pages deployment is gated on a production-artifact smoke pass
 - JSON export carries versioning and integrity checks
+- Save-picker pre-replace backups are read back before the app claims a verified disk write, and fallback Blob downloads keep a conservative delayed-revoke cleanup window
 - Import fails closed on malformed or unsafe data
 - Root-level and section-level error boundaries preserve recovery and export paths
 - ADRs, the risk register, the test plan, and the release checklist keep constraints visible so the repo cannot drift quietly
