@@ -1,9 +1,27 @@
 {
   "name": "opsnormal",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Offline-first personal readiness tracker for daily balance across work, home, relationships, body, and rest.",
+  "homepage": "https://opsnormal.app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bradsaucier/opsnormal.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bradsaucier/opsnormal/issues"
+  },
+  "author": "Bradley Saucier",
+  "license": "MIT",
+  "keywords": [
+    "pwa",
+    "offline-first",
+    "indexeddb",
+    "react",
+    "typescript",
+    "readiness"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },
