@@ -12,36 +12,41 @@ function installMatchMediaController(
   let matches = initialMatches;
   const listeners = new Set<ChangeListener>();
 
+  const addEventListenerMock = useLegacyListeners
+    ? undefined
+    : vi.fn(
+        (eventName: string, listener: EventListenerOrEventListenerObject) => {
+          if (eventName === 'change' && typeof listener === 'function') {
+            listeners.add(listener as ChangeListener);
+          }
+        },
+      );
+  const removeEventListenerMock = useLegacyListeners
+    ? undefined
+    : vi.fn(
+        (eventName: string, listener: EventListenerOrEventListenerObject) => {
+          if (eventName === 'change' && typeof listener === 'function') {
+            listeners.delete(listener as ChangeListener);
+          }
+        },
+      );
+  const addListenerMock = vi.fn((listener: ChangeListener) => {
+    listeners.add(listener);
+  });
+  const removeListenerMock = vi.fn((listener: ChangeListener) => {
+    listeners.delete(listener);
+  });
+
   const mediaQueryList = {
     get matches() {
       return matches;
     },
     media: '(min-width: 48rem)',
     onchange: null,
-    addEventListener: useLegacyListeners
-      ? undefined
-      : vi.fn(
-          (eventName: string, listener: EventListenerOrEventListenerObject) => {
-            if (eventName === 'change' && typeof listener === 'function') {
-              listeners.add(listener as ChangeListener);
-            }
-          },
-        ),
-    removeEventListener: useLegacyListeners
-      ? undefined
-      : vi.fn(
-          (eventName: string, listener: EventListenerOrEventListenerObject) => {
-            if (eventName === 'change' && typeof listener === 'function') {
-              listeners.delete(listener as ChangeListener);
-            }
-          },
-        ),
-    addListener: vi.fn((listener: ChangeListener) => {
-      listeners.add(listener);
-    }),
-    removeListener: vi.fn((listener: ChangeListener) => {
-      listeners.delete(listener);
-    }),
+    addEventListener: addEventListenerMock,
+    removeEventListener: removeEventListenerMock,
+    addListener: addListenerMock,
+    removeListener: removeListenerMock,
     dispatchEvent: vi.fn(),
   } as unknown as MediaQueryList;
 
@@ -52,6 +57,10 @@ function installMatchMediaController(
 
   return {
     mediaQueryList,
+    addEventListenerMock,
+    removeEventListenerMock,
+    addListenerMock,
+    removeListenerMock,
     setMatches(nextMatches: boolean) {
       matches = nextMatches;
       const event = {
@@ -82,9 +91,7 @@ describe('useViewportMatch', () => {
     });
 
     expect(result.current).toBe(true);
-    expect(controller.mediaQueryList.addEventListener.mock.calls).toHaveLength(
-      1,
-    );
+    expect(controller.addEventListenerMock).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to legacy addListener and removeListener support', () => {
@@ -100,10 +107,10 @@ describe('useViewportMatch', () => {
     });
 
     expect(result.current).toBe(true);
-    expect(controller.mediaQueryList.addListener.mock.calls).toHaveLength(1);
+    expect(controller.addListenerMock).toHaveBeenCalledTimes(1);
 
     unmount();
 
-    expect(controller.mediaQueryList.removeListener.mock.calls).toHaveLength(1);
+    expect(controller.removeListenerMock).toHaveBeenCalledTimes(1);
   });
 });
