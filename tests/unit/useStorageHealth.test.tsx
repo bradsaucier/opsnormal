@@ -96,88 +96,82 @@ describe('useStorageHealth', () => {
     vi.restoreAllMocks();
   });
 
-  it(
-    'hydrates initial storage health and refreshes on focus and diagnostics events',
-    async () => {
-      let diagnosticsCallback: (() => void) | undefined;
-      storageMocks.subscribeToStorageDiagnostics.mockImplementation(
-        (callback) => {
-          diagnosticsCallback = callback;
-          return () => undefined;
-        },
-      );
+  it('hydrates initial storage health and refreshes on focus and diagnostics events', async () => {
+    let diagnosticsCallback: (() => void) | undefined;
+    storageMocks.subscribeToStorageDiagnostics.mockImplementation(
+      (callback) => {
+        diagnosticsCallback = callback;
+        return () => undefined;
+      },
+    );
 
-      const { result } = renderHook(() => useStorageHealth());
+    const { result } = renderHook(() => useStorageHealth());
 
-      await act(async () => {
-        vi.runOnlyPendingTimers();
-        await Promise.resolve();
-      });
+    await act(async () => {
+      vi.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
 
-      const baselineCalls = storageMocks.getStorageHealth.mock.calls.length;
+    const baselineCalls = storageMocks.getStorageHealth.mock.calls.length;
 
-      expect(result.current.storageHealth?.status).toBe('monitor');
-      expect(baselineCalls).toBeGreaterThan(0);
+    expect(result.current.storageHealth?.status).toBe('monitor');
+    expect(baselineCalls).toBeGreaterThan(0);
 
-      await act(async () => {
-        window.dispatchEvent(new Event('focus'));
-        diagnosticsCallback?.();
-        await Promise.resolve();
-      });
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      diagnosticsCallback?.();
+      await Promise.resolve();
+    });
 
-      expect(storageMocks.getStorageHealth.mock.calls.length).toBe(
-        baselineCalls + 2,
-      );
-    },
-  );
+    expect(storageMocks.getStorageHealth.mock.calls.length).toBe(
+      baselineCalls + 2,
+    );
+  });
 
-  it(
-    'requests storage protection with the persistence flags and coalesces in-flight calls',
-    async () => {
-      const protectedHealth = buildStorageHealth({
-        persisted: true,
-        status: 'protected',
-      });
-      let resolveRequest: ((value: StorageHealth) => void) | null = null;
+  it('requests storage protection with the persistence flags and coalesces in-flight calls', async () => {
+    const protectedHealth = buildStorageHealth({
+      persisted: true,
+      status: 'protected',
+    });
+    let resolveRequest: ((value: StorageHealth) => void) | null = null;
 
-      storageMocks.getStorageHealth.mockImplementation(
-        (options: StorageHealthOptions = {}) =>
-          new Promise((resolve) => {
-            if (options.requestPersistence) {
-              resolveRequest = resolve;
-              return;
-            }
+    storageMocks.getStorageHealth.mockImplementation(
+      (options: StorageHealthOptions = {}) =>
+        new Promise((resolve) => {
+          if (options.requestPersistence) {
+            resolveRequest = resolve;
+            return;
+          }
 
-            resolve(buildStorageHealth());
-          }),
-      );
+          resolve(buildStorageHealth());
+        }),
+    );
 
-      const { result } = renderHook(() => useStorageHealth());
+    const { result } = renderHook(() => useStorageHealth());
 
-      let firstRequest!: Promise<StorageHealth>;
-      let secondRequest!: Promise<StorageHealth>;
+    let firstRequest!: Promise<StorageHealth>;
+    let secondRequest!: Promise<StorageHealth>;
 
-      await act(async () => {
-        firstRequest = result.current.requestStorageProtection();
-        secondRequest = result.current.requestStorageProtection();
-        await Promise.resolve();
-      });
+    await act(async () => {
+      firstRequest = result.current.requestStorageProtection();
+      secondRequest = result.current.requestStorageProtection();
+      await Promise.resolve();
+    });
 
-      expect(storageMocks.getStorageHealth).toHaveBeenCalledWith({
-        requestPersistence: true,
-        allowRepeatRequest: true,
-      });
-      expect(result.current.isRequestingStorageProtection).toBe(true);
+    expect(storageMocks.getStorageHealth).toHaveBeenCalledWith({
+      requestPersistence: true,
+      allowRepeatRequest: true,
+    });
+    expect(result.current.isRequestingStorageProtection).toBe(true);
 
-      await act(async () => {
-        resolveRequest?.(protectedHealth);
-        await Promise.all([firstRequest, secondRequest]);
-      });
+    await act(async () => {
+      resolveRequest?.(protectedHealth);
+      await Promise.all([firstRequest, secondRequest]);
+    });
 
-      expect(result.current.storageHealth?.status).toBe('protected');
-      expect(result.current.isRequestingStorageProtection).toBe(false);
-    },
-  );
+    expect(result.current.storageHealth?.status).toBe('protected');
+    expect(result.current.isRequestingStorageProtection).toBe(false);
+  });
 
   it('refreshes when the tab returns to the foreground', async () => {
     renderHook(() => useStorageHealth());
@@ -204,18 +198,15 @@ describe('useStorageHealth', () => {
     );
   });
 
-  it(
-    'falls back to legacy media-query listeners and removes them on unmount',
-    () => {
-      const { addListenerMock, removeListenerMock } =
-        installDisplayModeQuery(true);
-      const { unmount } = renderHook(() => useStorageHealth());
+  it('falls back to legacy media-query listeners and removes them on unmount', () => {
+    const { addListenerMock, removeListenerMock } =
+      installDisplayModeQuery(true);
+    const { unmount } = renderHook(() => useStorageHealth());
 
-      expect(addListenerMock).toHaveBeenCalledTimes(1);
+    expect(addListenerMock).toHaveBeenCalledTimes(1);
 
-      unmount();
+    unmount();
 
-      expect(removeListenerMock).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(removeListenerMock).toHaveBeenCalledTimes(1);
+  });
 });
