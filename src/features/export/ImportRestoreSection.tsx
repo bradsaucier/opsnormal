@@ -122,9 +122,8 @@ export function ImportRestoreSection({
     supportsVerifiedFileSave,
   );
 
-  const manualBackupInstructionText = getManualBackupInstructionText(
-    replaceBackupState,
-  );
+  const manualBackupInstructionText =
+    getManualBackupInstructionText(replaceBackupState);
 
   return (
     <AccordionSection
@@ -308,7 +307,10 @@ export function ImportRestoreSection({
                       <div className="panel-shadow">
                         <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
                           <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-amber-50">
-                            Step 1 - secure a pre-replace backup. {replaceCheckpointStepTwoText} Step 3 - arm the destructive path. Step 4 - execute the replace only if the preview still matches intent.
+                            Step 1 - secure a pre-replace backup.{' '}
+                            {replaceCheckpointStepTwoText} Step 3 - arm the
+                            destructive path. Step 4 - execute the replace only
+                            if the preview still matches intent.
                           </div>
                         </div>
                       </div>
