@@ -40,6 +40,8 @@ Before tagging a release:
 - [ ] forced close recovery verified with bounded reopen and operator-visible guidance
 - [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
 - [ ] JSON and CSV export verified on live build
+- [ ] save-picker pre-replace backup path read-back verifies the saved JSON before replace unlock on a supporting Chromium browser
+- [ ] fallback download path keeps the pre-replace backup accessible long enough to complete the browser handoff before Blob URL cleanup
 - [ ] replace import verified with pre-import undo restore
 - [ ] replace import verified with transactional post-write validation and pre-import state preserved on forced failure
 - [ ] manifest icons verified after build

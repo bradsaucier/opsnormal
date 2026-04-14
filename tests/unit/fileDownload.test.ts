@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   canUseVerifiedFileSave,
   downloadTextFile,
+  SaveVerificationMismatchError,
+  SaveVerificationUnavailableError,
   saveTextFileWithPicker,
 } from '../../src/lib/fileDownload';
 
@@ -38,7 +40,7 @@ describe('file download helpers', () => {
     vi.restoreAllMocks();
   });
 
-  it('downloads text content through a temporary anchor and revokes the blob url', () => {
+  it('downloads text content through a temporary anchor and revokes the blob url after a conservative guard delay', () => {
     downloadTextFile(
       'opsnormal-backup.json',
       '{"ok":true}',
@@ -51,8 +53,10 @@ describe('file download helpers', () => {
       document.querySelector('a[download="opsnormal-backup.json"]'),
     ).toBeNull();
 
-    vi.runAllTimers();
+    vi.advanceTimersByTime(39_999);
+    expect(revokeObjectUrlSpy).not.toHaveBeenCalled();
 
+    vi.advanceTimersByTime(1);
     expect(revokeObjectUrlSpy).toHaveBeenCalledWith('blob:opsnormal-test');
   });
 
@@ -83,15 +87,21 @@ describe('file download helpers', () => {
     ).rejects.toThrow('Verified file save is unavailable');
   });
 
-  it('writes content through the file picker when the browser exposes it', async () => {
+  it('writes content through the file picker and reads the saved file back before reporting success', async () => {
     const writeSpy = vi.fn().mockResolvedValue(undefined);
     const closeSpy = vi.fn().mockResolvedValue(undefined);
     const createWritableSpy = vi.fn().mockResolvedValue({
       write: writeSpy,
       close: closeSpy,
     });
+    const getFileSpy = vi.fn().mockResolvedValue(
+      new File(['{"mission":"go"}'], 'opsnormal-backup.json', {
+        type: 'application/json',
+      }),
+    );
     const showSaveFilePickerSpy = vi.fn().mockResolvedValue({
       createWritable: createWritableSpy,
+      getFile: getFileSpy,
     });
 
     Object.defineProperty(window, 'showSaveFilePicker', {
@@ -120,6 +130,86 @@ describe('file download helpers', () => {
     expect(createWritableSpy).toHaveBeenCalledTimes(1);
     expect(writeSpy).toHaveBeenCalledTimes(1);
     expect(closeSpy).toHaveBeenCalledTimes(1);
+    expect(getFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails when the saved file content does not match the expected payload', async () => {
+    const showSaveFilePickerSpy = vi.fn().mockResolvedValue({
+      createWritable: vi.fn().mockResolvedValue({
+        write: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+      }),
+      getFile: vi.fn().mockResolvedValue(
+        new File(['{"mission":"hold"}'], 'opsnormal-backup.json', {
+          type: 'application/json',
+        }),
+      ),
+    });
+
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePickerSpy,
+    });
+
+    await expect(
+      saveTextFileWithPicker(
+        'opsnormal-backup.json',
+        '{"mission":"go"}',
+        'application/json',
+      ),
+    ).rejects.toBeInstanceOf(SaveVerificationMismatchError);
+  });
+
+  it('falls back to manual verification when the browser cannot read the saved file back', async () => {
+    const showSaveFilePickerSpy = vi.fn().mockResolvedValue({
+      createWritable: vi.fn().mockResolvedValue({
+        write: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+      }),
+    });
+
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePickerSpy,
+    });
+
+    await expect(
+      saveTextFileWithPicker(
+        'opsnormal-backup.json',
+        '{"mission":"go"}',
+        'application/json',
+      ),
+    ).rejects.toBeInstanceOf(SaveVerificationUnavailableError);
+  });
+
+  it('preserves the underlying getFile failure as the cause when browser read-back permission drops', async () => {
+    const permissionError = new DOMException(
+      'Read permission revoked.',
+      'NotAllowedError',
+    );
+    const showSaveFilePickerSpy = vi.fn().mockResolvedValue({
+      createWritable: vi.fn().mockResolvedValue({
+        write: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn().mockResolvedValue(undefined),
+      }),
+      getFile: vi.fn().mockRejectedValue(permissionError),
+    });
+
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: showSaveFilePickerSpy,
+    });
+
+    await expect(
+      saveTextFileWithPicker(
+        'opsnormal-backup.json',
+        '{"mission":"go"}',
+        'application/json',
+      ),
+    ).rejects.toMatchObject({
+      name: 'SaveVerificationUnavailableError',
+      cause: permissionError,
+    });
   });
 
   it('treats a dismissed picker as a cancelled backup', async () => {

@@ -103,6 +103,7 @@ Export and import are integrity-sensitive paths. The implementation is intention
 - CSV export writes a flat record for review or spreadsheet use
 - Crash-state JSON export uses the same checksum envelope and can include crash diagnostics
 - The app records the last successful external backup timestamp in local storage for operator awareness
+- The save-picker replace checkpoint reads the saved JSON file back before the destructive path unlocks when the browser supports that proof
 
 ### Import
 
@@ -112,6 +113,8 @@ Export and import are integrity-sensitive paths. The implementation is intention
 - Legacy checksum-free payloads are allowed but flagged as unverified during preview
 - Merge and replace both compute the expected final state before commit
 - Replace requires a pre-replace backup checkpoint plus separate arm and execute actions
+- If the browser cannot read the saved file back for proof, replace falls back to an explicit manual acknowledgment path instead of claiming a verified write
+- Fallback anchor-triggered Blob downloads keep the object URL alive on a conservative delayed-revoke window because browsers do not expose a reliable download-complete signal for this path
 
 ### Commit verification
 

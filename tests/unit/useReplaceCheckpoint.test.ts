@@ -128,7 +128,36 @@ describe('useReplaceCheckpoint', () => {
     expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'success',
-      text: `Verified pre-replace backup saved as ${FILE_NAME}. 3 current rows secured before restore.`,
+      text: `Read-back verified pre-replace backup saved as ${FILE_NAME}. 3 current rows secured before restore.`,
+    });
+  });
+
+  it('drops to manual acknowledgment when the picker write succeeds but read-back verification is unavailable', async () => {
+    primeExportSnapshot();
+    checkpointJsonBackupToDiskMock.mockResolvedValue({
+      kind: 'manual-verification-required',
+      fileName: FILE_NAME,
+      exportedAt: EXPORTED_AT,
+      message:
+        'Backup save completed, but the browser could not read the saved file back for verification. Confirm the file on local disk before replace unlocks.',
+    });
+
+    const { result, onBackupCompleted, onStatusMessage } = renderSubject({});
+
+    await act(async () => {
+      await result.current.handlePrepareReplaceBackup();
+    });
+
+    expect(result.current.replaceBackupState).toEqual({
+      phase: 'manual-awaiting-ack',
+      fileName: FILE_NAME,
+      reason: 'readback-unavailable',
+    });
+    expect(result.current.replaceReady).toBe(false);
+    expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT);
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'warning',
+      text: `Backup saved as ${FILE_NAME}, but the browser could not read it back for verification. Confirm the file on local disk, then acknowledge before replace unlocks.`,
     });
   });
 
@@ -149,6 +178,7 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceBackupState).toEqual({
       phase: 'manual-awaiting-ack',
       fileName: FILE_NAME,
+      reason: 'download-triggered',
     });
     expect(result.current.replaceReady).toBe(false);
     expect(onBackupCompleted).toHaveBeenCalledWith(EXPORTED_AT);
@@ -164,6 +194,7 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceBackupState).toEqual({
       phase: 'manual-awaiting-ack',
       fileName: FILE_NAME,
+      reason: 'download-triggered',
     });
     expect(result.current.replaceReady).toBe(false);
 
@@ -184,7 +215,7 @@ describe('useReplaceCheckpoint', () => {
     expect(result.current.replaceReady).toBe(true);
     expect(onStatusMessage).toHaveBeenLastCalledWith({
       tone: 'warning',
-      text: 'Manual backup checkpoint acknowledged for opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json. Replace is unlocked, but the browser did not verify the disk write.',
+      text: 'Manual backup checkpoint acknowledged for opsnormal-pre-replace-backup-2026-04-02T21-00-00.000Z.json. Replace is unlocked, but the browser did not provide read-back proof for the saved file.',
     });
   });
 

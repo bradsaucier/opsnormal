@@ -4,6 +4,7 @@ import { createStorageOperationError } from './storage';
 import {
   downloadTextFile,
   canUseVerifiedFileSave,
+  isSaveVerificationUnavailableError,
   saveTextFileWithPicker,
 } from './fileDownload';
 import {
@@ -29,6 +30,12 @@ interface ExportSnapshotResult {
 
 export type BackupCheckpointResult =
   | { kind: 'verified-save-succeeded'; fileName: string; exportedAt: string }
+  | {
+      kind: 'manual-verification-required';
+      fileName: string;
+      exportedAt: string;
+      message: string;
+    }
   | {
       kind: 'fallback-download-triggered';
       fileName: string;
@@ -79,6 +86,16 @@ export async function checkpointJsonBackupToDisk(args: {
           fileName: args.fileName,
           exportedAt: args.exportedAt,
           message: 'Backup save cancelled. Local data unchanged.',
+        };
+      }
+
+      if (isSaveVerificationUnavailableError(error)) {
+        return {
+          kind: 'manual-verification-required',
+          fileName: args.fileName,
+          exportedAt: args.exportedAt,
+          message:
+            'Backup save completed, but the browser could not read the saved file back for verification. Confirm the file on local disk before replace unlocks.',
         };
       }
 
