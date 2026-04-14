@@ -6,7 +6,7 @@ import {
   checkpointJsonBackupToDisk,
   exportCurrentEntriesAsJson,
 } from '../../lib/export';
-import type { ImportPreview } from '../../types';
+import { isSuccessfulImportPreview, type ImportPreview } from '../../types';
 import type {
   ReplaceBackupState,
   ReplaceConfirmState,
@@ -117,7 +117,7 @@ export function useReplaceCheckpoint({
   }, [emitReplaceDisarmedMessage, replaceConfirmState]);
 
   const handlePrepareReplaceBackup = useCallback(async () => {
-    if (!pendingImport) {
+    if (!isSuccessfulImportPreview(pendingImport)) {
       return;
     }
 
@@ -217,7 +217,7 @@ export function useReplaceCheckpoint({
   }, [manualBackupConfirmed, onStatusMessage, replaceBackupState]);
 
   const handleArmReplace = useCallback(() => {
-    if (!pendingImport) {
+    if (!isSuccessfulImportPreview(pendingImport)) {
       return;
     }
 
