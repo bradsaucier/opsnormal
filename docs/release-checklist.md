@@ -10,6 +10,7 @@ Before tagging a release:
 - [ ] Playwright Chromium tests pass
 - [ ] Playwright WebKit smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/webkit-limitations.md
 - [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke and WebKit release smoke against that artifact, and only then publishes
+- [ ] public/CNAME matches the GitHub Pages custom-domain setting and the enforced HTTPS origin
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
 - [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project
 - [ ] direct-select radiogroup ARIA snapshot passes and only changes when the intended accessibility tree changes
@@ -41,6 +42,7 @@ Before tagging a release:
 - [ ] forced close recovery verified with bounded reopen and operator-visible guidance
 - [ ] crash-state JSON export includes storage durability diagnostics inside the verified checksum envelope and remains importable
 - [ ] JSON and CSV export verified on live build
+- [ ] canonical URL, Open Graph image, and social preview image all resolve from the live custom domain
 - [ ] save-picker pre-replace backup path read-back verifies the saved JSON before replace unlock on a supporting Chromium browser
 - [ ] fallback download path keeps the pre-replace backup accessible long enough to complete the browser handoff before Blob URL cleanup
 - [ ] replace import verified with pre-import undo restore
