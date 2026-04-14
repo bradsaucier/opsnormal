@@ -1,10 +1,10 @@
-import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type {
   StorageHealth,
   StorageHealthOptions,
-} from "../../src/lib/storage";
+} from '../../src/lib/storage';
 
 const storageMocks = vi.hoisted(() => ({
   getStorageHealth:
@@ -12,12 +12,12 @@ const storageMocks = vi.hoisted(() => ({
   subscribeToStorageDiagnostics: vi.fn<(callback: () => void) => () => void>(),
 }));
 
-vi.mock("../../src/lib/storage", () => ({
+vi.mock('../../src/lib/storage', () => ({
   getStorageHealth: storageMocks.getStorageHealth,
   subscribeToStorageDiagnostics: storageMocks.subscribeToStorageDiagnostics,
 }));
 
-import { useStorageHealth } from "../../src/hooks/useStorageHealth";
+import { useStorageHealth } from '../../src/hooks/useStorageHealth';
 
 function buildStorageHealth(
   overrides: Partial<StorageHealth> = {},
@@ -29,21 +29,21 @@ function buildStorageHealth(
     usageBytes: 10,
     quotaBytes: 100,
     percentUsed: 0.1,
-    status: "monitor",
-    message: "Storage health nominal.",
+    status: 'monitor',
+    message: 'Storage health nominal.',
     safari: {
       connectionDropsDetected: 0,
       reconnectSuccesses: 0,
       reconnectFailures: 0,
-      reconnectState: "steady",
+      reconnectState: 'steady',
       lastReconnectError: null,
       persistAttempted: false,
       persistGranted: false,
       standaloneMode: false,
       installRecommended: false,
       webKitRisk: false,
-      lastVerificationResult: "verified",
-      lastVerifiedAt: "2026-04-10T12:00:00.000Z",
+      lastVerificationResult: 'verified',
+      lastVerifiedAt: '2026-04-10T12:00:00.000Z',
     },
     ...overrides,
   };
@@ -52,7 +52,7 @@ function buildStorageHealth(
 function installDisplayModeQuery(useLegacyListeners = false) {
   const mediaQueryList = {
     matches: false,
-    media: "(display-mode: standalone)",
+    media: '(display-mode: standalone)',
     onchange: null,
     addEventListener: useLegacyListeners ? undefined : vi.fn(),
     removeEventListener: useLegacyListeners ? undefined : vi.fn(),
@@ -61,7 +61,7 @@ function installDisplayModeQuery(useLegacyListeners = false) {
     dispatchEvent: vi.fn(),
   } as unknown as MediaQueryList;
 
-  Object.defineProperty(window, "matchMedia", {
+  Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     value: vi.fn(() => mediaQueryList),
   });
@@ -69,7 +69,7 @@ function installDisplayModeQuery(useLegacyListeners = false) {
   return mediaQueryList;
 }
 
-describe("useStorageHealth", () => {
+describe('useStorageHealth', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     storageMocks.getStorageHealth.mockReset();
@@ -86,7 +86,7 @@ describe("useStorageHealth", () => {
     vi.restoreAllMocks();
   });
 
-  it("hydrates initial storage health and refreshes on focus and diagnostics events", async () => {
+  it('hydrates initial storage health and refreshes on focus and diagnostics events', async () => {
     let diagnosticsCallback: (() => void) | undefined;
     storageMocks.subscribeToStorageDiagnostics.mockImplementation(
       (callback) => {
@@ -104,11 +104,11 @@ describe("useStorageHealth", () => {
 
     const baselineCalls = storageMocks.getStorageHealth.mock.calls.length;
 
-    expect(result.current.storageHealth?.status).toBe("monitor");
+    expect(result.current.storageHealth?.status).toBe('monitor');
     expect(baselineCalls).toBeGreaterThan(0);
 
     await act(async () => {
-      window.dispatchEvent(new Event("focus"));
+      window.dispatchEvent(new Event('focus'));
       diagnosticsCallback?.();
       await Promise.resolve();
     });
@@ -118,10 +118,10 @@ describe("useStorageHealth", () => {
     );
   });
 
-  it("requests storage protection with the persistence flags and coalesces in-flight calls", async () => {
+  it('requests storage protection with the persistence flags and coalesces in-flight calls', async () => {
     const protectedHealth = buildStorageHealth({
       persisted: true,
-      status: "protected",
+      status: 'protected',
     });
     let resolveRequest: ((value: StorageHealth) => void) | null = null;
 
@@ -159,11 +159,11 @@ describe("useStorageHealth", () => {
       await Promise.all([firstRequest, secondRequest]);
     });
 
-    expect(result.current.storageHealth?.status).toBe("protected");
+    expect(result.current.storageHealth?.status).toBe('protected');
     expect(result.current.isRequestingStorageProtection).toBe(false);
   });
 
-  it("refreshes when the tab returns to the foreground", async () => {
+  it('refreshes when the tab returns to the foreground', async () => {
     renderHook(() => useStorageHealth());
 
     await act(async () => {
@@ -173,13 +173,13 @@ describe("useStorageHealth", () => {
 
     const baselineCalls = storageMocks.getStorageHealth.mock.calls.length;
 
-    Object.defineProperty(document, "visibilityState", {
+    Object.defineProperty(document, 'visibilityState', {
       configurable: true,
-      value: "visible",
+      value: 'visible',
     });
 
     await act(async () => {
-      document.dispatchEvent(new Event("visibilitychange"));
+      document.dispatchEvent(new Event('visibilitychange'));
       await Promise.resolve();
     });
 
@@ -188,7 +188,7 @@ describe("useStorageHealth", () => {
     );
   });
 
-  it("falls back to legacy media-query listeners and removes them on unmount", () => {
+  it('falls back to legacy media-query listeners and removes them on unmount', () => {
     const mediaQueryList = installDisplayModeQuery(true);
     const { unmount } = renderHook(() => useStorageHealth());
 
