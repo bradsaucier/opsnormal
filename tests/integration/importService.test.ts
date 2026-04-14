@@ -82,11 +82,30 @@ describe('import service', () => {
         updatedAt: '2026-03-28T12:00:00.000Z',
       },
     ]);
+    payload.exportedAt = '2026-04-14T12:00:00.000Z';
     payload.checksum = 'a'.repeat(64);
 
     const preview = await previewImportPayload(payload);
 
     expect(preview.integrityStatus).toBe('verified');
+    expect(preview.kind).toBe('good');
+  });
+
+  it('flags old checksum-backed imports as stale in preview', async () => {
+    const payload = buildPayload([
+      {
+        date: '2026-03-28',
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+    ]);
+    payload.exportedAt = '2026-03-20T12:00:00.000Z';
+    payload.checksum = 'a'.repeat(64);
+
+    const preview = await previewImportPayload(payload);
+
+    expect(preview.kind).toBe('stale');
   });
 
   it('merges entries and overwrites matching compound keys', async () => {
