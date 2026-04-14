@@ -39,7 +39,11 @@ export async function createJsonExport(
 
   const checksum = await computeJsonExportChecksum(payload);
 
-  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
+  return JSON.stringify(
+    { ...buildChecksumPayload(payload), checksum },
+    null,
+    2,
+  );
 }
 
 export async function createCrashJsonExport(
@@ -57,7 +61,11 @@ export async function createCrashJsonExport(
 
   const checksum = await computeJsonExportChecksum(payload);
 
-  return JSON.stringify({ ...buildChecksumPayload(payload), checksum }, null, 2);
+  return JSON.stringify(
+    { ...buildChecksumPayload(payload), checksum },
+    null,
+    2,
+  );
 }
 
 export function createCsvExport(entries: DailyEntry[]): string {
@@ -100,7 +108,10 @@ function getSubtleCrypto(): SubtleCrypto {
 }
 
 function isSecureContextAvailable(): boolean {
-  if (typeof window !== 'undefined' && typeof window.isSecureContext === 'boolean') {
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.isSecureContext === 'boolean'
+  ) {
     return window.isSecureContext;
   }
 
