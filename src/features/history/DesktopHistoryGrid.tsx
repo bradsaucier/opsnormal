@@ -194,7 +194,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                                 handleCellKeyDown(event, sectorIndex, dateIndex)
                               }
                               className={[
-                                'group cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
+                                'ops-focus-ring-chip-proxy cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
                                 isToday
                                   ? 'bg-emerald-300/[0.08]'
                                   : dateKey === selectedCell.dateKey
@@ -205,10 +205,10 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                               <div
                                 title={cellLabel}
                                 className={[
-                                  'ops-notch-chip clip-notched mx-auto flex h-11 w-11 items-center justify-center border text-[12px] leading-none font-semibold tracking-[0.32px] transition [font-variant-numeric:tabular-nums]',
+                                  'ops-focus-ring-chip ops-notch-chip clip-notched mx-auto flex h-11 w-11 items-center justify-center border text-[12px] leading-none font-semibold tracking-[0.32px] transition [font-variant-numeric:tabular-nums]',
                                   isSelected
                                     ? 'ring-2 ring-inset ring-ops-accent ring-offset-1 ring-offset-ops-surface-1'
-                                    : 'group-focus-visible:ring-2 group-focus-visible:ring-inset group-focus-visible:ring-ops-accent group-focus-visible:ring-offset-1 group-focus-visible:ring-offset-ops-surface-1',
+                                    : '',
                                   isToday && !isSelected
                                     ? 'ring-1 ring-inset ring-emerald-300/25'
                                     : '',
