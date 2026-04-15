@@ -201,7 +201,9 @@ describe('import service', () => {
     expect(result.importedCount).toBe(2);
 
     const allEntries = await getAllEntries();
-    const compoundKeys = allEntries.map((entry) => getCompoundKey(entry)).sort();
+    const compoundKeys = allEntries
+      .map((entry) => getCompoundKey(entry))
+      .sort();
 
     expect(compoundKeys).toEqual([
       '2026-03-27:body',
