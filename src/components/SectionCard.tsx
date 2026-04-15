@@ -1,21 +1,27 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 
+type SectionCardEmphasis = 'primary' | 'standard' | 'support';
+
 interface SectionCardProps extends PropsWithChildren {
   title: string;
   eyebrow?: string;
   meta?: ReactNode;
+  emphasis?: SectionCardEmphasis;
 }
 
 export function SectionCard({
   title,
   eyebrow,
   meta,
+  emphasis = 'standard',
   children,
 }: SectionCardProps) {
   return (
     <div className="panel-shadow">
-      <div className="clip-notched ops-notch-panel-outer bg-[linear-gradient(180deg,rgba(110,231,183,0.18),rgba(255,255,255,0.02))] p-px">
-        <section className="tactical-panel clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_24%),var(--color-ops-surface-1)] p-5 sm:p-6">
+      <div
+        className={`clip-notched ops-notch-panel-outer ops-section-frame ops-section-emphasis-${emphasis} p-px`}
+      >
+        <section className="tactical-panel clip-notched ops-notch-panel-inner ops-section-surface p-5 sm:p-6">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
               {eyebrow ? (
