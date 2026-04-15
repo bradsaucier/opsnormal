@@ -9,6 +9,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Changed
 
 - removed the internal IndexedDB auto-increment `id` from new JSON and crash-JSON exports, while keeping legacy backups that still carry `id` importable
+- hardened import commit verification by reading the pre-write snapshot and deriving the undo snapshot inside the rw transaction
 
 ## [1.0.0] - 2026-04-14
 
