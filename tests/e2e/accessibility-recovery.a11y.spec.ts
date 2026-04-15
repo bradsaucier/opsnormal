@@ -94,7 +94,9 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
       .include(`#${importRegionId}`)
       .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Undo and Recovery section passes WCAG 2.1 AA when opened', async ({
@@ -114,9 +116,13 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
       throw new Error('Undo and Recovery region id not found.');
     }
 
-    const results = await makeAxeBuilder().include(`#${undoRegionId}`).analyze();
+    const results = await makeAxeBuilder()
+      .include(`#${undoRegionId}`)
+      .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Storage Health section passes WCAG 2.1 AA with Safari-risk signals', async ({
@@ -145,7 +151,9 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
       .include(`#${storageRegionId}`)
       .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Backup Action Banner warning passes WCAG 2.1 AA', async ({
@@ -172,7 +180,9 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
       .include('[aria-labelledby="backup-action-banner-title"]')
       .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Database upgrade blocked alert passes WCAG 2.1 AA', async ({
@@ -201,7 +211,9 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
       .include('[aria-labelledby="database-upgrade-blocked-title"]')
       .analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Boot-fallback harness passes WCAG 2.1 AA', async ({
@@ -214,7 +226,9 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
 
     const results = await makeAxeBuilder().analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 
   test('Crash-fallback harness passes WCAG 2.1 AA', async ({
@@ -229,6 +243,8 @@ test.describe('OpsNormal recovery-surface accessibility coverage', () => {
 
     const results = await makeAxeBuilder().analyze();
 
-    expect(results.violations, formatViolations(results.violations)).toEqual([]);
+    expect(results.violations, formatViolations(results.violations)).toEqual(
+      [],
+    );
   });
 });
