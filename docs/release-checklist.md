@@ -12,7 +12,7 @@ Before tagging a release:
 - [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke and WebKit release smoke against that artifact, and only then publishes
 - [ ] public/CNAME matches the GitHub Pages custom-domain setting and the enforced HTTPS origin
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
-- [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project
+- [ ] WCAG 2.1 A and AA Playwright accessibility scans pass with service workers blocked in the dedicated accessibility project, including Import and Restore, Undo and Recovery, Storage Health, the Backup Action Banner, the database-blocked alert, and both fallback harness pages; manual sweep narrows to keyboard focus order and screen-reader prose
 - [ ] direct-select radiogroup ARIA snapshot passes and only changes when the intended accessibility tree changes
 - [ ] production build passes
 - [ ] service worker registration smoke test passes in Chromium
