@@ -243,7 +243,9 @@ describe('ExportPanel import warnings', () => {
   });
 
   it('keeps selected restore mode cards on structural chrome instead of readiness backgrounds', async () => {
-    previewImportFileMock.mockResolvedValue(buildPreview({ checksum: 'a'.repeat(64) }));
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
 
     render(<ExportPanel storageHealth={null} />);
 
