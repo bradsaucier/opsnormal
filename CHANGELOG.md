@@ -10,6 +10,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 - removed the internal IndexedDB auto-increment `id` from new JSON and crash-JSON exports, while keeping legacy backups that still carry `id` importable
 - hardened import commit verification by reading the pre-write snapshot and deriving the undo snapshot inside the rw transaction
+- unified focus chrome on DomainCard radios, history grid cells, mobile day buttons, and the history scroll region under shared focus utilities
 
 ## [1.0.0] - 2026-04-14
 

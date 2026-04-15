@@ -211,7 +211,7 @@ export function DomainCard({
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'clip-notched tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition motion-safe:duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent',
+                    'ops-focus-ring-chip clip-notched tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition motion-safe:duration-150',
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} ring-2 ring-inset ring-ops-accent/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`

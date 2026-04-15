@@ -84,6 +84,17 @@ Section shell emphasis:
 - `.ops-section-emphasis-support` drops the emerald outer wash and uses structural framing for support or recovery surfaces.
 - Apply these through `SectionCard` only. They recalibrate shell hierarchy without changing notch geometry, focus chrome, or component signatures downstream.
 
+Focus chrome:
+
+- `.ops-focus-ring-inset` for panel-scale and accordion-scale interactive surfaces that should carry the full inset focus treatment.
+- `.ops-focus-ring-chip` for chip-notch radios, history cells, and compact day selectors where the full 3px inset ring reads too heavy.
+
+Application rules:
+
+- Route focus-visible chrome on notched interactive elements through these shared utilities.
+- Do not recreate cockpit focus treatment with ad hoc `focus-visible:ring-*` Tailwind stacks in component markup.
+- Keep `ops-focus-ring-chip` on the clipped chip surface itself. If the focusable element is a parent shell, proxy focus to the chip surface instead of inventing a new ring pattern.
+
 ## Notch geometry
 
 Shared notch sizes live in `src/styles/index.css`.
