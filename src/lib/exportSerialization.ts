@@ -3,15 +3,16 @@ import {
   OPSNORMAL_APP_NAME,
   type CrashStorageDiagnostics,
   type DailyEntry,
-  type JsonExportPayload,
 } from '../types';
 
+type ExportedEntry = Omit<DailyEntry, 'id'>;
+
 interface ChecksumPayload {
-  app: JsonExportPayload['app'];
-  schemaVersion: JsonExportPayload['schemaVersion'];
-  exportedAt: JsonExportPayload['exportedAt'];
-  entries: JsonExportPayload['entries'];
-  crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
+  app: typeof OPSNORMAL_APP_NAME;
+  schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+  exportedAt: string;
+  entries: ExportedEntry[];
+  crashDiagnostics?: CrashStorageDiagnostics;
 }
 
 function buildChecksumPayload(payload: ChecksumPayload): ChecksumPayload {
@@ -26,6 +27,15 @@ function buildChecksumPayload(payload: ChecksumPayload): ChecksumPayload {
   };
 }
 
+function toExportedEntry(entry: DailyEntry): ExportedEntry {
+  return {
+    date: entry.date,
+    sectorId: entry.sectorId,
+    status: entry.status,
+    updatedAt: entry.updatedAt,
+  };
+}
+
 export async function createJsonExport(
   entries: DailyEntry[],
   exportedAt: string = new Date().toISOString(),
@@ -34,7 +44,7 @@ export async function createJsonExport(
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
-    entries,
+    entries: entries.map(toExportedEntry),
   };
 
   const checksum = await computeJsonExportChecksum(payload);
@@ -55,7 +65,7 @@ export async function createCrashJsonExport(
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
     exportedAt,
-    entries,
+    entries: entries.map(toExportedEntry),
     crashDiagnostics,
   };
   const checksum = await computeJsonExportChecksum(payload);
