@@ -1,11 +1,13 @@
-import { type KeyboardEvent, useId, useRef, useState } from 'react';
+import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 
-import { getStatusContent, getStatusLabel } from '../lib/status';
+import { getStatusContent } from '../lib/status';
 import type { Sector, UiStatus } from '../types';
 import { StatusBadge } from './StatusBadge';
 
 interface DomainCardProps {
   sector: Sector;
+  sectorSigil: string;
+  instructionId?: string;
   status: UiStatus;
   busy?: boolean;
   onSelect: (sectorId: Sector['id'], status: UiStatus) => Promise<void>;
@@ -15,23 +17,56 @@ const STATUS_OPTIONS: UiStatus[] = ['unmarked', 'nominal', 'degraded'];
 
 export function DomainCard({
   sector,
+  sectorSigil,
+  instructionId,
   status,
   busy = false,
   onSelect,
 }: DomainCardProps) {
   const groupId = useId();
-  const hintId = `${groupId}-hint`;
+  const busyHintId = `${groupId}-busy-hint`;
   const radioRefs = useRef(new Map<UiStatus, HTMLButtonElement>());
+  const pendingKeyboardFocusStatusRef = useRef<UiStatus | null>(null);
   const [optimisticStatus, setOptimisticStatus] = useState<UiStatus | null>(
     null,
   );
 
   const resolvedStatus = busy ? (optimisticStatus ?? status) : status;
-  const statusLabel = getStatusLabel(resolvedStatus);
+  const spineClassName =
+    resolvedStatus === 'nominal'
+      ? 'ops-sector-spine-nominal'
+      : resolvedStatus === 'degraded'
+        ? 'ops-sector-spine-degraded'
+        : 'ops-sector-spine-unmarked';
+  const describedBy = busy
+    ? [instructionId, busyHintId].filter(Boolean).join(' ') || undefined
+    : instructionId;
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
     : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-emerald-200/16 focus-within:bg-emerald-200/20';
+
+  useEffect(() => {
+    const pendingStatus = pendingKeyboardFocusStatusRef.current;
+
+    if (!pendingStatus) {
+      return;
+    }
+
+    const pendingRadio = radioRefs.current.get(pendingStatus);
+
+    if (!pendingRadio) {
+      return;
+    }
+
+    if (document.activeElement !== pendingRadio) {
+      pendingRadio.focus({ preventScroll: true });
+    }
+
+    if (!busy) {
+      pendingKeyboardFocusStatusRef.current = null;
+    }
+  }, [busy, resolvedStatus]);
 
   function registerRadioRef(
     option: UiStatus,
@@ -86,7 +121,8 @@ export function DomainCard({
     event.preventDefault();
     const nextStatus = STATUS_OPTIONS[nextIndex] ?? resolvedStatus;
     const nextRadio = radioRefs.current.get(nextStatus);
-    nextRadio?.focus();
+    pendingKeyboardFocusStatusRef.current = nextStatus;
+    nextRadio?.focus({ preventScroll: true });
 
     if (nextStatus !== resolvedStatus) {
       setOptimisticStatus(nextStatus);
@@ -96,11 +132,16 @@ export function DomainCard({
 
   return (
     <div className={shellClassName}>
-      <div className="clip-notched ops-notch-panel-inner tactical-panel flex min-h-[13rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-5 text-left">
+      <div
+        className={[
+          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[14rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-5 text-left',
+          spineClassName,
+        ].join(' ')}
+      >
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <span className="text-xs font-semibold tracking-[0.24em] text-ops-text-muted uppercase">
-              {sector.shortLabel}
+          <div className="min-w-0">
+            <span className="text-xs font-semibold tracking-[0.24em] text-ops-text-muted uppercase whitespace-nowrap">
+              {`${sectorSigil} - ${sector.shortLabel}`}
             </span>
             <h3 className="mt-2 text-base font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
               {sector.label}
@@ -112,25 +153,22 @@ export function DomainCard({
           <StatusBadge status={resolvedStatus} />
         </div>
 
-        <div className="mt-5 clip-notched ops-notch-chip tactical-subpanel px-4 py-4">
-          <div className="flex items-center justify-between gap-3 border-b border-ops-border-soft pb-3 text-xs tracking-[0.16em] text-ops-text-secondary uppercase">
-            <span>{busy ? 'SAVING' : 'DIRECT SELECT'}</span>
-            <span>{statusLabel}</span>
+        <div className="mt-5">
+          <div className="ops-sector-caption flex items-center justify-between gap-3 border-t border-ops-border-soft pt-3">
+            <span>{busy ? 'SAVING' : 'STATE'}</span>
+            <span className="whitespace-nowrap">{sectorSigil}</span>
           </div>
 
-          <p
-            id={hintId}
-            className="mt-3 text-xs leading-5 text-ops-text-secondary"
-          >
-            {busy
-              ? 'Saving local write. Stand by.'
-              : 'Choose a state directly. Arrow keys move inside the control group.'}
-          </p>
+          {busy ? (
+            <span id={busyHintId} className="sr-only">
+              Saving local write. Stand by.
+            </span>
+          ) : null}
 
           <div
             role="radiogroup"
             aria-label={`${sector.label} status`}
-            aria-describedby={hintId}
+            aria-describedby={describedBy}
             className="mt-3 grid grid-cols-3 gap-2"
           >
             {STATUS_OPTIONS.map((option, optionIndex) => {
@@ -147,8 +185,9 @@ export function DomainCard({
                   aria-label={`${sector.label} ${content.label}`}
                   tabIndex={isSelected ? 0 : -1}
                   disabled={busy}
-                  onClick={() => {
+                  onClick={(event) => {
                     setOptimisticStatus(option);
+                    event.currentTarget.focus({ preventScroll: true });
                     void onSelect(sector.id, option);
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}

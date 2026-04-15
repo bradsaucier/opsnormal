@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
@@ -27,6 +27,7 @@ export function TodayPanel({
   onAnnounce,
 }: TodayPanelProps) {
   const entries = useEntriesForDate(todayKey);
+  const directSelectHintId = useId();
   const [busySectorId, setBusySectorId] = useState<SectorId | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fallbackAnnouncement, setFallbackAnnouncement] = useState<string>('');
@@ -120,18 +121,23 @@ export function TodayPanel({
       ) : null}
 
       <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
-        <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary">
-          Select the state directly for each sector. Unmarked means no status
-          recorded for the day. Nominal and degraded are deliberate check-ins,
-          not automatic carry-forward.
+        <div
+          id={directSelectHintId}
+          className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary"
+        >
+          Choose a state directly. Arrow keys move inside the control group.
+          Unmarked means no status recorded for the day. Nominal and degraded
+          are deliberate check-ins, not automatic carry-forward.
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {SECTORS.map((sector) => (
+        {SECTORS.map((sector, index) => (
           <DomainCard
             key={sector.id}
             sector={sector}
+            sectorSigil={`S${index + 1}`}
+            instructionId={directSelectHintId}
             status={getUiStatus(entryLookup, todayKey, sector.id)}
             busy={busySectorId === sector.id}
             onSelect={handleSelectStatus}
