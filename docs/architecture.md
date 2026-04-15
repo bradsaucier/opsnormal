@@ -104,6 +104,7 @@ Export and import are integrity-sensitive paths. The implementation is intention
 ### Export
 
 - JSON export writes a versioned payload with metadata, entries, and a SHA-256 checksum
+- The internal IndexedDB `id` stays local to the browser and is not part of the export contract
 - CSV export writes a flat record for review or spreadsheet use
 - Crash-state JSON export uses the same checksum envelope and can include crash diagnostics
 - The app records the last successful external backup timestamp in local storage for operator awareness
