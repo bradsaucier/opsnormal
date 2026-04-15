@@ -1,10 +1,14 @@
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
+const pkg = JSON.parse(
+  readFileSync(resolve(__dirname, 'package.json'), 'utf8'),
+) as { version: string };
 
 export default defineConfig(({ mode }) => {
   const requestedBase = process.env.VITE_BASE_PATH ?? '/';
@@ -63,6 +67,9 @@ export default defineConfig(({ mode }) => {
             },
           }
         : undefined,
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
     },
     plugins: [
       react(),

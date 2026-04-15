@@ -199,6 +199,25 @@ Unmarked:
 - `--ops-status-unmarked-bg`: `rgba(36, 48, 42, 0.72)`
 - `--ops-status-unmarked-text`: `#96a39d`
 
+## Provenance lane
+
+The footer carries a Provenance lane as a sibling to the Boundary disclaimer.
+It is intentionally muted and secondary. It surfaces build version, license,
+and a compact source link.
+
+Application rules:
+
+- Provenance content stays inside the existing footer `tactical-subpanel`.
+- Use `.ops-provenance-facts` for the build and license definition list.
+- Use `.ops-action-button .ops-action-button-subtle .ops-provenance-source`
+  for the source link. The local `.ops-provenance-source` override drops the
+  chip to 32px to preserve hierarchy.
+- The source icon must be inline SVG. Remote image loads are out of policy
+  for this surface.
+- The source link must carry `target="_blank"` and `rel="noopener noreferrer"`
+  and an explicit `aria-label` that names the new-tab behavior.
+- Do not add additional promotional chrome, stars, or counts here.
+
 ## Enforcement guidance
 
 Use these tokens and utilities in:

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertSurface } from './components/AlertSurface';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportPanelCrashFallback } from './components/ExportPanelCrashFallback';
+import { FooterProvenance } from './components/FooterProvenance';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { TodayPanel } from './features/checkin/TodayPanel';
@@ -335,14 +336,20 @@ function App() {
 
         <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
           <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-zinc-400">
-            <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">
-              Boundary
-            </p>
-            <p className="mt-2">
-              OpsNormal is a personal status tracking tool. It is not a medical
-              device and does not diagnose, treat, cure, or prevent any disease
-              or condition. It does not provide medical or psychological advice.
-            </p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="lg:max-w-2xl">
+                <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">
+                  Boundary
+                </p>
+                <p className="mt-2">
+                  OpsNormal is a personal status tracking tool. It is not a
+                  medical device and does not diagnose, treat, cure, or prevent
+                  any disease or condition. It does not provide medical or
+                  psychological advice.
+                </p>
+              </div>
+              <FooterProvenance />
+            </div>
           </footer>
         </div>
       </main>
