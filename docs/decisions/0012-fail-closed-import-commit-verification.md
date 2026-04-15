@@ -23,7 +23,7 @@ Where Chromium supports durability hints, the write path should prefer strict du
 Harden import into a fail-closed sequence:
 
 - validate JSON structure and checksum before any write
-- compute the expected final entry set in memory before the transaction begins
+- compute the expected final entry set in memory from the transaction-scoped pre-write snapshot before applying import writes
 - write the import inside a single Dexie transaction
 - read the transaction view back before commit and compare it to the expected final state
 - throw on any mismatch so IndexedDB aborts the transaction natively
@@ -45,3 +45,8 @@ Trade-offs:
 - import now performs additional read and compare work inside the transaction
 - verification adds latency to import on larger datasets
 - undo remains a session-scoped convenience, not a substitute for external backup
+
+## Guardrails
+
+- The pre-write snapshot used to compute the expected final state must be read inside the same rw transaction as the import write and the read-back verification.
+- The undo snapshot must be derived from that same in-transaction pre-write view so session-scoped undo never restores a stale pre-transaction state.

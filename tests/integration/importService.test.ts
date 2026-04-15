@@ -6,7 +6,11 @@ import {
   applyImport,
   previewImportPayload,
 } from '../../src/services/importService';
-import { OPSNORMAL_APP_NAME, type JsonExportPayload } from '../../src/types';
+import {
+  OPSNORMAL_APP_NAME,
+  type DailyEntry,
+  type JsonExportPayload,
+} from '../../src/types';
 
 function getCompoundKey(
   entry: Pick<
@@ -26,6 +30,30 @@ function createComparableEntry(
     status: entry.status,
     updatedAt: entry.updatedAt,
   };
+}
+
+function sortComparableEntries<T extends Pick<DailyEntry, 'date' | 'sectorId'>>(
+  entries: T[],
+): T[] {
+  return [...entries].sort((left, right) =>
+    getCompoundKey(left).localeCompare(getCompoundKey(right)),
+  );
+}
+
+function injectWriteBeforeFirstTransaction(entry: DailyEntry) {
+  const originalTransaction = db.transaction.bind(db);
+  let injected = false;
+
+  return vi.spyOn(db, 'transaction').mockImplementation((async (
+    ...args: Parameters<typeof db.transaction>
+  ) => {
+    if (!injected) {
+      injected = true;
+      await db.dailyEntries.put({ ...entry });
+    }
+
+    return originalTransaction(...args);
+  }) as typeof db.transaction);
 }
 
 function buildPayload(
@@ -212,6 +240,47 @@ describe('import service', () => {
     ]);
   });
 
+  it('merges against the in-transaction snapshot when a write lands before the import transaction starts', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const concurrentEntry: DailyEntry = {
+      date: '2026-03-27',
+      sectorId: 'rest',
+      status: 'nominal',
+      updatedAt: '2026-03-29T12:00:00.000Z',
+    };
+    const payload = buildPayload([
+      {
+        date: '2026-03-27',
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-29T12:01:00.000Z',
+      },
+    ]);
+    const transactionSpy = injectWriteBeforeFirstTransaction(concurrentEntry);
+
+    try {
+      const result = await applyImport(payload, 'merge');
+      expect(result.importedCount).toBe(1);
+    } finally {
+      transactionSpy.mockRestore();
+    }
+
+    const allEntries = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+
+    expect(allEntries).toEqual([
+      {
+        date: '2026-03-27',
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-29T12:01:00.000Z',
+      },
+      createComparableEntry(concurrentEntry),
+    ]);
+  });
+
   it('round-trips exported entries through preview and merge import without data loss', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
     await setDailyStatus('2026-03-27', 'rest', 'degraded');
@@ -354,6 +423,50 @@ describe('import service', () => {
       .map((entry) => `${entry.date}:${entry.sectorId}`)
       .sort();
     expect(restoredKeys).toEqual(['2026-03-27:body', '2026-03-27:rest']);
+  });
+
+  it('undo restores the in-transaction snapshot when a write lands before replace import starts', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const preImportSnapshot = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+    const concurrentEntry: DailyEntry = {
+      date: '2026-03-28',
+      sectorId: 'rest',
+      status: 'degraded',
+      updatedAt: '2026-03-28T12:00:00.000Z',
+    };
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const transactionSpy = injectWriteBeforeFirstTransaction(concurrentEntry);
+
+    let result: Awaited<ReturnType<typeof applyImport>>;
+
+    try {
+      result = await applyImport(payload, 'replace');
+    } finally {
+      transactionSpy.mockRestore();
+    }
+
+    await result.undo();
+
+    const restoredEntries = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+
+    expect(restoredEntries).toEqual(
+      sortComparableEntries([
+        ...preImportSnapshot,
+        createComparableEntry(concurrentEntry),
+      ]),
+    );
   });
 
   it('aborts the transaction when post-write verification fails', async () => {
