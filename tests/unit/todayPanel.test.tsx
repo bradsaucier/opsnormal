@@ -126,7 +126,8 @@ describe('TodayPanel', () => {
     });
     expect(workNominal).toHaveFocus();
     expect(workNominal).toHaveAttribute('aria-checked', 'true');
-    expect(workNominal).toBeDisabled();
+    expect(workNominal).toHaveAttribute('aria-disabled', 'true');
+    expect(workNominal).not.toBeDisabled();
     expect(workNominal).toHaveAttribute('tabindex', '0');
     expect(
       screen.getByRole('radio', { name: /work or school unmarked/i }),
