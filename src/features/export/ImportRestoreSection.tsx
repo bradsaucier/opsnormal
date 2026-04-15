@@ -179,7 +179,7 @@ export function ImportRestoreSection({
           </label>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div role="list" className="grid gap-3 lg:grid-cols-2">
           <SignalCard
             label="Preferred path"
             value="Merge first"
