@@ -340,97 +340,93 @@ describe('history helpers and grid behavior', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it(
-    'keeps a single tabbable desktop gridcell and updates the selected-cell brief during keyboard traversal',
-    async () => {
-      const user = userEvent.setup({ delay: null });
-      const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
-      const matchMediaController = installMatchMediaController(true);
-      const firstDateLabel = formatLongDate(dateKeys[0] ?? '2026-02-27');
-      const oneWeekBackDateLabel = formatLongDate(
-        dateKeys[dateKeys.length - 8] ?? '2026-03-21',
-      );
-      const todayLabel = formatLongDate('2026-03-28');
+  it('keeps a single tabbable desktop gridcell and updates the selected-cell brief during keyboard traversal', async () => {
+    const user = userEvent.setup({ delay: null });
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    const matchMediaController = installMatchMediaController(true);
+    const firstDateLabel = formatLongDate(dateKeys[0] ?? '2026-02-27');
+    const oneWeekBackDateLabel = formatLongDate(
+      dateKeys[dateKeys.length - 8] ?? '2026-03-21',
+    );
+    const todayLabel = formatLongDate('2026-03-28');
 
-      void matchMediaController;
-      render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+    void matchMediaController;
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
 
-      const grid = screen.getByRole('grid');
-      expect(grid).toHaveAttribute('aria-colcount', '31');
-      expect(grid).toHaveAttribute('aria-rowcount', '6');
-      expect(
-        screen.queryByRole('button', { name: /previous week/i }),
-      ).not.toBeInTheDocument();
+    const grid = screen.getByRole('grid');
+    expect(grid).toHaveAttribute('aria-colcount', '31');
+    expect(grid).toHaveAttribute('aria-rowcount', '6');
+    expect(
+      screen.queryByRole('button', { name: /previous week/i }),
+    ).not.toBeInTheDocument();
 
-      const initialSelectedCell = getSelectedGridCell();
-      expect(initialSelectedCell).toHaveAttribute(
+    const initialSelectedCell = getSelectedGridCell();
+    expect(initialSelectedCell).toHaveAttribute(
+      'aria-label',
+      `Work or School on ${todayLabel}: UNMARKED.`,
+    );
+    expect(initialSelectedCell).toHaveAttribute('tabindex', '0');
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .filter((cell) => cell.getAttribute('tabindex') === '0'),
+    ).toHaveLength(1);
+
+    act(() => {
+      initialSelectedCell.focus();
+    });
+    expect(initialSelectedCell).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute(
         'aria-label',
-        `Work or School on ${todayLabel}: UNMARKED.`,
+        `Household on ${todayLabel}: UNMARKED.`,
       );
-      expect(initialSelectedCell).toHaveAttribute('tabindex', '0');
-      expect(
-        screen
-          .getAllByRole('gridcell')
-          .filter((cell) => cell.getAttribute('tabindex') === '0'),
-      ).toHaveLength(1);
+      expect(selectedCell).toHaveFocus();
+    });
+    expect(
+      screen.getByText(`Household on ${todayLabel} is UNMARKED.`),
+    ).toBeVisible();
 
-      act(() => {
-        initialSelectedCell.focus();
-      });
-      expect(initialSelectedCell).toHaveFocus();
+    await user.keyboard('{PageUp}');
+    await waitFor(() => {
+      expect(getSelectedGridCell()).toHaveAttribute(
+        'aria-label',
+        `Household on ${oneWeekBackDateLabel}: UNMARKED.`,
+      );
+    });
+    expect(
+      screen.getByText(`Household on ${oneWeekBackDateLabel} is UNMARKED.`),
+    ).toBeVisible();
 
-      await user.keyboard('{ArrowDown}');
-      await waitFor(() => {
-        const selectedCell = getSelectedGridCell();
-        expect(selectedCell).toHaveAttribute(
-          'aria-label',
-          `Household on ${todayLabel}: UNMARKED.`,
-        );
-        expect(selectedCell).toHaveFocus();
-      });
-      expect(
-        screen.getByText(`Household on ${todayLabel} is UNMARKED.`),
-      ).toBeVisible();
+    await user.keyboard('{Home}');
+    await waitFor(() => {
+      expect(getSelectedGridCell()).toHaveAttribute(
+        'aria-label',
+        `Household on ${firstDateLabel}: UNMARKED.`,
+      );
+    });
 
-      await user.keyboard('{PageUp}');
-      await waitFor(() => {
-        expect(getSelectedGridCell()).toHaveAttribute(
-          'aria-label',
-          `Household on ${oneWeekBackDateLabel}: UNMARKED.`,
-        );
-      });
-      expect(
-        screen.getByText(`Household on ${oneWeekBackDateLabel} is UNMARKED.`),
-      ).toBeVisible();
-
-      await user.keyboard('{Home}');
-      await waitFor(() => {
-        expect(getSelectedGridCell()).toHaveAttribute(
-          'aria-label',
-          `Household on ${firstDateLabel}: UNMARKED.`,
-        );
-      });
-
-      await user.keyboard('{Control>}{End}{/Control}');
-      await waitFor(() => {
-        const selectedCell = getSelectedGridCell();
-        expect(selectedCell).toHaveAttribute(
-          'aria-label',
-          `Rest on ${todayLabel}: UNMARKED.`,
-        );
-        expect(selectedCell).toHaveAttribute('tabindex', '0');
-      });
-      expect(
-        screen
-          .getAllByRole('gridcell')
-          .filter((cell) => cell.getAttribute('tabindex') === '0'),
-      ).toHaveLength(1);
-      expect(
-        screen.getByText(`Rest on ${todayLabel} is UNMARKED.`),
-      ).toBeVisible();
-    },
-    15000,
-  );
+    await user.keyboard('{Control>}{End}{/Control}');
+    await waitFor(() => {
+      const selectedCell = getSelectedGridCell();
+      expect(selectedCell).toHaveAttribute(
+        'aria-label',
+        `Rest on ${todayLabel}: UNMARKED.`,
+      );
+      expect(selectedCell).toHaveAttribute('tabindex', '0');
+    });
+    expect(
+      screen
+        .getAllByRole('gridcell')
+        .filter((cell) => cell.getAttribute('tabindex') === '0'),
+    ).toHaveLength(1);
+    expect(
+      screen.getByText(`Rest on ${todayLabel} is UNMARKED.`),
+    ).toBeVisible();
+  }, 15000);
 
   it('holds selection at the desktop grid boundary when traversal would move past the first cell', async () => {
     const user = userEvent.setup({ delay: null });
