@@ -268,8 +268,10 @@ button {
 }
 
 .history-scroll-shell:focus-visible {
-  outline: 2px solid rgba(183, 247, 218, 0.72);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 3px var(--ops-focus-ring);
 }
 
 .history-scroll-shell::-webkit-scrollbar {
@@ -449,6 +451,9 @@ button {
 }
 
 .tactical-chip-panel {
+  --ops-focus-ring-base-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px var(--color-ops-panel-border);
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -459,9 +464,7 @@ button {
       rgba(255, 255, 255, 0) 32%
     ),
     var(--color-ops-surface-base);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    inset 0 0 0 1px var(--color-ops-panel-border);
+  box-shadow: var(--ops-focus-ring-base-shadow);
 }
 
 .ops-focus-ring-inset:focus-visible,
@@ -476,6 +479,22 @@ button {
   box-shadow:
     inset 0 0 0 1px var(--ops-focus-ring-edge),
     inset 0 0 0 3px var(--ops-focus-ring);
+}
+
+.ops-focus-ring-chip:focus-visible,
+.ops-focus-ring-chip-proxy:focus-visible > .ops-focus-ring-chip {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 2px var(--ops-focus-ring),
+    var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000),
+    var(--tw-shadow, 0 0 #0000),
+    var(--ops-focus-ring-base-shadow, 0 0 #0000);
+}
+
+.ops-focus-ring-chip-proxy:focus-visible {
+  outline: none;
 }
 
 .ops-action-button {
