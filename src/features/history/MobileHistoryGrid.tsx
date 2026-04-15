@@ -4,7 +4,7 @@ import { formatDayLabel, formatLongDate } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
 import { SECTORS } from '../../types';
-import { getCellClassName } from './historyGridShared';
+import { getCellClassName, getStatusSpineClassName } from './historyGridShared';
 import type { HistoryGridModel } from './useHistoryGridModel';
 
 interface MobileHistoryGridProps {
@@ -44,6 +44,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
     mobileScrollRef,
     registerWeekRef,
     selectedCell,
+    selectedStatus,
     selectedDayStatuses,
     selectedDaySummary,
     todayKey,
@@ -292,7 +293,9 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         className="mt-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px"
         aria-live="polite"
       >
-        <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4">
+        <div
+          className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
+        >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
