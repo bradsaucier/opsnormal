@@ -200,7 +200,7 @@ function App() {
   }, [refreshStorageHealth]);
 
   return (
-    <div className="min-h-screen min-h-dvh bg-ops-base text-zinc-100">
+    <div className="min-h-screen min-h-dvh bg-ops-base text-ops-text-primary">
       <a className="ops-skip-link" href="#main-content">
         Skip to main content
       </a>
@@ -223,13 +223,13 @@ function App() {
           <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.28em] text-emerald-300/90 uppercase">
+                <p className="text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
                   Personal Readiness Tracker
                 </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-white uppercase sm:text-4xl">
+                <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-ops-text-primary uppercase sm:text-4xl">
                   OpsNormal
                 </h1>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-zinc-300 sm:text-base">
+                <p className="mt-4 max-w-3xl text-sm leading-7 text-ops-text-secondary sm:text-base">
                   A local-only mirror for daily balance across work or school,
                   household, relationships, body, and rest. No account. No cloud
                   sync. No analytics layer.
@@ -237,13 +237,13 @@ function App() {
               </div>
               <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px text-right">
                 <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3">
-                  <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">
+                  <div className="text-xs tracking-[0.16em] text-ops-text-muted uppercase">
                     Data posture
                   </div>
-                  <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-zinc-100 uppercase">
+                  <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
                     Local only
                   </div>
-                  <div className="mt-2 text-xs leading-5 text-zinc-400 [font-variant-numeric:tabular-nums]">
+                  <div className="mt-2 text-xs leading-5 text-ops-text-secondary [font-variant-numeric:tabular-nums]">
                     {storageHealth
                       ? formatStorageSummary(storageHealth)
                       : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
@@ -335,10 +335,10 @@ function App() {
         </div>
 
         <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
-          <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-zinc-400">
+          <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="lg:max-w-2xl">
-                <p className="font-semibold tracking-[0.14em] text-zinc-200 uppercase">
+                <p className="font-semibold tracking-[0.14em] text-ops-text-primary uppercase">
                   Boundary
                 </p>
                 <p className="mt-2">
