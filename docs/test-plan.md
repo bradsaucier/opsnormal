@@ -81,7 +81,7 @@ Prove that the app:
 - synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
 - production-artifact smoke gating reuses an already-built `dist/` bundle and excludes the harness-only crash and fallback specs that require e2e-mode fixture pages
-- dedicated WCAG 2.1 A and AA Playwright scans cover the desktop app shell, the direct-select radiogroup pattern, and the mobile history region with service workers blocked for deterministic DOM evaluation
+- dedicated WCAG 2.1 A and AA Playwright scans cover the desktop app shell, the direct-select radiogroup pattern, the mobile history region, the Import and Restore, Undo and Recovery, and Storage Health recovery sections, the Backup Action Banner warning state, the database-upgrade-blocked alert, and the boot-fallback and crash-fallback harness pages, all with service workers blocked for deterministic DOM evaluation
 - ARIA snapshot coverage locks the direct-select radiogroup structure without snapshotting time-driven history surfaces
 
 ## Coverage posture
@@ -105,6 +105,8 @@ Formatting gate:
 ## Accessibility automation note
 
 Vitest accessibility checks run in JSDOM and validate semantic markup only. The shared `axe` helper disables `color-contrast` because JSDOM cannot compute real browser layout or CSS color stacks. Browser-level accessibility enforcement runs in Playwright with `@axe-core/playwright`, filtered to `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`, and the dedicated accessibility project blocks service workers so cached assets cannot taint the scan target.
+
+The recovery-surface scan set drives the `accessibility-recovery.a11y.spec.ts` file and injects synthetic storage-health state through the e2e-only `__opsNormalStorageTestApi__` hook so the warning-tone Backup Action Banner and the Storage Health signals render through their production code paths during the scan.
 
 ## Storage lifecycle automation note
 
