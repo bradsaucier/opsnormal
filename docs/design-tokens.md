@@ -77,6 +77,13 @@ Application rules:
 - Use `tactical-chip-panel` for compact meta blocks, legends, and grouped facts that should feel inset rather than flat.
 - Keep these utilities inside the current cockpit language. They are not a license to add decorative glow, blur, or card-rounding.
 
+Section shell emphasis:
+
+- `.ops-section-emphasis-primary` keeps the strongest top-level shell and is reserved for the live operator surface.
+- `.ops-section-emphasis-standard` is the default shell weight for read-only mirrors such as history.
+- `.ops-section-emphasis-support` drops the emerald outer wash and uses structural framing for support or recovery surfaces.
+- Apply these through `SectionCard` only. They recalibrate shell hierarchy without changing notch geometry, focus chrome, or component signatures downstream.
+
 ## Notch geometry
 
 Shared notch sizes live in `src/styles/index.css`.
@@ -203,3 +210,5 @@ Use these tokens and utilities in:
 - clipped action surfaces such as install, update, export, import, and storage controls
 
 Do not create near-duplicate one-off values in component markup unless there is a clear functional need.
+Support `SignalCard` surfaces must stay on structural border and neutral surface tokens.
+If a backup or restore fact needs caution emphasis, keep the surface neutral and express the caution through copy and text treatment only.
