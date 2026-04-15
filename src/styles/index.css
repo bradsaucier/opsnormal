@@ -278,6 +278,40 @@ button {
   color: var(--ops-status-unmarked-text);
 }
 
+.ops-sector-caption {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-ops-text-muted);
+}
+
+.ops-sector-spine-nominal {
+  box-shadow:
+    inset 3px 0 0 var(--ops-status-nominal-border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.ops-sector-spine-degraded {
+  box-shadow:
+    inset 3px 0 0 var(--ops-status-degraded-border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.ops-sector-spine-unmarked {
+  box-shadow:
+    inset 3px 0 0 var(--ops-status-unmarked-border),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
 @utility clip-notched {
   -webkit-clip-path: polygon(
     var(--notch) 0,
