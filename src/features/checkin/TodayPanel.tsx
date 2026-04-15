@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react';
 
+import { AlertSurface } from '../../components/AlertSurface';
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
 import { useEntriesForDate } from '../../db/hooks';
@@ -92,6 +93,7 @@ export function TodayPanel({
     <SectionCard
       eyebrow="Daily Check-In"
       title="Today"
+      emphasis="primary"
       meta={
         <div className="space-y-1 text-right">
           <div>{formatLongDate(todayKey)}</div>
@@ -113,10 +115,15 @@ export function TodayPanel({
       ) : null}
 
       {errorMessage ? (
-        <div className="mb-4 clip-notched ops-notch-panel-outer bg-orange-500/30 p-px">
-          <div className="clip-notched ops-notch-panel-inner bg-orange-500/10 px-4 py-3 text-sm text-orange-200">
-            {errorMessage}
-          </div>
+        <div className="mb-4">
+          <AlertSurface
+            tone="warning"
+            title="Local save failed"
+            description={errorMessage}
+            as="div"
+            role="alert"
+            aria-atomic="true"
+          />
         </div>
       ) : null}
 
