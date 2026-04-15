@@ -207,7 +207,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           aria-pressed={isSelectedDay}
                           aria-current={isToday ? 'date' : undefined}
                           className={[
-                            'ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent',
+                            'ops-focus-ring-chip ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition',
                             isSelectedDay
                               ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                               : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
