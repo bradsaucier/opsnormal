@@ -54,7 +54,7 @@ export function DomainCard({
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
-    : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-emerald-200/16 focus-within:bg-emerald-200/20';
+    : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/16 focus-within:bg-ops-accent/20';
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
