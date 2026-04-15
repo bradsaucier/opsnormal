@@ -15,6 +15,15 @@ import {
   type DailyEntry,
 } from '../../src/types';
 
+function stripEntryIds(entries: DailyEntry[]) {
+  return entries.map((entry) => ({
+    date: entry.date,
+    sectorId: entry.sectorId,
+    status: entry.status,
+    updatedAt: entry.updatedAt,
+  }));
+}
+
 const sampleEntries: DailyEntry[] = [
   {
     id: 1,
@@ -87,7 +96,7 @@ describe('export helpers', () => {
     const json = await createJsonExport(sampleEntries, exportedAt);
     const parsed = await parseImportPayload(json);
 
-    expect(parsed.entries).toEqual(sampleEntries);
+    expect(parsed.entries).toEqual(stripEntryIds(sampleEntries));
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
   });
 
@@ -100,7 +109,7 @@ describe('export helpers', () => {
     );
     const parsed = await parseImportPayload(json);
 
-    expect(parsed.entries).toEqual(sampleEntries);
+    expect(parsed.entries).toEqual(stripEntryIds(sampleEntries));
     expect(parsed.crashDiagnostics).toEqual(sampleCrashDiagnostics);
   });
 

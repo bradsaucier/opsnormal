@@ -60,14 +60,16 @@ function normalizeImportedEntries(
       mode === 'merge'
         ? existingByCompoundKey.get(getCompoundKey(entry))
         : undefined;
-
-    return {
-      id: existing?.id ?? entry.id,
+    const normalizedEntry = {
       date: entry.date,
       sectorId: entry.sectorId,
       status: entry.status,
       updatedAt: entry.updatedAt,
     };
+
+    return typeof existing?.id === 'number'
+      ? { id: existing.id, ...normalizedEntry }
+      : normalizedEntry;
   });
 }
 

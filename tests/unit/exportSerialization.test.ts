@@ -13,6 +13,15 @@ import {
   type DailyEntry,
 } from '../../src/types';
 
+function stripEntryIds(entries: DailyEntry[]) {
+  return entries.map((entry) => ({
+    date: entry.date,
+    sectorId: entry.sectorId,
+    status: entry.status,
+    updatedAt: entry.updatedAt,
+  }));
+}
+
 const sampleEntries: DailyEntry[] = [
   {
     id: 1,
@@ -66,10 +75,15 @@ describe('exportSerialization', () => {
     vi.setSystemTime(new Date('2026-04-14T00:00:00.000Z'));
 
     const json = await createJsonExport(sampleEntries);
-    const parsed = JSON.parse(json) as { exportedAt: string; checksum: string };
+    const parsed = JSON.parse(json) as {
+      exportedAt: string;
+      checksum: string;
+      entries: Array<Record<string, unknown>>;
+    };
 
     expect(parsed.exportedAt).toBe('2026-04-14T00:00:00.000Z');
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+    expect(parsed.entries[0]).not.toHaveProperty('id');
   });
 
   it('uses the default exportedAt timestamp for crash json exports', async () => {
@@ -84,11 +98,37 @@ describe('exportSerialization', () => {
       exportedAt: string;
       checksum: string;
       crashDiagnostics: CrashStorageDiagnostics;
+      entries: Array<Record<string, unknown>>;
     };
 
     expect(parsed.exportedAt).toBe('2026-04-14T01:02:03.000Z');
     expect(parsed.crashDiagnostics).toEqual(sampleCrashDiagnostics);
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+    expect(parsed.entries[0]).not.toHaveProperty('id');
+  });
+
+  it('omits internal ids from json exports and computes the checksum from semantic fields only', async () => {
+    const exportedAt = '2026-04-14T05:06:07.000Z';
+    const json = await createJsonExport(sampleEntries, exportedAt);
+    const parsed = JSON.parse(json) as {
+      app: string;
+      schemaVersion: number;
+      exportedAt: string;
+      checksum: string;
+      entries: Array<Record<string, unknown>>;
+    };
+
+    expect(parsed.entries).toEqual(stripEntryIds(sampleEntries));
+    expect(parsed.entries.every((entry) => !('id' in entry))).toBe(true);
+
+    const recomputedChecksum = await computeJsonExportChecksum({
+      app: OPSNORMAL_APP_NAME,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      exportedAt,
+      entries: stripEntryIds(sampleEntries),
+    });
+
+    expect(parsed.checksum).toBe(recomputedChecksum);
   });
 
   it('uses the window secure-context hint when it is explicitly false', async () => {

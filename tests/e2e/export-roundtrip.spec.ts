@@ -22,11 +22,18 @@ function normalizeExportPayload(payload: ExportPayload) {
   return {
     app: payload.app,
     schemaVersion: payload.schemaVersion,
-    entries: [...payload.entries].sort((left, right) => {
-      const leftKey = `${left.date}:${left.sectorId}`;
-      const rightKey = `${right.date}:${right.sectorId}`;
-      return leftKey.localeCompare(rightKey);
-    }),
+    entries: payload.entries
+      .map((entry) => ({
+        date: entry.date,
+        sectorId: entry.sectorId,
+        status: entry.status,
+        updatedAt: entry.updatedAt,
+      }))
+      .sort((left, right) => {
+        const leftKey = `${left.date}:${left.sectorId}`;
+        const rightKey = `${right.date}:${right.sectorId}`;
+        return leftKey.localeCompare(rightKey);
+      }),
   };
 }
 
@@ -337,19 +344,12 @@ test.describe('OpsNormal export recovery', () => {
 
     const firstExport = await exportPayloadFromCurrentPage(page);
 
-    const expectedLegacyExportEntries: ExportEntry[] = legacyEntries.map(
-      (entry, index) => ({
-        ...entry,
-        id: index + 1,
-      }),
-    );
-
     expect(normalizeExportPayload(firstExport.payload).entries).toEqual(
       normalizeExportPayload({
         app: firstExport.payload.app,
         schemaVersion: firstExport.payload.schemaVersion,
         exportedAt: firstExport.payload.exportedAt,
-        entries: expectedLegacyExportEntries,
+        entries: legacyEntries,
         checksum: firstExport.payload.checksum,
       }).entries,
     );
