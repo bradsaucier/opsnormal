@@ -26,7 +26,9 @@ export function AccordionSection({
 
   return (
     <NotchedFrame
-      outerClassName={isOpen ? 'bg-ops-panel-border-strong' : 'bg-ops-border-struct'}
+      outerClassName={
+        isOpen ? 'bg-ops-panel-border-strong' : 'bg-ops-border-struct'
+      }
       innerClassName={isOpen ? 'tactical-subpanel-strong' : 'tactical-subpanel'}
     >
       {isOpen ? (
