@@ -97,7 +97,7 @@ export function TodayPanel({
       meta={
         <div className="space-y-1 text-right">
           <div>{formatLongDate(todayKey)}</div>
-          <div className="text-xs tracking-[0.16em] text-zinc-500 uppercase">
+          <div className="text-xs tracking-[0.16em] text-ops-text-muted uppercase">
             {completion.markedCount}/{completion.totalCount} sectors checked
           </div>
         </div>
