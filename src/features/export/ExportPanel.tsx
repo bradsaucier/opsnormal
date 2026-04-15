@@ -144,7 +144,11 @@ export function ExportPanel({
   }
 
   return (
-    <SectionCard eyebrow="Data Sovereignty" title="Backup and Recovery">
+    <SectionCard
+      eyebrow="Data Sovereignty"
+      title="Backup and Recovery"
+      emphasis="support"
+    >
       <div className="space-y-4">
         <p className="max-w-3xl text-sm leading-6 text-zinc-300">
           Local-first only works if recovery is real. Safe actions stay forward.

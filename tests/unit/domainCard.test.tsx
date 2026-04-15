@@ -112,4 +112,33 @@ describe('DomainCard', () => {
       'sr-only',
     );
   });
+
+  it('keeps focus parked and swallows control keys while busy', () => {
+    const onSelect = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <DomainCard
+        sector={SECTORS[0]}
+        sectorSigil="S1"
+        status="unmarked"
+        busy
+        onSelect={onSelect}
+      />,
+    );
+
+    const unmarked = screen.getByRole('radio', {
+      name: /work or school unmarked/i,
+    });
+    const nominal = screen.getByRole('radio', {
+      name: /work or school nominal/i,
+    });
+
+    unmarked.focus();
+    fireEvent.keyDown(unmarked, { key: 'ArrowRight' });
+
+    expect(unmarked).toHaveFocus();
+    expect(unmarked).toHaveAttribute('tabindex', '0');
+    expect(nominal).toHaveAttribute('tabindex', '-1');
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });

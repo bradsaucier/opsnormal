@@ -62,10 +62,10 @@ function getModeOptionClasses(isSelected: boolean, mode: ImportMode): string {
   }
 
   if (mode === 'replace') {
-    return 'clip-notched ops-notch-chip border border-amber-400/35 bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-amber-50';
+    return 'clip-notched ops-notch-chip border border-amber-300/35 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)] p-3 text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
   }
 
-  return 'clip-notched ops-notch-chip border border-emerald-400/35 bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-emerald-50';
+  return 'clip-notched ops-notch-chip border border-ops-panel-border-strong bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)] p-3 text-ops-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
 }
 
 function getReplaceCheckpointStepTwoText(

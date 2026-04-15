@@ -226,6 +226,51 @@ describe('ExportPanel import warnings', () => {
     ).toBeTruthy();
   });
 
+  it('keeps backup summary signal chrome off readiness-background accents', () => {
+    render(<ExportPanel storageHealth={null} />);
+
+    const summarySignals = screen.getByRole('list', {
+      name: /backup and recovery summary signals/i,
+    });
+    const signalMarkup = summarySignals.innerHTML;
+
+    expect(signalMarkup).toContain('bg-ops-panel-border-strong');
+    expect(signalMarkup).not.toContain('rgba(110,231,183');
+    expect(signalMarkup).not.toContain('rgba(16,185,129');
+    expect(signalMarkup).not.toContain('rgba(251,191,36,0.32)');
+    expect(signalMarkup).not.toContain('rgba(245,158,11,0.16)');
+    expect(signalMarkup).not.toContain('text-emerald-');
+  });
+
+  it('keeps selected restore mode cards on structural chrome instead of readiness backgrounds', async () => {
+    previewImportFileMock.mockResolvedValue(
+      buildPreview({ checksum: 'a'.repeat(64) }),
+    );
+
+    render(<ExportPanel storageHealth={null} />);
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /import and restore/i }),
+    );
+
+    await userEvent.upload(
+      screen.getByTestId('import-file-input'),
+      new File(['{}'], 'verified-export.json', {
+        type: 'application/json',
+      }),
+    );
+
+    const mergeOption = screen.getByText('Merge').closest('label');
+    expect(mergeOption?.className).not.toContain('emerald');
+    expect(mergeOption?.className).not.toContain('rgba(16,185,129');
+
+    await userEvent.click(screen.getByRole('radio', { name: /replace/i }));
+
+    const replaceOption = screen.getByText('Replace').closest('label');
+    expect(replaceOption?.className).not.toContain('rgba(245,158,11,0.16)');
+    expect(replaceOption?.className).not.toContain('text-amber-50');
+  });
+
   it('notifies the shell when a JSON backup completes', async () => {
     const onBackupCompleted = vi.fn();
     exportCurrentEntriesAsJsonMock.mockResolvedValue({

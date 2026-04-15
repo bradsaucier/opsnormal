@@ -180,6 +180,82 @@ button {
       right / 1px 8px no-repeat;
 }
 
+.ops-section-frame {
+  background: var(
+    --ops-section-frame-background,
+    linear-gradient(180deg, rgba(110, 231, 183, 0.1), rgba(255, 255, 255, 0.02))
+  );
+}
+
+.ops-section-surface {
+  background: var(
+    --ops-section-surface-background,
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%),
+    var(--color-ops-surface-1)
+  );
+  box-shadow: var(
+    --ops-section-surface-shadow,
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02)
+  );
+}
+
+.ops-section-emphasis-primary {
+  --ops-section-frame-background: linear-gradient(
+    180deg,
+    rgba(110, 231, 183, 0.18),
+    rgba(255, 255, 255, 0.02)
+  );
+  --ops-section-surface-background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(183, 247, 218, 0.04) 16%,
+      rgba(255, 255, 255, 0) 30%
+    ),
+    var(--color-ops-surface-1);
+  --ops-section-surface-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.ops-section-emphasis-standard {
+  --ops-section-frame-background: linear-gradient(
+    180deg,
+    rgba(110, 231, 183, 0.1),
+    rgba(255, 255, 255, 0.02)
+  );
+  --ops-section-surface-background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%),
+    var(--color-ops-surface-1);
+  --ops-section-surface-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--color-ops-border-soft),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.ops-section-emphasis-support {
+  --ops-section-frame-background: var(--color-ops-panel-border-strong);
+  --ops-section-surface-background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.03),
+      rgba(10, 15, 13, 0.12) 26%,
+      rgba(255, 255, 255, 0) 40%
+    ),
+    var(--color-ops-surface-base);
+  --ops-section-surface-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px var(--color-ops-panel-border-strong),
+    inset 0 -28px 44px rgba(10, 15, 13, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
 .history-scroll-shell {
   scrollbar-width: thin;
   scrollbar-color: rgba(110, 231, 183, 0.32) rgba(255, 255, 255, 0.04);

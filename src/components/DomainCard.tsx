@@ -14,6 +14,16 @@ interface DomainCardProps {
 }
 
 const STATUS_OPTIONS: UiStatus[] = ['unmarked', 'nominal', 'degraded'];
+const RADIO_CONTROL_KEYS = new Set([
+  ' ',
+  'Enter',
+  'ArrowRight',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowUp',
+  'Home',
+  'End',
+]);
 
 export function DomainCard({
   sector,
@@ -85,6 +95,10 @@ export function DomainCard({
     optionIndex: number,
   ) {
     if (busy) {
+      if (RADIO_CONTROL_KEYS.has(event.key)) {
+        event.preventDefault();
+      }
+
       return;
     }
 
@@ -182,17 +196,23 @@ export function DomainCard({
                   type="button"
                   role="radio"
                   aria-checked={isSelected}
+                  aria-disabled={busy || undefined}
                   aria-label={`${sector.label} ${content.label}`}
                   tabIndex={isSelected ? 0 : -1}
-                  disabled={busy}
                   onClick={(event) => {
+                    if (busy) {
+                      event.preventDefault();
+                      return;
+                    }
+
                     setOptimisticStatus(option);
                     event.currentTarget.focus({ preventScroll: true });
                     void onSelect(sector.id, option);
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'clip-notched tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition motion-safe:duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent disabled:cursor-wait disabled:opacity-70',
+                    'clip-notched tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase transition motion-safe:duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ops-accent',
+                    busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} ring-2 ring-inset ring-ops-accent/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
                       : 'text-ops-text-secondary hover:border-ops-border-struct hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]',

@@ -26,9 +26,17 @@ export function AccordionSection({
 
   return (
     <NotchedFrame
-      outerClassName="bg-ops-border-struct"
-      innerClassName="tactical-panel bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-raised)]"
+      outerClassName={
+        isOpen ? 'bg-ops-panel-border-strong' : 'bg-ops-border-struct'
+      }
+      innerClassName={isOpen ? 'tactical-subpanel-strong' : 'tactical-subpanel'}
     >
+      {isOpen ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-ops-accent-border"
+        />
+      ) : null}
       <h3>
         <button
           type="button"
@@ -78,25 +86,23 @@ function getSignalChromeClasses(
 } {
   if (tone === 'safe') {
     return {
-      outer:
-        'bg-[linear-gradient(180deg,rgba(110,231,183,0.34),rgba(255,255,255,0.04))]',
+      outer: 'bg-ops-panel-border-strong',
       inner:
-        'bg-[linear-gradient(180deg,rgba(16,185,129,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
-      label: 'text-emerald-100/80',
-      value: 'text-emerald-50',
-      detail: 'text-emerald-50/80',
+        'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)]',
+      label: 'text-ops-text-muted',
+      value: 'text-ops-text-primary',
+      detail: 'text-ops-text-secondary',
     };
   }
 
   if (tone === 'warning') {
     return {
-      outer:
-        'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
+      outer: 'bg-ops-panel-border-strong',
       inner:
-        'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_32%),var(--color-ops-surface-raised)]',
-      label: 'text-amber-100/80',
-      value: 'text-amber-50',
-      detail: 'text-amber-50/82',
+        'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)]',
+      label: 'text-amber-200/80',
+      value: 'text-amber-100',
+      detail: 'text-ops-text-secondary',
     };
   }
 

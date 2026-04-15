@@ -216,7 +216,7 @@ function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-4"
+        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-5 lg:gap-6"
       >
         <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
           <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">

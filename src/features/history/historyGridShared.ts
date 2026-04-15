@@ -34,6 +34,18 @@ export function getCellClassName(status: UiStatus) {
   return 'ops-grid-unmarked';
 }
 
+export function getStatusSpineClassName(status: UiStatus) {
+  if (status === 'nominal') {
+    return 'ops-sector-spine-nominal';
+  }
+
+  if (status === 'degraded') {
+    return 'ops-sector-spine-degraded';
+  }
+
+  return 'ops-sector-spine-unmarked';
+}
+
 export function clampIndex(index: number, upperBound: number) {
   if (index < 0) {
     return 0;

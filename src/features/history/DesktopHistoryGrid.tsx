@@ -4,7 +4,11 @@ import { formatDayLabel, formatLongDate } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
 import { SECTORS } from '../../types';
-import { buildCellKey, getCellClassName } from './historyGridShared';
+import {
+  buildCellKey,
+  getCellClassName,
+  getStatusSpineClassName,
+} from './historyGridShared';
 import type { HistoryGridModel } from './useHistoryGridModel';
 
 interface DesktopHistoryGridProps {
@@ -228,7 +232,9 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4">
+          <div
+            className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">

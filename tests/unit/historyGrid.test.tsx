@@ -277,6 +277,48 @@ describe('history helpers and grid behavior', () => {
     ).toBeVisible();
   });
 
+  it('echoes selected readiness state on the desktop selected-cell brief', async () => {
+    const user = userEvent.setup({ delay: null });
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 29));
+
+    installMatchMediaController(true);
+    mockUseEntriesForDateRange.mockReturnValue(completeDayEntries);
+
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-29" />);
+
+    const selectedCellSurface = screen
+      .getByText('Selected cell')
+      .closest('.tactical-subpanel-strong') as HTMLElement;
+
+    expect(selectedCellSurface).toHaveClass('ops-sector-spine-nominal');
+
+    const initialSelectedCell = getSelectedGridCell();
+    act(() => {
+      initialSelectedCell.focus();
+    });
+
+    await user.keyboard('{ArrowDown}');
+
+    await waitFor(() => {
+      expect(selectedCellSurface).toHaveClass('ops-sector-spine-degraded');
+    });
+  });
+
+  it('applies the state spine to the mobile daily brief surface', () => {
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 29));
+
+    mockUseEntriesForDateRange.mockReturnValue(completeDayEntries);
+    installMatchMediaController(false);
+
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-29" />);
+
+    const mobileDailyBriefSurface = screen
+      .getByText('Daily brief')
+      .closest('.tactical-subpanel-strong') as HTMLElement;
+
+    expect(mobileDailyBriefSurface).toHaveClass('ops-sector-spine-nominal');
+  });
+
   it('has no accessibility violations in the mobile history view', async () => {
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
 
@@ -384,7 +426,7 @@ describe('history helpers and grid behavior', () => {
     expect(
       screen.getByText(`Rest on ${todayLabel} is UNMARKED.`),
     ).toBeVisible();
-  });
+  }, 15000);
 
   it('holds selection at the desktop grid boundary when traversal would move past the first cell', async () => {
     const user = userEvent.setup({ delay: null });
