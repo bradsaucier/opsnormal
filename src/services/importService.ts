@@ -364,21 +364,28 @@ export async function applyImport(
   payload: JsonExportPayload,
   mode: ImportMode,
 ): Promise<{ importedCount: number; undo: () => Promise<void> }> {
-  const snapshot = await getAllEntries();
-  const undoSnapshot = snapshot.map((entry) => ({ ...entry }));
-  const normalizedEntries = normalizeImportedEntries(
-    payload.entries,
-    snapshot,
-    mode,
-  );
-  const expectedFinalEntries = buildExpectedFinalEntries(
-    snapshot,
-    normalizedEntries,
-    mode,
-  );
+  let undoSnapshot: DailyEntry[] = [];
+  let importedCount = 0;
 
   await runDatabaseWrite(async () =>
     db.transaction('rw', db.dailyEntries, async () => {
+      const snapshot = await db.dailyEntries
+        .orderBy('[date+sectorId]')
+        .toArray();
+      const normalizedEntries = normalizeImportedEntries(
+        payload.entries,
+        snapshot,
+        mode,
+      );
+      const expectedFinalEntries = buildExpectedFinalEntries(
+        snapshot,
+        normalizedEntries,
+        mode,
+      );
+
+      undoSnapshot = snapshot.map((entry) => ({ ...entry }));
+      importedCount = normalizedEntries.length;
+
       if (mode === 'replace') {
         await db.dailyEntries.clear();
       }
@@ -408,7 +415,7 @@ export async function applyImport(
   );
 
   return {
-    importedCount: normalizedEntries.length,
+    importedCount,
     undo: async () => {
       await restoreUndoSnapshot(undoSnapshot);
     },
