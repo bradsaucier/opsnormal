@@ -141,6 +141,75 @@ describe('import service', () => {
     );
   });
 
+  it('merges legacy imports with colliding ids without disturbing unrelated local rows', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const existingEntries = await getAllEntries();
+    const collidingId = existingEntries.find(
+      (entry) => getCompoundKey(entry) === '2026-03-27:rest',
+    )?.id;
+
+    expect(collidingId).toBeTypeOf('number');
+
+    const payload = buildPayload([
+      {
+        id: collidingId,
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+
+    const result = await applyImport(payload, 'merge');
+    expect(result.importedCount).toBe(1);
+
+    const allEntries = await getAllEntries();
+    const byCompoundKey = new Map(
+      allEntries.map((entry) => [getCompoundKey(entry), entry]),
+    );
+
+    expect(allEntries).toHaveLength(3);
+    expect(byCompoundKey.get('2026-03-27:body')?.status).toBe('nominal');
+    expect(byCompoundKey.get('2026-03-27:rest')?.status).toBe('degraded');
+    expect(byCompoundKey.get('2026-03-29:household')).toMatchObject({
+      status: 'nominal',
+      updatedAt: '2026-03-29T12:00:00.000Z',
+    });
+  });
+
+  it('merges id-free payloads successfully', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-28',
+        sectorId: 'rest',
+        status: 'degraded',
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+
+    const result = await applyImport(payload, 'merge');
+    expect(result.importedCount).toBe(2);
+
+    const allEntries = await getAllEntries();
+    const compoundKeys = allEntries.map((entry) => getCompoundKey(entry)).sort();
+
+    expect(compoundKeys).toEqual([
+      '2026-03-27:body',
+      '2026-03-28:rest',
+      '2026-03-29:household',
+    ]);
+  });
+
   it('round-trips exported entries through preview and merge import without data loss', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
     await setDailyStatus('2026-03-27', 'rest', 'degraded');
@@ -211,6 +280,49 @@ describe('import service', () => {
     );
     expect(replacedEntries.map((entry) => getCompoundKey(entry))).not.toContain(
       '2026-03-30:work-school',
+    );
+  });
+
+  it('replaces legacy imports with non-sequential ids using fresh local primary keys', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const payload = buildPayload([
+      {
+        id: 42,
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+      {
+        id: 77,
+        date: '2026-03-30',
+        sectorId: 'work-school',
+        status: 'degraded',
+        updatedAt: '2026-03-30T12:00:00.000Z',
+      },
+    ]);
+
+    const result = await applyImport(payload, 'replace');
+    expect(result.importedCount).toBe(2);
+
+    const allEntries = await getAllEntries();
+    const comparableEntries = allEntries
+      .map((entry) => createComparableEntry(entry))
+      .sort((left, right) =>
+        getCompoundKey(left).localeCompare(getCompoundKey(right)),
+      );
+
+    expect(comparableEntries).toEqual(
+      payload.entries
+        .map((entry) => createComparableEntry(entry))
+        .sort((left, right) =>
+          getCompoundKey(left).localeCompare(getCompoundKey(right)),
+        ),
+    );
+    expect(allEntries.some((entry) => entry.id === 42 || entry.id === 77)).toBe(
+      false,
     );
   });
 
