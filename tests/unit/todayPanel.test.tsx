@@ -48,10 +48,24 @@ describe('TodayPanel', () => {
   it('renders direct-select radio controls for each sector', () => {
     render(<TodayPanel todayKey="2026-03-27" />);
 
+    const instructionStrip = screen.getByText(
+      /Choose a state directly\. Arrow keys move inside the control group\. Unmarked means no status recorded for the day\./i,
+    );
+
     expect(screen.getAllByRole('radio')).toHaveLength(15);
+    expect(instructionStrip).toBeInTheDocument();
+    expect(screen.getByText('S1 - WORK')).toBeInTheDocument();
+    expect(screen.getByText('S5 - REST')).toBeInTheDocument();
     expect(
       screen.getByRole('radiogroup', { name: /work or school status/i }),
     ).toBeInTheDocument();
+
+    const instructionId = instructionStrip.getAttribute('id');
+    expect(instructionId).toBeTruthy();
+
+    for (const group of screen.getAllByRole('radiogroup')) {
+      expect(group).toHaveAttribute('aria-describedby', instructionId);
+    }
   });
 
   it('keeps the fallback live-region announcement mounted after a save', async () => {
