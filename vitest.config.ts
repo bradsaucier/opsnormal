@@ -58,7 +58,7 @@ export default defineConfig({
           branches: 100,
         },
         'src/services/importService.ts': {
-          lines: 94,
+          lines: 94.93,
           functions: 100,
           statements: 95,
           branches: 80,
