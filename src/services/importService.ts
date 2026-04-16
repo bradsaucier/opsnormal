@@ -1,4 +1,8 @@
 import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
+import {
+  UndoInvalidatedError,
+  UndoVerificationError,
+} from '../lib/errors';
 import type { ParsedJsonImport } from '../schemas/import';
 import type {
   DailyEntry,
@@ -35,6 +39,33 @@ interface WorkerRejectedMessage {
 
 const IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES = 256 * 1024;
 const IMPORT_BATCH_SIZE = 500;
+const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
+
+let undoSnapshotState:
+  | {
+      snapshot: DailyEntry[];
+      exportedAt: string;
+      invalidated: boolean;
+    }
+  | null = null;
+
+function handleEntryWritten(event: Event): void {
+  if (!undoSnapshotState) {
+    return;
+  }
+
+  const detail = (event as CustomEvent<{ source?: string }>).detail;
+
+  if (detail?.source !== 'daily-status') {
+    return;
+  }
+
+  undoSnapshotState.invalidated = true;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener(ENTRY_WRITTEN_EVENT_NAME, handleEntryWritten);
+}
 
 function isRejectedImportPreview(
   previewResult: ParsedImportSummary | RejectedImportPreview,
@@ -218,6 +249,16 @@ async function bulkPutEntries(entries: DailyEntry[]): Promise<void> {
 }
 
 async function restoreUndoSnapshot(snapshot: DailyEntry[]): Promise<void> {
+  if (!undoSnapshotState || undoSnapshotState.snapshot !== snapshot) {
+    throw new UndoInvalidatedError();
+  }
+
+  if (undoSnapshotState.invalidated) {
+    throw new UndoInvalidatedError(
+      'Undo disabled. A daily check-in landed after this import. Export a fresh backup before proceeding.',
+    );
+  }
+
   await runDatabaseWrite(async () =>
     db.transaction('rw', db.dailyEntries, async () => {
       await db.dailyEntries.clear();
@@ -225,8 +266,18 @@ async function restoreUndoSnapshot(snapshot: DailyEntry[]): Promise<void> {
       if (snapshot.length > 0) {
         await bulkPutEntries(snapshot);
       }
+
+      const readBack = await db.dailyEntries
+        .orderBy('[date+sectorId]')
+        .toArray();
+
+      if (!hasMatchingEntrySet(snapshot, readBack)) {
+        throw new UndoVerificationError();
+      }
     }),
   );
+
+  undoSnapshotState = null;
 }
 
 export async function readImportFile(file: File): Promise<string> {
@@ -414,10 +465,21 @@ export async function applyImport(
     }),
   );
 
+  undoSnapshotState = {
+    snapshot: undoSnapshot,
+    exportedAt: payload.exportedAt,
+    invalidated: false,
+  };
+
   return {
     importedCount,
     undo: async () => {
       await restoreUndoSnapshot(undoSnapshot);
     },
   };
+}
+
+/** @internal */
+export function __resetUndoSnapshotStateForTests(): void {
+  undoSnapshotState = null;
 }
