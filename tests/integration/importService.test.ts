@@ -733,7 +733,9 @@ describe('import service', () => {
     const orderBySpy = vi
       .spyOn(db.dailyEntries, 'orderBy')
       .mockImplementation(((index: string) =>
-        originalOrderBy(index as '[date+sectorId]')) as typeof db.dailyEntries.orderBy);
+        originalOrderBy(
+          index as '[date+sectorId]',
+        )) as typeof db.dailyEntries.orderBy);
 
     try {
       await result.undo();
