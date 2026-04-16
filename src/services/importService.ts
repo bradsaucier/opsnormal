@@ -1,8 +1,5 @@
 import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
-import {
-  UndoInvalidatedError,
-  UndoVerificationError,
-} from '../lib/errors';
+import { UndoInvalidatedError, UndoVerificationError } from '../lib/errors';
 import type { ParsedJsonImport } from '../schemas/import';
 import type {
   DailyEntry,
@@ -41,13 +38,11 @@ const IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES = 256 * 1024;
 const IMPORT_BATCH_SIZE = 500;
 const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
 
-let undoSnapshotState:
-  | {
-      snapshot: DailyEntry[];
-      exportedAt: string;
-      invalidated: boolean;
-    }
-  | null = null;
+let undoSnapshotState: {
+  snapshot: DailyEntry[];
+  exportedAt: string;
+  invalidated: boolean;
+} | null = null;
 
 function handleEntryWritten(event: Event): void {
   if (!undoSnapshotState) {
