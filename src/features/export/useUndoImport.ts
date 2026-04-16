@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import {
-  UndoInvalidatedError,
-  UndoVerificationError,
-} from '../../lib/errors';
+import { UndoInvalidatedError, UndoVerificationError } from '../../lib/errors';
 import type { StatusMessage } from './workflowTypes';
 
 const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
