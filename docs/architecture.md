@@ -136,7 +136,7 @@ This is the repo's strongest integrity proof surface. It should be described pre
 
 ### Undo
 
-A successful import returns a session-scoped undo closure that restores the pre-import snapshot. This is a convenience recovery path for the current browser session. It is not a durable backup boundary.
+Undo is a transactional, verified restore. The undo snapshot is invalidated by any post-import check-in write; attempting undo after invalidation fails closed.
 
 ## Crash containment
 
