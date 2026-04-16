@@ -1,109 +1,39 @@
 # OpsNormal
 
-```yaml
-tagline: 'Local-only operator readiness tracking with deliberate constraints and integrity-verified recovery.'
-```
+> **Local-only operator readiness tracking with deliberate constraints and integrity-verified recovery.**
 
-[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
-[![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
-[![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
-[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+<div align="center">
+
+[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+
+</div>
 
 <p align="center">
-  <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop dark interface showing a 30-day readiness grid across Work or School, Household, Relationships, Body, and Rest with an 8-day full check-in streak chip, an OK or DG or UN legend, and a selected-cell daily brief.">
+  <img src="./docs/images/desktop-readiness-grid.png" width="920" alt="Desktop dark interface showing the 30-day readiness grid across Work or School, Household, Relationships, Body, and Rest, with a 10 day streak chip, state legend, and selected-cell detail for Thu, Apr 16, 2026.">
 </p>
-<p align="center"><em>Figure 1. Desktop readiness grid displaying a 30-day trailing operational history across five monitored sectors. The surface carries streak state, legend state, and selected-cell detail without a backend data plane.</em></p>
+<p align="center"><em>Figure 1. Desktop readiness grid showing the full 30-day picture, state legend, streak state, and selected-cell detail on the primary history surface.</em></p>
 
-## BLUF
+---
+
+<a id="bluf"></a>
+## Bottom Line Up Front (BLUF)
 
 > [!IMPORTANT]
-> **OpsNormal is built to preserve a usable daily readiness signal under a local-only operating model with explicit recovery discipline.**
->
-> Five sectors. Three states. One trailing 30-day picture.
+> **OpsNormal is an instrument built to preserve a usable daily readiness signal under a strict, local-only operating model.**
 >
 > It competes with a paper logbook, not a cloud service.
 >
-> No account system. No backend data plane. No analytics path. No sync layer.
+> Five fixed sectors. Three states. One trailing 30-day picture.
 >
-> State lives in IndexedDB. Recovery depends on operator-controlled JSON export with integrity checks.
+> There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> Documented in [23 ADRs](./docs/decisions/README.md), a published [trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact.
-
-<a id="trust-contract"></a>
-
-## Trust contract
-
-This repository and the operator each carry non-transferable responsibilities.
-
-### The repository commits to
-
-- Core readiness records stay local to the device after the first successful load unless the operator exports them
-- JSON and CSV export preserve an operator-controlled recovery path, and JSON exports carry a SHA-256 integrity envelope
-- Import validates structure before commit, applies replace gating, and fails closed on malformed or unsafe data
-- Root-level and section-level error boundaries preserve recovery surfaces and keep export reachable during localized render faults
-- Release publication reuses the exact `dist-ci-verified` artifact that passed mainline integrity instead of rebuilding a new deploy bundle
-
-### The operator commits to
-
-- Browser-managed storage is not a backup system
-- Private, incognito, and other ephemeral browsing modes do not provide persistent storage guarantees
-- On Apple devices, Safari browser tabs remain subject to WebKit purge behavior after seven days of Safari use without user interaction on the site
-- Installing to Home Screen after entering data in Safari does not migrate that data automatically
-- If Safari purges the app after inactivity, it can erase both the readiness database and the browser-side timestamp that recorded the last export. The app may reopen looking like a clean install. Restore from the latest JSON export immediately.
-- Exported readiness files are unencrypted plain text once they leave the browser sandbox. Protect them accordingly.
-- On all platforms, clearing site data, switching profiles, quota pressure, browser eviction, browser updates, or device loss can destroy records
-
-Run a test export early. Export routinely. Keep important JSON exports in more than one location you control. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
-
-## Target operator
-
-This instrument is for people who want deterministic local state tracking and are willing to carry the backup burden that comes with it.
-
-This is for:
-
-- operators who want a fixed, legible readiness picture instead of feature sprawl
-- users who prefer local control over hosted convenience
-- people who will maintain their own export cadence and restore drills
-
-This is not for:
-
-- users seeking cross-device cloud sync or account recovery
-- users expecting automated telemetry, passive data capture, or social features
-- users who want browser storage treated like a guaranteed archive
-
-## Operational picture
-
-- Static PWA with same-origin asset and service-worker behavior
-- Local-only readiness tracking backed by IndexedDB through Dexie
-- Five fixed sectors and three states held to a trailing 30-day picture
-- Desktop 30-day history plus a week-paginated mobile history path
-- JSON and CSV export, validated import, explicit replace gating, and undo support
-- No third-party network targets at runtime. CSP enforces `default-src 'none'`, `connect-src 'self'`, and `form-action 'none'`.
-
-## Why these constraints exist
-
-These are not missing features. They are deliberate choices that protect the operating model.
-
-- No accounts or cloud sync keeps the readiness signal under operator control and removes the platform risk that comes with a hosted data plane
-- Five fixed sectors and three states keep the model legible under stress and preserve day-to-day comparability
-- Local-only storage with export as the durable boundary keeps recovery deliberate instead of pretending browser storage is permanent
-- Static PWA delivery keeps deployment simple, same-origin, and usable anywhere a standards-compliant browser exists
-- Explicit operational boundaries keep storage risk, export responsibility, crash recovery, and accessibility requirements visible instead of implied
-
-## What this is not
-
-- Not an account-based product
-- Not a cloud-sync tool
-- Not a free-form journal or custom-category tracker
-- Not a permanent archive unless you export
-- Not a medical device or source of medical or psychological advice
+> The operating boundary is documented in [23 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact.
 
 ## Operational model
 
 OpsNormal records one of three states for each of five fixed sectors.
 
-The model is intentionally coarse. The point is a usable signal, not exhaustive journaling.
+The model is intentionally coarse. The objective is a usable signal under stress, not exhaustive journaling.
 
 ### Sectors
 
@@ -123,19 +53,82 @@ The model is intentionally coarse. The point is a usable signal, not exhaustive 
 | Nominal  | Holding together                               |
 | Degraded | Needs attention                                |
 
-<p align="center">
-  <img src="./docs/images/desktop-daily-checkin.png" width="920" alt="Desktop dark interface showing the direct daily check-in surface across the five fixed readiness sectors with direct-select controls for Unmarked, Nominal, and Degraded.">
-</p>
-<p align="center"><em>Figure 2. Desktop daily check-in surface enforcing the fixed five-sector model with direct-select state entry and immediate local commit behavior.</em></p>
+---
 
-## Responsive history proof
+<p align="center">
+  <img src="./docs/images/desktop-daily-checkin.png" width="920" alt="Desktop dark interface showing the direct daily check-in surface across the five fixed readiness sectors, a date chip for Thu, Apr 16, 2026, and direct-select controls for UN, OK, and DG.">
+</p>
+<p align="center"><em>Figure 2. Daily check-in surface enforcing the fixed five-sector model with direct state selection and immediate local commit behavior.</em></p>
+
+---
+
+## Operational philosophy and target operator
+
+This instrument is engineered for operators who want deterministic local state tracking and who accept the backup burden that isolation requires.
+
+Designed for operators who:
+
+- want a fixed, legible readiness picture instead of feature sprawl
+- prefer local control over hosted convenience
+- will maintain their own export cadence and restore drills
+
+Explicitly not designed for users seeking:
+
+- cross-device cloud sync or account recovery
+- passive telemetry, social features, or background data collection
+- custom categories, free-form journaling, or browser storage treated like a guaranteed archive
+
+These are not missing features. They are deliberate constraints that protect the operating model.
+
+<a id="trust-contract"></a>
+
+## Trust contract
+
+OpsNormal runs on a shared-responsibility model. The repository makes hard commitments about data isolation, validation, and artifact integrity. The operator carries the burden of durable backup and safe handling of exported files.
+
+### The repository commits to
+
+- Core readiness records stay local to the device after the first successful load unless the operator exports them
+- JSON and CSV export preserve an operator-controlled recovery path, and JSON exports carry a SHA-256 integrity envelope
+- Import validates structure before commit, applies replace gating, and fails closed on malformed or unsafe data
+- Root-level and section-level error boundaries preserve recovery surfaces and keep export reachable during localized render faults
+- Release publication reuses the exact `dist-ci-verified` artifact that passed mainline integrity instead of rebuilding a new deploy bundle
+
+### The operator commits to
+
+- Browser-managed storage is not a backup system
+- Private, incognito, and other ephemeral browsing modes do not provide persistent storage guarantees
+- Exported readiness files are unencrypted plain text once they leave the browser sandbox. Protect them accordingly.
+- Clearing site data, switching profiles, quota pressure, browser eviction, browser updates, and device loss can destroy records
+
+Run a test export early. Export routinely. Keep important JSON exports in more than one location you control. When the shell raises a backup action prompt, treat it as a direct order to refresh the JSON export.
+
+## Storage volatility and WebKit risks
+
+OpsNormal uses IndexedDB for persistence. Local-only architecture means no external server can lose your readiness record. It also means no external server can save it. Browser-managed storage must be treated as an ephemeral cache, not a durable archive.
+
+### Apple device operators
+
+WebKit can purge script-writable storage for ordinary Safari tabs after seven days of Safari use without user interaction on the site. On Apple devices, that can destroy the readiness database and the browser-side timestamp that recorded the last export.
+
+To reduce that risk:
+
+- Install OpsNormal to the Home Screen before relying on it for sustained use on Apple devices
+- Do not assume Home Screen installation makes data permanent. It mitigates the seven-day Safari-tab purge risk but does not remove storage volatility from browser-managed environments.
+- Installing to Home Screen after entering data in Safari does not migrate existing data automatically
+- If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file.
+- If the app reopens looking like a clean install, restore immediately from the latest JSON export
+
+## Mobile history proof
 
 Narrow screens switch from the 30-day grid to week groups with a daily brief so the history surface stays readable on phone-sized viewports.
 
 <p align="center">
-  <img src="./docs/images/mobile-history-week-brief.png" width="300" alt="Mobile dark interface in installed-app chrome showing Week 4 of 5 for 4/6 to 4/12 with five sector rows across Mon through Sun and a daily brief for Sun, Apr 12 with Work or School marked Nominal.">
+  <img src="./docs/images/mobile-history-week-brief.png" width="300" alt="Mobile dark interface showing week-paginated history for 4/8 to 4/14 across five sectors and a daily brief for Tue, Apr 14, 2026.">
 </p>
-<p align="center"><em>Figure 3. Mobile history surface demonstrating week-paginated review and daily brief continuity under phone-sized viewport constraints.</em></p>
+<p align="center"><em>Figure 3. Mobile history surface proving week-paginated review and daily brief continuity under phone-sized viewport constraints.</em></p>
+
+---
 
 ## Deployment and initialization
 
@@ -154,9 +147,9 @@ Narrow screens switch from the 30-day grid to week groups with a daily brief so 
 
 ## Threat model and reliability posture
 
-OpsNormal is a client-side application with no backend, no account system, and no cloud data plane. That changes the threat model. The primary security concerns are not account takeover or server breach. They are dependency supply chain risk, browser storage handling and eviction behavior, service worker correctness and update handoff, exported user data files once they leave the browser sandbox, static hosting configuration and build integrity, and Content Security Policy drift.
+OpsNormal is a client-side application with no backend, no account system, and no cloud data plane. That changes the threat model. The primary security concerns are dependency supply chain risk, browser storage handling and eviction behavior, service worker correctness and update handoff, exported user data files once they leave the browser sandbox, static hosting configuration and build integrity, and Content Security Policy drift.
 
-Local-only means no server can lose your readiness record. It also means no server can save it. Browser-managed storage remains a best-effort environment, not a durable archive.
+Local-only means no server can lose your readiness record. It also means no server can save it.
 
 ### Storage model
 
@@ -169,11 +162,11 @@ Local-only means no server can lose your readiness record. It also means no serv
 
 Each row's verification-truth column states what the repo currently proves, not what it hopes will work.
 
-| Browser surface             | Current posture        | Verification truth                                                                  |
-| --------------------------- | ---------------------- | ----------------------------------------------------------------------------------- |
-| Chromium-based browsers     | Supported              | Full Playwright Chromium coverage, production-artifact smoke, and release gating    |
-| Safari and other WebKit UIs | Supported with caveats | Merge-blocking and release WebKit smoke lanes prove engine compatibility only       |
-| Firefox current release     | Expected to work       | Manual verification recommended because there is no dedicated Firefox CI lane today |
+| Browser surface             | Current posture        | Verification truth                                                               |
+| --------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
+| Chromium-based browsers     | Supported              | Full Playwright Chromium coverage, production-artifact smoke, and release gating |
+| Safari and other WebKit UIs | Supported with caveats | Merge-blocking and release WebKit smoke lanes prove engine compatibility only    |
+| Firefox current release     | Expected to work       | Manual verification recommended because there is no dedicated Firefox CI lane    |
 
 Read [WebKit CI coverage boundary](./docs/webkit-limitations.md) before making stronger Safari claims than the repo proves.
 
@@ -270,7 +263,3 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## License
 
 See [LICENSE](./LICENSE).
-
-```text
-// END TRANSMISSION
-```
