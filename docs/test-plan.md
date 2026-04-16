@@ -92,6 +92,23 @@ Targeted coverage gate:
 - aggregate floor of 65 percent for branches across that same targeted module set
 - explicit 100 percent gates for `src/lib/date.ts` and `src/lib/exportSerialization.ts`
 
+The targeted module list covers the repository's highest-risk logic paths:
+
+- `src/lib/date.ts` - date key formatting and parsing (100 percent gate)
+- `src/lib/export.ts` - export orchestration (browser API dependent, low unit coverage expected)
+- `src/lib/exportSerialization.ts` - export serialization and checksum (100 percent gate)
+- `src/lib/fileDownload.ts` - fallback download path
+- `src/lib/history.ts` - entry lookup, completion state, and streak computation
+- `src/lib/runtime.ts` - runtime environment detection
+- `src/lib/status.ts` - status content mapping, cycle logic, and screen reader hints
+- `src/hooks/useStorageHealth.ts` - storage durability and Safari risk detection
+- `src/services/importValidation.ts` - import integrity boundary with checksum, schema, and blocked key validation
+- `src/features/export/backupActionPrompt.ts` - backup safety signaling and warning logic
+- `src/features/history/useViewportMatch.ts` - viewport-driven history render path
+- `src/features/pwa/controllerReloadRecovery.ts` - controller change loop breaker
+- `src/features/pwa/pwaUpdateCoordination.ts` - PWA update prompt coordination
+- `src/features/pwa/swUpdateRuntime.ts` - service worker update runtime
+
 The coverage gate is intentionally incremental, not repository-wide. The `coverage.include` list in `vitest.config.ts` forces Vitest to count the critical modules targeted by this PR even when a file is not imported by a test path yet, and `reportOnFailure` keeps the coverage report available when CI blocks the change.
 
 The jsdom-backed unit path uses controlled stubs for APIs such as `BroadcastChannel`, `URL.createObjectURL`, and service-worker registration lookups where the test environment cannot provide a live browser engine. Those tests prove application logic and failure handling, not full browser IPC or background-thread execution.
