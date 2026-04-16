@@ -7,6 +7,7 @@ Before tagging a release:
 - [ ] lint passes
 - [ ] typecheck passes
 - [ ] unit and integration tests pass
+- [ ] per-file coverage thresholds on src/services/importService.ts and src/db/appDb.ts pass
 - [ ] Playwright Chromium tests pass
 - [ ] Playwright WebKit smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/webkit-limitations.md
 - [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke and WebKit release smoke against that artifact, and only then publishes

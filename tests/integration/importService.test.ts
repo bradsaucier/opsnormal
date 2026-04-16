@@ -4,7 +4,9 @@ import { db, getAllEntries, setDailyStatus } from '../../src/db/appDb';
 import { exportCurrentEntriesAsJson } from '../../src/lib/export';
 import {
   applyImport,
+  previewImportFile,
   previewImportPayload,
+  readImportFile,
 } from '../../src/services/importService';
 import {
   OPSNORMAL_APP_NAME,
@@ -56,6 +58,13 @@ function injectWriteBeforeFirstTransaction(entry: DailyEntry) {
   }) as typeof db.transaction);
 }
 
+interface MockPreviewWorker {
+  onmessage: ((event: MessageEvent<unknown>) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  postMessage: ReturnType<typeof vi.fn>;
+  terminate: ReturnType<typeof vi.fn>;
+}
+
 function buildPayload(
   entries: JsonExportPayload['entries'],
 ): JsonExportPayload {
@@ -67,9 +76,79 @@ function buildPayload(
   };
 }
 
+function createImportFile(
+  content: string,
+  name = 'opsnormal-import.json',
+): File {
+  return new File([content], name, { type: 'application/json' });
+}
+
+function createLargeImportFile(): File {
+  return createImportFile('x'.repeat(300_000), 'opsnormal-large-import.json');
+}
+
+function installPreviewWorkerStub(
+  onPostMessage: (worker: MockPreviewWorker, request: unknown) => void,
+) {
+  const originalWorker = globalThis.Worker;
+  let workerInstance: MockPreviewWorker | null = null;
+
+  class MockWorker {
+    onmessage: MockPreviewWorker['onmessage'] = null;
+    onerror: MockPreviewWorker['onerror'] = null;
+    postMessage = vi.fn((request: unknown) => {
+      onPostMessage(this as unknown as MockPreviewWorker, request);
+    });
+    terminate = vi.fn();
+
+    constructor() {
+      workerInstance = this as unknown as MockPreviewWorker;
+    }
+  }
+
+  Object.defineProperty(globalThis, 'Worker', {
+    configurable: true,
+    writable: true,
+    value: MockWorker,
+  });
+
+  return {
+    getWorker: () => workerInstance,
+    restore: () => {
+      if (originalWorker === undefined) {
+        delete (globalThis as { Worker?: unknown }).Worker;
+        return;
+      }
+
+      Object.defineProperty(globalThis, 'Worker', {
+        configurable: true,
+        writable: true,
+        value: originalWorker,
+      });
+    },
+  };
+}
+
 describe('import service', () => {
   beforeEach(async () => {
     await db.dailyEntries.clear();
+  });
+
+  it('reads import file text after validating the file size', async () => {
+    const rawText = JSON.stringify(
+      buildPayload([
+        {
+          date: '2026-03-28',
+          sectorId: 'body',
+          status: 'nominal',
+          updatedAt: '2026-03-28T12:00:00.000Z',
+        },
+      ]),
+    );
+
+    await expect(readImportFile(createImportFile(rawText))).resolves.toBe(
+      rawText,
+    );
   });
 
   it('previews overwrite and new entry counts', async () => {
@@ -134,6 +213,189 @@ describe('import service', () => {
     const preview = await previewImportPayload(payload);
 
     expect(preview.kind).toBe('stale');
+  });
+
+  it('parses a valid import file through the non-worker preview path', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const preview = await previewImportFile(
+      createImportFile(
+        JSON.stringify(
+          buildPayload([
+            {
+              date: '2026-03-27',
+              sectorId: 'body',
+              status: 'degraded',
+              updatedAt: '2026-03-28T12:00:00.000Z',
+            },
+            {
+              date: '2026-03-28',
+              sectorId: 'rest',
+              status: 'nominal',
+              updatedAt: '2026-03-28T12:05:00.000Z',
+            },
+          ]),
+        ),
+      ),
+    );
+
+    expect(preview).toMatchObject({
+      kind: 'legacy-unverified',
+      existingEntryCount: 1,
+      overwriteCount: 1,
+      newEntryCount: 1,
+      totalEntries: 2,
+    });
+  });
+
+  it('returns a rejected preview for unreadable import file contents', async () => {
+    const preview = await previewImportFile(createImportFile('{"app":'));
+
+    expect(preview).toEqual({ kind: 'unreadable' });
+  });
+
+  it('aborts preview parsing before reading when the signal is already cancelled', async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      previewImportFile(
+        createImportFile(JSON.stringify(buildPayload([]))),
+        controller.signal,
+      ),
+    ).rejects.toMatchObject({
+      name: 'AbortError',
+      message: 'Import preview cancelled.',
+    });
+  });
+
+  it('uses the worker path for large import previews', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-27',
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:01:00.000Z',
+      },
+    ]);
+    const file = createLargeImportFile();
+    const controller = new AbortController();
+    const workerStub = installPreviewWorkerStub((worker, request) => {
+      expect(request).toMatchObject({ size: file.size });
+
+      queueMicrotask(() => {
+        worker.onmessage?.(
+          new MessageEvent('message', {
+            data: {
+              ok: true,
+              summary: {
+                payload,
+                integrityStatus: 'legacy-unverified',
+                totalEntries: payload.entries.length,
+                dateRange: {
+                  start: '2026-03-27',
+                  end: '2026-03-29',
+                },
+              },
+            },
+          }),
+        );
+      });
+    });
+
+    try {
+      const preview = await previewImportFile(file, controller.signal);
+
+      expect(preview).toMatchObject({
+        kind: 'legacy-unverified',
+        existingEntryCount: 1,
+        overwriteCount: 1,
+        newEntryCount: 1,
+        totalEntries: 2,
+      });
+      expect(workerStub.getWorker()?.terminate).toHaveBeenCalledTimes(1);
+    } finally {
+      workerStub.restore();
+    }
+  });
+
+  it('returns worker-provided rejected previews for large import files', async () => {
+    const workerStub = installPreviewWorkerStub((worker) => {
+      queueMicrotask(() => {
+        worker.onmessage?.(
+          new MessageEvent('message', {
+            data: {
+              ok: false,
+              preview: {
+                kind: 'invalid',
+                issuePath: 'entries.0.status',
+                issueMessage: 'Invalid option',
+              },
+            },
+          }),
+        );
+      });
+    });
+
+    try {
+      const preview = await previewImportFile(createLargeImportFile());
+
+      expect(preview).toEqual({
+        kind: 'invalid',
+        issuePath: 'entries.0.status',
+        issueMessage: 'Invalid option',
+      });
+      expect(workerStub.getWorker()?.terminate).toHaveBeenCalledTimes(1);
+    } finally {
+      workerStub.restore();
+    }
+  });
+
+  it('surfaces worker preview failures for large import files', async () => {
+    const workerStub = installPreviewWorkerStub((worker) => {
+      queueMicrotask(() => {
+        worker.onerror?.(new Event('error'));
+      });
+    });
+
+    try {
+      await expect(previewImportFile(createLargeImportFile())).rejects.toThrow(
+        'Import preparation failed in the preview worker.',
+      );
+      expect(workerStub.getWorker()?.terminate).toHaveBeenCalledTimes(1);
+    } finally {
+      workerStub.restore();
+    }
+  });
+
+  it('aborts worker-backed preview when cancellation arrives after dispatch', async () => {
+    const controller = new AbortController();
+    const workerStub = installPreviewWorkerStub(() => {
+      controller.abort();
+    });
+
+    try {
+      const previewPromise = previewImportFile(
+        createLargeImportFile(),
+        controller.signal,
+      );
+
+      await expect(previewPromise).rejects.toMatchObject({
+        name: 'AbortError',
+        message: 'Import preview cancelled.',
+      });
+      expect(workerStub.getWorker()?.terminate).toHaveBeenCalledTimes(1);
+    } finally {
+      workerStub.restore();
+    }
   });
 
   it('merges entries and overwrites matching compound keys', async () => {
@@ -354,6 +616,21 @@ describe('import service', () => {
     );
   });
 
+  it('replaces with an empty payload without writing any bulk-put batches', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    const bulkPutSpy = vi.spyOn(db.dailyEntries, 'bulkPut');
+
+    try {
+      const result = await applyImport(buildPayload([]), 'replace');
+
+      expect(result.importedCount).toBe(0);
+      expect(bulkPutSpy).not.toHaveBeenCalled();
+      expect(await getAllEntries()).toEqual([]);
+    } finally {
+      bulkPutSpy.mockRestore();
+    }
+  });
+
   it('replaces legacy imports with non-sequential ids using fresh local primary keys', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
     await setDailyStatus('2026-03-27', 'rest', 'degraded');
@@ -395,6 +672,39 @@ describe('import service', () => {
     expect(allEntries.some((entry) => entry.id === 42 || entry.id === 77)).toBe(
       false,
     );
+  });
+
+  it('restores the exact pre-import snapshot after a successful replace undo round-trip', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const snapshot = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+      {
+        date: '2026-03-30',
+        sectorId: 'work-school',
+        status: 'degraded',
+        updatedAt: '2026-03-30T12:00:00.000Z',
+      },
+    ]);
+
+    const result = await applyImport(payload, 'replace');
+
+    await result.undo();
+
+    const restoredEntries = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+
+    expect(restoredEntries).toEqual(snapshot);
   });
 
   it('replaces the database and supports undo restore', async () => {
@@ -467,6 +777,58 @@ describe('import service', () => {
         createComparableEntry(concurrentEntry),
       ]),
     );
+  });
+
+  it('aborts merge import when equal-length verification detects changed contents', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-27',
+        sectorId: 'body',
+        status: 'degraded',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    let orderByCallCount = 0;
+
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) => {
+        orderByCallCount += 1;
+
+        if (index === '[date+sectorId]' && orderByCallCount === 2) {
+          return {
+            toArray: () =>
+              Promise.resolve([
+                {
+                  date: '2026-03-27',
+                  sectorId: 'body',
+                  status: 'nominal',
+                  updatedAt: '2026-03-29T12:00:00.000Z',
+                },
+                {
+                  date: '2026-03-27',
+                  sectorId: 'rest',
+                  status: 'degraded',
+                  updatedAt: '2026-03-27T00:00:00.000Z',
+                },
+              ]),
+          } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
+        }
+
+        return originalOrderBy(index as '[date+sectorId]');
+      }) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await expect(applyImport(payload, 'merge')).rejects.toThrow(
+        /first mismatch near \[2026-03-27:body\]/i,
+      );
+    } finally {
+      orderBySpy.mockRestore();
+    }
   });
 
   it('aborts the transaction when post-write verification fails', async () => {
@@ -583,5 +945,65 @@ describe('import service', () => {
     expect(byCompoundKey.get('2026-03-27:body')?.status).toBe('nominal');
     expect(byCompoundKey.get('2026-03-27:rest')?.status).toBe('degraded');
     expect(byCompoundKey.has('2026-03-29:household')).toBe(false);
+  });
+
+  it('aborts replace import when verification sees an unexpected extra row', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    let orderByCallCount = 0;
+
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) => {
+        orderByCallCount += 1;
+
+        if (index === '[date+sectorId]' && orderByCallCount === 2) {
+          return {
+            toArray: () =>
+              Promise.resolve([
+                {
+                  date: '2026-03-29',
+                  sectorId: 'household',
+                  status: 'nominal',
+                  updatedAt: '2026-03-29T12:00:00.000Z',
+                },
+                {
+                  date: '2026-03-30',
+                  sectorId: 'work-school',
+                  status: 'degraded',
+                  updatedAt: '2026-03-30T12:00:00.000Z',
+                },
+              ]),
+          } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
+        }
+
+        return originalOrderBy(index as '[date+sectorId]');
+      }) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await expect(applyImport(payload, 'replace')).rejects.toThrow(
+        /first mismatch near \[2026-03-30:work-school\]/i,
+      );
+    } finally {
+      orderBySpy.mockRestore();
+    }
+
+    const allEntries = await getAllEntries();
+
+    expect(allEntries).toHaveLength(1);
+    expect(allEntries[0]).toMatchObject({
+      date: '2026-03-27',
+      sectorId: 'body',
+      status: 'nominal',
+    });
   });
 });

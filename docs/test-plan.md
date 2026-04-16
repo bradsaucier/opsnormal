@@ -91,6 +91,7 @@ Targeted coverage gate:
 - aggregate floor of 70 percent for lines, functions, and statements across the critical modules named in `vitest.config.ts`
 - aggregate floor of 65 percent for branches across that same targeted module set
 - explicit 100 percent gates for `src/lib/date.ts` and `src/lib/exportSerialization.ts`
+- calibrated per-file gates for `src/services/importService.ts` and `src/db/appDb.ts` so the fail-closed import commit proof and the daily write read-back proof cannot drift below their current tested floor
 
 The targeted module list covers the repository's highest-risk logic paths:
 
@@ -102,6 +103,8 @@ The targeted module list covers the repository's highest-risk logic paths:
 - `src/lib/runtime.ts` - runtime environment detection
 - `src/lib/status.ts` - status content mapping, cycle logic, and screen reader hints
 - `src/hooks/useStorageHealth.ts` - storage durability and Safari risk detection
+- `src/db/appDb.ts` - read-back verified daily writes, reopen recovery, and schema-handoff guards
+- `src/services/importService.ts` - fail-closed import commit verification, mismatch hinting, and undo snapshot restoration
 - `src/services/importValidation.ts` - import integrity boundary with checksum, schema, and blocked key validation
 - `src/features/export/backupActionPrompt.ts` - backup safety signaling and warning logic
 - `src/features/history/useViewportMatch.ts` - viewport-driven history render path
