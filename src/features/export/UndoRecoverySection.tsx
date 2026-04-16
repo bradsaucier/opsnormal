@@ -7,6 +7,7 @@ interface UndoRecoverySectionProps {
   onToggle: (sectionKey: AccordionSectionKey) => void;
   canUndoImport: boolean;
   undoBusy: boolean;
+  undoInvalidated: boolean;
   onUndoImport: () => Promise<void>;
 }
 
@@ -15,6 +16,7 @@ export function UndoRecoverySection({
   onToggle,
   canUndoImport,
   undoBusy,
+  undoInvalidated,
   onUndoImport,
 }: UndoRecoverySectionProps) {
   return (
@@ -36,12 +38,17 @@ export function UndoRecoverySection({
         <button
           type="button"
           onClick={() => void onUndoImport()}
-          disabled={!canUndoImport || undoBusy}
+          disabled={!canUndoImport || undoInvalidated || undoBusy}
           className="ops-action-button ops-action-button-amber min-h-[44px] px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {undoBusy ? 'Undoing Import' : 'Undo Last Import'}
         </button>
-        {!canUndoImport ? (
+        {undoInvalidated ? (
+          <p className="text-sm leading-6 text-amber-300">
+            Undo disabled after a post-import daily check-in. Export a fresh
+            backup before proceeding.
+          </p>
+        ) : !canUndoImport ? (
           <p className="text-sm leading-6 text-zinc-400">
             No import rollback staged in this session.
           </p>

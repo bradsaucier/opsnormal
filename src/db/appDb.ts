@@ -25,9 +25,14 @@ const DATABASE_UPGRADE_BLOCKED_MESSAGE =
 
 export const OPSNORMAL_DB_BLOCKED_EVENT_NAME = 'opsnormal:db:blocked';
 export const OPSNORMAL_DB_UNBLOCKED_EVENT_NAME = 'opsnormal:db:unblocked';
+const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
 
 export interface OpsNormalDbBlockedEventDetail {
   message: string;
+}
+
+export interface OpsNormalEntryWrittenEventDetail {
+  source: 'daily-status';
 }
 
 declare global {
@@ -41,6 +46,7 @@ declare global {
   interface WindowEventMap {
     'opsnormal:db:blocked': CustomEvent<OpsNormalDbBlockedEventDetail>;
     'opsnormal:db:unblocked': Event;
+    'opsnormal:entry-written': CustomEvent<OpsNormalEntryWrittenEventDetail>;
   }
 }
 
@@ -207,6 +213,23 @@ function clearDatabaseRecoveryRequirement(): void {
   databaseRecoveryRequired = false;
 }
 
+function dispatchEntryWritten(): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<OpsNormalEntryWrittenEventDetail>(
+      ENTRY_WRITTEN_EVENT_NAME,
+      {
+        detail: {
+          source: 'daily-status',
+        },
+      },
+    ),
+  );
+}
+
 function dispatchDatabaseUpgradeBlocked(message: string): void {
   if (typeof window === 'undefined') {
     return;
@@ -315,6 +338,7 @@ async function verifyPersistedDailyStatus(
     }
 
     recordStorageWriteVerification('verified');
+    dispatchEntryWritten();
     return;
   }
 
@@ -330,6 +354,7 @@ async function verifyPersistedDailyStatus(
   }
 
   recordStorageWriteVerification('verified');
+  dispatchEntryWritten();
 }
 
 db.on('close', () => {

@@ -131,6 +131,7 @@ Security review is most valuable when it covers:
 - CSP bypass opportunities
 - Service worker cache poisoning or update-handling defects
 - Import validation bypasses
+- Undo verification bypass
 - Data-integrity failures during write, import, replace, or crash-export paths
 - Conditions that could silently lose data while reporting success
 - Static hosting misconfiguration

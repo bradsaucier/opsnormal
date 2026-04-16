@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { db, getAllEntries, setDailyStatus } from '../../src/db/appDb';
+import {
+  UndoInvalidatedError,
+  UndoVerificationError,
+} from '../../src/lib/errors';
 import { exportCurrentEntriesAsJson } from '../../src/lib/export';
 import {
+  __resetUndoSnapshotStateForTests,
   applyImport,
   previewImportFile,
   previewImportPayload,
@@ -131,6 +136,7 @@ function installPreviewWorkerStub(
 
 describe('import service', () => {
   beforeEach(async () => {
+    __resetUndoSnapshotStateForTests();
     await db.dailyEntries.clear();
   });
 
@@ -707,6 +713,45 @@ describe('import service', () => {
     expect(restoredEntries).toEqual(snapshot);
   });
 
+  it('restores the exact pre-import snapshot with post-write read-back proof', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+    await setDailyStatus('2026-03-27', 'rest', 'degraded');
+
+    const snapshot = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const result = await applyImport(payload, 'replace');
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) =>
+        originalOrderBy(
+          index as '[date+sectorId]',
+        )) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await result.undo();
+
+      expect(orderBySpy).toHaveBeenCalledWith('[date+sectorId]');
+    } finally {
+      orderBySpy.mockRestore();
+    }
+
+    const restoredEntries = sortComparableEntries(
+      (await getAllEntries()).map((entry) => createComparableEntry(entry)),
+    );
+
+    expect(restoredEntries).toEqual(snapshot);
+  });
+
   it('replaces the database and supports undo restore', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
     await setDailyStatus('2026-03-27', 'rest', 'degraded');
@@ -777,6 +822,132 @@ describe('import service', () => {
         createComparableEntry(concurrentEntry),
       ]),
     );
+  });
+
+  it('rolls back undo when post-write verification detects a mismatch', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const result = await applyImport(payload, 'replace');
+    const originalOrderBy = db.dailyEntries.orderBy.bind(db.dailyEntries);
+    const orderBySpy = vi
+      .spyOn(db.dailyEntries, 'orderBy')
+      .mockImplementation(((index: string) => {
+        if (index === '[date+sectorId]') {
+          return {
+            toArray: () => Promise.resolve([]),
+          } as unknown as ReturnType<typeof db.dailyEntries.orderBy>;
+        }
+
+        return originalOrderBy(index as '[date+sectorId]');
+      }) as typeof db.dailyEntries.orderBy);
+
+    try {
+      await expect(result.undo()).rejects.toBeInstanceOf(UndoVerificationError);
+    } finally {
+      orderBySpy.mockRestore();
+    }
+
+    const allEntries = await getAllEntries();
+
+    expect(allEntries).toHaveLength(1);
+    expect(allEntries[0]).toMatchObject({
+      date: '2026-03-29',
+      sectorId: 'household',
+      status: 'nominal',
+    });
+  });
+
+  it('refuses undo when a post-import daily-status write invalidates the snapshot', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const result = await applyImport(payload, 'replace');
+
+    window.dispatchEvent(
+      new CustomEvent('opsnormal:entry-written', {
+        detail: { source: 'daily-status' },
+      }),
+    );
+
+    await expect(result.undo()).rejects.toBeInstanceOf(UndoInvalidatedError);
+
+    const allEntries = await getAllEntries();
+
+    expect(allEntries).toHaveLength(1);
+    expect(allEntries[0]).toMatchObject({
+      date: '2026-03-29',
+      sectorId: 'household',
+      status: 'nominal',
+    });
+  });
+
+  it('does not clobber a post-import daily check-in when undo is invalidated', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const result = await applyImport(payload, 'replace');
+
+    await setDailyStatus('2026-03-30', 'work-school', 'degraded');
+
+    await expect(result.undo()).rejects.toBeInstanceOf(UndoInvalidatedError);
+
+    const allEntries = await getAllEntries();
+    const byCompoundKey = new Map(
+      allEntries.map((entry) => [getCompoundKey(entry), entry]),
+    );
+
+    expect(byCompoundKey.get('2026-03-29:household')?.status).toBe('nominal');
+    expect(byCompoundKey.get('2026-03-30:work-school')?.status).toBe(
+      'degraded',
+    );
+  });
+
+  it('refuses a consumed undo closure after the snapshot has already been restored', async () => {
+    await setDailyStatus('2026-03-27', 'body', 'nominal');
+
+    const payload = buildPayload([
+      {
+        date: '2026-03-29',
+        sectorId: 'household',
+        status: 'nominal',
+        updatedAt: '2026-03-29T12:00:00.000Z',
+      },
+    ]);
+    const result = await applyImport(payload, 'replace');
+
+    await result.undo();
+    await expect(result.undo()).rejects.toBeInstanceOf(UndoInvalidatedError);
+
+    const allEntries = await getAllEntries();
+
+    expect(allEntries).toHaveLength(1);
+    expect(allEntries[0]).toMatchObject({
+      date: '2026-03-27',
+      sectorId: 'body',
+      status: 'nominal',
+    });
   });
 
   it('aborts merge import when equal-length verification detects changed contents', async () => {

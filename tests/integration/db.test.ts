@@ -92,6 +92,59 @@ describe('database operations', () => {
     expect(diagnostics.lastVerifiedAt).not.toBeNull();
   });
 
+  it('dispatches an entry-written event after a verified daily-status save', async () => {
+    const entryWrittenListener = vi.fn();
+
+    window.addEventListener('opsnormal:entry-written', entryWrittenListener);
+
+    try {
+      await setDailyStatus('2026-03-27', 'rest', 'nominal');
+    } finally {
+      window.removeEventListener(
+        'opsnormal:entry-written',
+        entryWrittenListener,
+      );
+    }
+
+    expect(entryWrittenListener).toHaveBeenCalledTimes(1);
+    expect(
+      (
+        entryWrittenListener.mock.calls[0]?.[0] as CustomEvent<{
+          source: string;
+        }>
+      ).detail,
+    ).toEqual({
+      source: 'daily-status',
+    });
+  });
+
+  it('dispatches an entry-written event after a verified clear to unmarked', async () => {
+    await setDailyStatus('2026-03-27', 'rest', 'nominal');
+    const entryWrittenListener = vi.fn();
+
+    window.addEventListener('opsnormal:entry-written', entryWrittenListener);
+
+    try {
+      await setDailyStatus('2026-03-27', 'rest', 'unmarked');
+    } finally {
+      window.removeEventListener(
+        'opsnormal:entry-written',
+        entryWrittenListener,
+      );
+    }
+
+    expect(entryWrittenListener).toHaveBeenCalledTimes(1);
+    expect(
+      (
+        entryWrittenListener.mock.calls[0]?.[0] as CustomEvent<{
+          source: string;
+        }>
+      ).detail,
+    ).toEqual({
+      source: 'daily-status',
+    });
+  });
+
   it('surfaces a blocked schema upgrade and clears the signal once the database becomes ready again', () => {
     const blockedListener = vi.fn();
     const unblockedListener = vi.fn();
@@ -312,6 +365,14 @@ describe('database operations', () => {
 
     expect(handleDatabaseVersionChange(10_000)).toBe('reloading');
     expect(getItemSpy).toHaveBeenCalled();
+    expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes Dexie versionchange events through the registered reload handler', () => {
+    db.on('versionchange').fire(new Event('versionchange'));
+
+    expect(isDatabaseRecoveryRequired()).toBe(true);
+    expect(db.isOpen()).toBe(false);
     expect(mocks.reloadCurrentPage).toHaveBeenCalledTimes(1);
   });
 

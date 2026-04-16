@@ -78,10 +78,15 @@ export function ExportPanel({
     onBackupCompleted,
     onStatusMessage: updateStatusMessage,
   });
-  const { canUndoImport, handleUndoImport, stageUndoImport, undoBusy } =
-    useUndoImport({
-      onStatusMessage: updateStatusMessage,
-    });
+  const {
+    canUndoImport,
+    handleUndoImport,
+    stageUndoImport,
+    undoBusy,
+    undoInvalidated,
+  } = useUndoImport({
+    onStatusMessage: updateStatusMessage,
+  });
   const {
     clearPendingImport,
     fileInputId,
@@ -206,6 +211,7 @@ export function ExportPanel({
           onToggle={toggleSection}
           canUndoImport={canUndoImport}
           undoBusy={undoBusy}
+          undoInvalidated={undoInvalidated}
           onUndoImport={handleUndoImport}
         />
 
