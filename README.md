@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
 
 </div>
 
@@ -16,6 +16,7 @@
 ---
 
 <a id="bluf"></a>
+
 ## Bottom Line Up Front (BLUF)
 
 > [!IMPORTANT]
