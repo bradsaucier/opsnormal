@@ -54,4 +54,84 @@ describe('useUndoImport', () => {
     expect(firstUndo).not.toHaveBeenCalled();
     expect(secondUndo).toHaveBeenCalledTimes(1);
   });
+
+  it('disables the staged undo and emits a warning when a daily-status write lands', async () => {
+    const onStatusMessage = vi.fn();
+    const undo = vi.fn(() => Promise.resolve());
+
+    const { result } = renderHook(() =>
+      useUndoImport({
+        onStatusMessage,
+      }),
+    );
+
+    act(() => {
+      result.current.stageUndoImport(undo);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('opsnormal:entry-written', {
+          detail: { source: 'daily-status' },
+        }),
+      );
+    });
+
+    expect(result.current.canUndoImport).toBe(false);
+    expect(result.current.undoInvalidated).toBe(true);
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'warning',
+      text: 'Undo disabled: a daily check-in landed after this import. Export a fresh backup before proceeding.',
+    });
+
+    await act(async () => {
+      await result.current.handleUndoImport();
+    });
+
+    expect(undo).not.toHaveBeenCalled();
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'warning',
+      text: 'Undo disabled: a daily check-in landed after this import. Export a fresh backup before proceeding.',
+    });
+  });
+
+  it('re-enables undo when a new import stages a fresh snapshot', async () => {
+    const firstUndo = vi.fn(() => Promise.resolve());
+    const secondUndo = vi.fn(() => Promise.resolve());
+
+    const { result } = renderHook(() =>
+      useUndoImport({
+        onStatusMessage: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.stageUndoImport(firstUndo);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('opsnormal:entry-written', {
+          detail: { source: 'daily-status' },
+        }),
+      );
+    });
+
+    expect(result.current.canUndoImport).toBe(false);
+    expect(result.current.undoInvalidated).toBe(true);
+
+    act(() => {
+      result.current.stageUndoImport(secondUndo);
+    });
+
+    expect(result.current.canUndoImport).toBe(true);
+    expect(result.current.undoInvalidated).toBe(false);
+
+    await act(async () => {
+      await result.current.handleUndoImport();
+    });
+
+    expect(firstUndo).not.toHaveBeenCalled();
+    expect(secondUndo).toHaveBeenCalledTimes(1);
+  });
 });
