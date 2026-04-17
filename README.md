@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![CodeQL](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
 
 </div>
 
@@ -28,7 +28,7 @@
 >
 > There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> The operating boundary is documented in [27 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact.
+> The operating boundary is documented in [28 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact.
 
 ## Operational model
 
@@ -199,6 +199,7 @@ Quality is enforced through release gates, test coverage, and explicit design co
 - GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a merge-blocking Playwright WebKit smoke lane, and build validation
 - GitHub Pages release downloads the `dist-ci-verified` artifact from the successful mainline integrity run, re-smokes that exact bundle in Chromium and WebKit, and only then publishes
 - The released bundle carries a Sigstore-backed build-provenance attestation that Pipeline: Pages Release verifies before upload. See ADR-0027.
+- GitHub CodeQL code scanning gates mainline with the `security-extended` and `security-and-quality` query packs. See ADR-0028.
 - JSON export carries versioning and integrity checks, and import commit verification fails closed before the app claims success
 - Save-picker pre-replace backups are read back before the app claims a verified disk write, and fallback Blob downloads keep a conservative delayed-revoke cleanup window
 - Any database schema change must update the migration registry, migration tests, the relevant ADR, and browser-level upgrade proof before merge
