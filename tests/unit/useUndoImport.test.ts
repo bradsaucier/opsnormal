@@ -2,6 +2,11 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { useUndoImport } from '../../src/features/export/useUndoImport';
+import {
+  broadcastEntryWritten,
+  createEntryWrittenTabId,
+} from '../../src/services/entryWrittenCoordination';
+import { flushMicrotasks } from '../setup';
 
 describe('useUndoImport', () => {
   it('stages a session-scoped undo and clears it after a successful restore', async () => {
@@ -133,5 +138,66 @@ describe('useUndoImport', () => {
 
     expect(firstUndo).not.toHaveBeenCalled();
     expect(secondUndo).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the staged undo when a peer-tab coordination message arrives', async () => {
+    const onStatusMessage = vi.fn();
+    const undo = vi.fn(() => Promise.resolve());
+
+    const { result } = renderHook(() =>
+      useUndoImport({
+        onStatusMessage,
+      }),
+    );
+
+    act(() => {
+      result.current.stageUndoImport(undo);
+    });
+
+    broadcastEntryWritten({
+      type: 'entry-written',
+      sourceTabId: 'peer-tab',
+      source: 'daily-status',
+      at: 101,
+    });
+    await act(async () => {
+      await flushMicrotasks();
+    });
+
+    expect(result.current.canUndoImport).toBe(false);
+    expect(result.current.undoInvalidated).toBe(true);
+    expect(onStatusMessage).toHaveBeenLastCalledWith({
+      tone: 'warning',
+      text: 'Undo disabled: a daily check-in landed after this import. Export a fresh backup before proceeding.',
+    });
+  });
+
+  it('ignores same-tab coordination echoes', async () => {
+    const onStatusMessage = vi.fn();
+    const undo = vi.fn(() => Promise.resolve());
+
+    const { result } = renderHook(() =>
+      useUndoImport({
+        onStatusMessage,
+      }),
+    );
+
+    act(() => {
+      result.current.stageUndoImport(undo);
+    });
+
+    broadcastEntryWritten({
+      type: 'entry-written',
+      sourceTabId: createEntryWrittenTabId(),
+      source: 'daily-status',
+      at: 102,
+    });
+    await act(async () => {
+      await flushMicrotasks();
+    });
+
+    expect(result.current.canUndoImport).toBe(true);
+    expect(result.current.undoInvalidated).toBe(false);
+    expect(onStatusMessage).not.toHaveBeenCalled();
   });
 });
