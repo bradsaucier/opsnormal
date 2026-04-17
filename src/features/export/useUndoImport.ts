@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { UndoInvalidatedError, UndoVerificationError } from '../../lib/errors';
+import {
+  createEntryWrittenTabId,
+  isEntryWrittenCoordinationMessage,
+  subscribeToEntryWrittenCoordination,
+} from '../../services/entryWrittenCoordination';
 import type { StatusMessage } from './workflowTypes';
 
 const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
+const localTabId = createEntryWrittenTabId();
 
 interface UseUndoImportOptions {
   onStatusMessage: (message: StatusMessage) => void;
@@ -25,12 +31,20 @@ export function useUndoImport({
   );
   const [undoBusy, setUndoBusy] = useState(false);
   const [undoInvalidated, setUndoInvalidated] = useState(false);
+  const undoImportRef = useRef<(() => Promise<void>) | null>(null);
+  const onStatusMessageRef = useRef(onStatusMessage);
 
   useEffect(() => {
-    function handleEntryWritten(event: Event) {
-      const detail = (event as CustomEvent<{ source?: string }>).detail;
+    undoImportRef.current = undoImport;
+  }, [undoImport]);
 
-      if (!undoImport || detail?.source !== 'daily-status') {
+  useEffect(() => {
+    onStatusMessageRef.current = onStatusMessage;
+  }, [onStatusMessage]);
+
+  useEffect(() => {
+    function invalidateUndoImport() {
+      if (!undoImportRef.current) {
         return;
       }
 
@@ -39,7 +53,7 @@ export function useUndoImport({
           return current;
         }
 
-        onStatusMessage({
+        onStatusMessageRef.current({
           tone: 'warning',
           text: 'Undo disabled: a daily check-in landed after this import. Export a fresh backup before proceeding.',
         });
@@ -48,12 +62,41 @@ export function useUndoImport({
       });
     }
 
+    function handleEntryWritten(event: Event) {
+      const detail = (event as CustomEvent<{ source?: string }>).detail;
+
+      if (detail?.source !== 'daily-status') {
+        return;
+      }
+
+      invalidateUndoImport();
+    }
+
+    function handleCrossTabEntryWritten(event: MessageEvent<unknown>) {
+      if (!isEntryWrittenCoordinationMessage(event.data)) {
+        return;
+      }
+
+      if (
+        event.data.sourceTabId === localTabId ||
+        event.data.source !== 'daily-status'
+      ) {
+        return;
+      }
+
+      invalidateUndoImport();
+    }
+
     window.addEventListener(ENTRY_WRITTEN_EVENT_NAME, handleEntryWritten);
+    const unsubscribe = subscribeToEntryWrittenCoordination(
+      handleCrossTabEntryWritten,
+    );
 
     return () => {
       window.removeEventListener(ENTRY_WRITTEN_EVENT_NAME, handleEntryWritten);
+      unsubscribe?.();
     };
-  }, [onStatusMessage, undoImport]);
+  }, []);
 
   const canUndoImport = useMemo(
     () => undoImport !== null && !undoInvalidated,
@@ -61,6 +104,7 @@ export function useUndoImport({
   );
 
   function stageUndoImport(undo: () => Promise<void>) {
+    undoImportRef.current = undo;
     setUndoImport(() => undo);
     setUndoInvalidated(false);
   }
@@ -81,6 +125,7 @@ export function useUndoImport({
     try {
       setUndoBusy(true);
       await undoImport();
+      undoImportRef.current = null;
       setUndoImport(null);
       setUndoInvalidated(false);
       onStatusMessage({
