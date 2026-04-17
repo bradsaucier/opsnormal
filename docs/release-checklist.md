@@ -10,7 +10,8 @@ Before tagging a release:
 - [ ] per-file coverage thresholds on src/services/importService.ts and src/db/appDb.ts pass
 - [ ] Playwright Chromium tests pass
 - [ ] Playwright WebKit smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/webkit-limitations.md
-- [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke and WebKit release smoke against that artifact, and only then publishes
+- [ ] Playwright Firefox smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/firefox-limitations.md
+- [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke, WebKit release smoke, and Firefox release smoke against that artifact, and only then publishes
 - [ ] Pages release verifies the dist-ci-verified build-provenance attestation against the triggering commit SHA before smoke or upload
 - [ ] public/CNAME matches the GitHub Pages custom-domain setting and the enforced HTTPS origin
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces
@@ -28,6 +29,7 @@ Before tagging a release:
 - [ ] manual recovery in one tab clears stale loop-breaker state in another open tab
 - [ ] blocked duplicate-tab schema recovery completes after the 5000 millisecond guard window without entering a reload loop
 - [ ] offline reopen verified manually
+- [ ] current Firefox release verified manually for boot, reload persistence, fallback JSON export, and the non-WebKit storage-health path
 - [ ] export verified manually
 - [ ] root crash fallback verified manually where browser-specific behavior still matters
 - [ ] history grid crash containment verified manually
