@@ -124,6 +124,12 @@ Formatting gate:
 - `npm run format:check` is required locally and in CI before merge
 - Husky plus lint-staged auto-fix staged formatting drift before commit
 
+### Static analysis
+
+GitHub CodeQL analyzes the JavaScript and TypeScript source on every pull request, every push to `main`, and on a weekly sweep of the default branch.
+The workflow runs the `security-extended` and `security-and-quality` query packs so source-level security and quality regressions are surfaced beside the existing runtime and browser checks.
+Finding triage, severity expectations, and suppression discipline are defined in ADR-0028.
+
 ## Accessibility automation note
 
 Vitest accessibility checks run in JSDOM and validate semantic markup only. The shared `axe` helper disables `color-contrast` because JSDOM cannot compute real browser layout or CSS color stacks. Browser-level accessibility enforcement runs in Playwright with `@axe-core/playwright`, filtered to `wcag2a`, `wcag2aa`, `wcag21a`, and `wcag21aa`, and the dedicated accessibility project blocks service workers so cached assets cannot taint the scan target.
@@ -156,3 +162,4 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - expect up to a 5000 millisecond guard-window delay before a blocked duplicate tab finishes schema-recovery reload
 
 - Backup checkpoint tests should assert explicit result-state handling so read-back verified save, manual-verification fallback, download fallback, user cancellation, and hard failure cannot collapse into the same control path.
+
