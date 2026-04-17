@@ -9,6 +9,10 @@ import {
   recordStorageWriteVerification,
 } from '../lib/storage';
 import { reloadCurrentPage } from '../lib/runtime';
+import {
+  broadcastEntryWritten,
+  createEntryWrittenTabId,
+} from '../services/entryWrittenCoordination';
 import type { DailyEntry, SectorId, UiStatus } from '../types';
 import { applyOpsNormalDbSchema, OPSNORMAL_DB_NAME } from './schema';
 
@@ -63,6 +67,7 @@ class OpsNormalDb extends Dexie {
 }
 
 export const db = new OpsNormalDb();
+const localTabId = createEntryWrittenTabId();
 
 let databaseRecoveryRequired = false;
 let schemaReloadLoopDetected = false;
@@ -228,6 +233,17 @@ function dispatchEntryWritten(): void {
       },
     ),
   );
+
+  try {
+    broadcastEntryWritten({
+      type: 'entry-written',
+      sourceTabId: localTabId,
+      source: 'daily-status',
+      at: Date.now(),
+    });
+  } catch {
+    // Ignore coordination delivery failures. The same-tab invalidation path still holds.
+  }
 }
 
 function dispatchDatabaseUpgradeBlocked(message: string): void {
