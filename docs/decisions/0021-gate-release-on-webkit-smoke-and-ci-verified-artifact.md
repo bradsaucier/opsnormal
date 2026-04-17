@@ -2,6 +2,7 @@
 
 Accepted
 Amends ADR-0020.
+Extended by ADR-0027.
 
 ## Context
 
