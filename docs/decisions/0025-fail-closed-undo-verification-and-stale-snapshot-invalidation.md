@@ -28,6 +28,10 @@ Trade-offs:
 - undo is stricter than before and can no longer be used after an intervening daily check-in
 - the UI must surface invalidation state clearly so operators understand why the control is disabled
 
+Cross-tab invalidation now propagates on the `opsnormal-entry-written-coordination` BroadcastChannel so a verified daily-status write in one tab disables undo in peer tabs of the same origin.
+The same-tab `window` event remains in place for local listeners.
+If the channel cannot be opened, coordination fails open to today's single-tab behavior, while any tab that does receive the invalidation still fails closed on restore.
+
 ## Reference
 
 Extends ADR-0012 - Fail-closed import commit verification.

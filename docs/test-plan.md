@@ -70,6 +70,7 @@ Prove that the app:
 - production preview can reopen offline after first load
 - JSON export can be imported into a clean browser context and re-exported without data loss
 - import preview and staged merge path hold under the accordion backup panel
+- chromium-only cross-tab undo invalidation refuses stale restore after a peer-tab daily check-in and preserves the newer row in `tests/e2e/cross-tab-undo.spec.ts`
 - stale verified backups stay locked until the operator acknowledges the staged file risk
 - incompatible and checksum-failed backups stay in read-only preview mode with no write path
 - replace stays locked until the backup checkpoint is complete, then requires separate arm and execute actions
@@ -90,7 +91,7 @@ Targeted coverage gate:
 
 - aggregate floor of 70 percent for lines, functions, and statements across the critical modules named in `vitest.config.ts`
 - aggregate floor of 65 percent for branches across that same targeted module set
-- explicit 100 percent gates for `src/lib/date.ts` and `src/lib/exportSerialization.ts`
+- explicit 100 percent gates for `src/lib/date.ts`, `src/lib/exportSerialization.ts`, and `src/services/entryWrittenCoordination.ts`
 - calibrated per-file gates for `src/services/importService.ts` and `src/db/appDb.ts` so the fail-closed import commit proof and the daily write read-back proof cannot drift below their current tested floor
 
 The targeted module list covers the repository's highest-risk logic paths:
@@ -104,6 +105,7 @@ The targeted module list covers the repository's highest-risk logic paths:
 - `src/lib/status.ts` - status content mapping, cycle logic, and screen reader hints
 - `src/hooks/useStorageHealth.ts` - storage durability and Safari risk detection
 - `src/db/appDb.ts` - read-back verified daily writes, reopen recovery, and schema-handoff guards
+- `src/services/entryWrittenCoordination.ts` - cross-tab undo invalidation signaling (100 percent gate)
 - `src/services/importService.ts` - fail-closed import commit verification, mismatch hinting, and undo snapshot restoration
 - `src/services/importValidation.ts` - import integrity boundary with checksum, schema, and blocked key validation
 - `src/features/export/backupActionPrompt.ts` - backup safety signaling and warning logic

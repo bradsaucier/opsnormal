@@ -18,6 +18,11 @@ import {
   type ParsedImportSummary,
   validateImportFileSize,
 } from './importValidation';
+import {
+  createEntryWrittenTabId,
+  isEntryWrittenCoordinationMessage,
+  subscribeToEntryWrittenCoordination,
+} from './entryWrittenCoordination';
 
 interface WorkerPreviewRequest {
   buffer: ArrayBuffer;
@@ -37,6 +42,7 @@ interface WorkerRejectedMessage {
 const IMPORT_PREVIEW_WORKER_THRESHOLD_BYTES = 256 * 1024;
 const IMPORT_BATCH_SIZE = 500;
 const ENTRY_WRITTEN_EVENT_NAME = 'opsnormal:entry-written';
+const localTabId = createEntryWrittenTabId();
 
 let undoSnapshotState: {
   snapshot: DailyEntry[];
@@ -58,8 +64,35 @@ function handleEntryWritten(event: Event): void {
   undoSnapshotState.invalidated = true;
 }
 
+function handleCrossTabEntryWritten(event: MessageEvent<unknown>): void {
+  if (!undoSnapshotState) {
+    return;
+  }
+
+  if (!isEntryWrittenCoordinationMessage(event.data)) {
+    return;
+  }
+
+  if (
+    event.data.sourceTabId === localTabId ||
+    event.data.source !== 'daily-status'
+  ) {
+    return;
+  }
+
+  undoSnapshotState.invalidated = true;
+  window.dispatchEvent(
+    new CustomEvent(ENTRY_WRITTEN_EVENT_NAME, {
+      detail: {
+        source: 'daily-status',
+      },
+    }),
+  );
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener(ENTRY_WRITTEN_EVENT_NAME, handleEntryWritten);
+  subscribeToEntryWrittenCoordination(handleCrossTabEntryWritten);
 }
 
 function isRejectedImportPreview(
