@@ -32,6 +32,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0024 | Coverage gate on integrity-critical modules                     |
 | 0025 | Fail-closed undo verification and stale-snapshot invalidation   |
 | 0026 | CSP directive contract and Trusted Types                        |
+| 0027 | Build provenance attestation for release artifact               |
 
 ## Operating rule
 
