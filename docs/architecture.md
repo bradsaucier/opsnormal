@@ -6,7 +6,7 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 
 ## Decision anchors
 
-The current release posture and trust boundary are grounded in ADR-0005, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0014, ADR-0017, ADR-0020, ADR-0021, ADR-0022, and ADR-0023.
+The current release posture and trust boundary are grounded in ADR-0005, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0014, ADR-0017, ADR-0020, ADR-0021, ADR-0022, ADR-0023, and ADR-0026.
 
 ## Product boundary
 
@@ -188,7 +188,7 @@ The app is local-only, but it is not network-absent. Same-origin static hosting 
 
 ## Security posture
 
-The repo ships with a restrictive Content Security Policy in `index.html`.
+The repo ships with a restrictive meta Content Security Policy in `index.html`, and the directive set is pinned by automated tests because GitHub Pages does not provide response-header control for the shipped artifact.
 
 Current policy highlights:
 
@@ -200,6 +200,8 @@ Current policy highlights:
 - `connect-src 'self'`
 - `form-action 'none'`
 - `object-src 'none'`
+- `require-trusted-types-for 'script'`
+- `trusted-types opsnormal-default`
 
 This supports the local-only trust boundary while still allowing same-origin PWA behavior.
 
