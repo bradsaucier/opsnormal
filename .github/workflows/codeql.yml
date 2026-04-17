@@ -1,0 +1,52 @@
+name: 'CodeQL'
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '27 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        env:
+          HUSKY: 0
+        run: npm ci
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        with:
+          languages: javascript-typescript
+          queries: security-extended,security-and-quality
+
+      - name: Build for CodeQL analysis
+        env:
+          VITE_BASE_PATH: /
+        run: npm run build
+
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+        with:
+          category: '/language:javascript-typescript'

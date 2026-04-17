@@ -66,6 +66,7 @@ Current repo controls include:
 - CSP drift gate in `tests/csp.directive.test.ts`
 - Same-origin-only runtime policy through CSP directives such as `script-src 'self'`, `worker-src 'self'`, and `connect-src 'self'`
 - Trusted Types enforcement through `require-trusted-types-for 'script'` and the `trusted-types opsnormal-default` policy on supporting browsers
+- CodeQL source-level code scanning with `security-extended` and `security-and-quality`, required to pass before merge once branch protection is updated (ADR-0028)
 - Sigstore-backed build-provenance attestation for the uploaded `dist-ci-verified` release artifact
 - Pages release verification of that attestation before smoke and upload
 - Guarded IndexedDB operations with bounded reopen logic after connection interruption
@@ -112,6 +113,12 @@ gh attestation verify dist-ci-verified.zip \
 ```
 
 See ADR-0027 for the trust boundary and failure model.
+
+## Static analysis
+
+`CodeQL` analyzes the JavaScript and TypeScript source on every pull request, every push to `main`, and on a weekly sweep of the default branch.
+The workflow runs the `security-extended` and `security-and-quality` query packs and is intended to be a required merge gate once branch protection includes `CodeQL / Analyze (javascript-typescript)`.
+See ADR-0028 for the triage and suppression rules.
 
 ## Honest limits
 
