@@ -19,6 +19,14 @@ const webkitSmokeProject = {
     ...devices['Desktop Safari'],
   },
 };
+const firefoxSmokeProject = {
+  testMatch: /.*firefox-smoke\.spec\.ts/,
+  retries: 2,
+  workers: 1,
+  use: {
+    ...devices['Desktop Firefox'],
+  },
+};
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -42,7 +50,11 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: [/.*\.a11y\.spec\.ts/, /.*webkit-smoke\.spec\.ts/],
+      testIgnore: [
+        /.*\.a11y\.spec\.ts/,
+        /.*webkit-smoke\.spec\.ts/,
+        /.*firefox-smoke\.spec\.ts/,
+      ],
       use: { ...devices['Desktop Chrome'] },
     },
     {
@@ -62,6 +74,16 @@ export default defineConfig({
       // distinguish in CI reports without changing the browser contract.
       name: 'webkit-release',
       ...webkitSmokeProject,
+    },
+    {
+      name: 'firefox',
+      ...firefoxSmokeProject,
+    },
+    {
+      // Separate project name keeps the release-artifact smoke lane easy to
+      // distinguish in CI reports without changing the browser contract.
+      name: 'firefox-release',
+      ...firefoxSmokeProject,
     },
   ],
 });
