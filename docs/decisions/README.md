@@ -34,6 +34,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0026 | CSP directive contract and Trusted Types                        |
 | 0027 | Build provenance attestation for release artifact               |
 | 0028 | CodeQL source code scanning gate                                |
+| 0029 | Firefox smoke engine compatibility gate                         |
 
 ## Operating rule
 
