@@ -66,6 +66,8 @@ Current repo controls include:
 - CSP drift gate in `tests/csp.directive.test.ts`
 - Same-origin-only runtime policy through CSP directives such as `script-src 'self'`, `worker-src 'self'`, and `connect-src 'self'`
 - Trusted Types enforcement through `require-trusted-types-for 'script'` and the `trusted-types opsnormal-default` policy on supporting browsers
+- Sigstore-backed build-provenance attestation for the uploaded `dist-ci-verified` release artifact
+- Pages release verification of that attestation before smoke and upload
 - Guarded IndexedDB operations with bounded reopen logic after connection interruption
 - Storage durability checks and persistent-storage requests where supported
 - JSON export with SHA-256 checksum
@@ -93,6 +95,23 @@ The workflow files pin third-party actions to immutable commit SHAs.
 - Keep the SHA comment aligned to the human-readable release tag
 - Update action SHAs through reviewable pull requests instead of silent tag drift
 - Treat workflow changes as supply-chain changes and review them with the same discipline as application dependencies
+
+## Build provenance verification
+
+`Pipeline: Mainline Integrity` emits a Sigstore-backed build-provenance attestation for the `dist-ci-verified` artifact on every push to `main`.
+`Pipeline: Pages Release` resolves that same artifact by upstream run ID, verifies the attestation against the repository, signer workflow, branch ref, and triggering commit SHA, and only then continues to smoke or publish.
+
+Third parties can verify a downloaded CI artifact archive with:
+
+```bash
+gh attestation verify dist-ci-verified.zip \
+  --repo bradsaucier/opsnormal \
+  --signer-workflow bradsaucier/opsnormal/.github/workflows/ci.yml \
+  --source-digest <release-commit-sha> \
+  --source-ref refs/heads/main
+```
+
+See ADR-0027 for the trust boundary and failure model.
 
 ## Honest limits
 
