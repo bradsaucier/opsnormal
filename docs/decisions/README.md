@@ -31,6 +31,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0023 | Temporary React hooks lint canary exception                     |
 | 0024 | Coverage gate on integrity-critical modules                     |
 | 0025 | Fail-closed undo verification and stale-snapshot invalidation   |
+| 0026 | CSP directive contract and Trusted Types                        |
 
 ## Operating rule
 

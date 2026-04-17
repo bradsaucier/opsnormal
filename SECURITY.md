@@ -31,7 +31,7 @@ The primary security concerns are not account takeover or server breach. They ar
 - Service worker correctness and update handoff
 - Exported user data files once they leave the browser sandbox
 - Static hosting configuration and build integrity
-- Content Security Policy drift
+- Content Security Policy drift if the meta contract is weakened without review
 
 ## Trust boundaries
 
@@ -62,8 +62,10 @@ It does not remove:
 
 Current repo controls include:
 
-- Restrictive Content Security Policy in `index.html`
+- Restrictive meta Content Security Policy in `index.html`
+- CSP drift gate in `tests/csp.directive.test.ts`
 - Same-origin-only runtime policy through CSP directives such as `script-src 'self'`, `worker-src 'self'`, and `connect-src 'self'`
+- Trusted Types enforcement through `require-trusted-types-for 'script'` and the `trusted-types opsnormal-default` policy on supporting browsers
 - Guarded IndexedDB operations with bounded reopen logic after connection interruption
 - Storage durability checks and persistent-storage requests where supported
 - JSON export with SHA-256 checksum
@@ -100,7 +102,7 @@ Accurate statements:
 
 - The app is local-only by design
 - There is no backend data plane in the application
-- The app uses a restrictive CSP
+- The app uses a restrictive meta CSP whose directive set is gated by `tests/csp.directive.test.ts`
 - Import and export integrity paths are verified more carefully than a typical small PWA
 
 Inaccurate or overstated statements:

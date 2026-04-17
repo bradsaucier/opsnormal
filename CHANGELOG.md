@@ -12,6 +12,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - hardened import commit verification by reading the pre-write snapshot and deriving the undo snapshot inside the rw transaction
 - unified focus chrome on DomainCard radios, history grid cells, mobile day buttons, and the history scroll region under shared focus utilities
 
+### Security
+
+- pinned the meta CSP directive set with a test gate, added Trusted Types enforcement, and documented the contract in ADR-0026
+
 ## [1.0.0] - 2026-04-14
 
 ### Added

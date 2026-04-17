@@ -27,6 +27,8 @@ async function getCspViolations(page: Page) {
   return page.evaluate(() => window.__opsCspViolations ?? []);
 }
 
+// Directive drift is pinned separately in tests/csp.directive.test.ts and
+// tests/e2e/csp.directive.spec.ts. This suite only watches live runtime paths.
 test.describe('OpsNormal CSP posture', () => {
   test('boots without CSP violations in Chromium', async ({ page }) => {
     await installCspViolationCollector(page);

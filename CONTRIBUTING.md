@@ -14,6 +14,7 @@ Every change should preserve these boundaries:
 5. Do not rely on color alone to communicate state.
 6. New alert-like surfaces must compose `AlertSurface`; do not inline clip-notched banner scaffolding.
 7. Field-level validation should stay inline. Reserve `AlertSurface` for page-level, section-level, and support-banner surfaces.
+8. Any change to the CSP meta tag must update `tests/csp.directive.test.ts` and ADR-0026 in the same commit.
 
 ## Local setup
 
