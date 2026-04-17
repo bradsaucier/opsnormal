@@ -162,4 +162,3 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - expect up to a 5000 millisecond guard-window delay before a blocked duplicate tab finishes schema-recovery reload
 
 - Backup checkpoint tests should assert explicit result-state handling so read-back verified save, manual-verification fallback, download fallback, user cancellation, and hard failure cannot collapse into the same control path.
-
