@@ -14,9 +14,9 @@ jobs:
     name: Verify (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     permissions:
+      attestations: write
       contents: read
       id-token: write
-      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
@@ -39,6 +41,10 @@ jobs:
         env:
           HUSKY: 0
         run: npm ci
+
+      - name: Verify npm package signatures
+        if: matrix.node-version == 22
+        run: npm audit signatures
 
       - name: Security audit
         if: matrix.node-version == 22
@@ -95,6 +101,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
@@ -137,6 +145,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
@@ -178,6 +188,7 @@ jobs:
       - webkit_smoke
       - firefox_smoke
     if: ${{ !cancelled() }}
+    permissions: {}
 
     steps:
       - name: Fail when verify-matrix does not succeed
