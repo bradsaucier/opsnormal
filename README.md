@@ -1,12 +1,13 @@
 # OpsNormal - local-only operator readiness tracking
 
-**A disciplined daily readiness instrument. Five sectors. Three states. Thirty days. No accounts, no backend, no telemetry. Built to survive stress, not to impress a browser tab.**
+A disciplined daily readiness instrument. Five sectors. Three states. Thirty days. No accounts, no backend, no telemetry. Built to survive stress, not to impress a browser tab.
 
 <div align="center">
 
 [![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
 [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml)
+<br>
 [![Release](https://img.shields.io/github/v/release/bradsaucier/opsnormal?display_name=tag&style=flat-square&color=36476F)](./CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
 [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
