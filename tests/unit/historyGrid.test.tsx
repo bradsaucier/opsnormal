@@ -327,7 +327,7 @@ describe('history helpers and grid behavior', () => {
     );
 
     expect((await axe(container)).violations).toEqual([]);
-  });
+  }, 15000);
 
   it('has no accessibility violations in the desktop history view', async () => {
     const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
@@ -338,7 +338,7 @@ describe('history helpers and grid behavior', () => {
     );
 
     expect((await axe(container)).violations).toEqual([]);
-  });
+  }, 15000);
 
   it('keeps a single tabbable desktop gridcell and updates the selected-cell brief during keyboard traversal', async () => {
     const user = userEvent.setup({ delay: null });

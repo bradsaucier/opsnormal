@@ -128,12 +128,55 @@ jobs:
           path: test-results/
           retention-days: 7
 
+  firefox_smoke:
+    name: Firefox smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Node
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        env:
+          HUSKY: 0
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-firefox-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps firefox
+
+      - name: Firefox smoke tests
+        run: npm run test:e2e:firefox
+
+      - name: Upload Firefox traces
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: firefox-smoke-traces
+          path: test-results/
+          retention-days: 7
+
   verify:
     name: verify
     runs-on: ubuntu-latest
     needs:
       - verify_matrix
       - webkit_smoke
+      - firefox_smoke
     if: ${{ !cancelled() }}
 
     steps:
@@ -149,6 +192,12 @@ jobs:
           echo "webkit_smoke result: ${{ needs.webkit_smoke.result }}"
           exit 1
 
+      - name: Fail when Firefox smoke does not succeed
+        if: ${{ needs.firefox_smoke.result != 'success' }}
+        run: |
+          echo "firefox_smoke result: ${{ needs.firefox_smoke.result }}"
+          exit 1
+
       - name: Confirm required CI success
-        if: ${{ needs.verify_matrix.result == 'success' && needs.webkit_smoke.result == 'success' }}
+        if: ${{ needs.verify_matrix.result == 'success' && needs.webkit_smoke.result == 'success' && needs.firefox_smoke.result == 'success' }}
         run: echo "All required CI jobs passed"

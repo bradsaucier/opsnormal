@@ -67,6 +67,7 @@ Prove that the app:
 - daily check-in persists through reload
 - synthetic Safari storage warning states drive the correct backup banner, install guidance, and storage-health messaging in Chromium
 - narrow WebKit smoke coverage now gates CI for app boot, Apple WebKit warning rendering, and IndexedDB persistence without claiming eviction simulation
+- narrow Firefox smoke coverage now gates CI for app boot, the non-WebKit storage-health path, IndexedDB persistence across reload, service worker activation, fallback JSON export download, and CSP-safe startup on a Gecko engine without claiming live Firefox policy simulation
 - production preview can reopen offline after first load
 - JSON export can be imported into a clean browser context and re-exported without data loss
 - import preview and staged merge path hold under the accordion backup panel
@@ -140,11 +141,13 @@ The recovery-surface scan set drives the `accessibility-recovery.a11y.spec.ts` f
 
 Safari storage lifecycle coverage is intentionally split across three layers. Unit tests prove storage-health and backup-prompt decision logic. Chromium e2e harness tests inject synthetic storage states and verify the exact operator-facing warning surfaces. A narrow WebKit smoke lane now gates CI for rendering and IndexedDB I-O on a WebKit engine, but it does not claim to reproduce Safari's seven-day purge behavior. The exact proof boundary and triage rule live in docs/webkit-limitations.md.
 
+Firefox engine coverage uses a separate narrow smoke lane. That gate proves boot, the non-WebKit storage-health path, IndexedDB persistence across reload, service worker activation, fallback Blob download export, and CSP-safe startup on Gecko. It does not claim to reproduce live Firefox storage policy or hardware-specific behavior. The exact proof boundary and triage rule live in docs/firefox-limitations.md.
+
 No automated lane in this repository simulates Safari's seven-day script-writable-storage purge. That browser behavior depends on real Safari use over time and still requires manual verification on Apple hardware before release, including any installed Home Screen or Add to Dock path. If WebKit purges the app after inactivity, it can erase both IndexedDB and the browser-side timestamp that recorded the last export, so the shell can reopen looking like a clean install. Recovery guidance must direct the operator to restore from the latest JSON export immediately when that blank return occurs.
 
 ## Chromium-only note
 
-Playwright service worker validation is limited to Chromium. Offline reopen is still worth testing manually on Safari and mobile hardware before release. The mobile history E2E spec also uses Chromium viewport emulation rather than a real mobile browser, so WebKit and installed-PWA behavior still require manual verification. Full local and CI coverage uses the e2e-mode harness build. The deployment lane runs a narrower production-artifact smoke pass so GitHub Pages is blocked on the real shipped bundle without publishing the harness pages.
+Broad Playwright coverage is still Chromium-led. The WebKit and Firefox engine-compat gates are intentionally narrow, and offline reopen is still worth testing manually on Safari, Firefox, and mobile hardware before release. The mobile history E2E spec also uses Chromium viewport emulation rather than a real mobile browser, so WebKit and installed-PWA behavior still require manual verification. Full local and CI coverage uses the e2e-mode harness build. The deployment lane runs a narrower production-artifact smoke pass so GitHub Pages is blocked on the real shipped bundle without publishing the harness pages.
 
 ## Manual release checks
 
@@ -158,6 +161,7 @@ Playwright service worker validation is limited to Chromium. Offline reopen is s
 - verify repeated controllerchange churn in one tab pins the loop-breaker banner instead of continuing automatic reloads
 - verify manual recovery in one tab clears stale loop-breaker state in another open tab
 - verify the recovery announcement is spoken after a hard reload into the pinned manual recovery state with at least one screen reader and browser pair
+- verify current Firefox release keeps boot, reload persistence, fallback JSON export, and the non-WebKit storage-health path on the deployed build
 - verify Chrome DevTools "Update on reload" is disabled before manual service-worker handoff checks so the smoke test reflects normal operator behavior
 - expect up to a 5000 millisecond guard-window delay before a blocked duplicate tab finishes schema-recovery reload
 

@@ -38,6 +38,7 @@ npm run typecheck
 npm run test
 npm run test:e2e
 npm run test:e2e:webkit
+npm run test:e2e:firefox
 npm run build
 ```
 
@@ -51,6 +52,6 @@ npm run build
 4. Keep language clinical and professional throughout the repo.
 5. Any database schema change must add or update the migration registry, migration tests, and the relevant ADR before merge.
 6. Any durability-sensitive migration change must include browser-level upgrade proof before merge, not just unit coverage.
-7. The narrow WebKit smoke lane now gates CI. Keep it scoped to engine-level compatibility proof, not Safari policy simulation.
-8. If a WebKit smoke failure is accepted as a platform boundary instead of a product bug, document that boundary in docs/webkit-limitations.md before merge.
+7. The narrow WebKit and Firefox smoke lanes now gate CI. Keep them scoped to engine-level compatibility proof, not browser-policy simulation.
+8. If a WebKit or Firefox smoke failure is accepted as a platform boundary instead of a product bug, document that boundary in docs/webkit-limitations.md or docs/firefox-limitations.md before merge.
 9. When a module encodes a non-obvious architectural constraint, keep a short `// Architecture:` ADR reference comment near that boundary so future changes do not have to rediscover the rationale.

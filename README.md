@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![CodeQL](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
 
 </div>
 
@@ -167,9 +167,9 @@ Each row's verification-truth column states what the repo currently proves, not 
 | --------------------------- | ---------------------- | -------------------------------------------------------------------------------- |
 | Chromium-based browsers     | Supported              | Full Playwright Chromium coverage, production-artifact smoke, and release gating |
 | Safari and other WebKit UIs | Supported with caveats | Merge-blocking and release WebKit smoke lanes prove engine compatibility only    |
-| Firefox current release     | Expected to work       | Manual verification recommended because there is no dedicated Firefox CI lane    |
+| Firefox current release     | Supported with caveats | Merge-blocking and release Firefox smoke lanes prove engine compatibility only   |
 
-Read [WebKit CI coverage boundary](./docs/webkit-limitations.md) before making stronger Safari claims than the repo proves.
+Read [WebKit CI coverage boundary](./docs/webkit-limitations.md) and [Firefox CI coverage boundary](./docs/firefox-limitations.md) before making stronger browser claims than the repo proves.
 
 ### Reliability posture
 
@@ -196,8 +196,8 @@ Accessibility is architectural, not decorative.
 
 Quality is enforced through release gates, test coverage, and explicit design constraints.
 
-- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, a merge-blocking Playwright WebKit smoke lane, and build validation
-- GitHub Pages release downloads the `dist-ci-verified` artifact from the successful mainline integrity run, re-smokes that exact bundle in Chromium and WebKit, and only then publishes
+- GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, merge-blocking Playwright WebKit and Firefox smoke lanes, and build validation
+- GitHub Pages release downloads the `dist-ci-verified` artifact from the successful mainline integrity run, re-smokes that exact bundle in Chromium, WebKit, and Firefox, and only then publishes
 - The released bundle carries a Sigstore-backed build-provenance attestation that Pipeline: Pages Release verifies before upload. See ADR-0027.
 - GitHub CodeQL code scanning gates mainline with the `security-extended` and `security-and-quality` query packs. See ADR-0028.
 - JSON export carries versioning and integrity checks, and import commit verification fails closed before the app claims success
@@ -225,11 +225,14 @@ npm run typecheck
 npm run test
 npm run test:e2e
 npm run test:e2e:webkit
+npm run test:e2e:firefox
 npm run build
 npm run test:e2e:smoke
+npm run test:e2e:webkit:smoke
+npm run test:e2e:firefox:smoke
 ```
 
-`npm run format:check` verifies repository formatting with Prettier, and `npm run format` applies the repository formatting baseline locally. `npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. Run `npm run build` before `npm run test:e2e:smoke` so the smoke command reuses a real production `dist/` build and skips the harness-only specs.
+`npm run format:check` verifies repository formatting with Prettier, and `npm run format` applies the repository formatting baseline locally. `npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. `npm run test:e2e:firefox` runs the parallel Gecko smoke gate that verifies boot, IndexedDB persistence, service worker activation, the non-WebKit storage path, and the fallback download path without claiming to simulate live Firefox storage policy. Run `npm run build` before the `test:e2e:*:smoke` commands so the production-artifact smoke checks reuse a real `dist/` build and skip the harness-only specs.
 
 ## Documentation matrix
 
@@ -240,6 +243,7 @@ This README stays focused on orientation and first use. Deeper proof, limits, an
 | [**Architecture overview**](./docs/architecture.md)             | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits                   |
 | [**Risk register**](./docs/risk-register.md)                    | Known operational risks, browser-storage hazards, and current mitigations                            |
 | [WebKit CI coverage boundary](./docs/webkit-limitations.md)     | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures         |
+| [Firefox CI coverage boundary](./docs/firefox-limitations.md)   | What the merge-blocking Firefox lane proves, what it cannot prove, and how to triage failures        |
 | [**Architecture Decision Records**](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
 | [**Test plan**](./docs/test-plan.md)                            | Verification strategy, release checks, and coverage priorities                                       |
 | [Release checklist](./docs/release-checklist.md)                | Pre-release validation and operator-facing quality gates                                             |

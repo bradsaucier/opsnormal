@@ -77,6 +77,7 @@ Current repo controls include:
 - Root and section-level React error boundaries
 - Crash fallback that preserves export access after a render fault
 - CI validation across lint, typecheck, unit and integration tests, end-to-end tests, and build
+- Playwright Firefox smoke coverage enforces Gecko-engine compatibility at merge and release
 - Dependabot coverage for npm and GitHub Actions dependencies
 
 ## Dependency maintenance posture
