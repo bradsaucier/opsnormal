@@ -34,7 +34,7 @@ A disciplined daily readiness instrument. Five sectors. Three states. Thirty day
 >
 > There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> The operating boundary is documented in [30 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
+> The operating boundary is documented in [31 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
 
 ## At a glance
 
@@ -50,7 +50,7 @@ A disciplined daily readiness instrument. Five sectors. Three states. Thirty day
 | Static analysis     | CodeQL `security-extended` + `security-and-quality` as a merge gate (ADR-0028)                                               |
 | Coverage gates      | 100% on `date`, `exportSerialization`, `entryWrittenCoordination`; calibrated per-file floors on `importService` and `appDb` |
 | Accessibility       | Dedicated WCAG 2.1 A / AA Playwright scans with service workers blocked                                                      |
-| Decisions of record | 29 ADRs under [`docs/decisions/`](./docs/decisions/README.md)                                                                |
+| Decisions of record | 31 ADRs under [`docs/decisions/`](./docs/decisions/README.md)                                                                |
 
 ## Built for, and not built for
 

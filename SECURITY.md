@@ -122,7 +122,7 @@ See ADR-0027 for the trust boundary and failure model.
 ## Static analysis
 
 `CodeQL` analyzes the JavaScript and TypeScript source on every pull request, every push to `main`, and on a weekly sweep of the default branch.
-The workflow runs the `security-extended` and `security-and-quality` query packs and is intended to be a required merge gate once branch protection includes `CodeQL / Analyze (javascript-typescript)`.
+The workflow runs the `security-extended` and `security-and-quality` query packs and is a required merge gate. `Pipeline: Mainline Integrity` aggregates CodeQL into `verify`, which is the required status for the main branch.
 See ADR-0028 for the triage and suppression rules.
 
 ## Honest limits

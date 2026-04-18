@@ -339,13 +339,19 @@ describe('workflow security contract', () => {
   });
 
   it('keeps codeql write access scoped to security-events only', () => {
-    const workflow = loadWorkflow('codeql.yml');
-    const permissions = getPermissionBlock(
-      getJob(workflow, 'analyze').permissions,
+    const ciWorkflow = loadWorkflow('ci.yml');
+    const scheduledWorkflow = loadWorkflow('codeql.yml');
+    const ciPermissions = getPermissionBlock(
+      getJob(ciWorkflow, 'codeql').permissions,
+    );
+    const scheduledPermissions = getPermissionBlock(
+      getJob(scheduledWorkflow, 'analyze').permissions,
     );
 
-    expect(getReadScopes(permissions)).toEqual(['contents']);
-    expect(getWriteScopes(permissions)).toEqual(['security-events']);
+    expect(getReadScopes(ciPermissions)).toEqual(['contents']);
+    expect(getWriteScopes(ciPermissions)).toEqual(['security-events']);
+    expect(getReadScopes(scheduledPermissions)).toEqual(['contents']);
+    expect(getWriteScopes(scheduledPermissions)).toEqual(['security-events']);
   });
 
   it('gates Pages release on CodeQL verdict for the release SHA', () => {
@@ -378,10 +384,15 @@ describe('workflow security contract', () => {
     ).toBe(true);
     expect(
       typeof gateStep?.run === 'string' &&
-        gateStep.run.includes(
+        gateStep.run.includes('/commits/${RELEASE_SHA}/check-runs'),
+      'deploy.yml CodeQL gate must poll the commit check-runs API.',
+    ).toBe(true);
+    expect(
+      typeof gateStep?.run === 'string' &&
+        !gateStep.run.includes(
           '/actions/workflows/${CODEQL_WORKFLOW_FILE}/runs',
         ),
-      'deploy.yml CodeQL gate must poll the CodeQL workflow runs API.',
+      'deploy.yml CodeQL gate must not keep the legacy workflow-runs selector.',
     ).toBe(true);
     expect(
       deployNeeds,

@@ -3,6 +3,7 @@
 ## Status
 
 Accepted.
+Implemented 2026-04-18 through the `verify` aggregator in `Pipeline: Mainline Integrity`. Branch protection requires `verify`.
 
 ## Context
 
@@ -17,7 +18,7 @@ Those categories map directly to the JavaScript and TypeScript CodeQL query pack
 Add a dedicated `CodeQL` workflow that analyzes `javascript-typescript` on every pull request, every push to `main`, and on a weekly sweep of the default branch.
 The workflow runs with least-privilege permissions, installs dependencies, builds the production bundle, initializes CodeQL with `security-extended` and `security-and-quality`, and uploads SARIF through the standard `analyze` step.
 
-Treat `CodeQL / Analyze (javascript-typescript)` as a required mainline gate once the workflow has posted its first successful run.
+Treat `CodeQL / Analyze (javascript-typescript)` as a required mainline gate.
 High-severity findings must be fixed before merge unless a finding is proven incorrect and suppressed with a narrowly scoped, query-specific justification.
 Medium and low findings must be fixed in the same pull request or tracked immediately with an issue before merge.
 The gate is enforced at two points.
@@ -44,7 +45,7 @@ ESLint security plugins were rejected because they provide lighter lint rules, n
 
 ## Failure Model
 
-Workflow execution failure is treated the same way as any other required CI failure once branch protection is updated: merge stops until the workflow is green again.
+Workflow execution failure is treated the same way as any other required CI failure: merge stops until the workflow is green again.
 High-severity findings block merge.
 Medium and low findings may merge only when they are fixed immediately or tracked explicitly for prompt follow-up.
 
