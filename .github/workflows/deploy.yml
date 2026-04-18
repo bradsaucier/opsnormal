@@ -32,21 +32,21 @@ jobs:
       - name: Await CodeQL verdict for release SHA
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPOSITORY: ${{ github.repository }}
-          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          CODEQL_CHECK_RUN_NAME: codeql
           CODEQL_POLL_INTERVAL_SECONDS: '20'
           CODEQL_POLL_TIMEOUT_SECONDS: '720'
-          CODEQL_WORKFLOW_FILE: codeql.yml
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
 
           deadline=$(( $(date +%s) + CODEQL_POLL_TIMEOUT_SECONDS ))
           while :; do
             payload="$(
-              gh api "/repos/${REPOSITORY}/actions/workflows/${CODEQL_WORKFLOW_FILE}/runs?event=push&head_sha=${RELEASE_SHA}&per_page=100" \
-                | jq -c --arg sha "${RELEASE_SHA}" '
-                    [.workflow_runs[] | select(.head_sha == $sha)]
-                    | sort_by(.created_at)
+              gh api "/repos/${REPOSITORY}/commits/${RELEASE_SHA}/check-runs?per_page=100" \
+                | jq -c --arg name "${CODEQL_CHECK_RUN_NAME}" '
+                    [.check_runs[] | select(.name == $name)]
+                    | sort_by(.started_at // .created_at // .completed_at)
                     | last
                   '
             )"
@@ -62,19 +62,19 @@ jobs:
                   exit 0
                 fi
 
-                echo "CodeQL completed with conclusion ${conclusion} for ${RELEASE_SHA}." >&2
+                echo "CodeQL check-run completed with conclusion ${conclusion} for ${RELEASE_SHA}." >&2
                 if [ -n "$html_url" ]; then
                   echo "CodeQL run: ${html_url}" >&2
                 fi
                 exit 1
               fi
 
-              echo "CodeQL status for ${RELEASE_SHA}: ${status}. Waiting..."
+              echo "CodeQL check-run status for ${RELEASE_SHA}: ${status}. Waiting..."
               if [ -n "$html_url" ]; then
                 echo "CodeQL run: ${html_url}"
               fi
             else
-              echo "No CodeQL workflow run found yet for ${RELEASE_SHA}. Waiting..."
+              echo "No CodeQL check-run found yet for ${RELEASE_SHA}. Waiting..."
             fi
 
             if [ "$(date +%s)" -ge "$deadline" ]; then
