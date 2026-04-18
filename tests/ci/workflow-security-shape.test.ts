@@ -13,6 +13,9 @@ const { load } = require('js-yaml') as { load: (source: string) => unknown };
 type PermissionLevel = 'read' | 'write' | 'none';
 type PermissionBlock = Record<string, PermissionLevel>;
 type WorkflowStep = {
+  env?: unknown;
+  name?: unknown;
+  run?: unknown;
   uses?: unknown;
   with?: unknown;
 };
@@ -343,5 +346,67 @@ describe('workflow security contract', () => {
 
     expect(getReadScopes(permissions)).toEqual(['contents']);
     expect(getWriteScopes(permissions)).toEqual(['security-events']);
+  });
+
+  it('gates Pages release on CodeQL verdict for the release SHA', () => {
+    const workflow = loadWorkflow('deploy.yml');
+    const workflowText = readWorkflowText('deploy.yml');
+    const releaseSmokeSteps = getSteps(getJob(workflow, 'release_smoke'));
+    const deployJob = getJob(workflow, 'deploy');
+    const gateStep = releaseSmokeSteps.find(
+      (step) => typeof step.name === 'string' && /codeql/i.test(step.name),
+    );
+    const deployNeeds = Array.isArray(deployJob.needs)
+      ? deployJob.needs.filter(
+          (need): need is string => typeof need === 'string',
+        )
+      : typeof deployJob.needs === 'string'
+        ? [deployJob.needs]
+        : [];
+
+    expect(
+      gateStep,
+      'deploy.yml release_smoke must include a step that awaits CodeQL on the release SHA.',
+    ).toBeDefined();
+    expect(
+      releaseSmokeSteps[0]?.name,
+      'deploy.yml must check CodeQL before any release-smoke work begins.',
+    ).toBe('Await CodeQL verdict for release SHA');
+    expect(
+      workflowText.includes('github.event.workflow_run.head_sha'),
+      'deploy.yml CodeQL gate must filter on the release SHA, not a branch.',
+    ).toBe(true);
+    expect(
+      typeof gateStep?.run === 'string' &&
+        gateStep.run.includes(
+          '/actions/workflows/${CODEQL_WORKFLOW_FILE}/runs',
+        ),
+      'deploy.yml CodeQL gate must poll the CodeQL workflow runs API.',
+    ).toBe(true);
+    expect(
+      deployNeeds,
+      'deploy must remain blocked on release_smoke success.',
+    ).toContain('release_smoke');
+  });
+
+  it('keeps CodeQL analysis on pinned query packs', () => {
+    const workflow = loadWorkflow('codeql.yml');
+    const analyzeSteps = getSteps(getJob(workflow, 'analyze'));
+    const initStep = analyzeSteps.find(
+      (step) =>
+        typeof step.uses === 'string' &&
+        step.uses.startsWith('github/codeql-action/init@'),
+    );
+
+    expect(initStep).toBeDefined();
+
+    const initWith = isRecord(initStep?.with) ? initStep.with : undefined;
+    const packs = initWith?.packs;
+
+    expect(
+      typeof packs === 'string' && packs.includes('@'),
+      'codeql.yml must pin query packs with an @version reference.',
+    ).toBe(true);
+    expect(initWith?.queries).toBe('security-extended,security-and-quality');
   });
 });
