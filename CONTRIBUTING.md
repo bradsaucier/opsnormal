@@ -52,8 +52,9 @@ npm run build
 4. Keep language clinical and professional throughout the repo.
 5. Any database schema change must add or update the migration registry, migration tests, and the relevant ADR before merge.
 6. Any durability-sensitive migration change must include browser-level upgrade proof before merge, not just unit coverage.
-7. The narrow WebKit and Firefox smoke lanes now gate CI. Keep them scoped to engine-level compatibility proof, not browser-policy simulation.
-8. If a WebKit or Firefox smoke failure is accepted as a platform boundary instead of a product bug, document that boundary in docs/webkit-limitations.md or docs/firefox-limitations.md before merge.
-9. When a module encodes a non-obvious architectural constraint, keep a short `// Architecture:` ADR reference comment near that boundary so future changes do not have to rediscover the rationale.
-10. Any new `actions/checkout` use must set `persist-credentials: false`. If a future workflow truly needs persisted credentials or `contents: write`, document the exception in the workflow with a workflow-security justification comment and explain it in the pull request.
-11. Any change under `.github/` must keep `workflow-lint.yml` green before merge.
+7. Reuse `tests/helpers/dbMigrationFixture.ts` when schema work needs seeded upgrade proof instead of inventing a one-off migration seed.
+8. The narrow WebKit and Firefox smoke lanes now gate CI. Keep them scoped to engine-level compatibility proof, not browser-policy simulation.
+9. If a WebKit or Firefox smoke failure is accepted as a platform boundary instead of a product bug, document that boundary in docs/webkit-limitations.md or docs/firefox-limitations.md before merge.
+10. When a module encodes a non-obvious architectural constraint, keep a short `// Architecture:` ADR reference comment near that boundary so future changes do not have to rediscover the rationale.
+11. Any new `actions/checkout` use must set `persist-credentials: false`. If a future workflow truly needs persisted credentials or `contents: write`, document the exception in the workflow with a workflow-security justification comment and explain it in the pull request.
+12. Any change under `.github/` must keep `workflow-lint.yml` green before merge.
