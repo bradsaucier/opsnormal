@@ -69,6 +69,9 @@ Current repo controls include:
 - CodeQL source-level code scanning with `security-extended` and `security-and-quality`, required to pass before merge once branch protection is updated (ADR-0028)
 - Sigstore-backed build-provenance attestation for the uploaded `dist-ci-verified` release artifact
 - Pages release verification of that attestation before smoke and upload
+- `actions/checkout` pinned with `persist-credentials: false` across repository workflows unless an explicit exception is documented
+- `Workflow Lint` runs pinned `zizmor` analysis on workflow changes and uploads SARIF results to code scanning
+- CI verifies installed npm artifacts with `npm audit signatures` before build
 - Guarded IndexedDB operations with bounded reopen logic after connection interruption
 - Storage durability checks and persistent-storage requests where supported
 - JSON export with SHA-256 checksum
@@ -86,6 +89,7 @@ Current repo policy for dependency hygiene is intentionally conservative, with o
 
 - Direct dependency ranges should not lag behind the audited lockfile floor without a reason
 - CI and deploy now fail on high-severity npm advisories through `npm audit --audit-level=high`
+- CI also verifies npm registry signatures through `npm audit signatures`; rerun once on failure, and if the result is deterministic, file upstream and pin or replace the offending dependency before merge
 - The `serialize-javascript` override stays in place until the Workbox dependency chain absorbs a fixed release
 - `eslint-plugin-react-hooks` stays on the React canary line until a stable release fully supports ESLint 10, because the current stable release line still peers only through ESLint 9
 - Zod remains on the validated 3.x line until a separate migration proves 4.x behavior across import, export, and recovery schemas

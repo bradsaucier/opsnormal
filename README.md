@@ -34,7 +34,7 @@ A disciplined daily readiness instrument. Five sectors. Three states. Thirty day
 >
 > There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> The operating boundary is documented in [29 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
+> The operating boundary is documented in [30 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
 
 ## At a glance
 

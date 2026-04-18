@@ -55,3 +55,5 @@ npm run build
 7. The narrow WebKit and Firefox smoke lanes now gate CI. Keep them scoped to engine-level compatibility proof, not browser-policy simulation.
 8. If a WebKit or Firefox smoke failure is accepted as a platform boundary instead of a product bug, document that boundary in docs/webkit-limitations.md or docs/firefox-limitations.md before merge.
 9. When a module encodes a non-obvious architectural constraint, keep a short `// Architecture:` ADR reference comment near that boundary so future changes do not have to rediscover the rationale.
+10. Any new `actions/checkout` use must set `persist-credentials: false`. If a future workflow truly needs persisted credentials or `contents: write`, document the exception in the workflow with a workflow-security justification comment and explain it in the pull request.
+11. Any change under `.github/` must keep `workflow-lint.yml` green before merge.
