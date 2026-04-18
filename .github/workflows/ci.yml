@@ -125,7 +125,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps webkit
 
-      - name: WebKit smoke tests
+      - name: WebKit smoke and migration proof
         run: npm run test:e2e:webkit
 
       - name: Upload WebKit traces
@@ -169,7 +169,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps firefox
 
-      - name: Firefox smoke tests
+      - name: Firefox smoke and migration proof
         run: npm run test:e2e:firefox
 
       - name: Upload Firefox traces
