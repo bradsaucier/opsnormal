@@ -59,4 +59,5 @@ This decision requires the following discipline:
 - keep export payload versioning separate from database versioning
 - add migration tests before merging any schema change
 - execute browser-level upgrade proof for migration changes before merge when the durability boundary is involved
+- keep the automated migration upgrade proof green for durability-sensitive changes, per ADR-0031
 - do not use this framework to justify backend expansion, sync metadata, or telemetry
