@@ -1,10 +1,15 @@
-# OpsNormal
+# OpsNormal - local-only operator readiness tracking
 
-> **Local-only operator readiness tracking with deliberate constraints and integrity-verified recovery.**
+**A disciplined daily readiness instrument. Five sectors. Three states. Thirty days. No accounts, no backend, no telemetry. Built to survive stress, not to impress a browser tab.**
 
 <div align="center">
 
-[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml) [![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml) [![Status: v1.0.0](https://img.shields.io/badge/Status-v1.0.0_public_release-36476F?style=flat-square)](./CHANGELOG.md) [![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
+[![Pipeline: Mainline Integrity](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/ci.yml)
+[![Pipeline: Pages Release](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml/badge.svg)](https://github.com/bradsaucier/opsnormal/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/bradsaucier/opsnormal?display_name=tag&style=flat-square&color=36476F)](./CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-36476F?style=flat-square)](./LICENSE)
+[![Data posture: Local only](https://img.shields.io/badge/Data_Posture-Local_Only-36476F?style=flat-square)](#trust-contract)
 
 </div>
 
@@ -28,7 +33,31 @@
 >
 > There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> The operating boundary is documented in [28 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact.
+> The operating boundary is documented in [29 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
+
+## At a glance
+
+| Facet               | Current posture                                                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Runtime             | React 19, TypeScript, Tailwind CSS 4, Vite, `vite-plugin-pwa`                                                                |
+| Persistence         | IndexedDB through Dexie 4; compound uniqueness on `[date+sectorId]`                                                          |
+| Deployment          | Static PWA on GitHub Pages, custom domain `opsnormal.app`                                                                    |
+| Data posture        | Local only. No accounts, no backend, no analytics, no sync                                                                   |
+| Release pipeline    | Mainline integrity -> re-smoke CI-verified artifact in Chromium, WebKit, Firefox -> publish                                  |
+| Release artifact    | `dist-ci-verified` reused end-to-end; no separate deploy build                                                               |
+| Build provenance    | Sigstore-backed attestation, verified on Pages release (ADR-0027)                                                            |
+| Static analysis     | CodeQL `security-extended` + `security-and-quality` as a merge gate (ADR-0028)                                               |
+| Coverage gates      | 100% on `date`, `exportSerialization`, `entryWrittenCoordination`; calibrated per-file floors on `importService` and `appDb` |
+| Accessibility       | Dedicated WCAG 2.1 A / AA Playwright scans with service workers blocked                                                      |
+| Decisions of record | 29 ADRs under [`docs/decisions/`](./docs/decisions/README.md)                                                                |
+
+## Built for, and not built for
+
+Built for operators who want a fixed, legible readiness picture instead of feature sprawl, prefer local control over hosted convenience, and will maintain their own export cadence and restore drills.
+
+Not built for users seeking cross-device cloud sync or account recovery, passive telemetry, social features, background data collection, custom categories, free-form journaling, or browser storage treated like a guaranteed archive.
+
+These are not missing features. They are deliberate constraints that protect the operating model.
 
 ## Operational model
 
@@ -94,6 +123,7 @@ OpsNormal runs on a shared-responsibility model. The repository makes hard commi
 - Import validates structure before commit, applies replace gating, and fails closed on malformed or unsafe data
 - Root-level and section-level error boundaries preserve recovery surfaces and keep export reachable during localized render faults
 - Release publication reuses the exact `dist-ci-verified` artifact that passed mainline integrity instead of rebuilding a new deploy bundle
+- The released bundle carries a Sigstore-backed build-provenance attestation that Pipeline: Pages Release verifies before upload
 
 ### The operator commits to
 
@@ -120,7 +150,7 @@ To reduce that risk:
 - If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file.
 - If the app reopens looking like a clean install, restore immediately from the latest JSON export
 
-## Mobile history proof
+## Mobile history surface
 
 Narrow screens switch from the 30-day grid to week groups with a daily brief so the history surface stays readable on phone-sized viewports.
 
@@ -131,20 +161,13 @@ Narrow screens switch from the 30-day grid to week groups with a daily brief so 
 
 ---
 
-## Deployment and initialization
+## Release truth
 
-1. Open `https://opsnormal.app`
-2. On Apple devices, install to Home Screen before entering data if you intend to rely on the app there
-3. Record an initial status across the five fixed sectors in the environment you intend to keep using
-4. Run a test JSON export and keep the file somewhere you control
-5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
+The Pages release pipeline is not a second build. It is a verification and publishing pipeline over the exact artifact that passed mainline integrity.
 
-### Apple device guidance
+On every push to `main`, Pipeline: Mainline Integrity runs lint, typecheck, Vitest coverage, Playwright Chromium, merge-blocking WebKit and Firefox smoke lanes, and a production build, then uploads the `dist-ci-verified` artifact and emits a Sigstore-backed build-provenance attestation. Pipeline: Pages Release then resolves that artifact by upstream run ID, verifies the attestation against repository, signer workflow, source reference, and triggering commit SHA, re-smokes Chromium, WebKit, and Firefox against the extracted bundle, and only then publishes. The bundle on `opsnormal.app` is the same bytes that passed verification.
 
-- If you are validating a Pages rollout or DNS cutover, the fallback deployment URL is `https://bradsaucier.github.io/opsnormal/`
-- Ordinary Safari tabs are subject to WebKit purge behavior after seven days of Safari use without user interaction on the site
-- On Apple devices, Safari browser tabs and installed Home Screen apps keep isolated website data
-- If you already entered data in Safari on an Apple device, run a JSON export there first. Then install to Home Screen, open the installed app, and import that JSON file.
+Third parties can verify a downloaded CI artifact archive with `gh attestation verify`. See [SECURITY.md](./SECURITY.md) and ADR-0027.
 
 ## Threat model and reliability posture
 
@@ -207,16 +230,28 @@ Quality is enforced through release gates, test coverage, and explicit design co
 - GitHub Actions dependencies are pinned to immutable SHAs, and CI fails on high-severity npm advisories through `npm audit --audit-level=high`
 - ADRs, the risk register, the test plan, and the release checklist keep constraints visible so the repo cannot drift quietly
 
+## First run
+
+1. Open `https://opsnormal.app`
+2. On Apple devices, install to Home Screen before entering data if you intend to rely on the app there
+3. Record an initial status across the five fixed sectors in the environment you intend to keep using
+4. Run a test JSON export and keep the file somewhere you control
+5. Export routinely, especially before browser maintenance, profile changes, device transitions, or long periods of inactivity
+
+If you are validating a Pages rollout or DNS cutover, the fallback deployment URL is `https://bradsaucier.github.io/opsnormal/`.
+
 ## Local build and verification
 
-Prerequisites: Ensure the local environment meets the engine contract defined in `package.json`. `devEngines` enforces the local Node and npm baseline before install, ci, and run commands.
+Prerequisites: ensure the local environment meets the engine contract defined in `package.json`. `devEngines` enforces the local Node and npm baseline before install, ci, and run commands.
+
+### Develop
 
 ```bash
 npm ci
 npm run dev
 ```
 
-Local verification and CI are aligned to supported LTS lines. For the full contribution workflow and merge expectations, read [CONTRIBUTING.md](./CONTRIBUTING.md).
+### Verify before pull request
 
 ```bash
 npm run format:check
@@ -234,6 +269,8 @@ npm run test:e2e:firefox:smoke
 
 `npm run format:check` verifies repository formatting with Prettier, and `npm run format` applies the repository formatting baseline locally. `npm run test:e2e` builds the e2e-mode harness bundle and runs the full Chromium suite. `npm run test:e2e:webkit` runs the narrow WebKit smoke gate that verifies rendering and IndexedDB I/O on a WebKit engine without claiming to reproduce Safari eviction behavior. `npm run test:e2e:firefox` runs the parallel Gecko smoke gate that verifies boot, IndexedDB persistence, service worker activation, the non-WebKit storage path, and the fallback download path without claiming to simulate live Firefox storage policy. Run `npm run build` before the `test:e2e:*:smoke` commands so the production-artifact smoke checks reuse a real `dist/` build and skip the harness-only specs.
 
+For the full contribution workflow and merge expectations, read [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Documentation matrix
 
 This README stays focused on orientation and first use. Deeper proof, limits, and design constraints live in the repo docs.
@@ -242,14 +279,14 @@ This README stays focused on orientation and first use. Deeper proof, limits, an
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | [**Architecture overview**](./docs/architecture.md)             | Runtime shape, persistence model, recovery posture, PWA behavior, and known limits                   |
 | [**Risk register**](./docs/risk-register.md)                    | Known operational risks, browser-storage hazards, and current mitigations                            |
-| [WebKit CI coverage boundary](./docs/webkit-limitations.md)     | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures         |
-| [Firefox CI coverage boundary](./docs/firefox-limitations.md)   | What the merge-blocking Firefox lane proves, what it cannot prove, and how to triage failures        |
 | [**Architecture Decision Records**](./docs/decisions/README.md) | Why the repo chose IndexedDB, local-only boundaries, export integrity rules, and related constraints |
 | [**Test plan**](./docs/test-plan.md)                            | Verification strategy, release checks, and coverage priorities                                       |
 | [Release checklist](./docs/release-checklist.md)                | Pre-release validation and operator-facing quality gates                                             |
-| [Changelog](./CHANGELOG.md)                                     | Public release history                                                                               |
 | [Security policy](./SECURITY.md)                                | Security model, trust boundaries, and accurate claim limits                                          |
+| [WebKit CI coverage boundary](./docs/webkit-limitations.md)     | What the merge-blocking WebKit lane proves, what it cannot prove, and how to triage failures         |
+| [Firefox CI coverage boundary](./docs/firefox-limitations.md)   | What the merge-blocking Firefox lane proves, what it cannot prove, and how to triage failures        |
 | [Design tokens](./docs/design-tokens.md)                        | Visual language, structural colors, state colors, and clipped geometry                               |
+| [Changelog](./CHANGELOG.md)                                     | Public release history                                                                               |
 | [Contributing guide](./CONTRIBUTING.md)                         | Contribution rules that preserve repo scope                                                          |
 | [Support policy](./SUPPORT.md)                                  | Question paths, vulnerability reporting, and funding posture                                         |
 | [Code of conduct](./CODE_OF_CONDUCT.md)                         | Expected project conduct                                                                             |
@@ -267,6 +304,8 @@ If you want to contribute, stay inside the operating boundary.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-## License
+## License and citation
 
-See [LICENSE](./LICENSE).
+MIT License. Copyright © Bradley Saucier. See [LICENSE](./LICENSE).
+
+If you reference OpsNormal in research, operations, or published work, cite the software using [CITATION.cff](./CITATION.cff).
