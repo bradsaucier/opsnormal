@@ -42,6 +42,8 @@ jobs:
         uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
         with:
           languages: javascript-typescript
+          # Pinned for reproducible analysis; aliases remain selected below.
+          packs: codeql/javascript-queries@2.3.7
           queries: security-extended,security-and-quality
 
       - name: Build for CodeQL analysis

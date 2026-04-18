@@ -13,6 +13,7 @@ Before tagging a release:
 - [ ] Playwright Firefox smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/firefox-limitations.md
 - [ ] Pages release waits for the successful main-branch run of Pipeline: Mainline Integrity, downloads the exact dist-ci-verified artifact from that run, reruns Chromium smoke, WebKit release smoke, and Firefox release smoke against that artifact, and only then publishes
 - [ ] Pages release verifies the dist-ci-verified build-provenance attestation against the triggering commit SHA before smoke or upload
+- [ ] Pipeline: Pages Release release_smoke observed CodeQL / Analyze (javascript-typescript) completed and success on the release SHA before the artifact was uploaded to Pages
 - [ ] Confirm workflow-lint and workflow-security-shape are green on the release SHA
 - [ ] public/CNAME matches the GitHub Pages custom-domain setting and the enforced HTTPS origin
 - [ ] Vitest accessibility assertions pass on the direct-select check-in and history surfaces

@@ -20,6 +20,9 @@ The workflow runs with least-privilege permissions, installs dependencies, build
 Treat `CodeQL / Analyze (javascript-typescript)` as a required mainline gate once the workflow has posted its first successful run.
 High-severity findings must be fixed before merge unless a finding is proven incorrect and suppressed with a narrowly scoped, query-specific justification.
 Medium and low findings must be fixed in the same pull request or tracked immediately with an issue before merge.
+The gate is enforced at two points.
+Branch protection blocks merge when CodeQL fails on a pull request.
+Pipeline: Pages Release blocks publish when CodeQL has not reported completed and success for the release SHA before `release_smoke` runs, so a late-firing finding on push to `main`, including one raised by a query-pack roll-forward, can no longer silently ship.
 
 ## Consequences
 
@@ -29,6 +32,9 @@ The repository gains structured findings in the GitHub Security tab without chan
 The workflow adds CI minutes and may surface false positives that require triage.
 Because CodeQL analyzes the built project, `npm run build` must stay healthy for scanning to run.
 If the repository later becomes private, CodeQL minute consumption will become a costed resource instead of a free public-repository control.
+A CodeQL failure on the release SHA now stops Pages publish.
+This couples releases to CodeQL availability, matching the existing coupling to Sigstore `gh attestation verify`.
+Query packs are version-pinned so the gate evaluates a reproducible rule set, and pack updates flow through the normal dependency review cadence.
 
 ## Alternatives Considered
 
