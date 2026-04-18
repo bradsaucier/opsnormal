@@ -36,6 +36,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0028 | CodeQL source code scanning gate                                |
 | 0029 | Firefox smoke engine compatibility gate                         |
 | 0030 | Workflow supply-chain hardening                                 |
+| 0031 | Automated browser-level migration upgrade proof                 |
 
 ## Operating rule
 

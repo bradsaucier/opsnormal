@@ -10,6 +10,7 @@ const targetedCoverageModules = [
   'src/lib/status.ts',
   'src/hooks/useStorageHealth.ts',
   'src/db/appDb.ts',
+  'src/db/migrations/index.ts',
   'src/services/entryWrittenCoordination.ts',
   'src/services/importService.ts',
   'src/services/importValidation.ts',
@@ -66,6 +67,12 @@ export default defineConfig({
           functions: 90,
           statements: 89,
           branches: 78,
+        },
+        'src/db/migrations/index.ts': {
+          lines: 94,
+          functions: 100,
+          statements: 94,
+          branches: 84,
         },
         'src/services/entryWrittenCoordination.ts': {
           lines: 100,

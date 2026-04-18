@@ -61,6 +61,7 @@ Prove that the app:
 - cycle sequence correctness
 - bounded reopen recovery after forced close
 - post-write verification on the daily check-in write path
+- deterministic version 1 migration fixture upgrades through the full registry without entry loss, with intact `[date+sectorId]` uniqueness and no legacy secondary indexes
 
 ### End-to-end tests
 
@@ -82,6 +83,7 @@ Prove that the app:
 - ExportPanel fallback keeps emergency JSON and CSV export available through the isolated crash-export helper after a controlled render fault
 - synthetic PWA update handoff proof covers update prompt application, controller handoff, second-tab schema reload recovery, the session-scoped loop-breaker banner, and duplicate-tab recovery clear propagation in Chromium
 - session-scoped 5000 millisecond schema reload guard remains loop-safe and fail-open when storage access is denied
+- release-browser migration upgrade proof seeds a version 1 IndexedDB database and proves preserved entries, intact compound uniqueness, and removed legacy secondary indexes in Chromium release, WebKit, and Firefox lanes
 - production-artifact smoke gating reuses an already-built `dist/` bundle and excludes the harness-only crash and fallback specs that require e2e-mode fixture pages
 - dedicated WCAG 2.1 A and AA Playwright scans cover the desktop app shell, the direct-select radiogroup pattern, the mobile history region, the Import and Restore, Undo and Recovery, and Storage Health recovery sections, the Backup Action Banner warning state, the database-upgrade-blocked alert, and the boot-fallback and crash-fallback harness pages, all with service workers blocked for deterministic DOM evaluation
 - ARIA snapshot coverage locks the direct-select radiogroup structure without snapshotting time-driven history surfaces
@@ -106,6 +108,7 @@ The targeted module list covers the repository's highest-risk logic paths:
 - `src/lib/status.ts` - status content mapping, cycle logic, and screen reader hints
 - `src/hooks/useStorageHealth.ts` - storage durability and Safari risk detection
 - `src/db/appDb.ts` - read-back verified daily writes, reopen recovery, and schema-handoff guards
+- `src/db/migrations/index.ts` - ordered schema registry application and migration validation
 - `src/services/entryWrittenCoordination.ts` - cross-tab undo invalidation signaling (100 percent gate)
 - `src/services/importService.ts` - fail-closed import commit verification, mismatch hinting, and undo snapshot restoration
 - `src/services/importValidation.ts` - import integrity boundary with checksum, schema, and blocked key validation

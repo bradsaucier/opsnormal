@@ -11,8 +11,11 @@ const baseURL = env?.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
 const webServerCommand =
   env?.PLAYWRIGHT_WEB_SERVER_CMD ?? 'npm run preview:e2e';
 const skipWebServer = env?.PLAYWRIGHT_SKIP_WEBSERVER === '1';
+const migrationUpgradeSpec = /.*migration-upgrade\.spec\.ts/;
+const webkitSmokeSpec = /.*webkit-smoke\.spec\.ts/;
+const firefoxSmokeSpec = /.*firefox-smoke\.spec\.ts/;
 const webkitSmokeProject = {
-  testMatch: /.*webkit-smoke\.spec\.ts/,
+  testMatch: [webkitSmokeSpec, migrationUpgradeSpec],
   retries: 2,
   workers: 1,
   use: {
@@ -20,7 +23,7 @@ const webkitSmokeProject = {
   },
 };
 const firefoxSmokeProject = {
-  testMatch: /.*firefox-smoke\.spec\.ts/,
+  testMatch: [firefoxSmokeSpec, migrationUpgradeSpec],
   retries: 2,
   workers: 1,
   use: {
@@ -54,6 +57,7 @@ export default defineConfig({
         /.*\.a11y\.spec\.ts/,
         /.*webkit-smoke\.spec\.ts/,
         /.*firefox-smoke\.spec\.ts/,
+        migrationUpgradeSpec,
       ],
       use: { ...devices['Desktop Chrome'] },
     },
@@ -64,6 +68,15 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         serviceWorkers: 'block',
       },
+    },
+    {
+      // This project keeps the release-artifact migration drill explicit
+      // without slowing the default Chromium pull-request lane.
+      name: 'chromium-release',
+      testMatch: migrationUpgradeSpec,
+      retries: 2,
+      workers: 1,
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'webkit',

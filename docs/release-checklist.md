@@ -8,6 +8,7 @@ Before tagging a release:
 - [ ] typecheck passes
 - [ ] unit and integration tests pass
 - [ ] per-file coverage thresholds on src/services/importService.ts and src/db/appDb.ts pass
+- [x] seeded v1 to latest migration upgrade proof is automated in tests/integration/dbMigrations.browser.test.ts and tests/e2e/migration-upgrade.spec.ts
 - [ ] Playwright Chromium tests pass
 - [ ] Playwright WebKit smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/webkit-limitations.md
 - [ ] Playwright Firefox smoke gate passes in CI and any failure is triaged as a real regression, a test issue, or an explicitly documented platform boundary in docs/firefox-limitations.md

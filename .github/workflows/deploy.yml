@@ -171,12 +171,17 @@ jobs:
           PLAYWRIGHT_WEB_SERVER_CMD: npm run preview:prod
         run: npm run test:e2e:smoke
 
-      - name: Run WebKit release smoke against CI artifact
+      - name: Run Chromium release migration proof against CI artifact
+        env:
+          PLAYWRIGHT_WEB_SERVER_CMD: npm run preview:prod
+        run: npm run test:e2e:chromium:migration
+
+      - name: Run WebKit release smoke and migration proof against CI artifact
         env:
           PLAYWRIGHT_WEB_SERVER_CMD: npm run preview:prod
         run: npm run test:e2e:webkit:smoke
 
-      - name: Run Firefox release smoke against CI artifact
+      - name: Run Firefox release smoke and migration proof against CI artifact
         env:
           PLAYWRIGHT_WEB_SERVER_CMD: npm run preview:prod
         run: npm run test:e2e:firefox:smoke
