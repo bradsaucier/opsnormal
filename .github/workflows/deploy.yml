@@ -29,6 +29,62 @@ jobs:
       contents: read
 
     steps:
+      - name: Await CodeQL verdict for release SHA
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          CODEQL_POLL_INTERVAL_SECONDS: '20'
+          CODEQL_POLL_TIMEOUT_SECONDS: '720'
+          CODEQL_WORKFLOW_FILE: codeql.yml
+        run: |
+          set -euo pipefail
+
+          deadline=$(( $(date +%s) + CODEQL_POLL_TIMEOUT_SECONDS ))
+          while :; do
+            payload="$(
+              gh api "/repos/${REPOSITORY}/actions/workflows/${CODEQL_WORKFLOW_FILE}/runs?event=push&head_sha=${RELEASE_SHA}&per_page=100" \
+                | jq -c --arg sha "${RELEASE_SHA}" '
+                    [.workflow_runs[] | select(.head_sha == $sha)]
+                    | sort_by(.created_at)
+                    | last
+                  '
+            )"
+
+            if [ -n "$payload" ] && [ "$payload" != "null" ]; then
+              status="$(echo "$payload" | jq -r '.status // ""')"
+              conclusion="$(echo "$payload" | jq -r '.conclusion // ""')"
+              html_url="$(echo "$payload" | jq -r '.html_url // ""')"
+
+              if [ "$status" = "completed" ]; then
+                if [ "$conclusion" = "success" ]; then
+                  echo "CodeQL completed with success for ${RELEASE_SHA}."
+                  exit 0
+                fi
+
+                echo "CodeQL completed with conclusion ${conclusion} for ${RELEASE_SHA}." >&2
+                if [ -n "$html_url" ]; then
+                  echo "CodeQL run: ${html_url}" >&2
+                fi
+                exit 1
+              fi
+
+              echo "CodeQL status for ${RELEASE_SHA}: ${status}. Waiting..."
+              if [ -n "$html_url" ]; then
+                echo "CodeQL run: ${html_url}"
+              fi
+            else
+              echo "No CodeQL workflow run found yet for ${RELEASE_SHA}. Waiting..."
+            fi
+
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "Timed out awaiting CodeQL verdict for ${RELEASE_SHA}." >&2
+              exit 1
+            fi
+
+            sleep "${CODEQL_POLL_INTERVAL_SECONDS}"
+          done
+
       - name: Checkout release SHA
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
