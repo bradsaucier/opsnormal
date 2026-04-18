@@ -79,12 +79,14 @@ describe('build provenance workflow contract', () => {
     expect(releaseSmoke).toContain(
       'gh attestation verify dist-ci-verified.zip',
     );
+    expect(releaseSmoke).toContain('REPOSITORY: ${{ github.repository }}');
     expect(releaseSmoke).toContain(
-      '--signer-workflow ${{ github.repository }}/.github/workflows/ci.yml',
+      'SOURCE_DIGEST: ${{ github.event.workflow_run.head_sha }}',
     );
     expect(releaseSmoke).toContain(
-      '--source-digest ${{ github.event.workflow_run.head_sha }}',
+      '--signer-workflow "${REPOSITORY}/.github/workflows/ci.yml"',
     );
+    expect(releaseSmoke).toContain('--source-digest "${SOURCE_DIGEST}"');
     expect(releaseSmoke).toContain('--source-ref refs/heads/main');
 
     expectOrdered(releaseSmoke, [
@@ -101,12 +103,14 @@ describe('build provenance workflow contract', () => {
 
     expect(deployJob).toContain('attestations: read');
     expect(deployJob).toContain('gh attestation verify dist-ci-verified.zip');
+    expect(deployJob).toContain('REPOSITORY: ${{ github.repository }}');
     expect(deployJob).toContain(
-      '--signer-workflow ${{ github.repository }}/.github/workflows/ci.yml',
+      'SOURCE_DIGEST: ${{ github.event.workflow_run.head_sha }}',
     );
     expect(deployJob).toContain(
-      '--source-digest ${{ github.event.workflow_run.head_sha }}',
+      '--signer-workflow "${REPOSITORY}/.github/workflows/ci.yml"',
     );
+    expect(deployJob).toContain('--source-digest "${SOURCE_DIGEST}"');
     expect(deployJob).toContain('--source-ref refs/heads/main');
 
     expectOrdered(deployJob, [
