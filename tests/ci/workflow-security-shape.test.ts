@@ -106,6 +106,12 @@ function getJob(workflow: WorkflowDefinition, jobName: string): WorkflowJob {
   return job;
 }
 
+function getPositiveInteger(value: unknown): number | null {
+  return Number.isInteger(value) && (value as number) > 0
+    ? (value as number)
+    : null;
+}
+
 function getSteps(job: WorkflowJob): WorkflowStep[] {
   if (!Array.isArray(job.steps)) {
     return [];
@@ -232,6 +238,31 @@ describe('workflow security contract', () => {
         `${workflowFile} permissions must be a mapping.`,
       ).not.toBeNull();
     }
+  });
+
+  it('requires timeout-minutes on every workflow job', () => {
+    for (const workflowFile of workflowFiles) {
+      const workflow = loadWorkflow(workflowFile);
+
+      for (const [jobName, job] of Object.entries(getJobs(workflow))) {
+        expect(
+          getPositiveInteger(job['timeout-minutes']),
+          `${workflowFile} job ${jobName} must declare a positive integer timeout-minutes value.`,
+        ).not.toBeNull();
+      }
+    }
+  });
+
+  it('keeps mainline integrity concurrency pull-request scoped', () => {
+    const workflow = loadWorkflow('ci.yml');
+    const concurrency = workflow.concurrency;
+
+    expect(isRecord(concurrency) ? concurrency.group : undefined).toBe(
+      'mainline-integrity-${{ github.ref }}',
+    );
+    expect(
+      isRecord(concurrency) ? concurrency['cancel-in-progress'] : undefined,
+    ).toBe("${{ github.event_name == 'pull_request' }}");
   });
 
   it('disallows contents: write outside a documented exception path', () => {

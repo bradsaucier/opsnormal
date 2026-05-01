@@ -28,6 +28,7 @@ Add four workflow-supply-chain controls and treat them as the default repository
 2. Every workflow must declare top-level `permissions`, and every job must stay on the minimum read and write scopes it requires.
 3. `Workflow Lint` must run pinned `zizmor` analysis on workflow changes, upload SARIF results to code scanning, and block the run on high-severity findings.
 4. `Pipeline: Mainline Integrity` must run `npm audit signatures` before build so unsigned or mismatched npm artifacts fail the lane.
+5. Every workflow job must declare an explicit `timeout-minutes`, and Mainline Integrity pull request runs must cancel stale attempts without cancelling push-to-main release artifact runs.
 
 These controls are enforced through workflow definitions, the `workflow-security-shape` test suite, and the repository policy documents.
 
@@ -54,3 +55,4 @@ Review this decision when any of the following changes:
 2. a job permission block gains a new write scope or requests `contents: write`
 3. a workflow needs persisted checkout credentials
 4. `zizmor` or npm signature verification introduces sustained false positives or operational friction that the repository cannot absorb
+5. workflow timeouts, cache restore strategy, or pull request concurrency behavior no longer match observed runner behavior
