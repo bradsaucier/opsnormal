@@ -192,6 +192,7 @@ jobs:
     needs:
       - release_smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     concurrency:
       group: pages
       cancel-in-progress: false
