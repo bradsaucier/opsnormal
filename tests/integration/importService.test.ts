@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { MockInstance } from 'vitest';
 
 import { db, getAllEntries, setDailyStatus } from '../../src/db/appDb';
 import {
@@ -92,6 +93,15 @@ function createLargeImportFile(): File {
   return createImportFile('x'.repeat(300_000), 'opsnormal-large-import.json');
 }
 
+let dateNowSpy: MockInstance<() => number> | null = null;
+
+function pinPreviewClock() {
+  dateNowSpy?.mockRestore();
+  dateNowSpy = vi
+    .spyOn(Date, 'now')
+    .mockReturnValue(new Date('2026-04-15T12:00:00.000Z').getTime());
+}
+
 function installPreviewWorkerStub(
   onPostMessage: (worker: MockPreviewWorker, request: unknown) => void,
 ) {
@@ -138,6 +148,11 @@ describe('import service', () => {
   beforeEach(async () => {
     __resetUndoSnapshotStateForTests();
     await db.dailyEntries.clear();
+  });
+
+  afterEach(() => {
+    dateNowSpy?.mockRestore();
+    dateNowSpy = null;
   });
 
   it('reads import file text after validating the file size', async () => {
@@ -187,6 +202,8 @@ describe('import service', () => {
   });
 
   it('flags checksum-backed imports as verified in preview', async () => {
+    pinPreviewClock();
+
     const payload = buildPayload([
       {
         date: '2026-03-28',
@@ -205,6 +222,8 @@ describe('import service', () => {
   });
 
   it('flags old checksum-backed imports as stale in preview', async () => {
+    pinPreviewClock();
+
     const payload = buildPayload([
       {
         date: '2026-03-28',
