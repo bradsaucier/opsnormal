@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { UnverifiedImportRejectedError } from '../../lib/errors';
 import { applyImport, previewImportFile } from '../../services/importService';
 import {
   isSuccessfulImportPreview,
@@ -176,6 +177,11 @@ export function useImportWorkflow({
       const { importedCount, undo } = await applyImport(
         pendingImport.payload,
         importMode,
+        {
+          allowUnverified:
+            pendingImport.kind === 'legacy-unverified' &&
+            riskyImportAcknowledged,
+        },
       );
       onImportApplied(undo);
       clearPendingImport();
@@ -192,9 +198,11 @@ export function useImportWorkflow({
       onStatusMessage({
         tone: 'error',
         text:
-          error instanceof Error
-            ? error.message
-            : 'Import failed during database write.',
+          error instanceof UnverifiedImportRejectedError
+            ? 'Import rejected. The backup file has no integrity checksum. Reload the file and acknowledge the unverified-import risk before retrying.'
+            : error instanceof Error
+              ? error.message
+              : 'Import failed during database write.',
       });
     } finally {
       setImportBusy(false);

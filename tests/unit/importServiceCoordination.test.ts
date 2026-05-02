@@ -106,6 +106,7 @@ describe('import service cross-tab undo invalidation', () => {
         },
       ]),
       'replace',
+      { allowUnverified: true },
     );
     const windowEventSpy = vi.fn();
     window.addEventListener('opsnormal:entry-written', windowEventSpy);
@@ -147,6 +148,7 @@ describe('import service cross-tab undo invalidation', () => {
     const sameTabUndo = await importServiceModule.applyImport(
       validPayload,
       'replace',
+      { allowUnverified: true },
     );
 
     coordinationModule.broadcastEntryWritten({
@@ -163,6 +165,7 @@ describe('import service cross-tab undo invalidation', () => {
     const wrongSourceUndo = await importServiceModule.applyImport(
       validPayload,
       'replace',
+      { allowUnverified: true },
     );
     const wrongSourceChannel = new MockBroadcastChannel(
       coordinationModule.ENTRY_WRITTEN_COORDINATION_CHANNEL_NAME,
@@ -182,6 +185,7 @@ describe('import service cross-tab undo invalidation', () => {
     const malformedUndo = await importServiceModule.applyImport(
       validPayload,
       'replace',
+      { allowUnverified: true },
     );
     const malformedChannel = new MockBroadcastChannel(
       coordinationModule.ENTRY_WRITTEN_COORDINATION_CHANNEL_NAME,
@@ -216,6 +220,7 @@ describe('import service cross-tab undo invalidation', () => {
         },
       ]),
       'replace',
+      { allowUnverified: true },
     );
 
     window.dispatchEvent(

@@ -6,6 +6,7 @@ import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   STALE_IMPORT_BUFFER_MS,
+  type CrashStorageDiagnostics,
   type DailyEntry,
   type ImportIntegrityStatus,
   type JsonExportPayload,
@@ -28,6 +29,8 @@ interface RawChecksumPayload {
   crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
   checksum?: JsonExportPayload['checksum'];
 }
+
+type ParsedChecksumPayload = Parameters<typeof computeJsonExportChecksum>[0];
 
 interface ValidationIssueDetails {
   path: string | null;
@@ -101,7 +104,7 @@ class InvalidImportPayloadError extends Error {
   }
 }
 
-class ChecksumFailedImportError extends Error {
+export class ChecksumFailedImportError extends Error {
   constructor() {
     super(
       'Import rejected. File integrity check failed. The backup may be corrupted or modified.',
@@ -269,6 +272,80 @@ export async function verifyExportChecksum(
   if (computedChecksum !== validatedPayload.checksum) {
     throw new ChecksumFailedImportError();
   }
+}
+
+function buildParsedChecksumPayload(
+  payload: JsonExportPayload,
+  crashDiagnostics = payload.crashDiagnostics,
+): ParsedChecksumPayload {
+  const checksumPayload: ParsedChecksumPayload = {
+    app: payload.app,
+    schemaVersion: payload.schemaVersion,
+    exportedAt: payload.exportedAt,
+    entries: payload.entries,
+  };
+
+  return crashDiagnostics
+    ? {
+        ...checksumPayload,
+        crashDiagnostics,
+      }
+    : checksumPayload;
+}
+
+function buildCrashDiagnosticsInExportOrder(
+  diagnostics: CrashStorageDiagnostics,
+): CrashStorageDiagnostics {
+  return {
+    connectionDropsDetected: diagnostics.connectionDropsDetected,
+    reconnectSuccesses: diagnostics.reconnectSuccesses,
+    reconnectFailures: diagnostics.reconnectFailures,
+    reconnectState: diagnostics.reconnectState,
+    lastReconnectError: diagnostics.lastReconnectError,
+    lastVerificationResult: diagnostics.lastVerificationResult,
+    lastVerifiedAt: diagnostics.lastVerifiedAt,
+    persistAttempted: diagnostics.persistAttempted,
+    persistGranted: diagnostics.persistGranted,
+    standaloneMode: diagnostics.standaloneMode,
+    installRecommended: diagnostics.installRecommended,
+    webKitRisk: diagnostics.webKitRisk,
+  };
+}
+
+/**
+ * Re-verifies a JsonExportPayload's SHA-256 checksum against its canonical
+ * projection. Throws ChecksumFailedImportError on mismatch. Returns silently
+ * when no checksum is present. Call before any IndexedDB write.
+ */
+export async function verifyParsedExportChecksum(
+  payload: JsonExportPayload,
+): Promise<void> {
+  if (!payload.checksum) {
+    return;
+  }
+
+  const computedChecksum = await computeJsonExportChecksum(
+    buildParsedChecksumPayload(payload),
+  );
+
+  if (computedChecksum === payload.checksum) {
+    return;
+  }
+
+  if (payload.crashDiagnostics) {
+    const exportOrderChecksum = await computeJsonExportChecksum(
+      buildParsedChecksumPayload(
+        payload,
+        buildCrashDiagnosticsInExportOrder(payload.crashDiagnostics),
+      ),
+    );
+
+    if (exportOrderChecksum === payload.checksum) {
+      return;
+    }
+  }
+
+  throw new ChecksumFailedImportError();
 }
 
 export async function parseImportPayload(

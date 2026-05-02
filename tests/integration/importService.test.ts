@@ -9,14 +9,15 @@ import {
 import { exportCurrentEntriesAsJson } from '../../src/lib/export';
 import {
   __resetUndoSnapshotStateForTests,
-  applyImport,
+  __buildImportPreviewForTests,
+  applyImport as applyImportWithIntegrityGate,
   previewImportFile,
-  previewImportPayload,
   readImportFile,
 } from '../../src/services/importService';
 import {
   OPSNORMAL_APP_NAME,
   type DailyEntry,
+  type ImportMode,
   type JsonExportPayload,
 } from '../../src/types';
 
@@ -80,6 +81,10 @@ function buildPayload(
     exportedAt: '2026-03-28T12:00:00.000Z',
     entries,
   };
+}
+
+function applyImport(payload: JsonExportPayload, mode: ImportMode) {
+  return applyImportWithIntegrityGate(payload, mode, { allowUnverified: true });
 }
 
 function createImportFile(
@@ -175,7 +180,7 @@ describe('import service', () => {
   it('previews overwrite and new entry counts', async () => {
     await setDailyStatus('2026-03-27', 'body', 'nominal');
 
-    const preview = await previewImportPayload(
+    const preview = await __buildImportPreviewForTests(
       buildPayload([
         {
           date: '2026-03-27',
@@ -215,7 +220,7 @@ describe('import service', () => {
     payload.exportedAt = '2026-04-14T12:00:00.000Z';
     payload.checksum = 'a'.repeat(64);
 
-    const preview = await previewImportPayload(payload);
+    const preview = await __buildImportPreviewForTests(payload);
 
     expect(preview.integrityStatus).toBe('verified');
     expect(preview.kind).toBe('good');
@@ -235,7 +240,7 @@ describe('import service', () => {
     payload.exportedAt = '2026-03-20T12:00:00.000Z';
     payload.checksum = 'a'.repeat(64);
 
-    const preview = await previewImportPayload(payload);
+    const preview = await __buildImportPreviewForTests(payload);
 
     expect(preview.kind).toBe('stale');
   });
@@ -584,7 +589,7 @@ describe('import service', () => {
 
     await db.dailyEntries.clear();
 
-    const preview = await previewImportPayload(payload);
+    const preview = await __buildImportPreviewForTests(payload);
     expect(preview.integrityStatus).toBe('verified');
     expect(preview.existingEntryCount).toBe(0);
     expect(preview.totalEntries).toBe(originalEntries.length);
@@ -618,7 +623,7 @@ describe('import service', () => {
     await setDailyStatus('2026-03-29', 'household', 'degraded');
     await setDailyStatus('2026-03-30', 'work-school', 'nominal');
 
-    const preview = await previewImportPayload(payload);
+    const preview = await __buildImportPreviewForTests(payload);
     expect(preview.integrityStatus).toBe('verified');
     expect(preview.existingEntryCount).toBe(originalEntries.length + 2);
     expect(preview.totalEntries).toBe(originalEntries.length);

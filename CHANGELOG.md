@@ -8,6 +8,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- re-verified import checksums inside `applyImport` before any IndexedDB write and documented the boundary in ADR-0033
 - added explicit workflow job timeouts across the pipeline and locked the invariant in the workflow security shape tests
 - added PR-only cancellation to Pipeline: Mainline Integrity and Playwright browser cache restore keys for the WebKit and Firefox smoke lanes
 - removed the internal IndexedDB auto-increment `id` from new JSON and crash-JSON exports, while keeping legacy backups that still carry `id` importable
