@@ -6,7 +6,7 @@ OpsNormal exists to provide a sub-10-second daily readiness check that remains u
 
 ## Decision anchors
 
-The current release posture and trust boundary are grounded in ADR-0005, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0014, ADR-0017, ADR-0020, ADR-0021, ADR-0022, ADR-0023, and ADR-0026.
+The current release posture and trust boundary are grounded in ADR-0005, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0012, ADR-0014, ADR-0017, ADR-0020, ADR-0021, ADR-0022, and ADR-0026.
 
 ## Product boundary
 
