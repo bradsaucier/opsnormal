@@ -89,6 +89,26 @@ jobs:
           subject-name: dist-ci-verified.zip
           subject-digest: sha256:${{ steps.upload_dist.outputs.artifact-digest }}
 
+      - name: Generate release SBOM
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: .
+          format: spdx-json
+          output-file: dist-ci-verified.spdx.json
+          artifact-name: dist-ci-verified-sbom
+          upload-artifact: true
+          upload-artifact-retention: 7
+          upload-release-assets: false
+
+      - name: Attest release SBOM
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-name: dist-ci-verified.zip
+          subject-digest: sha256:${{ steps.upload_dist.outputs.artifact-digest }}
+          sbom-path: dist-ci-verified.spdx.json
+
       - name: Install Playwright browsers
         if: matrix.node-version == 22
         run: npx playwright install --with-deps chromium
