@@ -13,6 +13,7 @@ import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
   type DailyEntry,
+  type JsonExportPayload,
 } from '../../src/types';
 
 function stripEntryIds(entries: DailyEntry[]) {
@@ -123,6 +124,7 @@ describe('export helpers', () => {
     const parsed = JSON.parse(json) as {
       app: typeof OPSNORMAL_APP_NAME;
       schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+      checksumAlgorithm: JsonExportPayload['checksumAlgorithm'];
       exportedAt: string;
       entries: DailyEntry[];
       checksum: string;
@@ -132,6 +134,7 @@ describe('export helpers', () => {
     const recomputedChecksum = await computeJsonExportChecksum({
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
+      checksumAlgorithm: parsed.checksumAlgorithm,
       exportedAt: parsed.exportedAt,
       entries: parsed.entries,
       crashDiagnostics: parsed.crashDiagnostics,
@@ -148,6 +151,7 @@ describe('export helpers', () => {
     const recomputedChecksum: string = await computeJsonExportChecksum({
       app: parsed.app,
       schemaVersion: parsed.schemaVersion,
+      checksumAlgorithm: parsed.checksumAlgorithm,
       exportedAt: parsed.exportedAt,
       entries: parsed.entries,
     });

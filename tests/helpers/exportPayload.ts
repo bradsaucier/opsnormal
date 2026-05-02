@@ -9,9 +9,14 @@ export interface ParsedExportPayloadDetails {
   rawChecksumPayload: ChecksumPayload;
 }
 
+export interface ParseExportPayloadOptions {
+  legacyV1?: boolean;
+}
+
 function buildRawChecksumPayload(
   parsed: unknown,
   payload: JsonExportPayload,
+  options: ParseExportPayloadOptions = {},
 ): ChecksumPayload {
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Export payload must be a JSON object.');
@@ -28,6 +33,9 @@ function buildRawChecksumPayload(
   return {
     app: payload.app,
     schemaVersion: payload.schemaVersion,
+    ...(!options.legacyV1 && payload.checksumAlgorithm
+      ? { checksumAlgorithm: payload.checksumAlgorithm }
+      : {}),
     exportedAt: payload.exportedAt,
     entries: rawEntries as ChecksumPayload['entries'],
     ...(rawCrashDiagnostics && typeof rawCrashDiagnostics === 'object'
@@ -42,16 +50,20 @@ function buildRawChecksumPayload(
 
 export function parseExportPayloadDetails(
   rawText: string,
+  options: ParseExportPayloadOptions = {},
 ): ParsedExportPayloadDetails {
   const parsed: unknown = JSON.parse(rawText) as unknown;
   const payload = JsonImportSchema.parse(parsed);
 
   return {
     payload,
-    rawChecksumPayload: buildRawChecksumPayload(parsed, payload),
+    rawChecksumPayload: buildRawChecksumPayload(parsed, payload, options),
   };
 }
 
-export function parseExportPayload(rawText: string): JsonExportPayload {
-  return parseExportPayloadDetails(rawText).payload;
+export function parseExportPayload(
+  rawText: string,
+  options: ParseExportPayloadOptions = {},
+): JsonExportPayload {
+  return parseExportPayloadDetails(rawText, options).payload;
 }

@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ## [Unreleased]
 
+### Added
+
+- deterministic SHA-256 canonicalization for JSON export checksums via `sha256-canonical-v1`; legacy backups remain importable, while new backups require builds that understand the additive `checksumAlgorithm` field
+
 ### Changed
 
 - re-verified import checksums inside `applyImport` before any IndexedDB write and documented the boundary in ADR-0033

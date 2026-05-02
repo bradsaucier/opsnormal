@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHECKSUM_ALGORITHM_V2,
   createJsonExport,
   computeJsonExportChecksum,
 } from '../../src/lib/export';
@@ -148,7 +149,26 @@ describe('shared import validation', () => {
 
     expect(parsed.entries).toHaveLength(1);
     expect(parsed.entries[0]?.sectorId).toBe('body');
+    expect(parsed.checksumAlgorithm).toBe(CHECKSUM_ALGORITHM_V2);
     expect(parsed.checksum).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('rejects unknown checksum algorithms as incompatible', async () => {
+    const error = await captureRejection(
+      parseImportPayload(
+        JSON.stringify({
+          ...buildPayload(),
+          checksumAlgorithm: 'sha256-canonical-v9',
+        }),
+      ),
+    );
+
+    expect(createRejectedImportPreview(error)).toEqual({
+      kind: 'incompatible',
+      reason: 'algorithm',
+      detectedAppName: 'OpsNormal',
+      detectedSchemaVersion: 1,
+    });
   });
 
   it('rejects a payload with a mismatched checksum', async () => {

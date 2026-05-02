@@ -6,7 +6,12 @@ import {
   UndoInvalidatedError,
   UndoVerificationError,
 } from '../../src/lib/errors';
-import { exportCurrentEntriesAsJson } from '../../src/lib/export';
+import {
+  CHECKSUM_ALGORITHM_V2,
+  computeJsonExportChecksum,
+  exportCurrentEntriesAsJson,
+} from '../../src/lib/export';
+import { ChecksumFailedImportError } from '../../src/services/importValidation';
 import {
   __resetUndoSnapshotStateForTests,
   __buildImportPreviewForTests,
@@ -587,6 +592,8 @@ describe('import service', () => {
     const exportResult = await exportCurrentEntriesAsJson();
     const payload = JSON.parse(exportResult.payload) as JsonExportPayload;
 
+    expect(payload.checksumAlgorithm).toBe(CHECKSUM_ALGORITHM_V2);
+
     await db.dailyEntries.clear();
 
     const preview = await __buildImportPreviewForTests(payload);
@@ -604,6 +611,92 @@ describe('import service', () => {
       );
 
     expect(roundTrippedEntries).toEqual(originalEntries);
+  });
+
+  it('imports legacy v1 checksummed payloads without an algorithm tag', async () => {
+    const payload = buildPayload([
+      {
+        date: '2026-03-28',
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+    ]);
+    payload.checksum = await computeJsonExportChecksum({
+      app: payload.app,
+      schemaVersion: payload.schemaVersion,
+      exportedAt: payload.exportedAt,
+      entries: payload.entries,
+    });
+
+    const result = await applyImport(payload, 'merge');
+
+    expect(result.importedCount).toBe(1);
+    expect(await getAllEntries()).toHaveLength(1);
+  });
+
+  it('rejects a v2 checksum when the algorithm tag is removed', async () => {
+    const payload = buildPayload([
+      {
+        date: '2026-03-28',
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+    ]);
+    payload.checksumAlgorithm = CHECKSUM_ALGORITHM_V2;
+    payload.checksum = await computeJsonExportChecksum({
+      app: payload.app,
+      schemaVersion: payload.schemaVersion,
+      checksumAlgorithm: payload.checksumAlgorithm,
+      exportedAt: payload.exportedAt,
+      entries: payload.entries,
+    });
+    delete payload.checksumAlgorithm;
+
+    await expect(applyImport(payload, 'merge')).rejects.toBeInstanceOf(
+      ChecksumFailedImportError,
+    );
+  });
+
+  it('rejects a legacy v1 checksum when the v2 algorithm tag is injected', async () => {
+    const payload = buildPayload([
+      {
+        date: '2026-03-28',
+        sectorId: 'body',
+        status: 'nominal',
+        updatedAt: '2026-03-28T12:00:00.000Z',
+      },
+    ]);
+    payload.checksum = await computeJsonExportChecksum({
+      app: payload.app,
+      schemaVersion: payload.schemaVersion,
+      exportedAt: payload.exportedAt,
+      entries: payload.entries,
+    });
+    payload.checksumAlgorithm = CHECKSUM_ALGORITHM_V2;
+
+    await expect(applyImport(payload, 'merge')).rejects.toBeInstanceOf(
+      ChecksumFailedImportError,
+    );
+  });
+
+  it('surfaces unknown checksum algorithms as incompatible previews', async () => {
+    const preview = await previewImportFile(
+      createImportFile(
+        JSON.stringify({
+          ...buildPayload([]),
+          checksumAlgorithm: 'sha256-canonical-v9',
+        }),
+      ),
+    );
+
+    expect(preview).toEqual({
+      kind: 'incompatible',
+      reason: 'algorithm',
+      detectedAppName: 'OpsNormal',
+      detectedSchemaVersion: 1,
+    });
   });
 
   it('round-trips exported entries through preview and replace import, purging orphaned data', async () => {

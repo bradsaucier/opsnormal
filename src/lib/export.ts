@@ -8,10 +8,13 @@ import {
   saveTextFileWithPicker,
 } from './fileDownload';
 import {
+  CHECKSUM_ALGORITHM_V1_LEGACY,
+  CHECKSUM_ALGORITHM_V2,
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
   computeJsonExportChecksum,
+  isCanonicalAlgorithm,
 } from './exportSerialization';
 import {
   clearLastExportCompletedAt,
@@ -176,6 +179,8 @@ async function readExportSnapshot(): Promise<ExportSnapshotResult> {
 }
 
 export {
+  CHECKSUM_ALGORITHM_V1_LEGACY,
+  CHECKSUM_ALGORITHM_V2,
   canUseVerifiedFileSave,
   clearLastExportCompletedAt,
   computeJsonExportChecksum,
@@ -185,6 +190,7 @@ export {
   downloadTextFile,
   formatLastExportCompletedAt,
   getLastExportCompletedAt,
+  isCanonicalAlgorithm,
   recordExportCompleted,
   saveTextFileWithPicker,
 };

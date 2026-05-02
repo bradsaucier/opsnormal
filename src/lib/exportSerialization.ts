@@ -4,12 +4,18 @@ import {
   type CrashStorageDiagnostics,
   type DailyEntry,
 } from '../types';
+import { canonicalSerialize } from './canonicalJson';
+
+export const CHECKSUM_ALGORITHM_V1_LEGACY = null;
+export const CHECKSUM_ALGORITHM_V2 = 'sha256-canonical-v1' as const;
+export type ChecksumAlgorithm = typeof CHECKSUM_ALGORITHM_V2;
 
 type ExportedEntry = Omit<DailyEntry, 'id'>;
 
 interface ChecksumPayload {
   app: typeof OPSNORMAL_APP_NAME;
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+  checksumAlgorithm?: typeof CHECKSUM_ALGORITHM_V2;
   exportedAt: string;
   entries: ExportedEntry[];
   crashDiagnostics?: CrashStorageDiagnostics;
@@ -19,6 +25,9 @@ function buildChecksumPayload(payload: ChecksumPayload): ChecksumPayload {
   return {
     app: payload.app,
     schemaVersion: payload.schemaVersion,
+    ...(payload.checksumAlgorithm
+      ? { checksumAlgorithm: payload.checksumAlgorithm }
+      : {}),
     exportedAt: payload.exportedAt,
     entries: payload.entries,
     ...(payload.crashDiagnostics
@@ -43,6 +52,7 @@ export async function createJsonExport(
   const payload: ChecksumPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
+    checksumAlgorithm: CHECKSUM_ALGORITHM_V2,
     exportedAt,
     entries: entries.map(toExportedEntry),
   };
@@ -64,6 +74,7 @@ export async function createCrashJsonExport(
   const payload: ChecksumPayload = {
     app: OPSNORMAL_APP_NAME,
     schemaVersion: EXPORT_SCHEMA_VERSION,
+    checksumAlgorithm: CHECKSUM_ALGORITHM_V2,
     exportedAt,
     entries: entries.map(toExportedEntry),
     crashDiagnostics,
@@ -90,7 +101,10 @@ export async function computeJsonExportChecksum(
   payload: ChecksumPayload,
 ): Promise<string> {
   const subtleCrypto = getSubtleCrypto();
-  const serialized = JSON.stringify(buildChecksumPayload(payload));
+  const checksumPayload = buildChecksumPayload(payload);
+  const serialized = isCanonicalAlgorithm(payload.checksumAlgorithm)
+    ? canonicalSerialize(checksumPayload)
+    : JSON.stringify(checksumPayload);
   const bytes = encodeChecksumInput(serialized);
   const digestInput = toDigestBuffer(bytes);
   const digest = await subtleCrypto.digest('SHA-256', digestInput);
@@ -98,6 +112,12 @@ export async function computeJsonExportChecksum(
   return Array.from(new Uint8Array(digest), (value) =>
     value.toString(16).padStart(2, '0'),
   ).join('');
+}
+
+export function isCanonicalAlgorithm(
+  value: unknown,
+): value is typeof CHECKSUM_ALGORITHM_V2 {
+  return value === CHECKSUM_ALGORITHM_V2;
 }
 
 function getSubtleCrypto(): SubtleCrypto {

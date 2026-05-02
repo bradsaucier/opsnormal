@@ -18,6 +18,7 @@ const ChecksumSchema = z
     /^[a-f0-9]{64}$/,
     'Checksum must be a 64-character lowercase SHA-256 hex digest.',
   );
+const ChecksumAlgorithmSchema = z.literal('sha256-canonical-v1');
 const CrashDiagnosticsSchema = z
   .object({
     connectionDropsDetected: z.number().int().min(0),
@@ -54,6 +55,7 @@ export const JsonImportSchema = z
   .object({
     app: z.literal(OPSNORMAL_APP_NAME),
     schemaVersion: z.literal(EXPORT_SCHEMA_VERSION),
+    checksumAlgorithm: ChecksumAlgorithmSchema.optional(),
     exportedAt: z.string().datetime({ offset: true }),
     entries: z.array(DailyEntrySchema).max(10000),
     checksum: ChecksumSchema.optional(),
