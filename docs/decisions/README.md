@@ -38,6 +38,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0030 | Workflow supply-chain hardening                                 |
 | 0031 | Automated browser-level migration upgrade proof                 |
 | 0032 | SBOM attestation for release artifact                           |
+| 0033 | applyImport checksum recheck                                    |
 
 ## Operating rule
 
