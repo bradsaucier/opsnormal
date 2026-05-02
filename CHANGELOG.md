@@ -14,6 +14,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - hardened import commit verification by reading the pre-write snapshot and deriving the undo snapshot inside the rw transaction
 - unified focus chrome on DomainCard radios, history grid cells, mobile day buttons, and the history scroll region under shared focus utilities
 - added a narrow merge-blocking and release Firefox Playwright smoke lane, documented in ADR-0029, that proves Gecko engine-level compatibility without claiming live Firefox policy simulation
+- retired the React Hooks lint canary by moving to stable `eslint-plugin-react-hooks` 7.1.1 and removing the temporary Dependabot ignore
 
 ### Security
 
