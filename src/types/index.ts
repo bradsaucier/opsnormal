@@ -41,6 +41,7 @@ export type EntryStatus = 'nominal' | 'degraded';
 export type UiStatus = EntryStatus | 'unmarked';
 export type ImportMode = 'merge' | 'replace';
 export type ImportIntegrityStatus = 'verified' | 'legacy-unverified';
+export type JsonExportChecksumAlgorithm = 'sha256-canonical-v1';
 export type ImportPreviewKind =
   | 'good'
   | 'stale'
@@ -80,6 +81,7 @@ export interface CrashStorageDiagnostics {
 export interface JsonExportPayload {
   app: typeof OPSNORMAL_APP_NAME;
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
+  checksumAlgorithm?: JsonExportChecksumAlgorithm;
   exportedAt: string;
   entries: DailyEntry[];
   checksum?: string;
@@ -104,7 +106,7 @@ export interface SuccessfulImportPreview {
 
 export interface IncompatibleImportPreview {
   kind: 'incompatible';
-  reason: 'app' | 'schema-version';
+  reason: 'app' | 'schema-version' | 'algorithm';
   detectedAppName: string | null;
   detectedSchemaVersion: number | null;
 }
