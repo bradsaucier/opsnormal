@@ -1,5 +1,9 @@
 import { db, getAllEntries, runDatabaseWrite } from '../db/appDb';
-import { UndoInvalidatedError, UndoVerificationError } from '../lib/errors';
+import {
+  UndoInvalidatedError,
+  UndoVerificationError,
+  UnverifiedImportRejectedError,
+} from '../lib/errors';
 import type { ParsedJsonImport } from '../schemas/import';
 import type {
   DailyEntry,
@@ -17,12 +21,22 @@ import {
   summarizeParsedPayload,
   type ParsedImportSummary,
   validateImportFileSize,
+  verifyParsedExportChecksum,
 } from './importValidation';
 import {
   createEntryWrittenTabId,
   isEntryWrittenCoordinationMessage,
   subscribeToEntryWrittenCoordination,
 } from './entryWrittenCoordination';
+
+export interface ImportApplyOptions {
+  /**
+   * Permit applying a payload without a SHA-256 checksum field. Required when
+   * the UI has shown the legacy-unverified risk gate and the operator has
+   * acknowledged it.
+   */
+  allowUnverified?: boolean;
+}
 
 interface WorkerPreviewRequest {
   buffer: ArrayBuffer;
@@ -313,7 +327,12 @@ export async function readImportFile(file: File): Promise<string> {
   return file.text();
 }
 
-export async function previewImportPayload(
+/**
+ * @internal Test-only entry point. Production callers must use
+ * previewImportFile, which performs schema validation and SHA-256 checksum
+ * verification.
+ */
+export async function __buildImportPreviewForTests(
   payload: JsonExportPayload,
 ): Promise<SuccessfulImportPreview> {
   const existingEntries = await getAllEntries();
@@ -442,7 +461,14 @@ export async function previewImportFile(
 export async function applyImport(
   payload: JsonExportPayload,
   mode: ImportMode,
+  options: ImportApplyOptions = {},
 ): Promise<{ importedCount: number; undo: () => Promise<void> }> {
+  if (payload.checksum) {
+    await verifyParsedExportChecksum(payload);
+  } else if (options.allowUnverified !== true) {
+    throw new UnverifiedImportRejectedError();
+  }
+
   let undoSnapshot: DailyEntry[] = [];
   let importedCount = 0;
 
