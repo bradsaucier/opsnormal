@@ -31,3 +31,4 @@ The relocated root harness stubs were removed because the contract now covers ev
 ## Reference
 
 Extends ADR-0007 - Local-only and no-cloud trust boundary.
+Behavioural contract pinned in `tests/unit/trustedTypes.test.ts` and gated to 100% per ADR-0024.

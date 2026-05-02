@@ -9,6 +9,7 @@ const targetedCoverageModules = [
   'src/lib/history.ts',
   'src/lib/runtime.ts',
   'src/lib/status.ts',
+  'src/lib/trustedTypes.ts',
   'src/hooks/useStorageHealth.ts',
   'src/db/appDb.ts',
   'src/db/migrations/index.ts',
@@ -52,6 +53,12 @@ export default defineConfig({
           branches: 100,
         },
         'src/lib/exportSerialization.ts': {
+          lines: 100,
+          functions: 100,
+          statements: 100,
+          branches: 100,
+        },
+        'src/lib/trustedTypes.ts': {
           lines: 100,
           functions: 100,
           statements: 100,
