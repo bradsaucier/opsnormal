@@ -28,7 +28,7 @@ OpsNormal uses lightweight ADRs to record constraints that should not drift casu
 | 0020 | Promote WebKit smoke to a gating compatibility check            |
 | 0021 | Gate release on WebKit smoke and CI-verified artifact           |
 | 0022 | Public release scope and repo-surface requirements              |
-| 0023 | Temporary React hooks lint canary exception                     |
+| 0023 | Closed React hooks lint canary exception                        |
 | 0024 | Coverage gate on integrity-critical modules                     |
 | 0025 | Fail-closed undo verification and stale-snapshot invalidation   |
 | 0026 | CSP directive contract and Trusted Types                        |

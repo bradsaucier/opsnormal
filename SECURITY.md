@@ -85,13 +85,13 @@ Current repo controls include:
 
 ## Dependency maintenance posture
 
-Current repo policy for dependency hygiene is intentionally conservative, with one explicit lint-stack exception recorded in ADR-0023.
+Current repo policy for dependency hygiene is intentionally conservative.
 
 - Direct dependency ranges should not lag behind the audited lockfile floor without a reason
 - CI and deploy now fail on high-severity npm advisories through `npm audit --audit-level=high`
 - CI also verifies npm registry signatures through `npm audit signatures`; rerun once on failure, and if the result is deterministic, file upstream and pin or replace the offending dependency before merge
 - The `serialize-javascript` override stays in place until the Workbox dependency chain absorbs a fixed release
-- `eslint-plugin-react-hooks` stays on the React canary line until a stable release fully supports ESLint 10, because the current stable release line still peers only through ESLint 9
+- React Hooks linting stays on a stable release line that declares ESLint 10 peer support; do not reintroduce canary lint tooling without a new ADR
 - Zod remains on the validated 3.x line until a separate migration proves 4.x behavior across import, export, and recovery schemas
 
 ## GitHub Actions policy

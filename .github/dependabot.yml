@@ -16,10 +16,6 @@ updates:
         update-types:
           - minor
           - patch
-    ignore:
-      # See ADR-0023 for the temporary React hooks lint exception while stable
-      # releases do not yet support the repo's ESLint 10 baseline.
-      - dependency-name: 'eslint-plugin-react-hooks'
   - package-ecosystem: github-actions
     directory: /
     schedule:
