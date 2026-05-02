@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 const targetedCoverageModules = [
   'src/lib/date.ts',
+  'src/lib/canonicalJson.ts',
   'src/lib/export.ts',
   'src/lib/exportSerialization.ts',
   'src/lib/fileDownload.ts',
