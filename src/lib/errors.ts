@@ -33,6 +33,19 @@ export class UndoInvalidatedError extends Error {
   }
 }
 
+export class UnverifiedImportRejectedError extends Error {
+  static readonly code = 'UNVERIFIED_IMPORT_REJECTED';
+
+  readonly code = UnverifiedImportRejectedError.code;
+
+  constructor(
+    message = 'Import rejected. Backup has no integrity checksum and unverified imports were not explicitly allowed.',
+  ) {
+    super(message);
+    this.name = 'UnverifiedImportRejectedError';
+  }
+}
+
 export function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
