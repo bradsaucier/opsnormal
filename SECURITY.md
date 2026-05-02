@@ -68,7 +68,8 @@ Current repo controls include:
 - Trusted Types enforcement through `require-trusted-types-for 'script'` and the `trusted-types opsnormal-default` policy on supporting browsers
 - CodeQL source-level code scanning with `security-extended` and `security-and-quality`, required to pass before merge once branch protection is updated (ADR-0028)
 - Sigstore-backed build-provenance attestation for the uploaded `dist-ci-verified` release artifact
-- Pages release verification of that attestation before smoke and upload
+- SPDX JSON SBOM generation and Sigstore-backed SBOM attestation for the same release artifact digest
+- Pages release verification of both release attestations before smoke and upload
 - `actions/checkout` pinned with `persist-credentials: false` across repository workflows unless an explicit exception is documented
 - `Workflow Lint` runs pinned `zizmor` analysis on workflow changes and uploads SARIF results to code scanning
 - CI verifies installed npm artifacts with `npm audit signatures` before build
@@ -102,12 +103,13 @@ The workflow files pin third-party actions to immutable commit SHAs.
 - Update action SHAs through reviewable pull requests instead of silent tag drift
 - Treat workflow changes as supply-chain changes and review them with the same discipline as application dependencies
 
-## Build provenance verification
+## Artifact attestation verification
 
 `Pipeline: Mainline Integrity` emits a Sigstore-backed build-provenance attestation for the `dist-ci-verified` artifact on every push to `main`.
-`Pipeline: Pages Release` resolves that same artifact by upstream run ID, verifies the attestation against the repository, signer workflow, branch ref, and triggering commit SHA, and only then continues to smoke or publish.
+It also generates an SPDX JSON SBOM and emits a Sigstore-backed SBOM attestation for the same artifact digest.
+`Pipeline: Pages Release` resolves that same artifact by upstream run ID, verifies both attestations against the repository, signer workflow, branch ref, and triggering commit SHA, and only then continues to smoke or publish.
 
-Third parties can verify a downloaded CI artifact archive with:
+Third parties can verify the build provenance for a downloaded CI artifact archive with:
 
 ```bash
 gh attestation verify dist-ci-verified.zip \
@@ -117,7 +119,18 @@ gh attestation verify dist-ci-verified.zip \
   --source-ref refs/heads/main
 ```
 
-See ADR-0027 for the trust boundary and failure model.
+They can verify the SPDX SBOM attestation with:
+
+```bash
+gh attestation verify dist-ci-verified.zip \
+  --repo bradsaucier/opsnormal \
+  --signer-workflow bradsaucier/opsnormal/.github/workflows/ci.yml \
+  --source-digest <release-commit-sha> \
+  --source-ref refs/heads/main \
+  --predicate-type https://spdx.dev/Document/v2.3
+```
+
+See ADR-0027 and ADR-0032 for the trust boundary and failure model.
 
 ## Static analysis
 
