@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  CHECKSUM_ALGORITHM_V2,
   computeJsonExportChecksum,
   createCrashJsonExport,
   createCsvExport,
   createJsonExport,
 } from '../../src/lib/exportSerialization';
+import { canonicalSerialize } from '../../src/lib/canonicalJson';
+import { verifyParsedExportChecksum } from '../../src/services/importValidation';
 import {
   EXPORT_SCHEMA_VERSION,
   OPSNORMAL_APP_NAME,
@@ -113,6 +116,7 @@ describe('exportSerialization', () => {
     const parsed = JSON.parse(json) as {
       app: string;
       schemaVersion: number;
+      checksumAlgorithm: string;
       exportedAt: string;
       checksum: string;
       entries: Array<Record<string, unknown>>;
@@ -120,15 +124,72 @@ describe('exportSerialization', () => {
 
     expect(parsed.entries).toEqual(stripEntryIds(sampleEntries));
     expect(parsed.entries.every((entry) => !('id' in entry))).toBe(true);
+    expect(parsed.checksumAlgorithm).toBe(CHECKSUM_ALGORITHM_V2);
 
     const recomputedChecksum = await computeJsonExportChecksum({
       app: OPSNORMAL_APP_NAME,
       schemaVersion: EXPORT_SCHEMA_VERSION,
+      checksumAlgorithm: CHECKSUM_ALGORITHM_V2,
       exportedAt,
       entries: stripEntryIds(sampleEntries),
     });
 
     expect(parsed.checksum).toBe(recomputedChecksum);
+  });
+
+  it('writes the canonical checksum algorithm tag near the top of json exports', async () => {
+    const json = await createJsonExport(
+      sampleEntries,
+      '2026-04-14T05:06:07.000Z',
+    );
+    const parsed = JSON.parse(json) as {
+      checksumAlgorithm: string;
+    };
+
+    expect(parsed.checksumAlgorithm).toBe(CHECKSUM_ALGORITHM_V2);
+    expect(json.indexOf('"schemaVersion"')).toBeLessThan(
+      json.indexOf('"checksumAlgorithm"'),
+    );
+    expect(json.indexOf('"checksumAlgorithm"')).toBeLessThan(
+      json.indexOf('"exportedAt"'),
+    );
+  });
+
+  it('verifies canonical v2 checksums after top-level and diagnostics keys are reordered', async () => {
+    const json = await createCrashJsonExport(
+      sampleEntries,
+      sampleCrashDiagnostics,
+      '2026-04-14T05:06:07.000Z',
+    );
+    const parsed = JSON.parse(json) as {
+      crashDiagnostics: CrashStorageDiagnostics;
+    } & Parameters<typeof verifyParsedExportChecksum>[0];
+    const reorderedPayload = Object.fromEntries(
+      Object.entries({
+        ...parsed,
+        crashDiagnostics: Object.fromEntries(
+          Object.entries(parsed.crashDiagnostics).reverse(),
+        ),
+      }).reverse(),
+    ) as unknown as Parameters<typeof verifyParsedExportChecksum>[0];
+
+    await expect(
+      verifyParsedExportChecksum(reorderedPayload),
+    ).resolves.toBeUndefined();
+  });
+
+  it('pins the canonical v2 checksum input bytes', () => {
+    const serialized = canonicalSerialize({
+      app: OPSNORMAL_APP_NAME,
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      checksumAlgorithm: CHECKSUM_ALGORITHM_V2,
+      exportedAt: '2026-04-14T05:06:07.000Z',
+      entries: stripEntryIds(sampleEntries),
+    });
+
+    expect(serialized).toBe(
+      '{"app":"OpsNormal","checksumAlgorithm":"sha256-canonical-v1","entries":[{"date":"2026-03-27","sectorId":"work-school","status":"nominal","updatedAt":"2026-03-27T12:00:00.000Z"}],"exportedAt":"2026-04-14T05:06:07.000Z","schemaVersion":1}',
+    );
   });
 
   it('uses the window secure-context hint when it is explicitly false', async () => {
