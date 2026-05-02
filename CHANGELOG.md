@@ -24,6 +24,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 ### Security
 
 - pinned the meta CSP directive set with a test gate, added Trusted Types enforcement, and documented the contract in ADR-0026
+- pinned the Trusted Types policy contract under a 100% coverage gate per ADR-0024 and ADR-0026
 - added CodeQL JavaScript and TypeScript code scanning as a mainline merge gate in ADR-0028
 - added SPDX SBOM generation plus Sigstore-backed SBOM attestation and Pages release verification in ADR-0032
 
