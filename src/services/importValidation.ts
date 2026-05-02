@@ -1,6 +1,10 @@
 import { ZodError } from 'zod';
 
-import { computeJsonExportChecksum } from '../lib/export';
+import {
+  CHECKSUM_ALGORITHM_V2,
+  computeJsonExportChecksum,
+  isCanonicalAlgorithm,
+} from '../lib/export';
 import { JsonImportSchema } from '../schemas/import';
 import {
   EXPORT_SCHEMA_VERSION,
@@ -24,6 +28,7 @@ export interface ParsedImportSummary {
 interface RawChecksumPayload {
   app: JsonExportPayload['app'];
   schemaVersion: JsonExportPayload['schemaVersion'];
+  checksumAlgorithm?: JsonExportPayload['checksumAlgorithm'];
   exportedAt: JsonExportPayload['exportedAt'];
   entries: JsonExportPayload['entries'];
   crashDiagnostics?: JsonExportPayload['crashDiagnostics'];
@@ -37,7 +42,7 @@ interface ValidationIssueDetails {
   message: string;
 }
 
-type IncompatibleImportReason = 'app' | 'schema-version';
+type IncompatibleImportReason = 'app' | 'schema-version' | 'algorithm';
 
 const BLOCKED_IMPORT_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
@@ -80,16 +85,26 @@ class IncompatibleImportError extends Error {
     detectedAppName?: string | null;
     detectedSchemaVersion?: number | null;
   }) {
-    super(
-      args.reason === 'app'
-        ? 'Import rejected. File is not an OpsNormal backup.'
-        : 'Import rejected. Backup schema version is incompatible with this build.',
-    );
+    super(getIncompatibleImportMessage(args.reason));
     this.name = 'IncompatibleImportError';
     this.reason = args.reason;
     this.detectedAppName = args.detectedAppName ?? null;
     this.detectedSchemaVersion = args.detectedSchemaVersion ?? null;
   }
+}
+
+function getIncompatibleImportMessage(
+  reason: IncompatibleImportReason,
+): string {
+  if (reason === 'app') {
+    return 'Import rejected. File is not an OpsNormal backup.';
+  }
+
+  if (reason === 'algorithm') {
+    return 'Import rejected. Backup checksum algorithm is incompatible with this build.';
+  }
+
+  return 'Import rejected. Backup schema version is incompatible with this build.';
 }
 
 class InvalidImportPayloadError extends Error {
@@ -177,6 +192,7 @@ function throwIfImportIsIncompatible(parsed: unknown): void {
     typeof candidate.schemaVersion === 'number'
       ? candidate.schemaVersion
       : null;
+  const detectedChecksumAlgorithm = candidate.checksumAlgorithm;
 
   if (detectedAppName && detectedAppName !== OPSNORMAL_APP_NAME) {
     throw new IncompatibleImportError({
@@ -192,6 +208,17 @@ function throwIfImportIsIncompatible(parsed: unknown): void {
   ) {
     throw new IncompatibleImportError({
       reason: 'schema-version',
+      detectedAppName,
+      detectedSchemaVersion,
+    });
+  }
+
+  if (
+    typeof detectedChecksumAlgorithm === 'string' &&
+    !isCanonicalAlgorithm(detectedChecksumAlgorithm)
+  ) {
+    throw new IncompatibleImportError({
+      reason: 'algorithm',
       detectedAppName,
       detectedSchemaVersion,
     });
@@ -261,6 +288,11 @@ export async function verifyExportChecksum(
     return;
   }
 
+  if (validatedPayload.checksumAlgorithm === CHECKSUM_ALGORITHM_V2) {
+    await verifyParsedExportChecksum(validatedPayload);
+    return;
+  }
+
   const computedChecksum = await computeJsonExportChecksum({
     app: rawPayload.app,
     schemaVersion: rawPayload.schemaVersion,
@@ -281,6 +313,9 @@ function buildParsedChecksumPayload(
   const checksumPayload: ParsedChecksumPayload = {
     app: payload.app,
     schemaVersion: payload.schemaVersion,
+    ...(payload.checksumAlgorithm
+      ? { checksumAlgorithm: payload.checksumAlgorithm }
+      : {}),
     exportedAt: payload.exportedAt,
     entries: payload.entries,
   };
@@ -296,6 +331,7 @@ function buildParsedChecksumPayload(
 function buildCrashDiagnosticsInExportOrder(
   diagnostics: CrashStorageDiagnostics,
 ): CrashStorageDiagnostics {
+  // @legacy-v1-only - delete when retiring v1 verification per ADR-0034.
   return {
     connectionDropsDetected: diagnostics.connectionDropsDetected,
     reconnectSuccesses: diagnostics.reconnectSuccesses,
@@ -313,14 +349,26 @@ function buildCrashDiagnosticsInExportOrder(
 }
 
 /**
- * Re-verifies a JsonExportPayload's SHA-256 checksum against its canonical
- * projection. Throws ChecksumFailedImportError on mismatch. Returns silently
- * when no checksum is present. Call before any IndexedDB write.
+ * Re-verifies a JsonExportPayload's SHA-256 checksum against the algorithm
+ * declared by the payload. Throws ChecksumFailedImportError on mismatch.
+ * Returns silently when no checksum is present. Call before any IndexedDB write.
  */
 export async function verifyParsedExportChecksum(
   payload: JsonExportPayload,
 ): Promise<void> {
   if (!payload.checksum) {
+    return;
+  }
+
+  if (payload.checksumAlgorithm === CHECKSUM_ALGORITHM_V2) {
+    const computedChecksum = await computeJsonExportChecksum(
+      buildParsedChecksumPayload(payload),
+    );
+
+    if (computedChecksum !== payload.checksum) {
+      throw new ChecksumFailedImportError();
+    }
+
     return;
   }
 
