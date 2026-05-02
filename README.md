@@ -34,23 +34,23 @@ A disciplined daily readiness instrument. Five sectors. Three states. Thirty day
 >
 > There are no accounts, no backend data plane, no telemetry path, and no sync layer. State lives in IndexedDB. Durable recovery depends on operator-controlled JSON exports backed by integrity checks.
 >
-> The operating boundary is documented in [31 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under a Sigstore-backed build-provenance attestation.
+> The operating boundary is documented in [32 ADRs](./docs/decisions/README.md), a published [security and trust boundary](./SECURITY.md), and a release pipeline that publishes only the exact CI-verified production artifact under Sigstore-backed provenance and SBOM attestations.
 
 ## At a glance
 
-| Facet               | Current posture                                                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Runtime             | React 19, TypeScript, Tailwind CSS 4, Vite, `vite-plugin-pwa`                                                                |
-| Persistence         | IndexedDB through Dexie 4; compound uniqueness on `[date+sectorId]`                                                          |
-| Deployment          | Static PWA on GitHub Pages, custom domain `opsnormal.app`                                                                    |
-| Data posture        | Local only. No accounts, no backend, no analytics, no sync                                                                   |
-| Release pipeline    | Mainline integrity -> re-smoke CI-verified artifact in Chromium, WebKit, Firefox -> publish                                  |
-| Release artifact    | `dist-ci-verified` reused end-to-end; no separate deploy build                                                               |
-| Build provenance    | Sigstore-backed attestation, verified on Pages release (ADR-0027)                                                            |
-| Static analysis     | CodeQL `security-extended` + `security-and-quality` as a merge gate (ADR-0028)                                               |
-| Coverage gates      | 100% on `date`, `exportSerialization`, `entryWrittenCoordination`; calibrated per-file floors on `importService` and `appDb` |
-| Accessibility       | Dedicated WCAG 2.1 A / AA Playwright scans with service workers blocked                                                      |
-| Decisions of record | 31 ADRs under [`docs/decisions/`](./docs/decisions/README.md)                                                                |
+| Facet                | Current posture                                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Runtime              | React 19, TypeScript, Tailwind CSS 4, Vite, `vite-plugin-pwa`                                                                |
+| Persistence          | IndexedDB through Dexie 4; compound uniqueness on `[date+sectorId]`                                                          |
+| Deployment           | Static PWA on GitHub Pages, custom domain `opsnormal.app`                                                                    |
+| Data posture         | Local only. No accounts, no backend, no analytics, no sync                                                                   |
+| Release pipeline     | Mainline integrity -> re-smoke CI-verified artifact in Chromium, WebKit, Firefox -> publish                                  |
+| Release artifact     | `dist-ci-verified` reused end-to-end; no separate deploy build                                                               |
+| Release attestations | Sigstore-backed build-provenance and SBOM attestations, verified on Pages release (ADR-0027, ADR-0032)                       |
+| Static analysis      | CodeQL `security-extended` + `security-and-quality` as a merge gate (ADR-0028)                                               |
+| Coverage gates       | 100% on `date`, `exportSerialization`, `entryWrittenCoordination`; calibrated per-file floors on `importService` and `appDb` |
+| Accessibility        | Dedicated WCAG 2.1 A / AA Playwright scans with service workers blocked                                                      |
+| Decisions of record  | 32 ADRs under [`docs/decisions/`](./docs/decisions/README.md)                                                                |
 
 ## Built for, and not built for
 
@@ -166,9 +166,9 @@ Narrow screens switch from the 30-day grid to week groups with a daily brief so 
 
 The Pages release pipeline is not a second build. It is a verification and publishing pipeline over the exact artifact that passed mainline integrity.
 
-On every push to `main`, Pipeline: Mainline Integrity runs lint, typecheck, Vitest coverage, Playwright Chromium, merge-blocking WebKit and Firefox smoke lanes, and a production build, then uploads the `dist-ci-verified` artifact and emits a Sigstore-backed build-provenance attestation. Pipeline: Pages Release then resolves that artifact by upstream run ID, verifies the attestation against repository, signer workflow, source reference, and triggering commit SHA, re-smokes Chromium, WebKit, and Firefox against the extracted bundle, and only then publishes. The bundle on `opsnormal.app` is the same bytes that passed verification.
+On every push to `main`, Pipeline: Mainline Integrity runs lint, typecheck, Vitest coverage, Playwright Chromium, merge-blocking WebKit and Firefox smoke lanes, and a production build, then uploads the `dist-ci-verified` artifact, emits a Sigstore-backed build-provenance attestation, generates an SPDX JSON SBOM, and emits a Sigstore-backed SBOM attestation for the same release artifact digest. Pipeline: Pages Release then resolves that artifact by upstream run ID, verifies both attestations against repository, signer workflow, source reference, and triggering commit SHA, re-smokes Chromium, WebKit, and Firefox against the extracted bundle, and only then publishes. The bundle on `opsnormal.app` is the same bytes that passed verification.
 
-Third parties can verify a downloaded CI artifact archive with `gh attestation verify`. See [SECURITY.md](./SECURITY.md) and ADR-0027.
+Third parties can verify a downloaded CI artifact archive with `gh attestation verify`. See [SECURITY.md](./SECURITY.md), ADR-0027, and ADR-0032.
 
 ## Threat model and reliability posture
 
@@ -222,7 +222,7 @@ Quality is enforced through release gates, test coverage, and explicit design co
 
 - GitHub Actions runs lint, typecheck, Vitest coverage, Playwright Chromium verification, merge-blocking Playwright WebKit and Firefox smoke lanes, and build validation
 - GitHub Pages release downloads the `dist-ci-verified` artifact from the successful mainline integrity run, re-smokes that exact bundle in Chromium, WebKit, and Firefox, and only then publishes
-- The released bundle carries a Sigstore-backed build-provenance attestation that Pipeline: Pages Release verifies before upload. See ADR-0027.
+- The released bundle carries Sigstore-backed build-provenance and SBOM attestations that Pipeline: Pages Release verifies before upload. See ADR-0027 and ADR-0032.
 - GitHub CodeQL code scanning gates mainline with the `security-extended` and `security-and-quality` query packs. See ADR-0028.
 - JSON export carries versioning and integrity checks, and import commit verification fails closed before the app claims success
 - Save-picker pre-replace backups are read back before the app claims a verified disk write, and fallback Blob downloads keep a conservative delayed-revoke cleanup window
