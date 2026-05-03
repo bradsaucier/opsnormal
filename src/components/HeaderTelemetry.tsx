@@ -16,7 +16,8 @@ type TelemetryTone = 'default' | 'accent' | 'attention' | 'subtle';
 const toneClassNameByTone: Record<TelemetryTone, string> = {
   default: 'text-ops-text-primary',
   accent: 'text-ops-accent-muted',
-  attention: 'bg-amber-300/[0.06] text-amber-100',
+  attention:
+    'bg-[var(--ops-status-degraded-bg)] text-[var(--ops-status-degraded-text)]',
   subtle: 'text-ops-text-secondary',
 };
 
@@ -59,19 +60,19 @@ function TelemetryChip({
   return (
     <div
       className={[
-        'ops-telemetry-chip flex min-h-[3.25rem] flex-col justify-between px-3 py-3 text-left lg:px-4',
+        'ops-telemetry-chip flex min-h-[var(--ops-chip-min-h-lg)] flex-col justify-between px-3 py-3 text-left lg:px-4',
         isShimmering ? 'ops-telemetry-chip-shimmer' : '',
         toneClassNameByTone[tone],
       ].join(' ')}
     >
-      <span className="text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+      <span className="ops-eyebrow text-[10px] font-semibold text-ops-text-muted">
         {label}
       </span>
       <span className="mt-1.5 text-lg leading-none font-semibold tracking-[0.06em] uppercase [font-variant-numeric:tabular-nums] sm:text-xl">
         {value}
       </span>
       {detail ? (
-        <span className="mt-1.5 text-[10px] leading-4 tracking-[0.1em] text-ops-text-muted uppercase">
+        <span className="mt-1.5 text-[10px] leading-4 tracking-[0.10em] text-ops-text-muted uppercase">
           {detail}
         </span>
       ) : null}
@@ -85,7 +86,7 @@ function TelemetryHorizon({ children }: { children: ReactNode }) {
       <div className="clip-notched ops-notch-panel-inner tactical-subpanel bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(110,231,183,0.035)_32%,rgba(255,255,255,0)_54%),var(--color-ops-surface-overlay)]">
         <div className="grid lg:grid-cols-[11rem_minmax(0,1fr)]">
           <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
-            <p className="ops-eyebrow text-xs font-semibold tracking-[0.18em] text-ops-accent-muted uppercase">
+            <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
               Status horizon
             </p>
             <p className="mt-1 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
@@ -124,14 +125,27 @@ export function HeaderTelemetry({
 
   useEffect(() => {
     if (streak > previousStreakRef.current) {
-      setIsStreakShimmering(true);
+      if (
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        previousStreakRef.current = streak;
+        return undefined;
+      }
 
-      const timeoutId = window.setTimeout(() => {
+      const showTimeoutId = window.setTimeout(() => {
+        setIsStreakShimmering(true);
+      }, 0);
+
+      const hideTimeoutId = window.setTimeout(() => {
         setIsStreakShimmering(false);
       }, 850);
 
       previousStreakRef.current = streak;
-      return () => window.clearTimeout(timeoutId);
+      return () => {
+        window.clearTimeout(showTimeoutId);
+        window.clearTimeout(hideTimeoutId);
+      };
     }
 
     previousStreakRef.current = streak;
