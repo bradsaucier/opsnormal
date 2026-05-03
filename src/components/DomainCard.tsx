@@ -161,7 +161,7 @@ export function DomainCard({
               </span>
               <span>{`${sectorSigil} - ${sector.shortLabel}`}</span>
             </span>
-            <h3 className="mt-2 text-base font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
+            <h3 className="mt-2 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
               {sector.label}
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
@@ -172,9 +172,8 @@ export function DomainCard({
         </div>
 
         <div className="mt-5">
-          <div className="ops-sector-caption flex items-center justify-between gap-3 border-t border-ops-border-soft pt-3">
+          <div className="ops-sector-caption border-t border-ops-border-soft pt-3">
             <span>{busy ? 'SAVING' : 'STATE'}</span>
-            <span className="whitespace-nowrap">{sectorSigil}</span>
           </div>
 
           {busy ? (
@@ -219,7 +218,7 @@ export function DomainCard({
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
-                      : 'text-ops-text-secondary hover:border-ops-border-struct hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]',
+                      : 'text-ops-text-muted hover:border-ops-border-struct hover:text-ops-text-secondary hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]',
                   ].join(' ')}
                 >
                   {content.shortLabel}

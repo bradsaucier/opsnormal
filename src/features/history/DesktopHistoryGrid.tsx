@@ -43,7 +43,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
             This grid is the mirror. Patterns matter more than extra
             instrumentation.
           </p>
-          <p className="text-xs tracking-[0.14em] text-ops-text-muted uppercase">
+          <p className="text-xs leading-5 tracking-[0.04em] text-ops-text-muted">
             Desktop holds the full 30-day picture. Tab exits the grid. Select a
             cell for the detail brief.
           </p>
@@ -113,9 +113,9 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                             key={dateKey}
                             role="columnheader"
                             className={[
-                              'sticky top-0 z-20 border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
+                              'sticky top-0 z-20 min-w-[2.75rem] border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
                               isToday
-                                ? 'bg-emerald-300/12 text-ops-accent-muted'
+                                ? 'ops-history-today-header bg-emerald-300/12 text-ops-accent-muted'
                                 : isSelectedColumn
                                   ? 'bg-ops-surface-2 text-ops-text-primary'
                                   : 'bg-ops-surface-1 text-ops-text-secondary',
@@ -138,15 +138,13 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                           key={sector.id}
                           role="row"
                           className={
-                            isSelectedRow
-                              ? 'bg-white/[0.04]'
-                              : 'odd:bg-white/[0.025] even:bg-white/[0.012]'
+                            isSelectedRow ? 'bg-white/[0.035]' : undefined
                           }
                         >
                           <th
                             role="rowheader"
                             className={[
-                              'sticky left-0 z-20 border-b border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
+                              'ops-history-sector-divider sticky left-0 z-20 border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
                               isSelectedRow
                                 ? 'text-ops-accent-muted'
                                 : 'text-ops-text-primary',
@@ -209,11 +207,11 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                                   )
                                 }
                                 className={[
-                                  'ops-focus-ring-chip-proxy cursor-pointer border-b border-ops-border-soft px-1 py-0.5 align-middle outline-none',
+                                  'ops-focus-ring-chip-proxy ops-history-sector-divider cursor-pointer px-0.5 py-1 align-middle outline-none',
                                   isSelected
-                                    ? 'bg-white/[0.05] outline outline-1 -outline-offset-2 outline-[var(--ops-focus-ring)]'
+                                    ? 'ops-history-selected-cell bg-white/[0.06]'
                                     : isToday
-                                      ? 'bg-emerald-300/[0.05]'
+                                      ? 'ops-history-today-cell bg-emerald-300/[0.08]'
                                       : dateKey === selectedCell.dateKey
                                         ? 'bg-white/[0.025]'
                                         : '',

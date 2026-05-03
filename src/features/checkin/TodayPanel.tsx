@@ -21,6 +21,55 @@ interface TodayPanelProps {
   onAnnounce?: (message: string) => void;
 }
 
+interface DayCompletionTileProps {
+  isComplete: boolean;
+  markedCount: number;
+  totalCount: number;
+}
+
+function DayCompletionTile({
+  isComplete,
+  markedCount,
+  totalCount,
+}: DayCompletionTileProps) {
+  const remainingCount = Math.max(totalCount - markedCount, 0);
+
+  return (
+    <div className="panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px">
+      <div
+        className={[
+          'clip-notched ops-notch-panel-inner tactical-subpanel-strong flex min-h-[14rem] flex-col justify-between p-5',
+          isComplete ? 'ops-sector-spine-nominal' : 'ops-sector-spine-unmarked',
+        ].join(' ')}
+      >
+        <div>
+          <p className="ops-eyebrow text-xs font-semibold tracking-[0.22em] text-ops-text-muted uppercase">
+            Daily roll-up
+          </p>
+          <p className="mt-3 text-4xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+            {markedCount}/{totalCount}
+          </p>
+          <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
+            {isComplete
+              ? 'All sectors are marked for today.'
+              : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
+          </p>
+        </div>
+        <div className="mt-5 border-t border-ops-border-soft pt-3">
+          <span
+            className={[
+              'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
+              isComplete ? 'ops-status-nominal' : 'ops-status-unmarked',
+            ].join(' ')}
+          >
+            {isComplete ? 'Complete' : 'Open'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TodayPanel({
   todayKey,
   onDateRollover,
@@ -95,11 +144,18 @@ export function TodayPanel({
       title="Today"
       emphasis="primary"
       meta={
-        <div className="space-y-1 text-right">
+        <div className="flex flex-col items-end gap-2 text-right">
           <div>{formatLongDate(todayKey)}</div>
-          <div className="text-xs tracking-[0.16em] text-ops-text-muted uppercase">
-            {completion.markedCount}/{completion.totalCount} sectors checked
-          </div>
+          <span
+            className={[
+              'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-7 items-center border px-2.5 text-xs font-semibold tracking-[0.14em] uppercase [font-variant-numeric:tabular-nums]',
+              completion.isComplete
+                ? 'ops-status-nominal'
+                : 'ops-status-unmarked',
+            ].join(' ')}
+          >
+            {completion.markedCount}/{completion.totalCount} sectors
+          </span>
         </div>
       }
     >
@@ -138,18 +194,26 @@ export function TodayPanel({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-6">
         {SECTORS.map((sector, index) => (
-          <DomainCard
-            key={sector.id}
-            sector={sector}
-            sectorSigil={`S${index + 1}`}
-            instructionId={directSelectHintId}
-            status={getUiStatus(entryLookup, todayKey, sector.id)}
-            busy={busySectorId === sector.id}
-            onSelect={handleSelectStatus}
-          />
+          <div key={sector.id} className="xl:col-span-2">
+            <DomainCard
+              sector={sector}
+              sectorSigil={`S${index + 1}`}
+              instructionId={directSelectHintId}
+              status={getUiStatus(entryLookup, todayKey, sector.id)}
+              busy={busySectorId === sector.id}
+              onSelect={handleSelectStatus}
+            />
+          </div>
         ))}
+        <div className="xl:col-span-2">
+          <DayCompletionTile
+            isComplete={completion.isComplete}
+            markedCount={completion.markedCount}
+            totalCount={completion.totalCount}
+          />
+        </div>
       </div>
     </SectionCard>
   );

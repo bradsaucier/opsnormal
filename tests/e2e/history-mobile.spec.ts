@@ -7,6 +7,7 @@ test.describe('OpsNormal mobile history', () => {
     page,
   }) => {
     await page.goto('/');
+    await page.getByRole('radio', { name: /body nominal/i }).click();
 
     await expect(
       page.getByText(/mobile holds the history picture one week at a time/i),

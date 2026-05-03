@@ -9,7 +9,11 @@ import {
 } from './installBannerState';
 import { useInstallPrompt } from './useInstallPrompt';
 
-export function InstallBanner() {
+interface InstallBannerProps {
+  compact?: boolean;
+}
+
+export function InstallBanner({ compact = false }: InstallBannerProps) {
   const { isIOS, isStandalone, canPromptInstall, promptInstall } =
     useInstallPrompt();
   const [dismissed, setDismissed] = useState(false);
@@ -33,6 +37,7 @@ export function InstallBanner() {
       tone="success"
       title="Install the app"
       description="Your data stays on this device. Installing improves offline reopen behavior and storage durability, especially in Safari on macOS and browser tabs on iPhone or iPad."
+      intensity={compact ? 'compact' : 'standard'}
       bodyClassName="text-sm leading-6 text-ops-text-secondary"
       actions={
         <>

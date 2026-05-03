@@ -16,6 +16,7 @@ interface PwaUpdateBannerProps {
   onReload: () => void;
   onDismiss: () => void;
   onReloadPage: () => void;
+  compact?: boolean;
 }
 
 export function PwaUpdateBanner({
@@ -29,6 +30,7 @@ export function PwaUpdateBanner({
   onReload,
   onDismiss,
   onReloadPage,
+  compact = false,
 }: PwaUpdateBannerProps) {
   const [statusAnnouncement, setStatusAnnouncement] = useState('');
   const [recoveryAnnouncement, setRecoveryAnnouncement] = useState('');
@@ -107,6 +109,7 @@ export function PwaUpdateBanner({
             tone="info"
             title={viewModel.heading}
             description={viewModel.primaryMessage}
+            intensity={compact ? 'compact' : 'standard'}
             bodyClassName="text-sky-50"
             actions={
               <>
