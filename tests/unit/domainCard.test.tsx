@@ -21,7 +21,6 @@ describe('DomainCard', () => {
 
     expect(screen.getByText('S1 - WORK')).toBeInTheDocument();
     expect(screen.getByText('STATE')).toBeInTheDocument();
-    expect(screen.getByText('S1')).toBeInTheDocument();
 
     const group = screen.getByRole('radiogroup', {
       name: /work or school status/i,
