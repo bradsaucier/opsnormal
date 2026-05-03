@@ -98,7 +98,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                     <tr role="row">
                       <th
                         role="columnheader"
-                        className="sticky left-0 top-0 z-30 border-b border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-secondary shadow-[6px_0_12px_rgba(10,15,13,0.32)]"
+                        className="sticky top-0 left-0 z-30 border-r border-b border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold tracking-[0.16em] text-ops-text-secondary uppercase"
                         scope="col"
                       >
                         Sector
@@ -115,9 +115,9 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                             className={[
                               'sticky top-0 z-20 min-w-[2.75rem] border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
                               isToday
-                                ? 'ops-history-today-header bg-emerald-300/12 text-ops-accent-muted'
+                                ? 'ops-history-today-header bg-emerald-300/10 text-ops-accent-muted'
                                 : isSelectedColumn
-                                  ? 'bg-ops-surface-2 text-ops-text-primary'
+                                  ? 'bg-white/[0.035] text-ops-text-primary'
                                   : 'bg-ops-surface-1 text-ops-text-secondary',
                             ].join(' ')}
                             scope="col"
@@ -152,7 +152,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                           <th
                             role="rowheader"
                             className={[
-                              'ops-history-sector-divider sticky left-0 z-20 border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
+                              'ops-history-sector-divider sticky left-0 z-20 border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold tracking-[0.16em] uppercase',
                               isSelectedRow
                                 ? 'text-ops-accent-muted'
                                 : 'text-ops-text-primary',
