@@ -66,55 +66,61 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             or step the window with the week controls. Tap a day column for the
             daily brief.
           </p>
-          <p className="text-xs tracking-[0.14em] text-ops-text-muted uppercase">
+          <p className="text-xs leading-5 tracking-[0.04em] text-ops-text-muted">
             Week groups snap into place. Explicit previous and next controls
             keep the path visible when swipe is inconvenient or unavailable.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <StatusLegend />
-          <nav
-            aria-label="Week navigation"
-            className="flex flex-wrap items-center gap-2"
-          >
-            <button
-              type="button"
-              onClick={handlePreviousWeek}
-              disabled={!canViewPreviousWeek}
-              aria-controls={ids.mobileRegionId}
-              className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
+        <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel p-3">
+            <nav
+              aria-label="Week navigation"
+              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-stretch gap-2"
             >
-              Previous week
-            </button>
-            <div
-              data-testid="mobile-history-week-status"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-              className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
-            >
-              <span className="block text-[10px] text-ops-text-muted">
-                Week {visibleWeekIndex + 1} of {weekGroups.length}
-              </span>
-              <h3
-                id={visibleWeekHeadingId}
-                className="mt-1 text-left text-xs text-ops-text-primary"
+              <button
+                type="button"
+                onClick={handlePreviousWeek}
+                disabled={!canViewPreviousWeek}
+                aria-controls={ids.mobileRegionId}
+                aria-label="Previous week"
+                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
               >
-                Week of {formatDayLabel(visibleWeekStart)} to{' '}
-                {formatDayLabel(visibleWeekEnd)}
-              </h3>
+                Prev
+              </button>
+              <div
+                data-testid="mobile-history-week-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-center text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+              >
+                <span className="block text-[10px] text-ops-text-muted">
+                  Week {visibleWeekIndex + 1} of {weekGroups.length}
+                </span>
+                <h3
+                  id={visibleWeekHeadingId}
+                  className="mt-1 text-xs text-ops-text-primary"
+                >
+                  Week of {formatDayLabel(visibleWeekStart)} to{' '}
+                  {formatDayLabel(visibleWeekEnd)}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={handleNextWeek}
+                disabled={!canViewNextWeek}
+                aria-controls={ids.mobileRegionId}
+                aria-label="Next week"
+                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
+              >
+                Next
+              </button>
+            </nav>
+            <div className="mt-3 border-t border-ops-border-soft pt-3">
+              <StatusLegend />
             </div>
-            <button
-              type="button"
-              onClick={handleNextWeek}
-              disabled={!canViewNextWeek}
-              aria-controls={ids.mobileRegionId}
-              className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
-            >
-              Next week
-            </button>
-          </nav>
+          </div>
         </div>
       </div>
 
