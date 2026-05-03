@@ -14,12 +14,31 @@ In scope:
 - shared chrome utilities for primary panels, nested support surfaces, and compact chip surfaces
 - clipped action button chrome used on installation, update, backup, and restore actions
 - readiness state colors used by badges and history cells
+- typography role pairing between readable body copy and tactical mono chrome
 
 Out of scope:
 
-- full typography redesign
 - generic typography utilities
 - any new branding system or marketing layer
+
+## Typography roles
+
+OpsNormal uses two type roles, not two brand voices.
+Body copy runs on `--font-sans` for readability.
+The cockpit voice stays on `--font-mono`.
+
+Mono is reserved for:
+
+- product title and section headings
+- eyebrows, sector sigils, status labels, and action buttons
+- telemetry chips, provenance facts, and tabular grid values
+- radio chips and compact controls where state recognition matters
+
+Application rules:
+
+- Do not put descriptive paragraphs back on the mono stack.
+- Do not remove mono from sigils, readiness status, telemetry, or controls.
+- Prefer `.ops-mono` or `.ops-eyebrow` when a component needs explicit tactical voice.
 
 ## Core surfaces
 
@@ -87,7 +106,7 @@ Section shell emphasis:
 Focus chrome:
 
 - `.ops-focus-ring-inset` for panel-scale and accordion-scale interactive surfaces that should carry the full inset focus treatment.
-- `.ops-focus-ring-chip` for chip-notch radios, history cells, and compact day selectors where the full 3px inset ring reads too heavy.
+- `.ops-focus-ring-chip` for radio chips, history cells, and compact day selectors where the full 3px inset ring reads too heavy.
 
 Application rules:
 
@@ -124,6 +143,7 @@ Application rules:
 
 - Primary shells use a clipped outer frame plus a clipped inner surface.
 - Status badges and compact history controls use the chip notch.
+- Dense history heatmap cells use flat 2px-radius blocks instead of clipped chip geometry.
 - Buttons inside the chrome system use the chip notch and inset focus rings.
 - Do not add rounded corners to primary structural containers.
 
@@ -195,13 +215,13 @@ Do not use them as general decorative accents.
 Nominal:
 
 - `--ops-status-nominal-border`: `rgba(110, 231, 183, 0.56)`
-- `--ops-status-nominal-bg`: `rgba(110, 231, 183, 0.14)`
+- `--ops-status-nominal-bg`: `rgba(110, 231, 183, 0.30)`
 - `--ops-status-nominal-text`: `#c9fae4`
 
 Degraded:
 
-- `--ops-status-degraded-border`: `rgba(245, 158, 11, 0.56)`
-- `--ops-status-degraded-bg`: `rgba(245, 158, 11, 0.14)`
+- `--ops-status-degraded-border`: `rgba(245, 158, 11, 0.78)`
+- `--ops-status-degraded-bg`: `rgba(245, 158, 11, 0.28)`
 - `--ops-status-degraded-text`: `#fde7b0`
 
 Unmarked:
@@ -222,7 +242,7 @@ Application rules:
 - Use `.ops-provenance-facts` for the build and license definition list.
 - Use `.ops-action-button .ops-action-button-subtle .ops-provenance-source`
   for the source link. The local `.ops-provenance-source` override drops the
-  chip to 32px to preserve hierarchy.
+  chip to 28px to preserve hierarchy.
 - The source icon must be inline SVG. Remote image loads are out of policy
   for this surface.
 - The source link must carry `target="_blank"` and `rel="noopener noreferrer"`
