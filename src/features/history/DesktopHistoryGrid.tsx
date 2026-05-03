@@ -1,5 +1,6 @@
 import { StatusBadge } from '../../components/StatusBadge';
 import { StatusLegend } from '../../components/StatusLegend';
+import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
 import { formatDayLabel, formatLongDate } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
@@ -58,213 +59,224 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
         days at a time. Tab exits the grid.
       </p>
 
-      <div className="relative">
-        {canScrollLeft ? (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 z-40 h-full w-6 bg-gradient-to-r from-ops-surface-1 to-transparent"
-          />
-        ) : null}
-        {canScrollRight ? (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 z-40 h-full w-6 bg-gradient-to-l from-ops-surface-1 to-transparent"
-          />
-        ) : null}
-        <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="relative min-w-0">
+          {canScrollLeft ? (
             <div
-              ref={desktopScrollRef}
-              className="history-scroll-shell overflow-x-auto"
-              role="region"
-              aria-labelledby={ids.captionId}
-            >
-              <table
-                className="min-w-max w-full border-separate border-spacing-0 text-sm"
-                role="grid"
-                aria-readonly="true"
-                aria-describedby={`${ids.instructionsId} ${ids.statusSummaryId}`}
-                aria-colcount={dateKeys.length + 1}
-                aria-rowcount={SECTORS.length + 1}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-0 z-40 h-full w-6 bg-gradient-to-r from-ops-surface-1 to-transparent"
+            />
+          ) : null}
+          {canScrollRight ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 top-0 z-40 h-full w-6 bg-gradient-to-l from-ops-surface-1 to-transparent"
+            />
+          ) : null}
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+            <div className="clip-notched ops-notch-panel-inner tactical-subpanel">
+              <div
+                ref={desktopScrollRef}
+                className="history-scroll-shell overflow-x-auto"
+                role="region"
+                aria-labelledby={ids.captionId}
               >
-                <caption id={ids.captionId} className="sr-only">
-                  Thirty-day readiness grid with one row per sector and one
-                  column per day. Cell labels use OK for nominal, DG for
-                  degraded, and UN for unmarked.
-                </caption>
-                <thead role="rowgroup">
-                  <tr role="row">
-                    <th
-                      role="columnheader"
-                      className="sticky left-0 top-0 z-30 border-b border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-secondary shadow-[6px_0_12px_rgba(10,15,13,0.32)]"
-                      scope="col"
-                    >
-                      Sector
-                    </th>
-                    {dateKeys.map((dateKey) => {
-                      const isToday = dateKey === todayKey;
-                      const isSelectedColumn = dateKey === selectedCell.dateKey;
+                <table
+                  className="min-w-max w-full border-separate border-spacing-0 text-sm"
+                  role="grid"
+                  aria-readonly="true"
+                  aria-describedby={`${ids.instructionsId} ${ids.statusSummaryId}`}
+                  aria-colcount={dateKeys.length + 1}
+                  aria-rowcount={SECTORS.length + 1}
+                >
+                  <caption id={ids.captionId} className="sr-only">
+                    Thirty-day readiness grid with one row per sector and one
+                    column per day. Cell labels use OK for nominal, DG for
+                    degraded, and UN for unmarked.
+                  </caption>
+                  <thead role="rowgroup">
+                    <tr role="row">
+                      <th
+                        role="columnheader"
+                        className="sticky left-0 top-0 z-30 border-b border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-secondary shadow-[6px_0_12px_rgba(10,15,13,0.32)]"
+                        scope="col"
+                      >
+                        Sector
+                      </th>
+                      {dateKeys.map((dateKey) => {
+                        const isToday = dateKey === todayKey;
+                        const isSelectedColumn =
+                          dateKey === selectedCell.dateKey;
+
+                        return (
+                          <th
+                            key={dateKey}
+                            role="columnheader"
+                            className={[
+                              'sticky top-0 z-20 border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
+                              isToday
+                                ? 'bg-emerald-300/12 text-ops-accent-muted'
+                                : isSelectedColumn
+                                  ? 'bg-ops-surface-2 text-ops-text-primary'
+                                  : 'bg-ops-surface-1 text-ops-text-secondary',
+                            ].join(' ')}
+                            scope="col"
+                            aria-current={isToday ? 'date' : undefined}
+                          >
+                            {formatDayLabel(dateKey)}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody role="rowgroup">
+                    {SECTORS.map((sector, sectorIndex) => {
+                      const isSelectedRow = sector.id === selectedCell.sectorId;
 
                       return (
-                        <th
-                          key={dateKey}
-                          role="columnheader"
-                          className={[
-                            'sticky top-0 z-20 border-b border-ops-border-struct px-2 py-2 text-center text-xs font-semibold uppercase tracking-[0.16em]',
-                            isToday
-                              ? 'bg-emerald-300/12 text-ops-accent-muted'
-                              : isSelectedColumn
-                                ? 'bg-ops-surface-2 text-ops-text-primary'
-                                : 'bg-ops-surface-1 text-ops-text-secondary',
-                          ].join(' ')}
-                          scope="col"
-                          aria-current={isToday ? 'date' : undefined}
-                        >
-                          {formatDayLabel(dateKey)}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody role="rowgroup">
-                  {SECTORS.map((sector, sectorIndex) => {
-                    const isSelectedRow = sector.id === selectedCell.sectorId;
-
-                    return (
-                      <tr
-                        key={sector.id}
-                        role="row"
-                        className={
-                          isSelectedRow
-                            ? 'bg-white/[0.06]'
-                            : 'odd:bg-white/[0.04] even:bg-white/[0.02]'
-                        }
-                      >
-                        <th
-                          role="rowheader"
-                          className={[
-                            'sticky left-0 z-20 border-b border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
+                        <tr
+                          key={sector.id}
+                          role="row"
+                          className={
                             isSelectedRow
-                              ? 'text-ops-accent-muted'
-                              : 'text-ops-text-primary',
-                          ].join(' ')}
-                          scope="row"
+                              ? 'bg-white/[0.04]'
+                              : 'odd:bg-white/[0.025] even:bg-white/[0.012]'
+                          }
                         >
-                          {sector.label}
-                        </th>
-                        {dateKeys.map((dateKey, dateIndex) => {
-                          const status = getUiStatus(
-                            entryLookup,
-                            dateKey,
-                            sector.id,
-                          );
-                          const isToday = dateKey === todayKey;
-                          const isSelected =
-                            dateKey === selectedCell.dateKey &&
-                            sector.id === selectedCell.sectorId;
-                          const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
+                          <th
+                            role="rowheader"
+                            className={[
+                              'sticky left-0 z-20 border-b border-r border-ops-border-soft bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] shadow-[6px_0_12px_rgba(10,15,13,0.32)]',
+                              isSelectedRow
+                                ? 'text-ops-accent-muted'
+                                : 'text-ops-text-primary',
+                            ].join(' ')}
+                            scope="row"
+                          >
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="text-ops-text-muted"
+                                aria-hidden="true"
+                              >
+                                <SectorGlyphMark sectorId={sector.id} />
+                              </span>
+                              <span>{sector.label}</span>
+                            </span>
+                          </th>
+                          {dateKeys.map((dateKey, dateIndex) => {
+                            const status = getUiStatus(
+                              entryLookup,
+                              dateKey,
+                              sector.id,
+                            );
+                            const isToday = dateKey === todayKey;
+                            const isSelected =
+                              dateKey === selectedCell.dateKey &&
+                              sector.id === selectedCell.sectorId;
+                            const cellLabel = `${sector.label} on ${formatLongDate(dateKey)}: ${getStatusLabel(status)}.`;
 
-                          return (
-                            <td
-                              key={`${sector.id}:${dateKey}`}
-                              ref={(element) =>
-                                registerCellRef(
-                                  buildCellKey(sector.id, dateKey),
-                                  element,
-                                )
-                              }
-                              role="gridcell"
-                              aria-label={cellLabel}
-                              aria-describedby={ids.statusSummaryId}
-                              aria-selected={isSelected}
-                              tabIndex={isSelected ? 0 : -1}
-                              onClick={() =>
-                                handleCellSelection({
-                                  dateKey,
-                                  sectorId: sector.id,
-                                })
-                              }
-                              onFocus={() =>
-                                handleCellFocus({
-                                  dateKey,
-                                  sectorId: sector.id,
-                                })
-                              }
-                              onKeyDown={(event) =>
-                                handleCellKeyDown(event, sectorIndex, dateIndex)
-                              }
-                              className={[
-                                'ops-focus-ring-chip-proxy cursor-pointer border-b border-ops-border-soft px-2 py-2 align-middle outline-none',
-                                isToday
-                                  ? 'bg-emerald-300/[0.08]'
-                                  : dateKey === selectedCell.dateKey
-                                    ? 'bg-white/[0.03]'
-                                    : '',
-                              ].join(' ')}
-                            >
-                              <div
-                                title={cellLabel}
+                            return (
+                              <td
+                                key={`${sector.id}:${dateKey}`}
+                                ref={(element) =>
+                                  registerCellRef(
+                                    buildCellKey(sector.id, dateKey),
+                                    element,
+                                  )
+                                }
+                                role="gridcell"
+                                aria-label={cellLabel}
+                                aria-describedby={ids.statusSummaryId}
+                                aria-selected={isSelected}
+                                tabIndex={isSelected ? 0 : -1}
+                                onClick={() =>
+                                  handleCellSelection({
+                                    dateKey,
+                                    sectorId: sector.id,
+                                  })
+                                }
+                                onFocus={() =>
+                                  handleCellFocus({
+                                    dateKey,
+                                    sectorId: sector.id,
+                                  })
+                                }
+                                onKeyDown={(event) =>
+                                  handleCellKeyDown(
+                                    event,
+                                    sectorIndex,
+                                    dateIndex,
+                                  )
+                                }
                                 className={[
-                                  'ops-focus-ring-chip ops-notch-chip clip-notched mx-auto flex h-11 w-11 items-center justify-center border text-[12px] leading-none font-semibold tracking-[0.32px] transition [font-variant-numeric:tabular-nums]',
+                                  'ops-focus-ring-chip-proxy cursor-pointer border-b border-ops-border-soft px-1 py-0.5 align-middle outline-none',
                                   isSelected
-                                    ? 'ring-2 ring-inset ring-ops-accent ring-offset-1 ring-offset-ops-surface-1'
-                                    : '',
-                                  isToday && !isSelected
-                                    ? 'ring-1 ring-inset ring-emerald-300/25'
-                                    : '',
-                                  getCellClassName(status),
+                                    ? 'bg-white/[0.05] outline outline-1 -outline-offset-2 outline-[var(--ops-focus-ring)]'
+                                    : isToday
+                                      ? 'bg-emerald-300/[0.05]'
+                                      : dateKey === selectedCell.dateKey
+                                        ? 'bg-white/[0.025]'
+                                        : '',
                                 ].join(' ')}
                               >
-                                {getStatusCellText(status)}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div
-            className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
-                  Selected cell
-                </p>
-                <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
-                  {selectedSector.label}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
-                  {formatLongDate(selectedCell.dateKey)}
-                </p>
-                <p
-                  id={ids.statusSummaryId}
-                  className="mt-2 text-sm leading-6 text-ops-text-secondary"
-                >
-                  {selectedStatusSummary}
-                </p>
+                                <div
+                                  title={cellLabel}
+                                  className={[
+                                    'ops-grid-cell ops-focus-ring-chip mx-auto w-full transition [font-variant-numeric:tabular-nums]',
+                                    isToday && !isSelected
+                                      ? 'ring-1 ring-inset ring-emerald-300/25'
+                                      : '',
+                                    getCellClassName(status),
+                                  ].join(' ')}
+                                >
+                                  {getStatusCellText(status)}
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-              <StatusBadge status={selectedStatus} />
             </div>
           </div>
         </div>
 
-        <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary">
-            {selectedCell.dateKey === todayKey
-              ? 'Today is live. Use the Today panel to update the current status picture.'
-              : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
+        <aside className="lg:sticky lg:top-6 lg:self-start" aria-live="polite">
+          <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+            <div
+              className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-5 ${getStatusSpineClassName(selectedStatus)}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="ops-eyebrow text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                    Selected cell
+                  </p>
+                  <h3 className="mt-2 text-sm font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+                    {selectedSector.label}
+                  </h3>
+                </div>
+                <StatusBadge status={selectedStatus} />
+              </div>
+              <p className="mt-5 text-2xl leading-none font-semibold tracking-[0.04em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+                {formatLongDate(selectedCell.dateKey)}
+              </p>
+              <p
+                id={ids.statusSummaryId}
+                className="mt-4 text-sm leading-6 text-ops-text-secondary"
+              >
+                {selectedStatusSummary}
+              </p>
+              <p className="mt-4 border-t border-ops-border-soft pt-4 text-xs leading-5 tracking-[0.12em] text-ops-text-muted uppercase">
+                {selectedCell.dateKey === todayKey
+                  ? 'Today is live. Use the Today panel to update the current status picture.'
+                  : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
+              </p>
+            </div>
           </div>
-        </div>
+        </aside>
       </div>
     </>
   );

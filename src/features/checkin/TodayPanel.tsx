@@ -138,7 +138,7 @@ export function TodayPanel({
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-3">
         {SECTORS.map((sector, index) => (
           <DomainCard
             key={sector.id}

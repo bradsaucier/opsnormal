@@ -8,7 +8,7 @@ export function FooterProvenance() {
       className="ops-provenance flex flex-col gap-3 sm:w-full sm:max-w-sm sm:self-end"
       data-testid="footer-provenance"
     >
-      <dl className="ops-provenance-facts">
+      <dl className="ops-provenance-facts lg:text-right">
         <div>
           <dt>Build</dt>
           <dd className="[font-variant-numeric:tabular-nums]">
