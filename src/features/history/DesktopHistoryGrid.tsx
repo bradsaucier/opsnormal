@@ -123,7 +123,14 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                             scope="col"
                             aria-current={isToday ? 'date' : undefined}
                           >
-                            {formatDayLabel(dateKey)}
+                            {isToday ? (
+                              <span className="block text-[9px] leading-none tracking-[0.12em]">
+                                Today
+                              </span>
+                            ) : null}
+                            <span className={isToday ? 'mt-1 block' : ''}>
+                              {formatDayLabel(dateKey)}
+                            </span>
                           </th>
                         );
                       })}
@@ -137,9 +144,10 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                         <tr
                           key={sector.id}
                           role="row"
-                          className={
-                            isSelectedRow ? 'bg-white/[0.035]' : undefined
-                          }
+                          className={[
+                            'ops-history-row',
+                            isSelectedRow ? 'bg-white/[0.035]' : '',
+                          ].join(' ')}
                         >
                           <th
                             role="rowheader"
@@ -207,11 +215,11 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                                   )
                                 }
                                 className={[
-                                  'ops-focus-ring-chip-proxy ops-history-sector-divider cursor-pointer px-0.5 py-1 align-middle outline-none',
+                                  'ops-focus-ring-chip-proxy ops-history-cell ops-history-sector-divider cursor-pointer px-0.5 py-1 align-middle outline-none',
                                   isSelected
                                     ? 'ops-history-selected-cell bg-white/[0.06]'
                                     : isToday
-                                      ? 'ops-history-today-cell bg-emerald-300/[0.08]'
+                                      ? 'ops-history-today-cell bg-emerald-300/[0.12]'
                                       : dateKey === selectedCell.dateKey
                                         ? 'bg-white/[0.025]'
                                         : '',
@@ -242,14 +250,17 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
           </div>
         </div>
 
-        <aside className="lg:sticky lg:top-6 lg:self-start" aria-live="polite">
+        <aside
+          className="lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start"
+          aria-live="polite"
+        >
           <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
             <div
               className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-5 ${getStatusSpineClassName(selectedStatus)}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="ops-eyebrow text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                  <p className="ops-eyebrow text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
                     Selected cell
                   </p>
                   <h3 className="mt-2 text-sm font-semibold uppercase tracking-[0.06em] text-ops-text-primary">

@@ -19,7 +19,8 @@ describe('DomainCard', () => {
       </>,
     );
 
-    expect(screen.getByText('S1 - WORK')).toBeInTheDocument();
+    expect(screen.getByText('S1')).toBeInTheDocument();
+    expect(screen.getByText('WORK')).toBeInTheDocument();
     expect(screen.getByText('STATE')).toBeInTheDocument();
 
     const group = screen.getByRole('radiogroup', {

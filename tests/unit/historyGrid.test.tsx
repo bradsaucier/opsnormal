@@ -291,9 +291,7 @@ describe('history helpers and grid behavior', () => {
     render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
 
     expect(
-      screen.getByText(
-        'Patterns will appear here after your first daily check-in.',
-      ),
+      screen.getByText("Today's check-ins will mirror here as you mark them."),
     ).toBeVisible();
     expect(screen.queryByRole('grid')).not.toBeInTheDocument();
     expect(

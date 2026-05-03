@@ -84,16 +84,19 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 disabled={!canViewPreviousWeek}
                 aria-controls={ids.mobileRegionId}
                 aria-label="Previous week"
-                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
+                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.12em] uppercase"
               >
-                Prev
+                <span aria-hidden="true" className="hidden max-[360px]:inline">
+                  {'<'}
+                </span>
+                <span className="max-[360px]:sr-only">Prev</span>
               </button>
               <div
                 data-testid="mobile-history-week-status"
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-center text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+                className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-center text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
               >
                 <span className="block text-[10px] text-ops-text-muted">
                   Week {visibleWeekIndex + 1} of {weekGroups.length}
@@ -112,9 +115,12 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 disabled={!canViewNextWeek}
                 aria-controls={ids.mobileRegionId}
                 aria-label="Next week"
-                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.14em] uppercase"
+                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.12em] uppercase"
               >
-                Next
+                <span className="max-[360px]:sr-only">Next</span>
+                <span aria-hidden="true" className="hidden max-[360px]:inline">
+                  {'>'}
+                </span>
               </button>
             </nav>
             <div className="mt-3 border-t border-ops-border-soft pt-3">
@@ -150,7 +156,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         <div
           id={ids.mobileRegionId}
           ref={mobileScrollRef}
-          className="history-scroll-shell history-scroll-shell-mobile flex gap-3 overflow-x-auto pr-10"
+          className={[
+            'history-scroll-shell history-scroll-shell-mobile flex gap-3 overflow-x-auto',
+            canScrollRight ? 'pr-10' : 'pr-0',
+          ].join(' ')}
           role="region"
           aria-labelledby={ids.captionId}
           aria-describedby={`${ids.instructionsId} ${ids.statusSummaryId}`}
@@ -176,19 +185,19 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 <div className="clip-notched ops-notch-panel-inner tactical-subpanel p-3">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
                         Week {weekIndex + 1}
                       </p>
                       <p
                         id={weekHeadingId}
-                        className="mt-1 text-xs uppercase tracking-[0.14em] text-ops-text-secondary"
+                        className="mt-1 text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
                       >
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
                     </div>
                     <div
                       id={weekStateId}
-                      className="text-right text-[11px] uppercase tracking-[0.14em] text-ops-text-muted"
+                      className="text-right text-[11px] uppercase tracking-[0.12em] text-ops-text-muted"
                     >
                       {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
                     </div>
@@ -197,7 +206,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                   <div
                     className={`grid gap-2 ${getMobileWeekGridColumnsClass(weekGroup.length)}`}
                   >
-                    <div className="sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-secondary">
+                    <div className="sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-secondary">
                       Sector
                     </div>
                     {weekGroup.map((dateKey) => {
@@ -214,7 +223,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           aria-pressed={isSelectedDay}
                           aria-current={isToday ? 'date' : undefined}
                           className={[
-                            'ops-focus-ring-chip ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] transition',
+                            'ops-focus-ring-chip ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] transition hover:border-ops-border-struct hover:bg-white/[0.045] hover:text-ops-text-primary',
                             isSelectedDay
                               ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                               : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
@@ -237,7 +246,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       return [
                         <div
                           key={`${sector.id}:label`}
-                          className="sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-primary"
+                          className="sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-primary"
                         >
                           <span
                             className="text-ops-text-muted"
@@ -261,7 +270,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             <div
                               key={`${sector.id}:${dateKey}`}
                               className={[
-                                'ops-grid-cell min-h-10 [font-variant-numeric:tabular-nums]',
+                                'ops-grid-cell min-h-10 transition [font-variant-numeric:tabular-nums]',
                                 isSelectedDay
                                   ? 'outline outline-1 -outline-offset-1 outline-[var(--ops-focus-ring)]'
                                   : '',
@@ -310,7 +319,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ops-text-muted">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
                 Daily brief
               </p>
               <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
@@ -323,7 +332,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 {selectedDaySummary}
               </p>
             </div>
-            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.14em] text-ops-text-secondary">
+            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.12em] text-ops-text-secondary">
               {visibleWeekIndex + 1} of {weekGroups.length} week groups
             </div>
           </div>

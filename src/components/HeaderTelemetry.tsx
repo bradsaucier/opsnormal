@@ -57,18 +57,18 @@ function TelemetryChip({
   return (
     <div
       className={[
-        'ops-telemetry-chip clip-notched ops-notch-chip tactical-chip-panel flex min-h-[4.5rem] flex-col justify-between border px-3 py-3 text-left',
+        'ops-telemetry-chip clip-notched ops-notch-chip tactical-chip-panel flex min-h-[4rem] flex-col justify-between border px-3 py-3 text-left',
         toneClassNameByTone[tone],
       ].join(' ')}
     >
-      <span className="text-[10px] font-semibold tracking-[0.2em] text-ops-text-muted uppercase">
+      <span className="text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
         {label}
       </span>
       <span className="mt-1.5 text-lg leading-none font-semibold tracking-[0.06em] uppercase [font-variant-numeric:tabular-nums] sm:text-xl">
         {value}
       </span>
       {detail ? (
-        <span className="mt-1.5 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
+        <span className="mt-1.5 text-[10px] leading-4 tracking-[0.1em] text-ops-text-muted uppercase">
           {detail}
         </span>
       ) : null}
