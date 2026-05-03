@@ -13,6 +13,7 @@ test.describe('OpsNormal desktop history', () => {
     page,
   }) => {
     await page.goto('/');
+    await page.getByRole('radio', { name: /body nominal/i }).click();
 
     const grid = page.getByRole('grid');
     const selectedCell = () =>
