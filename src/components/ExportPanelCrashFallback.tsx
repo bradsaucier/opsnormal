@@ -6,6 +6,7 @@ import {
 } from '../lib/emergencyExport';
 import { getErrorMessage } from '../lib/errors';
 import { reloadCurrentPage } from '../lib/runtime';
+import { NotchedFrame } from './NotchedFrame';
 
 type BusyAction = 'json' | 'csv' | null;
 
@@ -106,80 +107,101 @@ export function ExportPanelCrashFallback({
 
   return (
     <Fragment>
-      <div
-        ref={containerRef}
-        role="alert"
-        aria-atomic="true"
-        tabIndex={-1}
-        className="rounded-2xl border border-orange-400/25 bg-orange-400/5 p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
+      <NotchedFrame
+        emphasis="support"
+        innerClassName="tactical-subpanel-strong ops-section-spine-fault p-5"
       >
-        <p className="text-xs font-semibold tracking-[0.16em] text-orange-300/90 uppercase">
-          Section fault
-        </p>
-        <h2 className="mt-2 text-sm font-semibold tracking-[0.06em] text-zinc-100 uppercase">
-          Backup and Recovery offline
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-zinc-400">
-          This panel crashed, but the rest of OpsNormal is still online.
-          Emergency export stays available through the isolated crash-export
-          recovery path.
-        </p>
-        <p className="mt-3 text-sm leading-6 text-zinc-300">{message}</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => void handleJsonExport()}
-            disabled={controlsDisabled}
-            className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-emerald-100 uppercase transition hover:bg-emerald-400/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {busyAction === 'json' ? 'Exporting JSON' : 'Emergency JSON export'}
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleCsvExport()}
-            disabled={controlsDisabled}
-            className="rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-emerald-100 uppercase transition hover:bg-emerald-400/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {busyAction === 'csv' ? 'Exporting CSV' : 'Emergency CSV export'}
-          </button>
-          <button
-            type="button"
-            onClick={onRetry}
-            disabled={controlsDisabled}
-            className="rounded-lg border border-sky-400/40 bg-sky-400/10 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-sky-100 uppercase transition hover:bg-sky-400/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Retry section
-          </button>
-          <button
-            type="button"
-            onClick={reloadCurrentPage}
-            disabled={controlsDisabled}
-            className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold tracking-[0.14em] text-zinc-100 uppercase transition hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Reload page
-          </button>
-        </div>
-        {showManualInspectionGuidance ? (
-          <p className="mt-4 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-6 text-zinc-300">
-            If emergency export still fails, inspect browser DevTools, then
-            Application, then IndexedDB, then the opsnormal database for manual
-            recovery.
+        <div
+          ref={containerRef}
+          role="alert"
+          aria-atomic="true"
+          tabIndex={-1}
+          className="ops-focus-ring-inset"
+        >
+          <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-status-degraded-text)]">
+            Section fault
           </p>
-        ) : null}
-        <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-zinc-300">
-          <summary className="cursor-pointer font-semibold tracking-[0.08em] text-zinc-100 uppercase">
-            Fault details
-          </summary>
-          <p className="mt-3 font-mono text-xs leading-5 text-zinc-300 break-words">
-            {getErrorMessage(error, 'Unknown render failure.')}
+          <h2 className="mt-2 text-sm font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
+            Backup and Recovery offline
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+            This panel crashed, but the rest of OpsNormal is still online.
+            Emergency export stays available through the isolated crash-export
+            recovery path.
           </p>
-          {componentStack ? (
-            <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-zinc-400">
-              {componentStack.trim()}
-            </pre>
+          <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
+            {message}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleJsonExport()}
+              disabled={controlsDisabled}
+              className="ops-action-button ops-action-button-emerald-solid"
+            >
+              {busyAction === 'json'
+                ? 'Exporting JSON'
+                : 'Emergency JSON export'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCsvExport()}
+              disabled={controlsDisabled}
+              className="ops-action-button ops-action-button-emerald"
+            >
+              {busyAction === 'csv' ? 'Exporting CSV' : 'Emergency CSV export'}
+            </button>
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={controlsDisabled}
+              className="ops-action-button ops-action-button-amber"
+            >
+              Retry section
+            </button>
+            <button
+              type="button"
+              onClick={reloadCurrentPage}
+              disabled={controlsDisabled}
+              className="ops-action-button ops-action-button-subtle"
+            >
+              Reload page
+            </button>
+          </div>
+          {showManualInspectionGuidance ? (
+            <p className="clip-notched ops-notch-chip tactical-chip-panel mt-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary">
+              If emergency export still fails, inspect browser DevTools, then
+              Application, then IndexedDB, then the opsnormal database for
+              manual recovery.
+            </p>
           ) : null}
-        </details>
-      </div>
+          <details className="clip-notched ops-notch-chip tactical-chip-panel mt-4 p-3 text-sm text-ops-text-secondary">
+            <summary className="ops-details-summary flex cursor-pointer items-center justify-between gap-3 font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
+              <span>Fault details</span>
+              <svg
+                viewBox="0 0 12 12"
+                className="h-3 w-3 text-[var(--ops-status-degraded-text)]"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="square"
+                strokeLinejoin="miter"
+                strokeWidth="1.5"
+                aria-hidden="true"
+              >
+                <path d="M4 2 L8 6 L4 10" />
+              </svg>
+            </summary>
+            <p className="mt-3 font-mono text-xs leading-5 text-ops-text-secondary break-words">
+              {getErrorMessage(error, 'Unknown render failure.')}
+            </p>
+            {componentStack ? (
+              <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-5 text-ops-text-muted">
+                {componentStack.trim()}
+              </pre>
+            ) : null}
+          </details>
+        </div>
+      </NotchedFrame>
       <div
         className="sr-only"
         role="status"
