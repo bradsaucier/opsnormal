@@ -4,6 +4,7 @@ import { AlertSurface } from '../../components/AlertSurface';
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
 import { SectorGlyphConstellation } from '../../components/SectorGlyphConstellation';
+import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
 import { useEntriesForDate } from '../../db/hooks';
 import { setDailyStatus } from '../../db/appDb';
 import { formatDateKey, formatLongDate } from '../../lib/date';
@@ -22,41 +23,50 @@ interface TodayPanelProps {
   onAnnounce?: (message: string) => void;
 }
 
-interface DayCompletionTileProps {
+interface DayCompletionRollupProps {
   isComplete: boolean;
   markedCount: number;
+  statuses: UiStatus[];
   totalCount: number;
 }
 
-function DayCompletionTile({
+function getRollupPipClassName(status: UiStatus): string {
+  if (status === 'nominal') {
+    return 'border-[var(--ops-status-nominal-border)] bg-[var(--ops-status-nominal-bg)]';
+  }
+
+  if (status === 'degraded') {
+    return 'border-[var(--ops-status-degraded-border)] bg-[var(--ops-status-degraded-bg)]';
+  }
+
+  return 'border-[var(--ops-status-unmarked-border)] bg-[var(--ops-status-unmarked-bg)]';
+}
+
+function DayCompletionRollup({
   isComplete,
   markedCount,
+  statuses,
   totalCount,
-}: DayCompletionTileProps) {
+}: DayCompletionRollupProps) {
   const remainingCount = Math.max(totalCount - markedCount, 0);
 
   return (
-    <div className="panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px">
-      <div
-        className={[
-          'clip-notched ops-notch-panel-inner tactical-subpanel-strong flex min-h-[14rem] flex-col justify-between p-5',
-          isComplete ? 'ops-sector-spine-nominal' : 'ops-sector-spine-unmarked',
-        ].join(' ')}
-      >
-        <div>
-          <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+    <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer bg-ops-border-strong p-px">
+      <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong ops-rollup-spine grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+        <div className="min-w-[8rem]">
+          <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
             Daily roll-up
           </p>
-          <p className="mt-3 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+          <p className="mt-2 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
             {markedCount}/{totalCount}
           </p>
-          <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
-            {isComplete
-              ? 'All sectors are marked for today.'
-              : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
-          </p>
         </div>
-        <div className="mt-5 border-t border-ops-border-soft pt-3">
+        <div className="text-sm leading-6 text-ops-text-secondary">
+          {isComplete
+            ? 'All five sectors are marked for today.'
+            : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 lg:justify-end">
           <span
             className={[
               'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
@@ -66,6 +76,26 @@ function DayCompletionTile({
           >
             {isComplete ? 'Complete' : 'Open'}
           </span>
+          <div
+            className="flex items-center gap-1.5"
+            aria-label="Today sector status pips"
+          >
+            {SECTORS.map((sector, index) => (
+              <span
+                key={sector.id}
+                className={[
+                  'clip-notched ops-notch-chip inline-flex h-4 w-7 items-center justify-center border',
+                  getRollupPipClassName(statuses[index] ?? 'unmarked'),
+                ].join(' ')}
+                title={sector.label}
+              >
+                <span className="sr-only">{sector.label}</span>
+                <span className="text-[9px] leading-none text-ops-text-primary/80">
+                  <SectorGlyphMark sectorId={sector.id} />
+                </span>
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -90,6 +120,11 @@ export function TodayPanel({
   const completion = useMemo(
     () => computeCompletionState(entries, todayKey),
     [entries, todayKey],
+  );
+  const todaySectorStatuses = useMemo(
+    () =>
+      SECTORS.map((sector) => getUiStatus(entryLookup, todayKey, sector.id)),
+    [entryLookup, todayKey],
   );
 
   function announce(message: string) {
@@ -214,9 +249,16 @@ export function TodayPanel({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:gap-5 xl:grid-cols-6">
+      <DayCompletionRollup
+        isComplete={completion.isComplete}
+        markedCount={completion.markedCount}
+        statuses={todaySectorStatuses}
+        totalCount={completion.totalCount}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:gap-5 xl:grid-cols-5">
         {SECTORS.map((sector, index) => (
-          <div key={sector.id} className="xl:col-span-2">
+          <div key={sector.id}>
             <DomainCard
               sector={sector}
               sectorSigil={`S${index + 1}`}
@@ -227,13 +269,6 @@ export function TodayPanel({
             />
           </div>
         ))}
-        <div className="xl:col-span-2">
-          <DayCompletionTile
-            isComplete={completion.isComplete}
-            markedCount={completion.markedCount}
-            totalCount={completion.totalCount}
-          />
-        </div>
       </div>
     </SectionCard>
   );
