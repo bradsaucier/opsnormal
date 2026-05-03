@@ -56,7 +56,7 @@ export function InstallBanner({ compact = false }: InstallBannerProps) {
               recordInstallBannerDismissal();
               setDismissed(true);
             }}
-            className="ops-action-button clip-notched ops-notch-chip px-4 py-2 text-xs font-semibold tracking-[0.16em] uppercase ops-action-button-subtle"
+            className="ops-action-button ops-action-button-sm ops-action-button-subtle"
           >
             Dismiss
           </button>
