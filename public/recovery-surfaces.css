@@ -1,5 +1,10 @@
 :root {
   color-scheme: dark;
+  --ops-fallback-panel-notch: 12px;
+  --ops-fallback-chip-notch: 8px;
+  --ops-fallback-border-soft: rgba(255, 255, 255, 0.14);
+  --ops-fallback-border-strong: rgba(255, 255, 255, 0.22);
+  --ops-fallback-focus: rgba(183, 247, 218, 0.86);
 }
 
 .ops-boot-fallback-shell,
@@ -24,7 +29,11 @@
 .ops-boot-fallback-eyebrow,
 .ops-crash-fallback-eyebrow,
 .ops-crash-fallback-detail-label,
-.ops-crash-fallback-danger-label {
+.ops-crash-fallback-danger-label,
+.ops-boot-fallback-button,
+.ops-crash-fallback-button {
+  font-family:
+    'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -63,14 +72,32 @@
 
 .ops-boot-fallback-button,
 .ops-crash-fallback-button {
+  --notch: var(--ops-fallback-chip-notch);
+  -webkit-clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  transform: translateZ(0);
   padding: 0.5rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  border-radius: 0.5rem;
   border: 1px solid transparent;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   transition:
     opacity 120ms ease,
     background-color 120ms ease,
@@ -81,26 +108,52 @@
 .ops-boot-fallback-button:focus-visible,
 .ops-crash-fallback-button:focus-visible,
 .ops-crash-fallback-checkbox:focus-visible {
-  outline: 2px solid rgba(183, 247, 218, 0.72);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(10, 15, 13, 0.96),
+    inset 0 0 0 3px var(--ops-fallback-focus);
 }
 
 .ops-boot-fallback-button {
   color: #fdba74;
-  background: rgba(251, 146, 60, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(251, 146, 60, 0.1);
   border-color: rgba(251, 146, 60, 0.4);
 }
 
 .ops-crash-fallback-detail-card,
 .ops-crash-fallback-danger-zone {
+  --notch: var(--ops-fallback-panel-notch);
+  -webkit-clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  transform: translateZ(0);
   margin-top: 1.5rem;
   padding: 1rem;
-  border-radius: 0.75rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 
 .ops-crash-fallback-detail-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--ops-fallback-border-soft);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 30%),
+    rgba(0, 0, 0, 0.25);
 }
 
 .ops-crash-fallback-detail-label {
@@ -118,31 +171,41 @@
 
 .ops-crash-fallback-button-primary {
   color: #a7f3d0;
-  background-color: rgba(16, 185, 129, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(16, 185, 129, 0.1);
   border-color: rgba(52, 211, 153, 0.4);
 }
 
 .ops-crash-fallback-button-muted {
   color: #e4e4e7;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 68%),
+    rgba(255, 255, 255, 0.05);
+  border-color: var(--ops-fallback-border-soft);
 }
 
 .ops-crash-fallback-button-retry {
   color: #93c5fd;
-  background-color: rgba(59, 130, 246, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(59, 130, 246, 0.1);
   border-color: rgba(96, 165, 250, 0.4);
 }
 
 .ops-crash-fallback-button-reload {
   color: #fdba74;
-  background-color: rgba(251, 146, 60, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(251, 146, 60, 0.1);
   border-color: rgba(251, 146, 60, 0.4);
 }
 
 .ops-crash-fallback-danger-zone {
   border: 1px solid rgba(248, 113, 113, 0.28);
-  background-color: rgba(127, 29, 29, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%),
+    rgba(127, 29, 29, 0.18);
 }
 
 .ops-crash-fallback-danger-label {
@@ -173,12 +236,16 @@
 
 .ops-crash-fallback-button-danger {
   color: #fee2e2;
-  background-color: rgba(220, 38, 38, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(220, 38, 38, 0.12);
   border-color: rgba(248, 113, 113, 0.45);
 }
 
 .ops-crash-fallback-button-danger.is-armed {
-  background-color: rgba(220, 38, 38, 0.32);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 68%),
+    rgba(220, 38, 38, 0.32);
 }
 
 .ops-crash-fallback-danger-note {
