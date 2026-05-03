@@ -4,6 +4,10 @@ import { AlertSurface } from './components/AlertSurface';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ExportPanelCrashFallback } from './components/ExportPanelCrashFallback';
 import { FooterProvenance } from './components/FooterProvenance';
+import {
+  HeaderTelemetry,
+  HeaderTelemetryFallback,
+} from './components/HeaderTelemetry';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { TodayPanel } from './features/checkin/TodayPanel';
@@ -26,7 +30,6 @@ import {
 } from './lib/export';
 import {
   clearStorageHealthForTesting,
-  formatStorageSummary,
   setStorageHealthForTesting,
   type StorageHealth,
 } from './lib/storage';
@@ -217,13 +220,13 @@ function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-5 lg:gap-6"
+        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-6 lg:gap-8"
       >
         <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
-          <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
+                <p className="ops-eyebrow text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
                   Personal Readiness Tracker
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-ops-text-primary uppercase sm:text-4xl">
@@ -235,21 +238,21 @@ function App() {
                   sync. No analytics layer.
                 </p>
               </div>
-              <div className="clip-notched ops-notch-panel-outer bg-ops-panel-border p-px text-right">
-                <div className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3">
-                  <div className="text-xs tracking-[0.16em] text-ops-text-muted uppercase">
-                    Data posture
-                  </div>
-                  <div className="mt-1 text-sm font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
-                    Local only
-                  </div>
-                  <div className="mt-2 text-xs leading-5 text-ops-text-secondary [font-variant-numeric:tabular-nums]">
-                    {storageHealth
-                      ? formatStorageSummary(storageHealth)
-                      : 'Assessing local storage posture. If Safari returns to a blank state after inactivity, restore from the latest JSON export immediately.'}
-                  </div>
-                </div>
-              </div>
+              <ErrorBoundary
+                fallbackRender={() => (
+                  <HeaderTelemetryFallback
+                    lastBackupAt={lastBackupAt}
+                    storageHealth={storageHealth}
+                  />
+                )}
+              >
+                <HeaderTelemetry
+                  dateKeys={trailingDateKeys}
+                  lastBackupAt={lastBackupAt}
+                  storageHealth={storageHealth}
+                  todayKey={todayKey}
+                />
+              </ErrorBoundary>
             </div>
           </header>
         </div>
@@ -334,11 +337,17 @@ function App() {
           </ErrorBoundary>
         </div>
 
+        <div
+          role="separator"
+          aria-orientation="horizontal"
+          className="h-px bg-ops-panel-border"
+        />
+
         <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
           <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="lg:max-w-2xl">
-                <p className="font-semibold tracking-[0.14em] text-ops-text-primary uppercase">
+                <p className="ops-eyebrow font-semibold tracking-[0.14em] text-ops-text-primary uppercase">
                   Boundary
                 </p>
                 <p className="mt-2">
