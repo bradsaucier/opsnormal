@@ -11,7 +11,7 @@ export function FooterProvenance() {
       <dl className="ops-provenance-facts lg:text-right">
         <div>
           <dt>Build</dt>
-          <dd className="[font-variant-numeric:tabular-nums]">
+          <dd className="text-ops-text-primary [font-variant-numeric:tabular-nums]">
             v{__APP_VERSION__}
           </dd>
         </div>
