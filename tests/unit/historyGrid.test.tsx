@@ -60,6 +60,13 @@ const completeDayEntries: DailyEntry[] = [
   },
 ];
 
+const placeholderVisibleEntry: DailyEntry = {
+  date: '2026-03-01',
+  sectorId: 'relationships',
+  status: 'nominal',
+  updatedAt: '2026-03-01T08:00:00.000Z',
+};
+
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null;
   readonly rootMargin = '0px';
@@ -153,7 +160,7 @@ function getSelectedGridCell(): HTMLElement {
 
 describe('history helpers and grid behavior', () => {
   beforeEach(() => {
-    mockUseEntriesForDateRange.mockReturnValue([]);
+    mockUseEntriesForDateRange.mockReturnValue([placeholderVisibleEntry]);
     installMatchMediaController(false);
 
     Object.defineProperty(Element.prototype, 'scrollIntoView', {
@@ -275,6 +282,23 @@ describe('history helpers and grid behavior', () => {
     expect(
       screen.getByRole('heading', { level: 3, name: /sat, mar 28, 2026/i }),
     ).toBeVisible();
+  });
+
+  it('renders a first-run empty state before any history entries exist', () => {
+    const dateKeys = getTrailingDateKeys(30, new Date(2026, 2, 28));
+    mockUseEntriesForDateRange.mockReturnValue([]);
+
+    render(<HistoryGrid dateKeys={dateKeys} todayKey="2026-03-28" />);
+
+    expect(
+      screen.getByText(
+        'Patterns will appear here after your first daily check-in.',
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /previous week/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('echoes selected readiness state on the desktop selected-cell brief', async () => {
