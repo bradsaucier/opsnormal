@@ -39,7 +39,7 @@ export function UndoRecoverySection({
           type="button"
           onClick={() => void onUndoImport()}
           disabled={!canUndoImport || undoInvalidated || undoBusy}
-          className="ops-action-button ops-action-button-amber min-h-[44px] px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition disabled:cursor-not-allowed disabled:opacity-60"
+          className="ops-action-button ops-action-button-orange min-h-[44px] px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition disabled:cursor-not-allowed disabled:opacity-60"
         >
           {undoBusy ? 'Undoing Import' : 'Undo Last Import'}
         </button>
