@@ -54,9 +54,9 @@
   --ops-status-nominal-border: rgba(110, 231, 183, 0.56);
   --ops-status-nominal-bg: rgba(110, 231, 183, 0.3);
   --ops-status-nominal-text: #c9fae4;
-  --ops-status-degraded-border: rgba(245, 158, 11, 0.78);
+  --ops-status-degraded-border: rgba(245, 158, 11, 0.72);
   --ops-status-degraded-bg: rgba(245, 158, 11, 0.28);
-  --ops-status-degraded-text: #fde7b0;
+  --ops-status-degraded-text: #fbd38d;
   --ops-status-unmarked-border: rgba(255, 255, 255, 0.16);
   --ops-status-unmarked-bg: rgba(36, 48, 42, 0.72);
   --ops-status-unmarked-text: #96a39d;
@@ -284,6 +284,18 @@ h3,
 .history-scroll-shell {
   scrollbar-width: thin;
   scrollbar-color: rgba(110, 231, 183, 0.32) rgba(255, 255, 255, 0.04);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
 }
 
 .history-scroll-shell-mobile {
@@ -503,6 +515,75 @@ h3,
   box-shadow: var(--ops-focus-ring-base-shadow);
 }
 
+.ops-telemetry-chip {
+  position: relative;
+  overflow: hidden;
+}
+
+.ops-telemetry-grid > .ops-telemetry-chip {
+  border-top: 1px solid var(--color-ops-border-soft);
+}
+
+.ops-telemetry-grid > .ops-telemetry-chip:nth-child(-n + 2) {
+  border-top: 0;
+}
+
+.ops-telemetry-grid > .ops-telemetry-chip:nth-child(odd) {
+  border-right: 1px solid var(--color-ops-border-soft);
+}
+
+@media (min-width: 1024px) {
+  .ops-telemetry-grid > .ops-telemetry-chip {
+    border-top: 0;
+    border-right: 1px solid var(--color-ops-border-soft);
+  }
+
+  .ops-telemetry-grid > .ops-telemetry-chip:last-child {
+    border-right: 0;
+  }
+}
+
+.ops-telemetry-chip-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(110, 231, 183, 0.2),
+    transparent
+  );
+  animation: ops-streak-shimmer 760ms ease-out;
+  transform: translateX(120%);
+}
+
+.ops-complete-badge {
+  animation: ops-complete-flip 220ms ease-out;
+}
+
+@keyframes ops-streak-shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes ops-complete-flip {
+  0% {
+    opacity: 0.68;
+    transform: scale(0.92);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .ops-radio-chip {
   border-radius: 2px;
   transition:
@@ -515,16 +596,16 @@ h3,
 }
 
 .ops-radio-chip-ghost {
-  border-color: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.18);
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.022),
+      rgba(255, 255, 255, 0.04),
       rgba(255, 255, 255, 0) 32%
     ),
     rgba(16, 22, 19, 0.78);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
     inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
@@ -949,15 +1030,34 @@ h3,
 }
 
 .ops-boot-fallback-button {
+  --notch: var(--ops-notch-chip);
+  -webkit-clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch)
+  );
+  transform: translateZ(0);
+  border: 1px solid rgba(251, 146, 60, 0.4);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
+    rgba(251, 146, 60, 0.1);
   padding: 0.5rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #fdba74;
-  background: rgba(251, 146, 60, 0.1);
-  border: 1px solid rgba(251, 146, 60, 0.4);
-  border-radius: 0.5rem;
   cursor: pointer;
 }
 
