@@ -1,69 +1,48 @@
 import { NotchedFrame } from '../../components/NotchedFrame';
-import {
-  getAlertSurfaceTonePalette,
-  type AlertSurfaceTone,
-} from '../../components/alertSurfaceTone';
+import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
+import type { StorageHealth } from '../../lib/storage';
+import type { AccordionSectionKey } from './exportPanelShared';
+import { AccordionSection } from './exportPanelShared';
 
-import type { StatusMessage } from './workflowTypes';
-
-interface StatusMessageRegionsProps {
-  statusMessage: StatusMessage;
+interface StorageHealthSectionProps {
+  isOpen: boolean;
+  onToggle: (sectionKey: AccordionSectionKey) => void;
+  storageHealth: StorageHealth | null;
+  onRequestStorageProtection?: () => Promise<StorageHealth>;
+  isRequestingStorageProtection?: boolean;
 }
 
-function getStatusSurfaceTone(statusMessage: StatusMessage): AlertSurfaceTone {
-  if (statusMessage.tone === 'success') {
-    return 'success';
-  }
-
-  if (statusMessage.tone === 'error') {
-    return 'danger';
-  }
-
-  if (statusMessage.tone === 'warning') {
-    return 'attention';
-  }
-
-  return 'neutral';
-}
-
-export function StatusMessageRegions({
-  statusMessage,
-}: StatusMessageRegionsProps) {
-  const passiveStatusText =
-    statusMessage.tone === 'info' || statusMessage.tone === 'success'
-      ? statusMessage.text
-      : '';
-  const alertStatusText =
-    statusMessage.tone === 'warning' || statusMessage.tone === 'error'
-      ? statusMessage.text
-      : '';
-
-  const tonePalette = getAlertSurfaceTonePalette(
-    getStatusSurfaceTone(statusMessage),
-  );
-
+export function StorageHealthSection({
+  isOpen,
+  onToggle,
+  storageHealth,
+  onRequestStorageProtection,
+  isRequestingStorageProtection = false,
+}: StorageHealthSectionProps) {
   return (
-    <div className="space-y-3">
-      <div role="status" aria-atomic="true">
-        {passiveStatusText ? (
-          <NotchedFrame
-            outerClassName={tonePalette.outerClassName}
-            innerClassName={`p-4 text-sm leading-6 ${tonePalette.innerClassName} ${tonePalette.descriptionClassName}`}
-          >
-            {passiveStatusText}
-          </NotchedFrame>
-        ) : null}
+    <AccordionSection
+      sectionKey="storage"
+      title="Storage Health"
+      summary="Browser-managed storage is operational terrain, not a guaranteed archive."
+      isOpen={isOpen}
+      onToggle={onToggle}
+    >
+      <div className="space-y-4">
+        <StorageHealthIndicator
+          storageHealth={storageHealth}
+          onRequestStorageProtection={onRequestStorageProtection}
+          isRequestingStorageProtection={isRequestingStorageProtection}
+        />
+        <NotchedFrame
+          emphasis="quiet"
+          innerClassName="tactical-chip-panel tactical-chip-panel-neutral p-4 text-sm leading-6"
+        >
+          The browser automatically manages local storage. You can manually
+          request exemption from automatic deletion, though browsers may deny
+          this silently. Always rely on routine exports to secure your critical
+          data.
+        </NotchedFrame>
       </div>
-      <div role="alert" aria-atomic="true">
-        {alertStatusText ? (
-          <NotchedFrame
-            outerClassName={tonePalette.outerClassName}
-            innerClassName={`p-4 text-sm leading-6 ${tonePalette.innerClassName} ${tonePalette.descriptionClassName}`}
-          >
-            {alertStatusText}
-          </NotchedFrame>
-        ) : null}
-      </div>
-    </div>
+    </AccordionSection>
   );
 }
