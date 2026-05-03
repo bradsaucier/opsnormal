@@ -148,16 +148,19 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[14rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-5 text-left',
+          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[13rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left sm:p-5',
           spineClassName,
         ].join(' ')}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
+          <span
+            className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 shrink-0 items-center justify-center border border-ops-border-soft text-ops-text-muted"
+            aria-hidden="true"
+          >
+            <SectorGlyphMark sectorId={sector.id} />
+          </span>
           <div className="min-w-0">
-            <span className="ops-mono flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase whitespace-nowrap">
-              <span className="text-ops-text-muted" aria-hidden="true">
-                <SectorGlyphMark sectorId={sector.id} />
-              </span>
+            <span className="ops-mono flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
               <span className="text-ops-accent/70">{sectorSigil}</span>
               <span
                 className="h-3 w-px bg-ops-border-struct"
@@ -165,10 +168,10 @@ export function DomainCard({
               />
               <span>{sector.shortLabel}</span>
             </span>
-            <h3 className="mt-2 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
+            <h3 className="mt-1.5 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
               {sector.label}
             </h3>
-            <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
+            <p className="mt-2.5 text-sm leading-6 text-ops-text-secondary">
               {sector.description}
             </p>
           </div>
@@ -221,7 +224,7 @@ export function DomainCard({
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
-                      : 'ops-radio-chip-ghost text-ops-text-muted hover:text-ops-text-secondary',
+                      : 'ops-radio-chip-ghost text-ops-text-secondary hover:text-ops-text-primary',
                   ].join(' ')}
                 >
                   {content.shortLabel}
