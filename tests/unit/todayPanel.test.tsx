@@ -54,8 +54,10 @@ describe('TodayPanel', () => {
 
     expect(screen.getAllByRole('radio')).toHaveLength(15);
     expect(instructionStrip).toBeInTheDocument();
-    expect(screen.getByText('S1 - WORK')).toBeInTheDocument();
-    expect(screen.getByText('S5 - REST')).toBeInTheDocument();
+    expect(screen.getByText('S1')).toBeInTheDocument();
+    expect(screen.getByText('WORK')).toBeInTheDocument();
+    expect(screen.getByText('S5')).toBeInTheDocument();
+    expect(screen.getByText('REST')).toBeInTheDocument();
     expect(
       screen.getByRole('radiogroup', { name: /work or school status/i }),
     ).toBeInTheDocument();
