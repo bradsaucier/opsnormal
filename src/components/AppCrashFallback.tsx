@@ -237,7 +237,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-[var(--ops-status-degraded-text)]">
                 Render fault
               </p>
-              <h1 className="ops-tracking-display mt-2 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
+              <h1 className="ops-crash-fallback-title ops-tracking-display mt-2 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
                 OpsNormal stopped rendering
               </h1>
               <p
