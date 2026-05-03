@@ -47,7 +47,7 @@ export function AccordionSection({
           className="ops-focus-ring-inset flex min-h-[56px] w-full items-start justify-between gap-4 px-4 py-4 text-left transition hover:bg-white/4"
         >
           <span>
-            <span className="block text-xs font-semibold tracking-[0.22em] text-ops-text-muted uppercase">
+            <span className="block text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
               {title}
             </span>
             <span className="mt-2 block text-sm leading-6 text-ops-text-secondary">
@@ -56,9 +56,19 @@ export function AccordionSection({
           </span>
           <span
             aria-hidden="true"
-            className={`mt-1 text-lg leading-none text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`mt-1 inline-flex h-6 w-6 items-center justify-center text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
           >
-            ›
+            <svg
+              viewBox="0 0 12 12"
+              className="h-3 w-3"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="square"
+              strokeLinejoin="miter"
+              strokeWidth="1.5"
+            >
+              <path d="M4 2 L8 6 L4 10" />
+            </svg>
           </span>
         </button>
       </h3>
@@ -138,7 +148,7 @@ export function SignalCard({
         innerClassName={`p-4 ${chromeClasses.inner}`}
       >
         <p
-          className={`text-xs font-semibold tracking-[0.16em] uppercase ${chromeClasses.label}`}
+          className={`text-xs font-semibold tracking-[0.14em] uppercase ${chromeClasses.label}`}
         >
           {label}
         </p>
