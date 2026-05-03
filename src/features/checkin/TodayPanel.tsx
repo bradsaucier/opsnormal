@@ -43,7 +43,7 @@ function DayCompletionTile({
         ].join(' ')}
       >
         <div>
-          <p className="ops-eyebrow text-xs font-semibold tracking-[0.22em] text-ops-text-muted uppercase">
+          <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
             Daily roll-up
           </p>
           <p className="mt-3 text-4xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
@@ -84,6 +84,7 @@ export function TodayPanel({
   const persistRequestedRef = useRef(false);
 
   const entryLookup = useMemo(() => createEntryLookup(entries), [entries]);
+  const hasEntriesForToday = entries.length > 0;
   const completion = useMemo(
     () => computeCompletionState(entries, todayKey),
     [entries, todayKey],
@@ -180,6 +181,20 @@ export function TodayPanel({
             role="alert"
             aria-atomic="true"
           />
+        </div>
+      ) : null}
+
+      {!hasEntriesForToday ? (
+        <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong px-4 py-3">
+            <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+              Awaiting first mark
+            </p>
+            <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+              No sectors are marked for today. Set one state below and the daily
+              roll-up will start tracking live progress.
+            </p>
+          </div>
         </div>
       ) : null}
 
