@@ -110,7 +110,7 @@ export function PwaUpdateBanner({
             title={viewModel.heading}
             description={viewModel.primaryMessage}
             intensity={compact ? 'compact' : 'standard'}
-            bodyClassName="text-sky-50"
+            bodyClassName="text-[var(--ops-text-on-sky)]"
             actions={
               <>
                 {viewModel.showApplyButton ? (
@@ -136,7 +136,7 @@ export function PwaUpdateBanner({
                   <button
                     type="button"
                     onClick={onDismiss}
-                    className="ops-action-button clip-notched ops-notch-chip px-4 py-2 text-xs font-semibold tracking-[0.16em] uppercase ops-action-button-subtle"
+                    className="ops-action-button ops-action-button-sm ops-action-button-subtle"
                   >
                     Dismiss
                   </button>

@@ -29,8 +29,8 @@ export function UndoRecoverySection({
     >
       <div className="space-y-4">
         <NotchedFrame
-          outerClassName="bg-ops-panel-border"
-          innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-4 text-sm leading-6 text-zinc-300"
+          emphasis="quiet"
+          innerClassName="tactical-chip-panel tactical-chip-panel-neutral p-4 text-sm leading-6"
         >
           Undo restores the pre-import snapshot for the current session only.
           Reload the app and that rope is gone. Keep external backups current.
@@ -39,17 +39,17 @@ export function UndoRecoverySection({
           type="button"
           onClick={() => void onUndoImport()}
           disabled={!canUndoImport || undoInvalidated || undoBusy}
-          className="ops-action-button ops-action-button-orange min-h-[44px] px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase transition disabled:cursor-not-allowed disabled:opacity-60"
+          className="ops-action-button ops-action-button-orange disabled:cursor-not-allowed disabled:opacity-60"
         >
           {undoBusy ? 'Undoing Import' : 'Undo Last Import'}
         </button>
         {undoInvalidated ? (
-          <p className="text-sm leading-6 text-amber-300">
+          <p className="text-sm leading-6 text-[var(--ops-status-degraded-text)]">
             Undo disabled after a post-import daily check-in. Export a fresh
             backup before proceeding.
           </p>
         ) : !canUndoImport ? (
-          <p className="text-sm leading-6 text-zinc-400">
+          <p className="text-sm leading-6 text-ops-text-muted">
             No import rollback staged in this session.
           </p>
         ) : null}

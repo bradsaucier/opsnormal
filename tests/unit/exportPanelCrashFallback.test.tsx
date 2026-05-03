@@ -71,6 +71,13 @@ describe('ExportPanelCrashFallback', () => {
       'Emergency JSON export complete. 2 entries recovered.',
     );
     expect(alert).not.toContainElement(status);
+    expect(container.querySelector('.clip-notched')).toBeInTheDocument();
+    expect(
+      container.querySelector('.ops-section-spine-fault'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /emergency json export/i }),
+    ).toHaveClass('ops-action-button-emerald-solid');
     expect((await axe(container)).violations).toEqual([]);
   });
 

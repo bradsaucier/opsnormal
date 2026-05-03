@@ -12,6 +12,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 
 ### Changed
 
+- elevated cockpit visual polish across crash fallbacks, Today roll-up, history grid states, export and restore surfaces, shared action buttons, and frame emphasis tokens
 - re-verified import checksums inside `applyImport` before any IndexedDB write and documented the boundary in ADR-0033
 - added explicit workflow job timeouts across the pipeline and locked the invariant in the workflow security shape tests
 - added PR-only cancellation to Pipeline: Mainline Integrity and Playwright browser cache restore keys for the WebKit and Firefox smoke lanes

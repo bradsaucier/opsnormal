@@ -12,6 +12,8 @@ import {
   createCsvExport,
 } from '../lib/exportSerialization';
 import { reloadCurrentPage } from '../lib/runtime';
+import { getAlertSurfaceTonePalette } from './alertSurfaceTone';
+import { NotchedFrame } from './NotchedFrame';
 import type { CrashExportSnapshot } from '../lib/crashExport';
 
 interface AppCrashFallbackProps {
@@ -69,6 +71,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   const clearDataUnlocked = hasExported || manualDeleteAcknowledged;
   const clearDataButtonDisabled =
     recoveryControlsDisabled || !clearDataUnlocked;
+  const dangerTone = getAlertSurfaceTonePalette('danger');
 
   const disarmClearData = useCallback((nextMessage: string) => {
     if (busyActionRef.current !== null) {
@@ -220,123 +223,150 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
   }
 
   return (
-    <div className="ops-crash-fallback-shell" data-testid="app-crash-fallback">
-      <div className="ops-crash-fallback-container">
-        <p className="ops-crash-fallback-eyebrow">Render fault</p>
-        <h1 className="ops-crash-fallback-title">
-          OpsNormal stopped rendering
-        </h1>
-        <p
-          className="ops-crash-fallback-status"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
+    <div
+      className="min-h-screen min-h-dvh bg-ops-base p-4 text-ops-text-primary sm:p-6 lg:p-8"
+      data-testid="app-crash-fallback"
+    >
+      <div className="mx-auto max-w-4xl">
+        <NotchedFrame
+          emphasis="support"
+          innerClassName="tactical-panel ops-section-spine-fault bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(249,115,22,0.035)_24%,rgba(255,255,255,0)_46%),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
         >
-          {message}
-        </p>
+          <div className="grid gap-5">
+            <div>
+              <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-[var(--ops-status-degraded-text)]">
+                Render fault
+              </p>
+              <h1 className="ops-crash-fallback-title ops-tracking-display mt-2 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
+                OpsNormal stopped rendering
+              </h1>
+              <p
+                className="mt-4 max-w-3xl text-sm leading-6 text-ops-text-secondary"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {message}
+              </p>
+            </div>
 
-        <div className="ops-crash-fallback-detail-card">
-          <p className="ops-crash-fallback-detail-label">Error detail</p>
-          <p className="ops-crash-fallback-detail" role="alert">
-            {faultMessage}
-          </p>
-        </div>
+            <div className="clip-notched ops-notch-chip tactical-chip-panel p-4">
+              <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
+                Error detail
+              </p>
+              <p
+                className="mt-2 font-mono text-xs leading-5 text-[var(--ops-status-degraded-text)] break-words"
+                role="alert"
+              >
+                {faultMessage}
+              </p>
+            </div>
 
-        <div className="ops-crash-fallback-actions">
-          <button
-            className="ops-crash-fallback-button ops-crash-fallback-button-primary"
-            type="button"
-            onClick={() => void handleJsonExport()}
-            disabled={recoveryControlsDisabled}
-          >
-            {busyAction === 'json' ? 'Exporting JSON' : 'Export JSON'}
-          </button>
-          <button
-            className="ops-crash-fallback-button ops-crash-fallback-button-muted"
-            type="button"
-            onClick={() => void handleCsvExport()}
-            disabled={recoveryControlsDisabled}
-          >
-            {busyAction === 'csv' ? 'Exporting CSV' : 'Export CSV'}
-          </button>
-          <button
-            className="ops-crash-fallback-button ops-crash-fallback-button-retry"
-            type="button"
-            onClick={onRetry}
-            disabled={recoveryControlsDisabled}
-          >
-            Retry app
-          </button>
-          <button
-            className="ops-crash-fallback-button ops-crash-fallback-button-reload"
-            type="button"
-            onClick={reloadCurrentPage}
-            disabled={recoveryControlsDisabled}
-          >
-            Reload page
-          </button>
-        </div>
-
-        <div ref={clearActionRef} className="ops-crash-fallback-danger-zone">
-          <p className="ops-crash-fallback-danger-label">
-            Destructive recovery
-          </p>
-          <p className="ops-crash-fallback-danger-copy">
-            Use this only if export, retry, and reload still leave OpsNormal
-            stuck in a repeat crash loop. This action permanently deletes all
-            local data stored on this device for this app.
-          </p>
-          <label className="ops-crash-fallback-checkbox-row">
-            <input
-              className="ops-crash-fallback-checkbox"
-              type="checkbox"
-              checked={manualDeleteAcknowledged}
-              onChange={(event) => {
-                setManualDeleteAcknowledged(event.currentTarget.checked);
-              }}
-              disabled={recoveryControlsDisabled || hasExported}
-            />
-            <span>
-              I understand this will permanently delete local data and should
-              only be used after I export a recovery file.
-            </span>
-          </label>
-          <div className="ops-crash-fallback-actions">
-            <button
-              ref={primaryClearButtonRef}
-              className={`ops-crash-fallback-button ops-crash-fallback-button-danger${clearConfirmState === 'armed' ? ' is-armed' : ''}`}
-              type="button"
-              onClick={() => void handleClearDataAndReload()}
-              disabled={clearDataButtonDisabled}
-            >
-              {busyAction === 'clear'
-                ? 'Clearing local data'
-                : clearConfirmState === 'armed'
-                  ? 'Confirm delete all local data and reload'
-                  : 'Clear local data and reload'}
-            </button>
-            {clearConfirmState === 'armed' ? (
+            <div className="flex flex-wrap gap-3">
               <button
-                className="ops-crash-fallback-button ops-crash-fallback-button-muted"
+                className="ops-action-button ops-action-button-emerald-solid"
                 type="button"
-                onClick={() => {
-                  disarmClearData(
-                    'Clear-data reset disarmed. Local data remains untouched.',
-                  );
-                }}
+                onClick={() => void handleJsonExport()}
                 disabled={recoveryControlsDisabled}
               >
-                Disarm clear-data reset
+                {busyAction === 'json' ? 'Exporting JSON' : 'Export JSON'}
               </button>
-            ) : null}
+              <button
+                className="ops-action-button ops-action-button-emerald"
+                type="button"
+                onClick={() => void handleCsvExport()}
+                disabled={recoveryControlsDisabled}
+              >
+                {busyAction === 'csv' ? 'Exporting CSV' : 'Export CSV'}
+              </button>
+              <button
+                className="ops-action-button ops-action-button-amber"
+                type="button"
+                onClick={onRetry}
+                disabled={recoveryControlsDisabled}
+              >
+                Retry app
+              </button>
+              <button
+                className="ops-action-button ops-action-button-subtle"
+                type="button"
+                onClick={reloadCurrentPage}
+                disabled={recoveryControlsDisabled}
+              >
+                Reload page
+              </button>
+            </div>
+
+            <NotchedFrame
+              className="contents"
+              outerClassName={dangerTone.outerClassName}
+              innerClassName="tactical-chip-panel tactical-chip-panel-red p-4"
+              withShadow={false}
+            >
+              <div ref={clearActionRef}>
+                <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-text-on-red)]">
+                  Destructive recovery
+                </p>
+                <p className="mt-2 text-sm leading-6 text-[var(--ops-text-on-red)]">
+                  Use this only if export, retry, and reload still leave
+                  OpsNormal stuck in a repeat crash loop. This action
+                  permanently deletes all local data stored on this device for
+                  this app.
+                </p>
+                <label className="mt-4 flex items-start gap-3 text-sm leading-6 text-[var(--ops-text-on-red)]">
+                  <input
+                    className="mt-1 h-4 w-4 accent-[var(--ops-status-degraded-border)]"
+                    type="checkbox"
+                    checked={manualDeleteAcknowledged}
+                    onChange={(event) => {
+                      setManualDeleteAcknowledged(event.currentTarget.checked);
+                    }}
+                    disabled={recoveryControlsDisabled || hasExported}
+                  />
+                  <span>
+                    I understand this will permanently delete local data and
+                    should only be used after I export a recovery file.
+                  </span>
+                </label>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    ref={primaryClearButtonRef}
+                    className={`ops-action-button ${clearConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-orange'}`}
+                    type="button"
+                    onClick={() => void handleClearDataAndReload()}
+                    disabled={clearDataButtonDisabled}
+                  >
+                    {busyAction === 'clear'
+                      ? 'Clearing local data'
+                      : clearConfirmState === 'armed'
+                        ? 'Confirm delete all local data and reload'
+                        : 'Clear local data and reload'}
+                  </button>
+                  {clearConfirmState === 'armed' ? (
+                    <button
+                      className="ops-action-button ops-action-button-subtle"
+                      type="button"
+                      onClick={() => {
+                        disarmClearData(
+                          'Clear-data reset disarmed. Local data remains untouched.',
+                        );
+                      }}
+                      disabled={recoveryControlsDisabled}
+                    >
+                      Disarm clear-data reset
+                    </button>
+                  ) : null}
+                </div>
+                {!clearDataUnlocked ? (
+                  <p className="mt-3 text-xs leading-5 text-[var(--ops-text-on-red)] opacity-80">
+                    Unlock requires either a successful export in this crash
+                    session or the explicit delete acknowledgment above.
+                  </p>
+                ) : null}
+              </div>
+            </NotchedFrame>
           </div>
-          {!clearDataUnlocked ? (
-            <p className="ops-crash-fallback-danger-note">
-              Unlock requires either a successful export in this crash session
-              or the explicit delete acknowledgment above.
-            </p>
-          ) : null}
-        </div>
+        </NotchedFrame>
       </div>
     </div>
   );

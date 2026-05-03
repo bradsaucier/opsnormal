@@ -8,6 +8,7 @@ import {
   HeaderTelemetry,
   HeaderTelemetryFallback,
 } from './components/HeaderTelemetry';
+import { NotchedFrame } from './components/NotchedFrame';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
 import { SectorGlyphMark } from './components/icons/SectorGlyphs';
@@ -226,8 +227,12 @@ function App() {
         tabIndex={-1}
         className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-6 lg:gap-8"
       >
-        <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
-          <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7">
+        <NotchedFrame
+          emphasis="primary"
+          notch="shell"
+          innerClassName="tactical-panel bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
+        >
+          <header>
             <div className="grid gap-5 lg:gap-6">
               <div className="flex max-w-4xl gap-4">
                 <div
@@ -237,16 +242,16 @@ function App() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <span
-                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 items-center justify-center border border-ops-accent/30 text-ops-accent-muted"
+                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-8 w-8 items-center justify-center border border-ops-accent/30 text-ops-accent-muted"
                       aria-hidden="true"
                     >
                       <SectorGlyphMark sectorId="work-school" />
                     </span>
-                    <p className="ops-eyebrow text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
+                    <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent/70">
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="mt-3 text-4xl font-semibold tracking-[0.10em] text-ops-text-primary uppercase sm:text-5xl">
+                  <h1 className="ops-tracking-display mt-3 text-4xl font-semibold text-ops-text-primary uppercase sm:text-5xl">
                     OpsNormal
                   </h1>
                   <p className="mt-4 max-w-3xl text-sm leading-7 text-ops-text-secondary sm:text-base">
@@ -273,7 +278,7 @@ function App() {
               </ErrorBoundary>
             </div>
           </header>
-        </div>
+        </NotchedFrame>
 
         <InstallBanner compact={hasPriorityAlert} />
         <PwaUpdateBanner
@@ -356,17 +361,15 @@ function App() {
           </ErrorBoundary>
         </div>
 
-        <div
-          role="separator"
-          aria-orientation="horizontal"
-          className="h-px bg-ops-panel-border"
-        />
-
-        <div className="clip-notched ops-notch-shell-outer bg-ops-panel-border p-px">
-          <footer className="clip-notched ops-notch-shell-inner tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary">
+        <NotchedFrame
+          emphasis="quiet"
+          notch="shell"
+          innerClassName="tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary"
+        >
+          <footer>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="lg:max-w-2xl">
-                <p className="ops-eyebrow font-semibold tracking-[0.14em] text-ops-text-primary uppercase">
+                <p className="ops-eyebrow font-semibold text-ops-text-primary">
                   Boundary
                 </p>
                 <p className="mt-2">
@@ -379,7 +382,7 @@ function App() {
               <FooterProvenance />
             </div>
           </footer>
-        </div>
+        </NotchedFrame>
       </main>
     </div>
   );

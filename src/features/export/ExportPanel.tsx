@@ -155,7 +155,7 @@ export function ExportPanel({
       emphasis="support"
     >
       <div className="space-y-4">
-        <p className="max-w-3xl text-sm leading-6 text-zinc-300">
+        <p className="max-w-3xl text-sm leading-6 text-ops-text-secondary">
           Local-first only works if recovery is real. Safe actions stay forward.
           Destructive restore paths stay collapsed until you deliberately open,
           stage, and confirm them.

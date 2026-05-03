@@ -23,11 +23,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(125,211,252,0.34),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(56,189,248,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-sky-200',
-    descriptionClassName: 'text-sky-100',
-    detailClassName: 'text-sky-50',
-    subduedClassName: 'text-sky-100/78',
-    definitionClassName: 'text-sky-50/88',
+    titleClassName: 'text-[var(--ops-text-on-sky)]',
+    descriptionClassName: 'text-[var(--ops-text-on-sky)]',
+    detailClassName: 'text-[var(--ops-text-on-sky)]',
+    subduedClassName: 'text-[var(--ops-text-on-sky)] opacity-80',
+    definitionClassName: 'text-[var(--ops-text-on-sky)] opacity-90',
     actionClassName: 'ops-action-button-info',
   },
   success: {
@@ -47,11 +47,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-amber-100',
-    descriptionClassName: 'text-amber-100',
-    detailClassName: 'text-amber-100',
-    subduedClassName: 'text-amber-100/76',
-    definitionClassName: 'text-amber-100/88',
+    titleClassName: 'text-[var(--ops-text-on-amber)]',
+    descriptionClassName: 'text-[var(--ops-text-on-amber)]',
+    detailClassName: 'text-[var(--ops-text-on-amber)]',
+    subduedClassName: 'text-[var(--ops-text-on-amber)] opacity-80',
+    definitionClassName: 'text-[var(--ops-text-on-amber)] opacity-90',
     actionClassName: 'ops-action-button-amber',
   },
   warning: {
@@ -59,11 +59,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(251,146,60,0.34),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(249,115,22,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-orange-200',
-    descriptionClassName: 'text-orange-100/90',
-    detailClassName: 'text-orange-100/90',
-    subduedClassName: 'text-orange-100/78',
-    definitionClassName: 'text-orange-100/88',
+    titleClassName: 'text-[var(--ops-text-on-orange)]',
+    descriptionClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
+    detailClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
+    subduedClassName: 'text-[var(--ops-text-on-orange)] opacity-80',
+    definitionClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
     actionClassName: 'ops-action-button-orange',
   },
   danger: {
@@ -71,11 +71,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(248,113,113,0.38),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(127,29,29,0.42),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-red-200',
-    descriptionClassName: 'text-red-100/92',
-    detailClassName: 'text-red-100/92',
-    subduedClassName: 'text-red-100/78',
-    definitionClassName: 'text-red-100/88',
+    titleClassName: 'text-[var(--ops-text-on-red)]',
+    descriptionClassName: 'text-[var(--ops-text-on-red)]',
+    detailClassName: 'text-[var(--ops-text-on-red)]',
+    subduedClassName: 'text-[var(--ops-text-on-red)] opacity-80',
+    definitionClassName: 'text-[var(--ops-text-on-red)] opacity-90',
     actionClassName: 'ops-action-button-red',
   },
   neutral: {
@@ -92,7 +92,7 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
 };
 
 export const alertSurfaceActionButtonClasses =
-  'ops-action-button clip-notched ops-notch-chip px-4 py-2 text-xs font-semibold tracking-[0.16em] uppercase';
+  'ops-action-button ops-action-button-sm';
 
 function joinClasses(
   ...values: Array<string | false | null | undefined>

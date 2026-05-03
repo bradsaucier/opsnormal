@@ -25,11 +25,11 @@ export function SectionCard({
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
               {eyebrow ? (
-                <p className="ops-eyebrow text-xs font-semibold tracking-[0.24em] text-ops-accent-muted uppercase">
+                <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
                   {eyebrow}
                 </p>
               ) : null}
-              <h2 className="mt-1 text-2xl font-semibold tracking-[0.08em] text-ops-text-primary uppercase sm:text-3xl">
+              <h2 className="ops-tracking-section mt-1 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
                 {title}
               </h2>
             </div>

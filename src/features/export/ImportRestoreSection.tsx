@@ -1,6 +1,7 @@
 import type { ChangeEvent, RefObject } from 'react';
 
 import { NotchedFrame } from '../../components/NotchedFrame';
+import { getAlertSurfaceTonePalette } from '../../components/alertSurfaceTone';
 import { formatBytes } from '../../lib/storage';
 import {
   isSuccessfulImportPreview,
@@ -53,19 +54,18 @@ interface ImportRestoreSectionProps {
   onDisarmReplace: () => void;
 }
 
-const actionButtonClasses =
-  'ops-action-button clip-notched ops-notch-chip px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase';
+const actionButtonClasses = 'ops-action-button';
 
 function getModeOptionClasses(isSelected: boolean, mode: ImportMode): string {
   if (!isSelected) {
-    return 'clip-notched ops-notch-chip border border-ops-border-soft bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3 text-ops-text-secondary transition hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_28%),var(--color-ops-surface-interactive)]';
+    return 'clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-neutral p-3 text-ops-text-secondary transition hover:text-ops-text-primary';
   }
 
   if (mode === 'replace') {
-    return 'clip-notched ops-notch-chip border border-amber-300/35 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)] p-3 text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+    return 'clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-amber p-3';
   }
 
-  return 'clip-notched ops-notch-chip border border-ops-panel-border-strong bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)] p-3 text-ops-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+  return 'clip-notched ops-notch-chip tactical-chip-panel p-3 text-ops-text-primary';
 }
 
 function getReplaceCheckpointStepTwoText(
@@ -151,6 +151,8 @@ export function ImportRestoreSection({
 
   const manualBackupInstructionText =
     getManualBackupInstructionText(replaceBackupState);
+  const infoTone = getAlertSurfaceTonePalette('info');
+  const dangerTone = getAlertSurfaceTonePalette('danger');
 
   return (
     <AccordionSection
@@ -164,7 +166,7 @@ export function ImportRestoreSection({
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <label
             htmlFor={fileInputId}
-            className={`ops-action-button ops-action-button-sky ops-focus-ring-within clip-notched ops-notch-chip cursor-pointer px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase ${importBusy ? 'pointer-events-none opacity-70' : ''}`}
+            className={`ops-action-button ops-action-button-sky ops-focus-ring-within cursor-pointer ${importBusy ? 'pointer-events-none opacity-70' : ''}`}
           >
             Select JSON Backup
             <input
@@ -196,24 +198,32 @@ export function ImportRestoreSection({
 
         {pendingImport ? (
           <NotchedFrame
-            outerClassName="bg-[linear-gradient(180deg,rgba(125,211,252,0.34),rgba(255,255,255,0.04))]"
-            innerClassName="bg-[linear-gradient(180deg,rgba(56,189,248,0.14),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)] p-4"
+            outerClassName={infoTone.outerClassName}
+            innerClassName={`p-4 ${infoTone.innerClassName}`}
           >
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex-1">
-                <h4 className="text-sm font-semibold tracking-[0.16em] text-sky-100 uppercase">
+                <h4
+                  className={`text-sm font-semibold tracking-[var(--ops-tracking-table)] uppercase ${infoTone.titleClassName}`}
+                >
                   Import preview
                 </h4>
-                <p className="mt-2 break-all text-sm font-semibold text-white">
+                <p className="mt-2 break-all text-sm font-semibold text-ops-text-primary">
                   {pendingFileName || 'Selected file'}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sky-50/95">
+                <p
+                  className={`mt-2 text-sm leading-6 ${infoTone.descriptionClassName}`}
+                >
                   {importPreviewHeadline}
                 </p>
-                <p className="mt-2 text-sm leading-6 text-sky-50/95">
+                <p
+                  className={`mt-2 text-sm leading-6 ${infoTone.descriptionClassName}`}
+                >
                   {importPreviewDetailText}
                 </p>
-                <p className="mt-2 text-xs tracking-[0.14em] text-sky-100/75 uppercase">
+                <p
+                  className={`ops-eyebrow mt-2 text-xs ${infoTone.subduedClassName}`}
+                >
                   File size - {formatBytes(pendingFileSize)}
                 </p>
                 {successfulPreview ? (
@@ -269,13 +279,13 @@ export function ImportRestoreSection({
 
                     {pendingImportRequiresAcknowledgment ? (
                       <div className="panel-shadow mt-4">
-                        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
-                          <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.14),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3">
-                            <p className="text-sm leading-6 text-amber-100">
+                        <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-amber p-3">
+                          <div>
+                            <p className="text-sm leading-6">
                               Review the staged file risk before merge or
                               replace unlocks.
                             </p>
-                            <label className="mt-3 flex items-start gap-3 text-sm leading-6 text-amber-100">
+                            <label className="mt-3 flex items-start gap-3 text-sm leading-6">
                               <input
                                 type="checkbox"
                                 checked={riskyImportAcknowledged}
@@ -295,11 +305,9 @@ export function ImportRestoreSection({
                   </>
                 ) : (
                   <div className="panel-shadow mt-4">
-                    <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(248,113,113,0.34),rgba(255,255,255,0.04))] p-px">
-                      <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(239,68,68,0.14),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-rose-50">
-                        Local data unchanged. Select a different JSON backup or
-                        clear this preview.
-                      </div>
+                    <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-rose p-3 text-sm leading-6">
+                      Local data unchanged. Select a different JSON backup or
+                      clear this preview.
                     </div>
                   </div>
                 )}
@@ -307,13 +315,13 @@ export function ImportRestoreSection({
 
               <NotchedFrame
                 className="w-full max-w-sm"
-                outerClassName="bg-ops-border-soft"
-                innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)] p-4"
+                emphasis="inset"
+                innerClassName="tactical-chip-panel tactical-chip-panel-neutral p-4"
               >
                 {successfulPreview ? (
                   <>
                     <fieldset>
-                      <legend className="text-xs font-semibold tracking-[0.16em] text-ops-text-muted uppercase">
+                      <legend className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
                         Restore mode
                       </legend>
                       <div className="mt-3 space-y-3 text-sm text-ops-text-secondary">
@@ -367,23 +375,19 @@ export function ImportRestoreSection({
                     </fieldset>
 
                     <div className="panel-shadow mt-4">
-                      <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
-                        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-base)] px-3 py-3 text-sm leading-6 text-ops-text-secondary">
-                          {importMode === 'replace'
-                            ? 'Destructive restore path selected. '
-                            : 'Merge path selected. '}
-                          {getImportImpactText(successfulPreview, importMode)}
-                        </div>
+                      <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-neutral px-3 py-3 text-sm leading-6 text-ops-text-secondary">
+                        {importMode === 'replace'
+                          ? 'Destructive restore path selected. '
+                          : 'Merge path selected. '}
+                        {getImportImpactText(successfulPreview, importMode)}
                       </div>
                     </div>
 
                     {!pendingImportCanCommit ? (
                       <div className="panel-shadow mt-4">
-                        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
-                          <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.14),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] px-3 py-3 text-sm leading-6 text-amber-100">
-                            Acknowledge the staged file risk before the write
-                            path unlocks.
-                          </div>
+                        <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-amber px-3 py-3 text-sm leading-6">
+                          Acknowledge the staged file risk before the write path
+                          unlocks.
                         </div>
                       </div>
                     ) : null}
@@ -393,18 +397,16 @@ export function ImportRestoreSection({
                     {importMode === 'replace' ? (
                       <NotchedFrame
                         className="mt-6"
-                        outerClassName="bg-[linear-gradient(180deg,rgba(248,113,113,0.34),rgba(255,255,255,0.04))]"
-                        innerClassName="bg-[linear-gradient(180deg,rgba(239,68,68,0.14),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-overlay)] p-4"
+                        outerClassName={dangerTone.outerClassName}
+                        innerClassName={`p-4 ${dangerTone.innerClassName}`}
                       >
                         <div ref={replaceActionRef}>
                           <div className="panel-shadow">
-                            <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
-                              <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3 text-sm leading-6 text-amber-50">
-                                Step 1 - secure a pre-replace backup.{' '}
-                                {replaceCheckpointStepTwoText} Step 3 - arm the
-                                destructive path. Step 4 - execute the replace
-                                only if the preview still matches intent.
-                              </div>
+                            <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-amber p-3 text-sm leading-6">
+                              Step 1 - secure a pre-replace backup.{' '}
+                              {replaceCheckpointStepTwoText} Step 3 - arm the
+                              destructive path. Step 4 - execute the replace
+                              only if the preview still matches intent.
                             </div>
                           </div>
 
@@ -412,12 +414,12 @@ export function ImportRestoreSection({
                             {replaceBackupState.phase ===
                             'manual-awaiting-ack' ? (
                               <div className="panel-shadow">
-                                <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))] p-px">
-                                  <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(245,158,11,0.14),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-overlay)] p-3">
-                                    <p className="mb-3 text-sm leading-6 text-amber-100">
+                                <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-amber p-3">
+                                  <div>
+                                    <p className="mb-3 text-sm leading-6">
                                       {manualBackupInstructionText}
                                     </p>
-                                    <label className="flex items-start gap-3 text-sm leading-6 text-amber-100">
+                                    <label className="flex items-start gap-3 text-sm leading-6">
                                       <input
                                         type="checkbox"
                                         checked={manualBackupConfirmed}
@@ -468,8 +470,8 @@ export function ImportRestoreSection({
 
                             {replaceBackupState.phase === 'ready' ? (
                               <div className="panel-shadow">
-                                <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
-                                  <p className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-base)] px-3 py-3 text-sm leading-6 text-ops-text-primary">
+                                <div className="clip-notched ops-notch-chip tactical-chip-panel tactical-chip-panel-neutral px-3 py-3 text-sm leading-6 text-ops-text-primary">
+                                  <p>
                                     Backup ready - {replaceBackupState.fileName}
                                     .{' '}
                                     {replaceBackupState.verification ===
@@ -482,7 +484,7 @@ export function ImportRestoreSection({
                             ) : null}
                           </div>
 
-                          <div className="mt-4 border-t border-red-400/20 pt-4">
+                          <div className="mt-4 border-t border-ops-panel-border-strong pt-4">
                             <div className="flex flex-col gap-3">
                               <button
                                 type="button"
@@ -562,8 +564,8 @@ export function ImportRestoreSection({
           </NotchedFrame>
         ) : (
           <NotchedFrame
-            outerClassName="bg-ops-border-soft"
-            innerClassName="bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_24%),var(--color-ops-surface-base)] p-4 text-sm leading-6 text-ops-text-muted"
+            emphasis="inset"
+            innerClassName="tactical-chip-panel tactical-chip-panel-neutral p-4 text-sm leading-6 text-ops-text-muted"
           >
             No file staged. Select a JSON backup to open the preview and restore
             controls.

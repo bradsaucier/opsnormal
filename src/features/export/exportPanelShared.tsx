@@ -47,7 +47,7 @@ export function AccordionSection({
           className="ops-focus-ring-inset flex min-h-[56px] w-full items-start justify-between gap-4 px-4 py-4 text-left transition hover:bg-white/4"
         >
           <span>
-            <span className="block text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+            <span className="ops-eyebrow block text-xs font-semibold text-ops-text-muted">
               {title}
             </span>
             <span className="mt-2 block text-sm leading-6 text-ops-text-secondary">
@@ -110,8 +110,8 @@ function getSignalChromeClasses(
       outer: 'bg-ops-panel-border-strong',
       inner:
         'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)]',
-      label: 'text-amber-200/80',
-      value: 'text-amber-100',
+      label: 'text-[var(--ops-status-degraded-text)] opacity-80',
+      value: 'text-[var(--ops-status-degraded-text)]',
       detail: 'text-ops-text-secondary',
     };
   }
@@ -148,12 +148,12 @@ export function SignalCard({
         innerClassName={`p-4 ${chromeClasses.inner}`}
       >
         <p
-          className={`text-xs font-semibold tracking-[0.14em] uppercase ${chromeClasses.label}`}
+          className={`ops-eyebrow text-xs font-semibold ${chromeClasses.label}`}
         >
           {label}
         </p>
         <p
-          className={`mt-2 text-sm font-semibold tracking-[0.08em] uppercase ${chromeClasses.value}`}
+          className={`ops-tracking-section mt-2 text-sm font-semibold uppercase ${chromeClasses.value}`}
         >
           {value}
         </p>
@@ -180,7 +180,7 @@ export function PreviewFactCard({
     <div role="listitem" className="panel-shadow">
       <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
         <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3">
-          <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+          <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
             {label}
           </p>
           <p className="mt-1 text-sm font-semibold text-ops-text-primary">
