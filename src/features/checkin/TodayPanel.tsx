@@ -3,6 +3,7 @@ import { useId, useMemo, useRef, useState } from 'react';
 import { AlertSurface } from '../../components/AlertSurface';
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
+import { SectorGlyphConstellation } from '../../components/SectorGlyphConstellation';
 import { useEntriesForDate } from '../../db/hooks';
 import { setDailyStatus } from '../../db/appDb';
 import { formatDateKey, formatLongDate } from '../../lib/date';
@@ -46,7 +47,7 @@ function DayCompletionTile({
           <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
             Daily roll-up
           </p>
-          <p className="mt-3 text-4xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+          <p className="mt-3 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
             {markedCount}/{totalCount}
           </p>
           <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
@@ -59,6 +60,7 @@ function DayCompletionTile({
           <span
             className={[
               'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
+              isComplete ? 'ops-complete-badge' : '',
               isComplete ? 'ops-status-nominal' : 'ops-status-unmarked',
             ].join(' ')}
           >
@@ -186,14 +188,17 @@ export function TodayPanel({
 
       {!hasEntriesForToday ? (
         <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong px-4 py-3">
-            <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
-              Awaiting first mark
-            </p>
-            <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
-              No sectors are marked for today. Set one state below and the daily
-              roll-up will start tracking live progress.
-            </p>
+          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong relative px-4 py-3">
+            <SectorGlyphConstellation />
+            <div className="relative z-10 max-w-2xl">
+              <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+                Awaiting first mark
+              </p>
+              <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+                No sectors are marked for today. Set one state below and the
+                daily roll-up will start tracking live progress.
+              </p>
+            </div>
           </div>
         </div>
       ) : null}
