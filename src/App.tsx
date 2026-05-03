@@ -169,6 +169,9 @@ function App() {
     () => createBackupActionPrompt(storageHealth, lastBackupAt),
     [lastBackupAt, storageHealth],
   );
+  const hasPriorityAlert = Boolean(
+    databaseBlockedMessage || backupActionPrompt,
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined' || import.meta.env.MODE !== 'e2e') {
@@ -257,7 +260,7 @@ function App() {
           </header>
         </div>
 
-        <InstallBanner />
+        <InstallBanner compact={hasPriorityAlert} />
         <PwaUpdateBanner
           needRefresh={needRefresh}
           offlineReady={offlineReady}
@@ -269,6 +272,7 @@ function App() {
           onReload={handleApplyUpdate}
           onDismiss={handleDismissBanner}
           onReloadPage={handleReloadPage}
+          compact={hasPriorityAlert}
         />
         {databaseBlockedMessage ? (
           <AlertSurface
