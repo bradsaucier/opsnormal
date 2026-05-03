@@ -39,6 +39,7 @@ export interface HistoryGridModel {
   todayKey: string;
   isDesktopHistory: boolean;
   streak: number;
+  hasEntries: boolean;
   entryLookup: ReturnType<typeof createEntryLookup>;
   weekGroups: string[][];
   visibleWeekIndex: number;
@@ -80,6 +81,7 @@ export function useHistoryGridModel({
   const isDesktopHistory = useViewportMatch(DESKTOP_HISTORY_QUERY);
 
   const entries = useEntriesForDateRange(startDate, endDate);
+  const hasEntries = entries.length > 0;
   const entryLookup = useMemo(() => createEntryLookup(entries), [entries]);
   const streak = useMemo(
     () => computeCheckInStreak(entries, todayKey),
@@ -490,6 +492,7 @@ export function useHistoryGridModel({
     todayKey,
     isDesktopHistory,
     streak,
+    hasEntries,
     entryLookup,
     weekGroups,
     visibleWeekIndex,
