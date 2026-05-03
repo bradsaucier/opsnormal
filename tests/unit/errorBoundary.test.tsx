@@ -459,7 +459,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('renders the root crash fallback without inline style attributes', () => {
-    render(
+    const { container } = render(
       <AppCrashFallback
         error={new Error('render failure')}
         onRetry={vi.fn()}
@@ -470,6 +470,13 @@ describe('ErrorBoundary', () => {
 
     expect(crashFallback.getAttribute('style')).toBeNull();
     expect(crashFallback.querySelector('[style]')).toBeNull();
+    expect(container.querySelector('.clip-notched')).toBeInTheDocument();
+    expect(
+      container.querySelector('.ops-section-spine-fault'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /export json/i })).toHaveClass(
+      'ops-action-button-emerald-solid',
+    );
   });
 
   it('surfaces local reset failures without reloading', async () => {
@@ -543,6 +550,13 @@ describe('SectionCrashFallback', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('History Grid offline');
     expect(screen.getByRole('alert')).toHaveFocus();
     expect(screen.getAllByText('Grid fault')).toHaveLength(2);
+    expect(container.querySelector('.clip-notched')).toBeInTheDocument();
+    expect(
+      container.querySelector('.ops-section-spine-fault'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry section/i })).toHaveClass(
+      'ops-action-button-amber',
+    );
 
     expect((await axe(container)).violations).toEqual([]);
   });
