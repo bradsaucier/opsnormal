@@ -29,9 +29,13 @@
 
 :root {
   color-scheme: dark;
-  font-family:
+  --font-mono:
     'IBM Plex Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono',
     Menlo, monospace;
+  --font-sans:
+    Inter, 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -45,13 +49,13 @@
   --ops-notch-panel-outer: 12px;
   --ops-notch-panel-inner: 11px;
   --ops-notch-chip: 8px;
-  --ops-focus-ring: rgba(183, 247, 218, 0.92);
+  --ops-focus-ring: rgba(229, 255, 242, 0.92);
   --ops-focus-ring-edge: rgba(10, 15, 13, 0.96);
   --ops-status-nominal-border: rgba(110, 231, 183, 0.56);
-  --ops-status-nominal-bg: rgba(110, 231, 183, 0.14);
+  --ops-status-nominal-bg: rgba(110, 231, 183, 0.3);
   --ops-status-nominal-text: #c9fae4;
-  --ops-status-degraded-border: rgba(245, 158, 11, 0.56);
-  --ops-status-degraded-bg: rgba(245, 158, 11, 0.14);
+  --ops-status-degraded-border: rgba(245, 158, 11, 0.78);
+  --ops-status-degraded-bg: rgba(245, 158, 11, 0.28);
   --ops-status-degraded-text: #fde7b0;
   --ops-status-unmarked-border: rgba(255, 255, 255, 0.16);
   --ops-status-unmarked-bg: rgba(36, 48, 42, 0.72);
@@ -87,6 +91,25 @@ body {
 
 button {
   font: inherit;
+}
+
+h1,
+h2,
+h3,
+.ops-mono,
+.ops-eyebrow,
+.ops-sector-caption,
+.ops-status-frame,
+.ops-action-button,
+.ops-radio-chip,
+.ops-grid-cell,
+.ops-telemetry-chip,
+.ops-skip-link,
+.ops-provenance-facts,
+.ops-boot-fallback-eyebrow,
+.ops-boot-fallback-title,
+.ops-boot-fallback-button {
+  font-family: var(--font-mono);
 }
 
 ::selection {
@@ -336,24 +359,35 @@ button {
   color: var(--ops-status-unmarked-text);
 }
 
+.ops-grid-cell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 28px;
+  border: 0;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+
 .ops-grid-nominal {
-  border-color: var(--ops-status-nominal-border);
-  background: rgba(110, 231, 183, 0.18);
-  color: var(--ops-status-nominal-text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(110, 231, 183, 0.42);
+  color: #042c1d;
+  box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.1);
 }
 
 .ops-grid-degraded {
-  border-color: var(--ops-status-degraded-border);
-  background: rgba(245, 158, 11, 0.18);
-  color: var(--ops-status-degraded-text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(245, 158, 11, 0.5);
+  color: #2a1a04;
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.12);
 }
 
 .ops-grid-unmarked {
-  border-color: var(--ops-status-unmarked-border);
-  background: rgba(36, 48, 42, 0.76);
-  color: var(--ops-status-unmarked-text);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.025);
 }
 
 .ops-sector-caption {
@@ -465,6 +499,28 @@ button {
     ),
     var(--color-ops-surface-base);
   box-shadow: var(--ops-focus-ring-base-shadow);
+}
+
+.ops-radio-chip {
+  border-radius: 2px;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.ops-radio-chip:active {
+  transform: scale(0.97);
+}
+
+.ops-radio-chip[aria-checked='true'] {
+  box-shadow:
+    inset 0 0 0 1.5px var(--ops-focus-ring),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    var(--ops-focus-ring-base-shadow);
 }
 
 .ops-focus-ring-inset:focus-visible,
@@ -710,7 +766,7 @@ button {
 
 .ops-provenance-source {
   --notch: var(--ops-notch-chip);
-  min-height: 32px;
+  min-height: 28px;
   width: 100%;
   justify-content: center;
   padding: 0 0.75rem;
@@ -719,6 +775,28 @@ button {
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--color-ops-text-secondary);
+}
+
+@media (min-width: 1024px) {
+  .ops-provenance-facts > div {
+    grid-template-columns: 1fr 4.5rem;
+  }
+
+  .ops-provenance-facts dt {
+    order: 1;
+  }
+
+  .ops-provenance-facts dd {
+    order: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .ops-action-button,
+  .ops-radio-chip,
+  .history-week-card .ops-focus-ring-chip {
+    min-height: 48px;
+  }
 }
 
 .ops-provenance-source:hover {
