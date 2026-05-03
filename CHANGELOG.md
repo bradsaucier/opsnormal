@@ -27,6 +27,7 @@ The format is based on Keep a Changelog, and this project follows Semantic Versi
 - pinned the Trusted Types policy contract under a 100% coverage gate per ADR-0024 and ADR-0026
 - added CodeQL JavaScript and TypeScript code scanning as a mainline merge gate in ADR-0028
 - added SPDX SBOM generation plus Sigstore-backed SBOM attestation and Pages release verification in ADR-0032
+- narrowed the release SBOM to production-only dependencies derived from `package-lock.json`, classified `workbox-window` as a runtime dependency, and documented the boundary in ADR-0035
 
 ## [1.0.0] - 2026-04-14
 
