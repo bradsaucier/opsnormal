@@ -3,7 +3,6 @@ import { type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { getStatusContent } from '../lib/status';
 import type { Sector, UiStatus } from '../types';
 import { SectorGlyphMark } from './icons/SectorGlyphs';
-import { StatusBadge } from './StatusBadge';
 
 interface DomainCardProps {
   sector: Sector;
@@ -153,13 +152,18 @@ export function DomainCard({
           spineClassName,
         ].join(' ')}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
           <div className="min-w-0">
-            <span className="ops-mono flex items-center gap-2 text-xs font-semibold tracking-[0.24em] text-ops-text-muted uppercase whitespace-nowrap">
+            <span className="ops-mono flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase whitespace-nowrap">
               <span className="text-ops-text-muted" aria-hidden="true">
                 <SectorGlyphMark sectorId={sector.id} />
               </span>
-              <span>{`${sectorSigil} - ${sector.shortLabel}`}</span>
+              <span className="text-ops-accent/70">{sectorSigil}</span>
+              <span
+                className="h-3 w-px bg-ops-border-struct"
+                aria-hidden="true"
+              />
+              <span>{sector.shortLabel}</span>
             </span>
             <h3 className="mt-2 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
               {sector.label}
@@ -168,7 +172,6 @@ export function DomainCard({
               {sector.description}
             </p>
           </div>
-          <StatusBadge status={resolvedStatus} />
         </div>
 
         <div className="mt-5">
@@ -214,11 +217,11 @@ export function DomainCard({
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel min-h-11 border border-ops-border-soft px-2 py-2 text-center text-[11px] font-semibold tracking-[0.16em] uppercase',
+                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel min-h-11 border px-2 py-2 text-center text-[11px] font-semibold tracking-[0.12em] uppercase',
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
-                      : 'text-ops-text-muted hover:border-ops-border-struct hover:text-ops-text-secondary hover:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0)_32%),var(--color-ops-surface-overlay)]',
+                      : 'ops-radio-chip-ghost text-ops-text-muted hover:text-ops-text-secondary',
                   ].join(' ')}
                 >
                   {content.shortLabel}
