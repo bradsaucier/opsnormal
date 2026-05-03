@@ -68,7 +68,7 @@ Current repo controls include:
 - Trusted Types enforcement through `require-trusted-types-for 'script'` and the `trusted-types opsnormal-default` policy on supporting browsers
 - CodeQL source-level code scanning with `security-extended` and `security-and-quality`, required to pass before merge once branch protection is updated (ADR-0028)
 - Sigstore-backed build-provenance attestation for the uploaded `dist-ci-verified` release artifact
-- SPDX JSON SBOM generation and Sigstore-backed SBOM attestation for the same release artifact digest
+- SPDX JSON SBOM generation for production runtime dependencies from `package-lock.json` with `--omit=dev`, plus Sigstore-backed SBOM attestation for the same release artifact digest
 - Pages release verification of both release attestations before smoke and upload
 - `actions/checkout` pinned with `persist-credentials: false` across repository workflows unless an explicit exception is documented
 - `Workflow Lint` runs pinned `zizmor` analysis on workflow changes and uploads SARIF results to code scanning
@@ -106,7 +106,7 @@ The workflow files pin third-party actions to immutable commit SHAs.
 ## Artifact attestation verification
 
 `Pipeline: Mainline Integrity` emits a Sigstore-backed build-provenance attestation for the `dist-ci-verified` artifact on every push to `main`.
-It also generates an SPDX JSON SBOM and emits a Sigstore-backed SBOM attestation for the same artifact digest.
+It also generates an SPDX JSON SBOM for production runtime dependencies from `package-lock.json` with `--omit=dev`, then emits a Sigstore-backed SBOM attestation for the same artifact digest.
 `Pipeline: Pages Release` resolves that same artifact by upstream run ID, verifies both attestations against the repository, signer workflow, branch ref, and triggering commit SHA, and only then continues to smoke or publish.
 
 Third parties can verify the build provenance for a downloaded CI artifact archive with:
@@ -130,7 +130,7 @@ gh attestation verify dist-ci-verified.zip \
   --predicate-type https://spdx.dev/Document/v2.3
 ```
 
-See ADR-0027 and ADR-0032 for the trust boundary and failure model.
+See ADR-0027, ADR-0032, and ADR-0035 for the trust boundary, failure model, and SBOM contents boundary.
 
 ## Static analysis
 

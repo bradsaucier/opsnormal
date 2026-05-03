@@ -89,17 +89,84 @@ jobs:
           subject-name: dist-ci-verified.zip
           subject-digest: sha256:${{ steps.upload_dist.outputs.artifact-digest }}
 
-      - name: Generate release SBOM
+      - name: Generate release SBOM (production deps only)
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        run: |
+          prod_sbom_dir="$(mktemp -d)"
+          export PROD_SBOM_DIR="$prod_sbom_dir"
+          trap 'rm -rf "$prod_sbom_dir"' EXIT
+
+          cp package-lock.json "$prod_sbom_dir/package-lock.json"
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+          delete packageJson.devDependencies;
+          writeFileSync(
+            `${process.env.PROD_SBOM_DIR}/package.json`,
+            `${JSON.stringify(packageJson, null, 2)}\n`,
+          );
+          NODE
+
+          npm ci --omit=dev --ignore-scripts --prefix "$prod_sbom_dir"
+          npm sbom --sbom-format=spdx --prefix "$prod_sbom_dir" > dist-ci-verified.spdx.json
+
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+
+          const sbom = JSON.parse(readFileSync('dist-ci-verified.spdx.json', 'utf8'));
+          const packageNames = new Set(sbom.packages.map(({ name }) => name));
+          const requiredRuntimePackages = [
+            'opsnormal',
+            'dexie',
+            'dexie-react-hooks',
+            'react',
+            'react-dom',
+            'workbox-window',
+            'zod',
+          ];
+          const forbiddenBuildPackages = [
+            '@playwright/test',
+            '@vitejs/plugin-react',
+            'eslint',
+            'prettier',
+            'tailwindcss',
+            'typescript',
+            'vite',
+            'vitest',
+          ];
+          const missingRuntimePackages = requiredRuntimePackages.filter(
+            (packageName) => !packageNames.has(packageName),
+          );
+          const includedBuildPackages = forbiddenBuildPackages.filter((packageName) =>
+            packageNames.has(packageName),
+          );
+
+          if (sbom.spdxVersion !== 'SPDX-2.3') {
+            throw new Error(`Unexpected SPDX version: ${sbom.spdxVersion}`);
+          }
+
+          if (missingRuntimePackages.length > 0) {
+            throw new Error(
+              `Release SBOM omitted runtime packages: ${missingRuntimePackages.join(', ')}`,
+            );
+          }
+
+          if (includedBuildPackages.length > 0) {
+            throw new Error(
+              `Release SBOM included build-only packages: ${includedBuildPackages.join(', ')}`,
+            );
+          }
+          NODE
+
+      - name: Upload release SBOM artifact
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: .
-          format: spdx-json
-          output-file: dist-ci-verified.spdx.json
-          artifact-name: dist-ci-verified-sbom
-          upload-artifact: true
-          upload-artifact-retention: 7
-          upload-release-assets: false
+          name: dist-ci-verified-sbom
+          path: dist-ci-verified.spdx.json
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Attest release SBOM
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.node-version == 22 }}

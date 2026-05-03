@@ -56,13 +56,27 @@ describe('release SBOM attestation workflow contract', () => {
     const verifyMatrix = getJobBlock(ciWorkflow, 'verify_matrix');
 
     expect(verifyMatrix).toContain(
-      'uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0',
+      'name: Generate release SBOM (production deps only)',
     );
-    expect(verifyMatrix).toContain('format: spdx-json');
-    expect(verifyMatrix).toContain('output-file: dist-ci-verified.spdx.json');
-    expect(verifyMatrix).toContain('artifact-name: dist-ci-verified-sbom');
-    expect(verifyMatrix).toContain('upload-artifact-retention: 7');
-    expect(verifyMatrix).toContain('upload-release-assets: false');
+    expect(verifyMatrix).toContain('prod_sbom_dir="$(mktemp -d)"');
+    expect(verifyMatrix).toContain('delete packageJson.devDependencies;');
+    expect(verifyMatrix).toContain(
+      'npm ci --omit=dev --ignore-scripts --prefix "$prod_sbom_dir"',
+    );
+    expect(verifyMatrix).toContain(
+      'npm sbom --sbom-format=spdx --prefix "$prod_sbom_dir" > dist-ci-verified.spdx.json',
+    );
+    expect(verifyMatrix).toContain("'workbox-window',");
+    expect(verifyMatrix).toContain("'@playwright/test',");
+    expect(verifyMatrix).toContain("sbom.spdxVersion !== 'SPDX-2.3'");
+    expect(verifyMatrix).toContain('name: Upload release SBOM artifact');
+    expect(verifyMatrix).toContain(
+      'uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1',
+    );
+    expect(verifyMatrix).toContain('name: dist-ci-verified-sbom');
+    expect(verifyMatrix).toContain('path: dist-ci-verified.spdx.json');
+    expect(verifyMatrix).toContain('retention-days: 7');
+    expect(verifyMatrix).toContain('if-no-files-found: error');
     expect(verifyMatrix).toContain(
       'uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0',
     );
@@ -75,7 +89,8 @@ describe('release SBOM attestation workflow contract', () => {
     expectOrdered(verifyMatrix, [
       'name: Upload CI-verified production artifact',
       'name: Attest build provenance',
-      'name: Generate release SBOM',
+      'name: Generate release SBOM (production deps only)',
+      'name: Upload release SBOM artifact',
       'name: Attest release SBOM',
       'name: Install Playwright browsers',
     ]);
