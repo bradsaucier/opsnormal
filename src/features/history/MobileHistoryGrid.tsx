@@ -1,5 +1,6 @@
 import { StatusBadge } from '../../components/StatusBadge';
 import { StatusLegend } from '../../components/StatusLegend';
+import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
 import { formatDayLabel, formatLongDate } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
@@ -230,9 +231,15 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       return [
                         <div
                           key={`${sector.id}:label`}
-                          className="sticky left-0 z-10 flex min-h-11 items-center bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-primary"
+                          className="sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ops-text-primary"
                         >
-                          {sector.shortLabel}
+                          <span
+                            className="text-ops-text-muted"
+                            aria-hidden="true"
+                          >
+                            <SectorGlyphMark sectorId={sector.id} />
+                          </span>
+                          <span>{sector.shortLabel}</span>
                         </div>,
                         ...weekGroup.map((dateKey) => {
                           const status = getUiStatus(
@@ -248,14 +255,13 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             <div
                               key={`${sector.id}:${dateKey}`}
                               className={[
-                                'ops-notch-chip clip-notched flex min-h-11 items-center justify-center border px-1 py-1 text-[11px] font-semibold tracking-[0.24px] [font-variant-numeric:tabular-nums]',
+                                'ops-grid-cell min-h-10 [font-variant-numeric:tabular-nums]',
                                 isSelectedDay
-                                  ? 'ring-1 ring-inset ring-ops-accent/60'
+                                  ? 'outline outline-1 -outline-offset-1 outline-[var(--ops-focus-ring)]'
                                   : '',
                                 getCellClassName(status),
                               ].join(' ')}
                               title={cellLabel}
-                              aria-hidden="true"
                             >
                               {getStatusCellText(status)}
                             </div>
@@ -320,12 +326,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             {selectedDayStatuses.map(({ sector, status }) => (
               <div
                 key={sector.id}
-                className="clip-notched ops-notch-chip tactical-chip-panel flex items-center justify-between gap-3 px-3 py-3"
+                className="tactical-chip-panel flex items-center justify-between gap-3 border border-ops-border-soft px-3 py-3"
               >
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
-                    {sector.label}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-ops-text-muted" aria-hidden="true">
+                      <SectorGlyphMark sectorId={sector.id} />
+                    </span>
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
+                      {sector.label}
+                    </p>
+                  </div>
                   <p className="mt-1 text-xs leading-5 text-ops-text-secondary">
                     {sector.description}
                   </p>
