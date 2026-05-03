@@ -72,6 +72,7 @@ test.describe('OpsNormal accessibility regression coverage', () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
+    await page.getByRole('radio', { name: /body nominal/i }).click();
 
     const mobileHistoryRegion = page.getByRole('region', {
       name: /weekly readiness history/i,
