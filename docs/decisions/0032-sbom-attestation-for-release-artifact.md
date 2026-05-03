@@ -21,7 +21,7 @@ On every push to `main`, the Node 22 leg of `Pipeline: Mainline Integrity` will:
 
 1. upload the `dist-ci-verified` production artifact
 2. attest build provenance for that artifact digest
-3. generate an SPDX JSON SBOM with `anchore/sbom-action`
+3. generate an SPDX JSON SBOM for the release dependency tree defined by ADR-0035
 4. upload the SBOM as `dist-ci-verified-sbom`
 5. attest the SBOM to the same `dist-ci-verified.zip` artifact digest with `actions/attest`
 
@@ -46,7 +46,7 @@ Positive:
 
 Trade-offs:
 
-- adds another pinned third-party action to the mainline workflow
+- depends on npm CLI SBOM output remaining stable for SPDX 2.3 predicates
 - increases main-branch CI time on the Node 22 leg
 - couples Pages release to GitHub's SBOM attestation predicate support and GitHub CLI verification behavior
 - the SBOM is a dependency inventory and integrity signal, not a claim that bundled code is vulnerability-free
@@ -60,3 +60,4 @@ Review this decision when any of the following changes:
 3. the release artifact name, digest source, or upload flow changes
 4. Pages release verification moves away from `gh attestation verify`
 5. OpsNormal adds a backend, container image, npm publishing path, or other release artifact type
+6. ADR-0035 changes the SBOM contents, source command, or production dependency boundary
