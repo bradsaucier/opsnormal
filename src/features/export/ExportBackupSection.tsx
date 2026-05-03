@@ -9,8 +9,7 @@ interface ExportBackupSectionProps {
   onCsvExport: () => Promise<void>;
 }
 
-const actionButtonClasses =
-  'ops-action-button clip-notched ops-notch-chip px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase';
+const actionButtonClasses = 'ops-action-button';
 
 export function ExportBackupSection({
   isOpen,
@@ -32,7 +31,7 @@ export function ExportBackupSection({
           <div className="panel-shadow">
             <div className="clip-notched ops-notch-panel-outer bg-ops-border-soft p-px">
               <div className="clip-notched ops-notch-panel-inner bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)] p-4">
-                <p className="text-xs font-semibold tracking-[0.16em] text-ops-text-muted uppercase">
+                <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
                   Backup posture
                 </p>
                 <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
