@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useEntriesForDateRange } from '../db/hooks';
 import { computeCheckInStreak, computeCompletionState } from '../lib/history';
@@ -14,10 +14,10 @@ interface HeaderTelemetryProps {
 type TelemetryTone = 'default' | 'accent' | 'attention' | 'subtle';
 
 const toneClassNameByTone: Record<TelemetryTone, string> = {
-  default: 'border-ops-border-soft text-ops-text-primary',
-  accent: 'border-ops-accent/40 text-ops-accent-muted',
-  attention: 'border-amber-300/44 bg-amber-300/[0.08] text-amber-100',
-  subtle: 'border-ops-border-soft text-ops-text-secondary',
+  default: 'text-ops-text-primary',
+  accent: 'text-ops-accent-muted',
+  attention: 'bg-amber-300/[0.06] text-amber-100',
+  subtle: 'text-ops-text-secondary',
 };
 
 function formatLastBackupAge(lastBackupAt: string | null) {
@@ -47,9 +47,11 @@ function TelemetryChip({
   label,
   value,
   detail,
+  isShimmering = false,
   tone = 'default',
 }: {
   detail?: string;
+  isShimmering?: boolean;
   label: string;
   tone?: TelemetryTone;
   value: string;
@@ -57,7 +59,8 @@ function TelemetryChip({
   return (
     <div
       className={[
-        'ops-telemetry-chip clip-notched ops-notch-chip tactical-chip-panel flex min-h-[4rem] flex-col justify-between border px-3 py-3 text-left',
+        'ops-telemetry-chip flex min-h-[3.25rem] flex-col justify-between px-3 py-3 text-left lg:px-4',
+        isShimmering ? 'ops-telemetry-chip-shimmer' : '',
         toneClassNameByTone[tone],
       ].join(' ')}
     >
@@ -72,6 +75,28 @@ function TelemetryChip({
           {detail}
         </span>
       ) : null}
+    </div>
+  );
+}
+
+function TelemetryHorizon({ children }: { children: ReactNode }) {
+  return (
+    <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+      <div className="clip-notched ops-notch-panel-inner tactical-subpanel bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(110,231,183,0.035)_32%,rgba(255,255,255,0)_54%),var(--color-ops-surface-overlay)]">
+        <div className="grid lg:grid-cols-[11rem_minmax(0,1fr)]">
+          <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
+            <p className="ops-eyebrow text-xs font-semibold tracking-[0.18em] text-ops-accent-muted uppercase">
+              Status horizon
+            </p>
+            <p className="mt-1 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
+              30-day local picture
+            </p>
+          </div>
+          <div className="ops-telemetry-grid grid grid-cols-2 lg:grid-cols-4">
+            {children}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -94,10 +119,33 @@ export function HeaderTelemetry({
     [entries, todayKey],
   );
   const lastBackupLabel = formatLastBackupAge(lastBackupAt);
+  const previousStreakRef = useRef(streak);
+  const [isStreakShimmering, setIsStreakShimmering] = useState(false);
+
+  useEffect(() => {
+    if (streak > previousStreakRef.current) {
+      setIsStreakShimmering(true);
+
+      const timeoutId = window.setTimeout(() => {
+        setIsStreakShimmering(false);
+      }, 850);
+
+      previousStreakRef.current = streak;
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    previousStreakRef.current = streak;
+    return undefined;
+  }, [streak]);
 
   return (
-    <div className="grid w-full grid-cols-2 gap-2 lg:min-w-[20rem] lg:max-w-sm">
-      <TelemetryChip label="Streak" value={`${streak}D`} tone="accent" />
+    <TelemetryHorizon>
+      <TelemetryChip
+        label="Streak"
+        value={`${streak}D`}
+        tone="accent"
+        isShimmering={isStreakShimmering}
+      />
       <TelemetryChip
         label="Today"
         value={`${completion.markedCount}/${completion.totalCount}`}
@@ -114,7 +162,7 @@ export function HeaderTelemetry({
         value={lastBackupLabel}
         tone={lastBackupAt ? 'subtle' : 'attention'}
       />
-    </div>
+    </TelemetryHorizon>
   );
 }
 
@@ -123,7 +171,7 @@ export function HeaderTelemetryFallback({
   storageHealth,
 }: Pick<HeaderTelemetryProps, 'lastBackupAt' | 'storageHealth'>) {
   return (
-    <div className="grid w-full grid-cols-2 gap-2 lg:min-w-[20rem] lg:max-w-sm">
+    <TelemetryHorizon>
       <TelemetryChip label="Streak" value="0D" tone="accent" />
       <TelemetryChip label="Today" value="0/5" detail="Assessing" />
       <TelemetryChip
@@ -137,6 +185,6 @@ export function HeaderTelemetryFallback({
         value={formatLastBackupAge(lastBackupAt)}
         tone={lastBackupAt ? 'subtle' : 'attention'}
       />
-    </div>
+    </TelemetryHorizon>
   );
 }
