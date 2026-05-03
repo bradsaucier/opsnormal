@@ -29,7 +29,7 @@ export function SectionCard({
                   {eyebrow}
                 </p>
               ) : null}
-              <h2 className="mt-1 text-lg font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
+              <h2 className="mt-1 text-xl font-semibold tracking-[0.08em] text-ops-text-primary uppercase sm:text-2xl">
                 {title}
               </h2>
             </div>
