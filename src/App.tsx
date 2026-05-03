@@ -10,6 +10,7 @@ import {
 } from './components/HeaderTelemetry';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
+import { SectorGlyphMark } from './components/icons/SectorGlyphs';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { BackupActionBanner } from './features/export/BackupActionBanner';
 import { createBackupActionPrompt } from './features/export/backupActionPrompt';
@@ -227,19 +228,33 @@ function App() {
       >
         <div className="clip-notched ops-notch-shell-outer bg-ops-accent-border p-px">
           <header className="tactical-panel clip-notched ops-notch-shell-inner bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <p className="ops-eyebrow text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
-                  Personal Readiness Tracker
-                </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-[0.12em] text-ops-text-primary uppercase sm:text-4xl">
-                  OpsNormal
-                </h1>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-ops-text-secondary sm:text-base">
-                  A local-only mirror for daily balance across work or school,
-                  household, relationships, body, and rest. No account. No cloud
-                  sync. No analytics layer.
-                </p>
+            <div className="grid gap-5 lg:gap-6">
+              <div className="flex max-w-4xl gap-4">
+                <div
+                  className="hidden w-px shrink-0 self-stretch bg-ops-accent/45 sm:block"
+                  aria-hidden="true"
+                />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span
+                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 items-center justify-center border border-ops-accent/30 text-ops-accent-muted"
+                      aria-hidden="true"
+                    >
+                      <SectorGlyphMark sectorId="work-school" />
+                    </span>
+                    <p className="ops-eyebrow text-xs font-semibold tracking-[0.28em] text-ops-accent/90 uppercase">
+                      Personal Readiness Tracker
+                    </p>
+                  </div>
+                  <h1 className="mt-3 text-4xl font-semibold tracking-[0.10em] text-ops-text-primary uppercase sm:text-5xl">
+                    OpsNormal
+                  </h1>
+                  <p className="mt-4 max-w-3xl text-sm leading-7 text-ops-text-secondary sm:text-base">
+                    A local-only mirror for daily balance across work or school,
+                    household, relationships, body, and rest. No account. No
+                    cloud sync. No analytics layer.
+                  </p>
+                </div>
               </div>
               <ErrorBoundary
                 fallbackRender={() => (

@@ -164,7 +164,7 @@ export function ImportRestoreSection({
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <label
             htmlFor={fileInputId}
-            className={`ops-action-button ops-action-button-info ops-focus-ring-within clip-notched ops-notch-chip cursor-pointer px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase ${importBusy ? 'pointer-events-none opacity-70' : ''}`}
+            className={`ops-action-button ops-action-button-sky ops-focus-ring-within clip-notched ops-notch-chip cursor-pointer px-4 py-3 text-sm font-semibold tracking-[0.14em] uppercase ${importBusy ? 'pointer-events-none opacity-70' : ''}`}
           >
             Select JSON Backup
             <input
@@ -440,7 +440,7 @@ export function ImportRestoreSection({
                                       disabled={
                                         !manualBackupConfirmed || importBusy
                                       }
-                                      className={`${actionButtonClasses} ops-action-button-warning mt-3 w-full`}
+                                      className={`${actionButtonClasses} ops-action-button-amber mt-3 w-full`}
                                     >
                                       Unlock Replace After Manual Backup Check
                                     </button>
@@ -456,7 +456,7 @@ export function ImportRestoreSection({
                                   replaceBackupState.phase === 'saving' ||
                                   importBusy
                                 }
-                                className={`${actionButtonClasses} ops-action-button-info w-full`}
+                                className={`${actionButtonClasses} ops-action-button-amber w-full`}
                               >
                                 {replaceBackupState.phase === 'saving'
                                   ? 'Writing Backup'
@@ -492,7 +492,7 @@ export function ImportRestoreSection({
                                   !replaceReady ||
                                   importBusy
                                 }
-                                className={`${actionButtonClasses} ${replaceConfirmState === 'armed' ? 'ops-action-button-danger' : 'ops-action-button-warning'}`}
+                                className={`${actionButtonClasses} ${replaceConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-orange'}`}
                               >
                                 {importBusy
                                   ? 'Writing Import'
@@ -528,7 +528,7 @@ export function ImportRestoreSection({
                           type="button"
                           onClick={() => void onConfirmImport()}
                           disabled={!pendingImportCanCommit || importBusy}
-                          className={`${actionButtonClasses} ops-action-button-success w-full`}
+                          className={`${actionButtonClasses} ops-action-button-emerald-solid w-full`}
                         >
                           {importBusy
                             ? 'Writing Import'
