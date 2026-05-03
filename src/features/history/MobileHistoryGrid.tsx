@@ -84,7 +84,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 disabled={!canViewPreviousWeek}
                 aria-controls={ids.mobileRegionId}
                 aria-label="Previous week"
-                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.12em] uppercase"
+                className="ops-action-button ops-action-button-sm ops-action-button-subtle"
               >
                 <span aria-hidden="true" className="hidden max-[360px]:inline">
                   {'<'}
@@ -115,7 +115,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 disabled={!canViewNextWeek}
                 aria-controls={ids.mobileRegionId}
                 aria-label="Next week"
-                className="ops-action-button ops-action-button-subtle px-3 py-2 text-xs font-semibold tracking-[0.12em] uppercase"
+                className="ops-action-button ops-action-button-sm ops-action-button-subtle"
               >
                 <span className="max-[360px]:sr-only">Next</span>
                 <span aria-hidden="true" className="hidden max-[360px]:inline">
@@ -143,13 +143,13 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         {canScrollLeft ? (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-0 z-30 h-full w-6 bg-gradient-to-r from-ops-surface-1 to-transparent"
+            className="ops-history-edge-left pointer-events-none absolute top-0 left-0 z-30 h-full w-6"
           />
         ) : null}
         {canScrollRight ? (
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute right-0 top-0 z-30 h-full w-10 bg-gradient-to-l from-ops-surface-1 to-transparent"
+            className="ops-history-edge-right pointer-events-none absolute top-0 right-0 z-30 h-full w-10"
           />
         ) : null}
 
@@ -197,7 +197,12 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     </div>
                     <div
                       id={weekStateId}
-                      className="text-right text-[11px] uppercase tracking-[0.12em] text-ops-text-muted"
+                      className={[
+                        'clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold uppercase tracking-[0.12em]',
+                        visibleWeekIndex === weekIndex
+                          ? 'text-ops-accent-muted'
+                          : 'text-ops-text-muted',
+                      ].join(' ')}
                     >
                       {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
                     </div>
@@ -228,7 +233,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                               ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                               : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
                             isToday && !isSelectedDay
-                              ? 'ring-1 ring-inset ring-emerald-300/25'
+                              ? 'ops-history-today-cell'
                               : '',
                           ].join(' ')}
                         >
@@ -299,7 +304,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             <span
               key={weekGroup[0] ?? `week-${weekIndex}`}
               className={[
-                'h-2 w-2 rounded-full border',
+                'clip-notched ops-notch-chip h-[3px] w-3 border',
                 visibleWeekIndex === weekIndex
                   ? 'border-ops-accent bg-ops-accent'
                   : 'border-ops-border-struct bg-transparent',
@@ -341,7 +346,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             {selectedDayStatuses.map(({ sector, status }) => (
               <div
                 key={sector.id}
-                className="tactical-chip-panel flex items-center justify-between gap-3 border border-ops-border-soft px-3 py-3"
+                className="tactical-chip-panel flex items-center justify-between gap-3 px-3 py-3"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
