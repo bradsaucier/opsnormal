@@ -47,11 +47,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-amber-50',
-    descriptionClassName: 'text-amber-50',
-    detailClassName: 'text-amber-50',
+    titleClassName: 'text-amber-100',
+    descriptionClassName: 'text-amber-100',
+    detailClassName: 'text-amber-100',
     subduedClassName: 'text-amber-100/76',
-    definitionClassName: 'text-amber-50/88',
+    definitionClassName: 'text-amber-100/88',
     actionClassName: 'ops-action-button-amber',
   },
   warning: {
@@ -59,11 +59,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(251,146,60,0.34),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(249,115,22,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-orange-100',
-    descriptionClassName: 'text-orange-50/90',
-    detailClassName: 'text-orange-50/90',
+    titleClassName: 'text-orange-200',
+    descriptionClassName: 'text-orange-100/90',
+    detailClassName: 'text-orange-100/90',
     subduedClassName: 'text-orange-100/78',
-    definitionClassName: 'text-orange-50/88',
+    definitionClassName: 'text-orange-100/88',
     actionClassName: 'ops-action-button-orange',
   },
   danger: {
@@ -71,11 +71,11 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
       'bg-[linear-gradient(180deg,rgba(248,113,113,0.38),rgba(255,255,255,0.04))]',
     innerClassName:
       'bg-[linear-gradient(180deg,rgba(127,29,29,0.42),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-red-100',
-    descriptionClassName: 'text-red-50/92',
-    detailClassName: 'text-red-50/92',
+    titleClassName: 'text-red-200',
+    descriptionClassName: 'text-red-100/92',
+    detailClassName: 'text-red-100/92',
     subduedClassName: 'text-red-100/78',
-    definitionClassName: 'text-red-50/88',
+    definitionClassName: 'text-red-100/88',
     actionClassName: 'ops-action-button-red',
   },
   neutral: {
