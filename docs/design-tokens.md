@@ -40,6 +40,23 @@ Application rules:
 - Do not remove mono from sigils, readiness status, telemetry, or controls.
 - Prefer `.ops-mono` or `.ops-eyebrow` when a component needs explicit tactical voice.
 
+### Tracking scale
+
+OpsNormal uses a small tracking scale instead of one-off component values.
+
+- `--ops-tracking-display`: `0.10em` for the product title and large display values
+- `--ops-tracking-section`: `0.08em` for section and card headings
+- `--ops-tracking-eyebrow`: `0.14em` for standard eyebrows and compact labels
+- `--ops-tracking-eyebrow-strong`: `0.18em` for high-level shell metadata
+- `--ops-tracking-action`: `0.14em` for clipped action buttons
+- `--ops-tracking-table`: `0.16em` for dense table and grid headers
+
+Application rules:
+
+- Use `.ops-tracking-display`, `.ops-tracking-section`, `.ops-eyebrow`, `.ops-eyebrow-strong`, or `.ops-tracking-table` before adding an arbitrary tracking value.
+- Action controls inherit tracking from `.ops-action-button`.
+- Do not escalate eyebrow tracking above the product name.
+
 ## Core surfaces
 
 - `--color-ops-base`: `#0a0f0d`
@@ -87,6 +104,12 @@ Inset support surfaces:
 Compact support surfaces:
 
 - `.tactical-chip-panel`
+- `.tactical-chip-panel-neutral`
+- `.tactical-chip-panel-sky`
+- `.tactical-chip-panel-amber`
+- `.tactical-chip-panel-orange`
+- `.tactical-chip-panel-rose`
+- `.tactical-chip-panel-red`
 
 Application rules:
 
@@ -95,6 +118,16 @@ Application rules:
 - Use `tactical-subpanel-strong` when a detail brief or selected-state summary should read one step higher than surrounding support strips.
 - Use `tactical-chip-panel` for compact meta blocks, legends, and grouped facts that should feel inset rather than flat.
 - Keep these utilities inside the current cockpit language. They are not a license to add decorative glow, blur, or card-rounding.
+- Use tone chip panels for import, restore, recovery, and fault guidance instead of repeating inline gradient stacks.
+
+Frame emphasis:
+
+- `NotchedFrame` supports `primary`, `standard`, `support`, `inset`, and `quiet` emphasis.
+- Use `primary` for top-level live operator chrome.
+- Use `standard` for normal nested panels.
+- Use `support` for recovery, backup, and fault surfaces.
+- Use `inset` for compact nested fact surfaces.
+- Use `quiet` for low-priority boundary and footer chrome.
 
 Section shell emphasis:
 
@@ -102,6 +135,12 @@ Section shell emphasis:
 - `.ops-section-emphasis-standard` is the default shell weight for read-only mirrors such as history.
 - `.ops-section-emphasis-support` drops the emerald outer wash and uses structural framing for support or recovery surfaces.
 - Apply these through `SectionCard` only. They recalibrate shell hierarchy without changing notch geometry, focus chrome, or component signatures downstream.
+
+Spine emphasis:
+
+- `.ops-sector-spine-nominal`, `.ops-sector-spine-degraded`, and `.ops-sector-spine-unmarked` are reserved for sector readiness cards and selected sector summaries.
+- `.ops-section-spine-fault` is reserved for contained crash and recovery fallback surfaces.
+- `.ops-rollup-spine` is reserved for aggregate roll-up bands that are not sectors.
 
 Focus chrome:
 
@@ -158,6 +197,17 @@ They are available for future rollouts even where core Tailwind spacing utilitie
 - `--spacing-ops-5`: `1.25rem`
 - `--spacing-ops-6`: `1.5rem`
 
+## Chip height tokens
+
+- `--ops-chip-min-h-sm`: `36px`
+- `--ops-chip-min-h`: `44px`
+- `--ops-chip-min-h-lg`: `52px`
+
+Application rules:
+
+- Use the shared chip height tokens through `.ops-action-button`, `.ops-action-button-sm`, `.ops-action-button-lg`, telemetry chips, radio chips, and compact controls.
+- Avoid new ad hoc `min-h-[...]` values unless the control has a fixed-format layout requirement that cannot use the shared scale.
+
 ## Action button chrome
 
 Clipped action buttons are defined centrally so install, update, export, import, and recovery controls present the same geometry.
@@ -165,6 +215,11 @@ Clipped action buttons are defined centrally so install, update, export, import,
 Base class:
 
 - `.ops-action-button`
+
+Size classes:
+
+- `.ops-action-button-sm`
+- `.ops-action-button-lg`
 
 Tone classes:
 
@@ -182,6 +237,7 @@ Guidance:
 
 - Use `ops-action-button` as the base class for structural controls.
 - Default button notch is `--ops-notch-chip`.
+- Default size is 44px minimum height. Use `ops-action-button-sm` for compact alert actions and `ops-action-button-lg` for high-emphasis recovery actions.
 - Use semantic tone modifiers rather than ad hoc border and background values.
 - Keep focus indication inside the clipped geometry with the shared inset focus treatment.
 - Avoid rounded button chrome inside primary tactical panels.
