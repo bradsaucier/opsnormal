@@ -69,7 +69,7 @@ export function AlertSurface({
         <h2
           id={resolvedTitleId}
           className={joinClasses(
-            'text-sm font-semibold tracking-[0.16em] uppercase',
+            'text-sm font-semibold tracking-[0.14em] uppercase',
             isCompact && 'text-xs tracking-[0.14em]',
             tonePalette.titleClassName,
             titleClassName,
