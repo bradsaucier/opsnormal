@@ -23,6 +23,7 @@ interface AlertSurfaceProps
   description?: ReactNode;
   actions?: ReactNode;
   as?: 'section' | 'div';
+  intensity?: 'standard' | 'compact';
   titleId?: string;
   outerClassName?: string;
   innerClassName?: string;
@@ -43,6 +44,7 @@ export function AlertSurface({
   description,
   actions,
   as = 'section',
+  intensity = 'standard',
   titleId,
   outerClassName,
   innerClassName,
@@ -56,6 +58,7 @@ export function AlertSurface({
   const generatedTitleId = useId();
   const resolvedTitleId = titleId ?? generatedTitleId;
   const tonePalette = getAlertSurfaceTonePalette(tone);
+  const isCompact = intensity === 'compact';
   const resolvedAriaLabelledBy =
     elementProps['aria-labelledby'] ??
     (elementProps['aria-label'] ? undefined : resolvedTitleId);
@@ -67,6 +70,7 @@ export function AlertSurface({
           id={resolvedTitleId}
           className={joinClasses(
             'text-sm font-semibold tracking-[0.16em] uppercase',
+            isCompact && 'text-xs tracking-[0.14em]',
             tonePalette.titleClassName,
             titleClassName,
           )}
@@ -76,7 +80,7 @@ export function AlertSurface({
         {description ? (
           <p
             className={joinClasses(
-              'mt-2 text-sm leading-6',
+              isCompact ? 'mt-1 text-sm leading-5' : 'mt-2 text-sm leading-6',
               tonePalette.descriptionClassName,
               descriptionClassName,
             )}
@@ -85,11 +89,22 @@ export function AlertSurface({
           </p>
         ) : null}
         {children ? (
-          <div className={joinClasses('mt-3', bodyClassName)}>{children}</div>
+          <div
+            className={joinClasses(isCompact ? 'mt-2' : 'mt-3', bodyClassName)}
+          >
+            {children}
+          </div>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex flex-wrap gap-3 lg:justify-end">{actions}</div>
+        <div
+          className={joinClasses(
+            'flex flex-wrap lg:justify-end',
+            isCompact ? 'gap-2' : 'gap-3',
+          )}
+        >
+          {actions}
+        </div>
       ) : null}
     </>
   );
@@ -98,7 +113,7 @@ export function AlertSurface({
     <NotchedFrame
       outerClassName={joinClasses(tonePalette.outerClassName, outerClassName)}
       innerClassName={joinClasses(
-        'p-4 sm:p-5',
+        isCompact ? 'p-3 sm:p-3' : 'p-4 sm:p-5',
         tonePalette.innerClassName,
         innerClassName,
       )}
@@ -113,7 +128,12 @@ export function AlertSurface({
           className: joinClasses(className),
         },
         actions ? (
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div
+            className={joinClasses(
+              'flex flex-col lg:flex-row lg:items-center lg:justify-between',
+              isCompact ? 'gap-3' : 'gap-4',
+            )}
+          >
             {content}
           </div>
         ) : (
