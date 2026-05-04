@@ -23,7 +23,7 @@ interface AlertSurfaceProps
   description?: ReactNode;
   actions?: ReactNode;
   as?: 'section' | 'div';
-  intensity?: 'standard' | 'compact' | 'inline';
+  intensity?: 'standard' | 'compact';
   titleId?: string;
   outerClassName?: string;
   innerClassName?: string;
@@ -59,7 +59,6 @@ export function AlertSurface({
   const resolvedTitleId = titleId ?? generatedTitleId;
   const tonePalette = getAlertSurfaceTonePalette(tone);
   const isCompact = intensity === 'compact';
-  const isInline = intensity === 'inline';
   const resolvedAriaLabelledBy =
     elementProps['aria-labelledby'] ??
     (elementProps['aria-label'] ? undefined : resolvedTitleId);
@@ -70,9 +69,11 @@ export function AlertSurface({
         <h2
           id={resolvedTitleId}
           className={joinClasses(
-            'text-sm font-semibold tracking-[0.14em] uppercase',
-            isCompact && 'text-xs tracking-[0.14em]',
-            tonePalette.titleClassName,
+            'font-semibold uppercase',
+            isCompact
+              ? 'text-[11px] tracking-[0.10em] text-ops-text-secondary'
+              : 'text-sm tracking-[0.14em]',
+            !isCompact && tonePalette.titleClassName,
             titleClassName,
           )}
         >
@@ -109,30 +110,6 @@ export function AlertSurface({
       ) : null}
     </>
   );
-
-  if (isInline) {
-    return createElement(
-      as,
-      {
-        ...elementProps,
-        ...(resolvedAriaLabelledBy
-          ? { 'aria-labelledby': resolvedAriaLabelledBy }
-          : {}),
-        className: joinClasses(
-          'ops-inline-alert p-4',
-          tonePalette.titleClassName,
-          className,
-        ),
-      },
-      actions ? (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          {content}
-        </div>
-      ) : (
-        content
-      ),
-    );
-  }
 
   return (
     <NotchedFrame

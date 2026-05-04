@@ -54,13 +54,7 @@ export function DomainCard({
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
-    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer bg-ops-border-struct p-px transition-colors duration-150 ease-out hover:bg-ops-border-strong focus-within:bg-ops-border-strong';
-  const sigilClassName =
-    resolvedStatus === 'nominal'
-      ? 'border-ops-accent/35 bg-ops-accent/10 text-ops-accent-muted'
-      : resolvedStatus === 'degraded'
-        ? 'border-[var(--ops-status-degraded-border)] bg-[var(--ops-status-degraded-bg)] text-[var(--ops-status-degraded-text)]'
-        : 'border-ops-border-soft text-ops-text-muted';
+    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
@@ -154,16 +148,13 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'ops-domain-card-surface clip-notched ops-notch-panel-inner tactical-panel flex transform-gpu flex-col gap-5 p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5',
+          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[15rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[16rem]',
           spineClassName,
         ].join(' ')}
       >
         <div className="flex items-start gap-3">
           <span
-            className={[
-              'clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 shrink-0 items-center justify-center border transition-colors duration-150 ease-out',
-              sigilClassName,
-            ].join(' ')}
+            className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 shrink-0 items-center justify-center border border-ops-border-soft text-ops-text-muted"
             aria-hidden="true"
           >
             <SectorGlyphMark sectorId={sector.id} />
@@ -177,7 +168,7 @@ export function DomainCard({
               />
               <span>{sector.shortLabel}</span>
             </span>
-            <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
+            <h3 className="mt-2 text-sm leading-5 font-semibold tracking-[0.04em] text-ops-text-primary uppercase">
               {sector.label}
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
@@ -186,7 +177,12 @@ export function DomainCard({
           </div>
         </div>
 
-        <div className="border-t border-ops-border-soft pt-4">
+        <div className="mt-6">
+          <div
+            className="ops-sector-caption border-t border-ops-border-soft pt-3"
+            aria-hidden="true"
+          />
+
           {busy ? (
             <span id={busyHintId} className="sr-only">
               Saving local write. Stand by.
@@ -197,7 +193,7 @@ export function DomainCard({
             role="radiogroup"
             aria-label={`${sector.label} status`}
             aria-describedby={describedBy}
-            className="grid grid-cols-3 gap-2"
+            className="mt-3 grid grid-cols-3 gap-2"
           >
             {STATUS_OPTIONS.map((option, optionIndex) => {
               const content = getStatusContent(option);

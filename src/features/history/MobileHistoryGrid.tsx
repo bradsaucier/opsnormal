@@ -1,7 +1,7 @@
 import { StatusBadge } from '../../components/StatusBadge';
 import { StatusLegend } from '../../components/StatusLegend';
 import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
-import { formatDayLabel, formatLongDate, formatWeekday } from '../../lib/date';
+import { formatDayLabel, formatLongDate } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
 import { SECTORS } from '../../types';
@@ -28,6 +28,30 @@ function getMobileWeekGridColumnsClass(dayCount: number) {
     MOBILE_WEEK_GRID_COLUMN_CLASS[
       dayCount as keyof typeof MOBILE_WEEK_GRID_COLUMN_CLASS
     ] ?? MOBILE_WEEK_GRID_COLUMN_CLASS[7]
+  );
+}
+
+function WeekChevronIcon({ direction }: { direction: 'previous' | 'next' }) {
+  return (
+    <svg
+      viewBox="0 0 12 12"
+      className="h-3 w-3"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      strokeWidth="1.5"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d={
+          direction === 'previous'
+            ? 'M7.5 2.5 L4 6 L7.5 9.5'
+            : 'M4.5 2.5 L8 6 L4.5 9.5'
+        }
+      />
+    </svg>
   );
 }
 
@@ -86,9 +110,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 aria-label="Previous week"
                 className="ops-action-button ops-action-button-sm ops-action-button-subtle"
               >
-                <span aria-hidden="true" className="hidden max-[360px]:inline">
-                  {'<'}
-                </span>
+                <WeekChevronIcon direction="previous" />
                 <span className="max-[360px]:sr-only">Prev</span>
               </button>
               <div
@@ -118,9 +140,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 className="ops-action-button ops-action-button-sm ops-action-button-subtle"
               >
                 <span className="max-[360px]:sr-only">Next</span>
-                <span aria-hidden="true" className="hidden max-[360px]:inline">
-                  {'>'}
-                </span>
+                <WeekChevronIcon direction="next" />
               </button>
             </nav>
             <div className="mt-3 border-t border-ops-border-soft pt-3">
@@ -195,18 +215,17 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
                     </div>
-                    {visibleWeekIndex === weekIndex ? (
-                      <div
-                        id={weekStateId}
-                        className="clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold tracking-[0.12em] text-ops-accent-muted uppercase"
-                      >
-                        On deck
-                      </div>
-                    ) : (
-                      <span id={weekStateId} className="sr-only">
-                        Inactive week
-                      </span>
-                    )}
+                    <div
+                      id={weekStateId}
+                      className={[
+                        'clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold uppercase tracking-[0.12em]',
+                        visibleWeekIndex === weekIndex
+                          ? 'text-ops-accent-muted'
+                          : 'text-ops-text-muted',
+                      ].join(' ')}
+                    >
+                      {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
+                    </div>
                   </div>
 
                   <div
@@ -239,7 +258,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           ].join(' ')}
                         >
                           <span className="block text-[10px] text-ops-text-muted">
-                            {formatWeekday(dateKey)}
+                            {formatLongDate(dateKey).split(',')[0]}
                           </span>
                           <span className="mt-1 block">
                             {formatDayLabel(dateKey)}
@@ -317,16 +336,18 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
 
       <div
         id="mobile-history-daily-brief"
-        className={`ops-flat-panel-strong mt-4 p-4 ${getStatusSpineClassName(selectedStatus)}`}
+        className="mt-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px"
         aria-live="polite"
       >
-        <div>
+        <div
+          className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong ops-flat-panel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
+        >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
                 Daily brief
               </p>
-              <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
+              <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
                 {formatLongDate(selectedCell.dateKey)}
               </h3>
               <p
@@ -352,7 +373,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     <span className="text-ops-text-muted" aria-hidden="true">
                       <SectorGlyphMark sectorId={sector.id} />
                     </span>
-                    <p className="text-sm font-semibold text-ops-text-primary">
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
                       {sector.label}
                     </p>
                   </div>

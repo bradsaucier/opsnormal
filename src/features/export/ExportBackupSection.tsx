@@ -28,7 +28,7 @@ export function ExportBackupSection({
     >
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="ops-flat-panel p-4">
+          <div className="panel-shadow clip-notched ops-notch-panel-outer tactical-subpanel p-4">
             <p className="ops-eyebrow-mixed">Backup posture</p>
             <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
               {backupStatus}
@@ -42,21 +42,24 @@ export function ExportBackupSection({
             <button
               type="button"
               onClick={() => void onJsonExport()}
-              className={`${actionButtonClasses} ops-action-button-emerald-solid`}
+              className={`${actionButtonClasses} ops-action-button-lg ops-action-button-success-solid`}
             >
               Export JSON
             </button>
             <button
               type="button"
               onClick={() => void onCsvExport()}
-              className={`${actionButtonClasses} ops-action-button-subtle`}
+              className={`${actionButtonClasses} flex-col gap-1 ops-action-button-subtle`}
             >
-              Export CSV
+              <span className="text-[10px] leading-none tracking-[0.16em] text-ops-text-muted">
+                Also
+              </span>
+              <span>Export CSV</span>
             </button>
           </div>
         </div>
 
-        <div className="ops-flat-panel-strong p-4 text-sm leading-6 text-ops-text-secondary">
+        <div className="panel-shadow clip-notched ops-notch-panel-outer tactical-subpanel-strong p-4 text-sm leading-6 text-ops-text-secondary">
           Export produces the recovery file. Run it routinely, especially in
           Safari on macOS and browser tabs on iPhone or iPad where
           browser-managed storage can disappear.
