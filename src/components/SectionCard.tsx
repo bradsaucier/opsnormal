@@ -26,7 +26,7 @@ export function SectionCard({
       <div
         className={`clip-notched ops-notch-panel-outer ops-section-frame ops-section-emphasis-${emphasis} p-px`}
       >
-        <section className="tactical-panel clip-notched ops-notch-panel-inner ops-section-surface p-6 sm:p-7 lg:p-8">
+        <section className="tactical-panel clip-notched ops-notch-panel-inner ops-section-surface p-5 sm:p-6 lg:p-8">
           {emphasis === 'primary' ? (
             <span className="ops-section-primary-tick" aria-hidden="true" />
           ) : null}
@@ -39,7 +39,7 @@ export function SectionCard({
             </div>
             {meta ? (
               <div className="lg:flex lg:self-stretch lg:border-l lg:border-ops-border-soft lg:pl-6">
-                <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-3 text-sm text-ops-text-secondary sm:min-w-[14rem] sm:text-right lg:flex lg:items-center lg:justify-end">
+                <div className="clip-notched ops-notch-chip tactical-chip-panel ops-section-meta-panel px-3 py-3 text-sm text-ops-text-secondary sm:min-w-[14rem] sm:text-right lg:flex lg:items-center lg:justify-end lg:p-0">
                   {meta}
                 </div>
               </div>

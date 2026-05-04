@@ -46,7 +46,7 @@ Application rules:
 OpsNormal uses a small tracking scale instead of one-off component values.
 
 - `--ops-tracking-display`: `0.10em` for the product title and large display values
-- `--ops-tracking-section`: `0.04em` for legacy compact headings
+- `--ops-tracking-section`: `0.08em` for compact section headings
 - `--ops-tracking-eyebrow`: `0.14em` for standard eyebrows and compact labels
 - `--ops-tracking-eyebrow-strong`: `0.18em` for high-level shell metadata
 - `--ops-tracking-action`: `0.14em` for clipped action buttons
@@ -62,21 +62,21 @@ Application rules:
 ## Core surfaces
 
 - `--color-ops-base`: `#0a0f0d`
-- `--color-ops-surface-base`: `#0e1411`
-- `--color-ops-surface-1`: `#121814`
-- `--color-ops-surface-2`: `#1a221e`
-- `--color-ops-surface-3`: `#222b27`
-- `--color-ops-surface-raised`: `#1a221e`
-- `--color-ops-surface-overlay`: `#222b27`
-- `--color-ops-surface-interactive`: `#26342d`
+- `--color-ops-surface-base`: `#101613`
+- `--color-ops-surface-1`: `#151d1a`
+- `--color-ops-surface-2`: `#1c2521`
+- `--color-ops-surface-3`: `#24302a`
+- `--color-ops-surface-raised`: `#18211d`
+- `--color-ops-surface-overlay`: `#1f2a25`
+- `--color-ops-surface-interactive`: `#28342e`
 - `--color-ops-text-primary`: `#e6ece9`
 - `--color-ops-text-secondary`: `#b4bfba`
 - `--color-ops-text-muted`: `#8b9691`
-- `--color-ops-border-soft`: `#ffffff12`
-- `--color-ops-border-struct`: `#ffffff26`
-- `--color-ops-border-strong`: `#ffffff38`
-- `--color-ops-panel-border`: `#ffffff12`
-- `--color-ops-panel-border-strong`: `#ffffff26`
+- `--color-ops-border-soft`: `#ffffff14`
+- `--color-ops-border-struct`: `#ffffff29`
+- `--color-ops-border-strong`: `#ffffff3a`
+- `--color-ops-panel-border`: `#ffffff1a`
+- `--color-ops-panel-border-strong`: `#ffffff24`
 - `--color-ops-accent`: `#6ee7b7`
 - `--color-ops-accent-muted`: `#b7f7da`
 - `--color-ops-accent-border`: `#6ee7b724`
@@ -92,12 +92,12 @@ Application rules:
 
 ## Hover and elevation scale
 
-- `--ops-hover-1-bg`: `rgba(255, 255, 255, 0.01)`
-- `--ops-hover-2-bg`: `rgba(255, 255, 255, 0.025)`
+- `--ops-hover-1-bg`: `rgba(255, 255, 255, 0.015)`
+- `--ops-hover-2-bg`: `rgba(255, 255, 255, 0.035)`
 - `--ops-elevation-1`: standard card elevation
 - `--ops-elevation-2`: active or hovered panel elevation
 - `--ops-motion-standard`: `160ms ease-out`
-- `--ops-motion-select`: `220ms cubic-bezier(0.2, 0.8, 0.2, 1)`
+- `--ops-motion-select`: `cubic-bezier(0.2, 0, 0, 1)`
 
 Application rules:
 

@@ -117,9 +117,14 @@
   --ops-tracking-eyebrow-strong: 0.18em;
   --ops-tracking-action: 0.14em;
   --ops-tracking-table: 0.16em;
+  --ops-hover-1-bg: rgba(255, 255, 255, 0.015);
+  --ops-hover-2-bg: rgba(255, 255, 255, 0.035);
+  --ops-motion-standard: 160ms ease-out;
   --ops-motion-select: cubic-bezier(0.2, 0, 0, 1);
   --ops-elevation-1:
     0 8px 18px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.14);
+  --ops-elevation-2:
+    0 14px 28px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.16);
   --ops-focus-ring-solid-edge: rgba(2, 18, 12, 0.96);
   --ops-focus-ring-solid-outer: rgba(255, 255, 255, 0.92);
   --ops-chip-min-h-sm: 36px;
@@ -289,6 +294,24 @@ h3,
 
 .ops-tracking-table {
   letter-spacing: var(--ops-tracking-table);
+}
+
+.ops-headline-h2,
+.ops-headline-h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.ops-headline-h2 {
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+
+.ops-headline-h3 {
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 @media (min-width: 640px) {
@@ -625,6 +648,13 @@ h3,
   --ops-sector-spine-width: 5px;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .ops-domain-card:hover .ops-domain-card-shell,
+  .ops-domain-card:focus-within .ops-domain-card-shell {
+    transform: translateY(-1px);
+  }
+}
+
 .ops-section-spine-fault {
   box-shadow:
     inset 4px 0 0 var(--ops-status-degraded-border),
@@ -701,6 +731,54 @@ h3,
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     inset 0 0 0 1px var(--color-ops-panel-border-strong);
+}
+
+.ops-flat-panel,
+.ops-flat-panel-strong {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.ops-flat-panel {
+  --ops-focus-ring-base-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    inset 0 0 0 1px var(--color-ops-panel-border);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.025),
+      rgba(255, 255, 255, 0) 32%
+    ),
+    var(--color-ops-surface-overlay);
+  box-shadow: var(--ops-focus-ring-base-shadow);
+}
+
+.ops-flat-panel-strong {
+  --ops-focus-ring-base-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 1px var(--color-ops-panel-border-strong);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0) 30%
+    ),
+    var(--color-ops-surface-raised);
+  box-shadow: var(--ops-focus-ring-base-shadow);
+}
+
+.ops-section-meta-panel {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .ops-section-meta-panel {
+    -webkit-clip-path: none;
+    clip-path: none;
+    background: transparent;
+    box-shadow: none;
+  }
 }
 
 .tactical-chip-panel {
@@ -837,6 +915,11 @@ h3,
   background: var(--ops-status-unmarked-border);
 }
 
+.ops-telemetry-attention {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
+}
+
 .ops-telemetry-grid > .ops-telemetry-chip {
   border-top: 1px solid var(--color-ops-panel-border-strong);
 }
@@ -970,12 +1053,12 @@ h3,
 }
 
 .ops-radio-chip.ops-status-unmarked[aria-checked='true'] {
-  --ops-radio-chip-status-border: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.28);
+  --ops-radio-chip-status-border: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.18);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 38%),
-    rgba(64, 76, 70, 0.64);
-  color: #d5ddd9;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 38%),
+    rgba(255, 255, 255, 0.06);
+  color: #c5ceca;
 }
 
 .ops-history-row {
@@ -983,7 +1066,7 @@ h3,
 }
 
 .ops-history-row:hover {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--ops-hover-1-bg);
 }
 
 .ops-history-cell {
@@ -994,22 +1077,17 @@ h3,
 }
 
 .ops-history-cell:hover {
-  background: rgba(255, 255, 255, 0.045);
-  box-shadow: var(--ops-elevation-1);
+  background: var(--ops-hover-2-bg);
+  box-shadow: var(--ops-elevation-2);
   transform: translateY(-1px);
 }
 
 .ops-history-today-header {
-  box-shadow:
-    inset 0 2px 0 var(--ops-status-nominal-border),
-    inset 1px 0 0 var(--ops-today-rail),
-    inset -1px 0 0 var(--ops-today-rail);
+  box-shadow: inset 0 2px 0 var(--ops-status-nominal-border);
 }
 
 .ops-history-today-cell {
-  box-shadow:
-    inset 1px 0 0 var(--ops-today-rail),
-    inset -1px 0 0 rgba(110, 231, 183, 0.22);
+  box-shadow: inset 0 -2px 0 var(--ops-today-rail);
 }
 
 .ops-history-week-boundary {
@@ -1018,15 +1096,14 @@ h3,
 
 .ops-history-today-header.ops-history-week-boundary {
   box-shadow:
-    inset 1px 0 0 var(--ops-today-rail),
-    inset -1px 0 0 var(--ops-today-rail),
+    inset 1px 0 0 var(--color-ops-border-soft),
     inset 0 2px 0 var(--ops-status-nominal-border);
 }
 
 .ops-history-today-cell.ops-history-week-boundary {
   box-shadow:
-    inset 1px 0 0 var(--ops-today-rail),
-    inset -1px 0 0 rgba(110, 231, 183, 0.22);
+    inset 1px 0 0 var(--color-ops-border-soft),
+    inset 0 -2px 0 var(--ops-today-rail);
 }
 
 .ops-history-selected-cell {
@@ -1136,12 +1213,12 @@ h3,
   text-decoration: none;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease,
-    box-shadow 120ms ease,
-    opacity 120ms ease,
-    transform 120ms ease;
+    background-color var(--ops-motion-standard),
+    border-color var(--ops-motion-standard),
+    color var(--ops-motion-standard),
+    box-shadow var(--ops-motion-standard),
+    opacity var(--ops-motion-standard),
+    transform var(--ops-motion-standard);
 }
 
 .ops-action-button-sm {
@@ -1325,8 +1402,70 @@ h3,
 
   .ops-action-button:hover,
   .ops-export-accordion-trigger-collapsed:hover,
-  .ops-history-cell:hover {
+  .ops-history-cell:hover,
+  .ops-domain-card:hover .ops-domain-card-shell,
+  .ops-domain-card:focus-within .ops-domain-card-shell {
     transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  body {
+    background: var(--color-ops-base);
+  }
+
+  .tactical-panel,
+  .tactical-subpanel,
+  .tactical-subpanel-strong,
+  .tactical-chip-panel,
+  .ops-flat-panel,
+  .ops-flat-panel-strong {
+    background-color: var(--color-ops-surface-base);
+  }
+}
+
+@media (forced-colors: active) {
+  .tactical-panel,
+  .tactical-subpanel,
+  .tactical-subpanel-strong,
+  .tactical-chip-panel,
+  .ops-flat-panel,
+  .ops-flat-panel-strong,
+  .ops-status-frame,
+  .ops-grid-cell {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: inset 0 0 0 1px CanvasText;
+  }
+
+  .ops-status-nominal,
+  .ops-grid-nominal {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .ops-status-degraded,
+  .ops-grid-degraded {
+    border-color: LinkText;
+    background: Canvas;
+    color: LinkText;
+  }
+
+  .ops-status-unmarked,
+  .ops-grid-unmarked {
+    border-color: GrayText;
+    background: Canvas;
+    color: GrayText;
+  }
+
+  .ops-action-button {
+    forced-color-adjust: none;
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
   }
 }
 

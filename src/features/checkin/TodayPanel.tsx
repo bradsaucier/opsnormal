@@ -50,19 +50,24 @@ function DayCompletionRollup({
   const remainingCount = Math.max(totalCount - markedCount, 0);
 
   return (
-    <div className="ops-flat-panel-strong mb-4 grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+    <div className="ops-flat-panel-strong mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-[8rem]">
         <p className="ops-eyebrow-mixed">Daily roll-up</p>
         <p className="mt-2 text-3xl leading-none font-semibold text-ops-text-primary [font-variant-numeric:tabular-nums]">
           {markedCount}/{totalCount}
         </p>
       </div>
-      <div className="text-sm leading-6 text-ops-text-secondary">
+      <div
+        className={[
+          'text-sm leading-6 text-ops-text-secondary',
+          isComplete ? 'lg:hidden' : '',
+        ].join(' ')}
+      >
         {isComplete
           ? 'All five sectors are marked for today.'
           : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
       </div>
-      <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+      <div className="col-span-2 flex flex-wrap items-center gap-3 sm:col-span-1 sm:justify-end lg:col-span-1 lg:col-start-3">
         <span
           className={[
             'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
@@ -73,7 +78,7 @@ function DayCompletionRollup({
           {isComplete ? 'Complete' : 'Open'}
         </span>
         <div
-          className="flex items-center gap-1.5"
+          className="clip-notched ops-notch-chip tactical-chip-panel flex items-center gap-1.5 px-2 py-1.5"
           aria-label="Today sector status pips"
         >
           {SECTORS.map((sector, index) => (
@@ -216,23 +221,21 @@ export function TodayPanel({
         </div>
       ) : null}
 
-      {!hasEntriesForToday ? (
-        <div className="ops-flat-panel-strong mb-4 px-4 py-3">
-          <p className="ops-eyebrow-mixed">Awaiting first mark</p>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-ops-text-secondary">
-            No sectors are marked for today. Set one state below and the daily
-            roll-up will start tracking live progress.
-          </p>
-        </div>
-      ) : null}
-
       <div
-        id={directSelectHintId}
-        className="ops-flat-panel mb-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary"
+        className={[
+          'mb-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary',
+          hasEntriesForToday ? 'ops-flat-panel' : 'ops-flat-panel-strong',
+        ].join(' ')}
       >
-        Choose a state directly. Arrow keys move inside the control group.
-        Unmarked means no status recorded for the day. Nominal and degraded are
-        deliberate check-ins, not automatic carry-forward.
+        {!hasEntriesForToday ? (
+          <p className="ops-eyebrow-mixed mb-2">Awaiting first mark</p>
+        ) : null}
+        <p id={directSelectHintId}>
+          {!hasEntriesForToday ? 'No sectors are marked for today. ' : null}
+          Choose a state directly. Arrow keys move inside the control group.
+          Unmarked means no status recorded for the day. Nominal and degraded
+          are deliberate check-ins, not automatic carry-forward.
+        </p>
       </div>
 
       <DayCompletionRollup
@@ -242,9 +245,9 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
         {SECTORS.map((sector, index) => (
-          <div key={sector.id}>
+          <div key={sector.id} className="h-full">
             <DomainCard
               sector={sector}
               sectorSigil={`S${index + 1}`}
