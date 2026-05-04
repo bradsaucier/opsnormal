@@ -44,7 +44,12 @@ export function AccordionSection({
           aria-expanded={isOpen}
           aria-controls={panelId}
           onClick={() => onToggle(sectionKey)}
-          className="ops-focus-ring-inset flex min-h-[56px] w-full items-start justify-between gap-4 px-4 py-4 text-left transition hover:bg-white/4"
+          className={[
+            'ops-focus-ring-inset flex min-h-[64px] w-full items-start justify-between gap-4 border-l-2 px-4 py-4 text-left transition-colors hover:border-ops-accent/30 hover:bg-white/[0.05]',
+            isOpen
+              ? 'border-ops-accent/40 bg-white/[0.025]'
+              : 'border-transparent',
+          ].join(' ')}
         >
           <span>
             <span className="ops-eyebrow block text-xs font-semibold text-ops-text-muted">
@@ -56,11 +61,11 @@ export function AccordionSection({
           </span>
           <span
             aria-hidden="true"
-            className={`mt-1 inline-flex h-6 w-6 items-center justify-center text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`mt-1 inline-flex h-7 w-7 items-center justify-center text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
           >
             <svg
               viewBox="0 0 12 12"
-              className="h-3 w-3"
+              className="h-3.5 w-3.5"
               fill="none"
               stroke="currentColor"
               strokeLinecap="square"
@@ -77,7 +82,7 @@ export function AccordionSection({
         role="region"
         aria-labelledby={headerId}
         hidden={!isOpen}
-        className="border-t border-ops-border-soft px-4 py-4"
+        className={`border-t px-4 py-4 ${isOpen ? 'border-ops-panel-border-strong' : 'border-ops-border-soft'}`}
       >
         {children}
       </div>
