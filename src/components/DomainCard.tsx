@@ -14,6 +14,11 @@ interface DomainCardProps {
 }
 
 const STATUS_OPTIONS: UiStatus[] = ['nominal', 'degraded', 'unmarked'];
+const STATUS_CONTROL_LABELS: Record<UiStatus, string> = {
+  nominal: 'NOM',
+  degraded: 'DEG',
+  unmarked: 'NONE',
+};
 const RADIO_CONTROL_KEYS = new Set([
   ' ',
   'Enter',
@@ -53,8 +58,8 @@ export function DomainCard({
     : instructionId;
 
   const shellClassName = busy
-    ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
-    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
+    ? 'panel-shadow clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px'
+    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
@@ -148,7 +153,7 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[15rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[16rem]',
+          'clip-notched ops-notch-panel-inner tactical-panel ops-domain-card-shell flex h-full min-h-[13rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out sm:p-5 xl:min-h-[14rem]',
           spineClassName,
         ].join(' ')}
       >
@@ -168,7 +173,7 @@ export function DomainCard({
               />
               <span>{sector.shortLabel}</span>
             </span>
-            <h3 className="mt-2 text-sm leading-5 font-semibold tracking-[0.04em] text-ops-text-primary uppercase">
+            <h3 className="mt-2 text-sm leading-5 font-semibold tracking-[0.04em] text-ops-text-primary uppercase md:normal-case md:tracking-[0.02em]">
               {sector.label}
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
@@ -177,7 +182,7 @@ export function DomainCard({
           </div>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-5">
           <div
             className="ops-sector-caption border-t border-ops-border-soft pt-3"
             aria-hidden="true"
@@ -221,14 +226,14 @@ export function DomainCard({
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel min-h-11 border px-2 py-2 text-center text-[11px] font-semibold tracking-[0.12em] uppercase',
+                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel min-h-11 border px-1 py-2 text-center text-[10px] font-semibold tracking-normal uppercase',
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
                       : 'ops-radio-chip-ghost text-ops-text-secondary hover:text-ops-text-primary',
                   ].join(' ')}
                 >
-                  {content.shortLabel}
+                  {STATUS_CONTROL_LABELS[option]}
                 </button>
               );
             })}
