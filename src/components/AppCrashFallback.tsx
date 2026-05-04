@@ -331,7 +331,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button
                     ref={primaryClearButtonRef}
-                    className={`ops-action-button ${clearConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-orange'}`}
+                    className={`ops-action-button ${clearConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-amber'}`}
                     type="button"
                     onClick={() => void handleClearDataAndReload()}
                     disabled={clearDataButtonDisabled}
