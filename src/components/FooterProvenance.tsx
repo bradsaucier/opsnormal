@@ -5,7 +5,7 @@ const REPO_URL = 'https://github.com/bradsaucier/opsnormal';
 export function FooterProvenance() {
   return (
     <div
-      className="ops-provenance grid gap-3 sm:w-full sm:self-end lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-8"
+      className="ops-provenance grid gap-3 sm:w-full sm:self-end lg:grid-cols-[auto_auto_auto] lg:items-center lg:justify-end lg:gap-8"
       data-testid="footer-provenance"
     >
       <p className="ops-eyebrow-strong font-semibold text-ops-text-primary">
