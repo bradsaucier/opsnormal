@@ -4,6 +4,7 @@ import {
   formatDateKey,
   formatDayLabel,
   formatLongDate,
+  formatWeekday,
   getTrailingDateKeys,
   parseDateKey,
 } from '../../src/lib/date';
@@ -46,6 +47,12 @@ describe('date helpers', () => {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
+      }).format(parsedDate),
+    );
+
+    expect(formatWeekday('2026-03-27')).toBe(
+      new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
       }).format(parsedDate),
     );
   });
