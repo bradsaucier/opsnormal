@@ -246,7 +246,7 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5">
         {SECTORS.map((sector, index) => (
           <div key={sector.id}>
             <DomainCard
