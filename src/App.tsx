@@ -234,19 +234,11 @@ function App() {
         >
           <header>
             <div className="grid gap-5 lg:gap-6">
-              <div className="flex max-w-4xl gap-4">
-                <div
-                  className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
-                  aria-hidden="true"
-                >
-                  <span className="h-16 w-0.5 bg-ops-accent/75 shadow-[0_0_16px_rgba(110,231,183,0.22)]" />
-                  <span className="mt-2 h-8 w-px bg-ops-accent-border" />
-                  <span className="mt-2 h-full w-px flex-1 bg-ops-border-struct" />
-                </div>
+              <div className="max-w-4xl">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <span
-                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-8 w-8 items-center justify-center border border-ops-accent/30 text-ops-accent-muted"
+                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 items-center justify-center border border-ops-accent/35 bg-ops-accent/10 text-ops-accent-muted"
                       aria-hidden="true"
                     >
                       <SectorGlyphMark sectorId="work-school" />
@@ -255,7 +247,7 @@ function App() {
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="ops-tracking-display mt-3 text-4xl font-semibold text-ops-text-primary uppercase sm:text-5xl">
+                  <h1 className="mt-3 text-4xl font-semibold text-ops-text-primary sm:text-5xl">
                     OpsNormal
                   </h1>
                   <p className="mt-4 max-w-3xl text-sm leading-7 text-ops-text-secondary sm:text-base">
@@ -263,9 +255,12 @@ function App() {
                     household, relationships, body, and rest. No account. No
                     cloud sync. No analytics layer.
                   </p>
+                  <div
+                    className="mt-5 h-px bg-ops-accent/25"
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
-              <div className="h-px bg-ops-border-soft" aria-hidden="true" />
               <ErrorBoundary
                 fallbackRender={() => (
                   <HeaderTelemetryFallback
@@ -307,6 +302,7 @@ function App() {
             role="alert"
             aria-atomic="true"
             titleId="database-upgrade-blocked-title"
+            intensity="inline"
           />
         ) : null}
         <BackupActionBanner prompt={backupActionPrompt} />
@@ -372,21 +368,20 @@ function App() {
           innerClassName="tactical-subpanel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
         >
           <footer>
-            <div className="border-t border-ops-panel-border-strong pt-6">
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
-                <div className="lg:max-w-2xl">
-                  <p className="ops-eyebrow font-semibold text-ops-text-primary">
-                    Boundary
-                  </p>
-                  <p className="mt-2">
-                    OpsNormal is a personal status tracking tool. It is not a
-                    medical device and does not diagnose, treat, cure, or
-                    prevent any disease or condition. It does not provide
-                    medical or psychological advice.
-                  </p>
-                </div>
-                <FooterProvenance />
+            <div className="grid gap-5">
+              <div className="max-w-3xl">
+                <p className="ops-eyebrow font-semibold text-ops-text-primary">
+                  Boundary
+                </p>
+                <p className="mt-2">
+                  OpsNormal is a personal status tracking tool. It is not a
+                  medical device and does not diagnose, treat, cure, or prevent
+                  any disease or condition. It does not provide medical or
+                  psychological advice.
+                </p>
               </div>
+              <div className="h-px bg-ops-border-soft" aria-hidden="true" />
+              <FooterProvenance />
             </div>
           </footer>
         </NotchedFrame>
