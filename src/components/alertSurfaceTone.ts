@@ -40,7 +40,7 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
     detailClassName: 'text-ops-text-secondary',
     subduedClassName: 'text-ops-text-muted',
     definitionClassName: 'text-ops-text-secondary',
-    actionClassName: 'ops-action-button-success',
+    actionClassName: 'ops-action-button-emerald',
   },
   attention: {
     outerClassName:
@@ -56,15 +56,15 @@ const tonePaletteByTone: Record<AlertSurfaceTone, AlertSurfaceTonePalette> = {
   },
   warning: {
     outerClassName:
-      'bg-[linear-gradient(180deg,rgba(251,146,60,0.34),rgba(255,255,255,0.04))]',
+      'bg-[linear-gradient(180deg,rgba(251,191,36,0.32),rgba(255,255,255,0.04))]',
     innerClassName:
-      'bg-[linear-gradient(180deg,rgba(249,115,22,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
-    titleClassName: 'text-[var(--ops-text-on-orange)]',
-    descriptionClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
-    detailClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
-    subduedClassName: 'text-[var(--ops-text-on-orange)] opacity-80',
-    definitionClassName: 'text-[var(--ops-text-on-orange)] opacity-90',
-    actionClassName: 'ops-action-button-orange',
+      'bg-[linear-gradient(180deg,rgba(245,158,11,0.16),rgba(255,255,255,0.02)_30%),var(--color-ops-surface-raised)]',
+    titleClassName: 'text-[var(--ops-text-on-amber)]',
+    descriptionClassName: 'text-[var(--ops-text-on-amber)] opacity-90',
+    detailClassName: 'text-[var(--ops-text-on-amber)] opacity-90',
+    subduedClassName: 'text-[var(--ops-text-on-amber)] opacity-80',
+    definitionClassName: 'text-[var(--ops-text-on-amber)] opacity-90',
+    actionClassName: 'ops-action-button-amber',
   },
   danger: {
     outerClassName:

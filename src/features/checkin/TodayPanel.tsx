@@ -3,7 +3,6 @@ import { useId, useMemo, useRef, useState } from 'react';
 import { AlertSurface } from '../../components/AlertSurface';
 import { DomainCard } from '../../components/DomainCard';
 import { SectionCard } from '../../components/SectionCard';
-import { SectorGlyphConstellation } from '../../components/SectorGlyphConstellation';
 import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
 import { useEntriesForDate } from '../../db/hooks';
 import { setDailyStatus } from '../../db/appDb';
@@ -51,10 +50,10 @@ function DayCompletionRollup({
   const remainingCount = Math.max(totalCount - markedCount, 0);
 
   return (
-    <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer tactical-subpanel-strong ops-rollup-spine grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+    <div className="ops-flat-panel-strong mb-4 grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-[8rem]">
         <p className="ops-eyebrow-mixed">Daily roll-up</p>
-        <p className="mt-2 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+        <p className="mt-2 text-3xl leading-none font-semibold text-ops-text-primary [font-variant-numeric:tabular-nums]">
           {markedCount}/{totalCount}
         </p>
       </div>
@@ -81,13 +80,13 @@ function DayCompletionRollup({
             <span
               key={sector.id}
               className={[
-                'clip-notched ops-notch-chip inline-flex h-4 w-7 items-center justify-center border',
+                'inline-flex h-5 w-5 items-center justify-center border',
                 getRollupPipClassName(statuses[index] ?? 'unmarked'),
               ].join(' ')}
               title={sector.label}
             >
               <span className="sr-only">{sector.label}</span>
-              <span className="text-[9px] leading-none text-ops-text-primary/80">
+              <span className="text-[9px] leading-none text-ops-text-primary/70">
                 <SectorGlyphMark sectorId={sector.id} />
               </span>
             </span>
@@ -218,21 +217,18 @@ export function TodayPanel({
       ) : null}
 
       {!hasEntriesForToday ? (
-        <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer tactical-subpanel-strong relative px-4 py-3">
-          <SectorGlyphConstellation />
-          <div className="relative z-10 max-w-2xl">
-            <p className="ops-eyebrow-mixed">Awaiting first mark</p>
-            <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
-              No sectors are marked for today. Set one state below and the daily
-              roll-up will start tracking live progress.
-            </p>
-          </div>
+        <div className="ops-flat-panel-strong mb-4 px-4 py-3">
+          <p className="ops-eyebrow-mixed">Awaiting first mark</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ops-text-secondary">
+            No sectors are marked for today. Set one state below and the daily
+            roll-up will start tracking live progress.
+          </p>
         </div>
       ) : null}
 
       <div
         id={directSelectHintId}
-        className="mb-4 clip-notched ops-notch-panel-outer tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary"
+        className="ops-flat-panel mb-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary"
       >
         Choose a state directly. Arrow keys move inside the control group.
         Unmarked means no status recorded for the day. Nominal and degraded are
@@ -246,7 +242,7 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5">
         {SECTORS.map((sector, index) => (
           <div key={sector.id}>
             <DomainCard

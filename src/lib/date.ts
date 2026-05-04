@@ -51,3 +51,9 @@ export function formatLongDate(dateKey: string): string {
     year: 'numeric',
   }).format(parseDateKey(dateKey));
 }
+
+export function formatWeekday(dateKey: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+  }).format(parseDateKey(dateKey));
+}

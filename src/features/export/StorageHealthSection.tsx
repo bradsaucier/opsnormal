@@ -1,4 +1,3 @@
-import { NotchedFrame } from '../../components/NotchedFrame';
 import { StorageHealthIndicator } from '../../components/StorageHealthIndicator';
 import type { StorageHealth } from '../../lib/storage';
 import type { AccordionSectionKey } from './exportPanelShared';
@@ -33,15 +32,12 @@ export function StorageHealthSection({
           onRequestStorageProtection={onRequestStorageProtection}
           isRequestingStorageProtection={isRequestingStorageProtection}
         />
-        <NotchedFrame
-          emphasis="quiet"
-          innerClassName="tactical-chip-panel tactical-chip-panel-neutral p-4 text-sm leading-6"
-        >
+        <div className="ops-flat-panel p-4 text-sm leading-6 text-ops-text-secondary">
           The browser automatically manages local storage. You can manually
           request exemption from automatic deletion, though browsers may deny
           this silently. Always rely on routine exports to secure your critical
           data.
-        </NotchedFrame>
+        </div>
       </div>
     </AccordionSection>
   );

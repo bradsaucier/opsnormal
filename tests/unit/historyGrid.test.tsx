@@ -310,7 +310,7 @@ describe('history helpers and grid behavior', () => {
 
     const selectedCellSurface = screen
       .getByText('Selected cell')
-      .closest('.tactical-subpanel-strong') as HTMLElement;
+      .closest('.ops-flat-panel-strong') as HTMLElement;
 
     expect(selectedCellSurface).toHaveClass('ops-sector-spine-nominal');
 
@@ -336,7 +336,7 @@ describe('history helpers and grid behavior', () => {
 
     const mobileDailyBriefSurface = screen
       .getByText('Daily brief')
-      .closest('.tactical-subpanel-strong') as HTMLElement;
+      .closest('.ops-flat-panel-strong') as HTMLElement;
 
     expect(mobileDailyBriefSurface).toHaveClass('ops-sector-spine-nominal');
   });

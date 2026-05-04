@@ -49,15 +49,15 @@ describe('AlertSurface', () => {
     expect(surface).not.toHaveAttribute('role');
   });
 
-  it('maps the warning tone to the orange action-button treatment', () => {
+  it('maps the warning tone to the amber action-button treatment', () => {
     expect(getAlertSurfaceActionToneClass('warning')).toContain(
-      'ops-action-button-orange',
+      'ops-action-button-amber',
     );
   });
 
   it('keeps success and neutral tones distinct in the shared action treatment', () => {
     expect(getAlertSurfaceActionToneClass('success')).toContain(
-      'ops-action-button-success',
+      'ops-action-button-emerald',
     );
     expect(getAlertSurfaceActionToneClass('neutral')).toContain(
       'ops-action-button-neutral',

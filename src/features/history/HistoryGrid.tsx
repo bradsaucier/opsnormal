@@ -1,5 +1,4 @@
 import { SectionCard } from '../../components/SectionCard';
-import { SectorGlyphConstellation } from '../../components/SectorGlyphConstellation';
 
 import { DesktopHistoryGrid } from './DesktopHistoryGrid';
 import type { HistoryGridProps } from './historyGridShared';
@@ -25,21 +24,18 @@ export function HistoryGrid(props: HistoryGridProps) {
       }
     >
       {!model.hasEntries ? (
-        <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong relative p-5 sm:p-6">
-            <SectorGlyphConstellation />
-            <div className="relative z-10 max-w-2xl">
-              <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
-                No history yet
-              </p>
-              <h3 className="mt-2 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
-                Today's check-ins will mirror here as you mark them.
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
-                The grid opens after the first saved sector so the page avoids a
-                wall of unmarked cells.
-              </p>
-            </div>
+        <div className="ops-flat-panel-strong p-5 sm:p-6">
+          <div className="max-w-2xl">
+            <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+              No history yet
+            </p>
+            <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
+              Today's check-ins will mirror here as you mark them.
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
+              The grid opens after the first saved sector so the page avoids a
+              wall of unmarked cells.
+            </p>
           </div>
         </div>
       ) : model.isDesktopHistory ? (
