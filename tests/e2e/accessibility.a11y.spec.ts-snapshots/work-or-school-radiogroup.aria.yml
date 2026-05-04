@@ -1,4 +1,4 @@
 - radiogroup "Work or School status":
-    - radio "Work or School NOMINAL" [checked]: OK
-    - radio "Work or School DEGRADED": DG
-    - radio "Work or School UNMARKED": UN
+    - radio "Work or School NOMINAL" [checked]: NOM
+    - radio "Work or School DEGRADED": DEG
+    - radio "Work or School UNMARKED": NONE
