@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 import { AlertSurface } from '../../components/AlertSurface';
-import { getAlertSurfaceActionToneClass } from '../../components/alertSurfaceTone';
 import {
   clearInstallBannerDismissal,
   hasDismissedInstallBanner,
@@ -45,7 +44,7 @@ export function InstallBanner({ compact = false }: InstallBannerProps) {
             <button
               type="button"
               onClick={() => void promptInstall()}
-              className={getAlertSurfaceActionToneClass('success')}
+              className="ops-action-button ops-action-button-sm ops-action-button-emerald"
             >
               Install now
             </button>
