@@ -28,7 +28,7 @@ export function ExportBackupSection({
     >
       <div className="space-y-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div className="panel-shadow clip-notched ops-notch-panel-outer tactical-subpanel p-4">
+          <div className="ops-flat-panel p-4">
             <p className="ops-eyebrow-mixed">Backup posture</p>
             <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
               {backupStatus}
@@ -42,7 +42,7 @@ export function ExportBackupSection({
             <button
               type="button"
               onClick={() => void onJsonExport()}
-              className={`${actionButtonClasses} ops-action-button-success-solid`}
+              className={`${actionButtonClasses} ops-action-button-emerald-solid`}
             >
               Export JSON
             </button>
@@ -56,7 +56,7 @@ export function ExportBackupSection({
           </div>
         </div>
 
-        <div className="panel-shadow clip-notched ops-notch-panel-outer tactical-subpanel-strong p-4 text-sm leading-6 text-ops-text-secondary">
+        <div className="ops-flat-panel-strong p-4 text-sm leading-6 text-ops-text-secondary">
           Export produces the recovery file. Run it routinely, especially in
           Safari on macOS and browser tabs on iPhone or iPad where
           browser-managed storage can disappear.
