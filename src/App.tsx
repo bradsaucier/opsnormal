@@ -225,7 +225,7 @@ function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-6 lg:gap-8"
+        className="app-shell mx-auto flex w-full max-w-[1280px] flex-col gap-6 2xl:max-w-[1440px] lg:gap-8"
       >
         <NotchedFrame
           emphasis="primary"
@@ -233,7 +233,7 @@ function App() {
           innerClassName="tactical-panel bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
         >
           <header>
-            <div className="grid gap-5 lg:gap-6">
+            <div className="grid gap-4 lg:gap-6">
               <div className="flex max-w-4xl gap-4">
                 <div
                   className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
@@ -255,18 +255,14 @@ function App() {
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="ops-tracking-display mt-4 text-4xl font-semibold text-ops-text-primary uppercase sm:mt-5 sm:text-5xl">
+                  <h1 className="ops-tracking-display mt-3 text-3xl font-semibold text-ops-text-primary uppercase sm:mt-4 sm:text-4xl lg:text-5xl">
                     OpsNormal
                   </h1>
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">
                     A local-only mirror for daily balance across work or school,
                     household, relationships, body, and rest. No account. No
                     cloud sync. No analytics layer.
                   </p>
-                  <div className="mt-5 space-y-1.5" aria-hidden="true">
-                    <span className="block h-px max-w-2xl bg-ops-border-soft" />
-                    <span className="clip-notched ops-notch-chip block h-1 w-12 bg-ops-accent/65 shadow-[0_0_14px_rgba(110,231,183,0.18)]" />
-                  </div>
                 </div>
               </div>
               <ErrorBoundary
@@ -288,31 +284,33 @@ function App() {
           </header>
         </NotchedFrame>
 
-        <InstallBanner compact={hasPriorityAlert} />
-        <PwaUpdateBanner
-          needRefresh={needRefresh}
-          offlineReady={offlineReady}
-          isApplyingUpdate={isApplyingUpdate}
-          updateStalled={updateStalled}
-          reloadRecoveryRequired={reloadRecoveryRequired}
-          externalUpdateInProgress={externalUpdateInProgress}
-          externalUpdateStalled={externalUpdateStalled}
-          onReload={handleApplyUpdate}
-          onDismiss={handleDismissBanner}
-          onReloadPage={handleReloadPage}
-          compact={hasPriorityAlert}
-        />
-        {databaseBlockedMessage ? (
-          <AlertSurface
-            tone="attention"
-            title="Database Upgrade Blocked"
-            description={databaseBlockedMessage}
-            role="alert"
-            aria-atomic="true"
-            titleId="database-upgrade-blocked-title"
+        <div className="flex flex-col gap-3">
+          <InstallBanner compact={hasPriorityAlert} />
+          <PwaUpdateBanner
+            needRefresh={needRefresh}
+            offlineReady={offlineReady}
+            isApplyingUpdate={isApplyingUpdate}
+            updateStalled={updateStalled}
+            reloadRecoveryRequired={reloadRecoveryRequired}
+            externalUpdateInProgress={externalUpdateInProgress}
+            externalUpdateStalled={externalUpdateStalled}
+            onReload={handleApplyUpdate}
+            onDismiss={handleDismissBanner}
+            onReloadPage={handleReloadPage}
+            compact={hasPriorityAlert}
           />
-        ) : null}
-        <BackupActionBanner prompt={backupActionPrompt} />
+          {databaseBlockedMessage ? (
+            <AlertSurface
+              tone="attention"
+              title="Database Upgrade Blocked"
+              description={databaseBlockedMessage}
+              role="alert"
+              aria-atomic="true"
+              titleId="database-upgrade-blocked-title"
+            />
+          ) : null}
+          <BackupActionBanner prompt={backupActionPrompt} />
+        </div>
 
         <ErrorBoundary
           resetKeys={[todayKey]}
@@ -375,21 +373,19 @@ function App() {
           innerClassName="tactical-subpanel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
         >
           <footer>
-            <div className="border-t border-ops-panel-border-strong pt-6">
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
-                <div className="lg:max-w-2xl">
-                  <p className="ops-eyebrow font-semibold text-ops-text-primary">
-                    Boundary
-                  </p>
-                  <p className="mt-2">
-                    OpsNormal is a personal status tracking tool. It is not a
-                    medical device and does not diagnose, treat, cure, or
-                    prevent any disease or condition. It does not provide
-                    medical or psychological advice.
-                  </p>
-                </div>
-                <FooterProvenance />
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
+              <div className="lg:max-w-2xl">
+                <p className="ops-eyebrow font-semibold text-ops-text-primary">
+                  Boundary
+                </p>
+                <p className="mt-2">
+                  OpsNormal is a personal status tracking tool. It is not a
+                  medical device and does not diagnose, treat, cure, or prevent
+                  any disease or condition. It does not provide medical or
+                  psychological advice.
+                </p>
               </div>
+              <FooterProvenance />
             </div>
           </footer>
         </NotchedFrame>
