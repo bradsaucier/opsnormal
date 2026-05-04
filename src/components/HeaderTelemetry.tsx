@@ -68,11 +68,11 @@ function TelemetryChip({
       <span className="ops-eyebrow text-[10px] font-semibold text-ops-text-muted">
         {label}
       </span>
-      <span className="mt-1.5 text-lg leading-none font-semibold tracking-[0.06em] uppercase [font-variant-numeric:tabular-nums] sm:text-xl">
+      <span className="mt-2 text-2xl leading-none font-semibold tracking-[0.04em] uppercase [font-variant-numeric:tabular-nums] sm:text-3xl">
         {value}
       </span>
       {detail ? (
-        <span className="mt-1.5 text-[10px] leading-4 tracking-[0.10em] text-ops-text-muted uppercase">
+        <span className="mt-2 text-[10px] leading-4 tracking-[0.10em] text-ops-text-muted uppercase">
           {detail}
         </span>
       ) : null}

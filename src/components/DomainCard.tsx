@@ -54,7 +54,7 @@ export function DomainCard({
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px'
-    : 'panel-shadow clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/16 focus-within:bg-ops-accent/20';
+    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
@@ -148,7 +148,7 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[13rem] flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left sm:p-5',
+          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[14rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[15rem]',
           spineClassName,
         ].join(' ')}
       >

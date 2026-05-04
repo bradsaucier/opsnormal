@@ -8,6 +8,9 @@ export function FooterProvenance() {
       className="ops-provenance flex flex-col gap-3 sm:w-full sm:max-w-sm sm:self-end"
       data-testid="footer-provenance"
     >
+      <p className="ops-eyebrow font-semibold text-ops-text-primary">
+        Provenance
+      </p>
       <dl className="ops-provenance-facts">
         <div>
           <dt>Build</dt>

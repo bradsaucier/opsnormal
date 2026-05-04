@@ -51,51 +51,47 @@ function DayCompletionRollup({
   const remainingCount = Math.max(totalCount - markedCount, 0);
 
   return (
-    <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer bg-ops-border-strong p-px">
-      <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong ops-rollup-spine grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
-        <div className="min-w-[8rem]">
-          <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
-            Daily roll-up
-          </p>
-          <p className="mt-2 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
-            {markedCount}/{totalCount}
-          </p>
-        </div>
-        <div className="text-sm leading-6 text-ops-text-secondary">
-          {isComplete
-            ? 'All five sectors are marked for today.'
-            : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
-        </div>
-        <div className="flex flex-wrap items-center gap-3 lg:justify-end">
-          <span
-            className={[
-              'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
-              isComplete ? 'ops-complete-badge' : '',
-              isComplete ? 'ops-status-nominal' : 'ops-status-unmarked',
-            ].join(' ')}
-          >
-            {isComplete ? 'Complete' : 'Open'}
-          </span>
-          <div
-            className="flex items-center gap-1.5"
-            aria-label="Today sector status pips"
-          >
-            {SECTORS.map((sector, index) => (
-              <span
-                key={sector.id}
-                className={[
-                  'clip-notched ops-notch-chip inline-flex h-4 w-7 items-center justify-center border',
-                  getRollupPipClassName(statuses[index] ?? 'unmarked'),
-                ].join(' ')}
-                title={sector.label}
-              >
-                <span className="sr-only">{sector.label}</span>
-                <span className="text-[9px] leading-none text-ops-text-primary/80">
-                  <SectorGlyphMark sectorId={sector.id} />
-                </span>
+    <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer tactical-subpanel-strong ops-rollup-spine grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+      <div className="min-w-[8rem]">
+        <p className="ops-eyebrow-mixed">Daily roll-up</p>
+        <p className="mt-2 text-3xl leading-none font-semibold tracking-[0.06em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+          {markedCount}/{totalCount}
+        </p>
+      </div>
+      <div className="text-sm leading-6 text-ops-text-secondary">
+        {isComplete
+          ? 'All five sectors are marked for today.'
+          : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
+      </div>
+      <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+        <span
+          className={[
+            'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
+            isComplete ? 'ops-complete-badge' : '',
+            isComplete ? 'ops-status-nominal' : 'ops-status-unmarked',
+          ].join(' ')}
+        >
+          {isComplete ? 'Complete' : 'Open'}
+        </span>
+        <div
+          className="flex items-center gap-1.5"
+          aria-label="Today sector status pips"
+        >
+          {SECTORS.map((sector, index) => (
+            <span
+              key={sector.id}
+              className={[
+                'clip-notched ops-notch-chip inline-flex h-4 w-7 items-center justify-center border',
+                getRollupPipClassName(statuses[index] ?? 'unmarked'),
+              ].join(' ')}
+              title={sector.label}
+            >
+              <span className="sr-only">{sector.label}</span>
+              <span className="text-[9px] leading-none text-ops-text-primary/80">
+                <SectorGlyphMark sectorId={sector.id} />
               </span>
-            ))}
-          </div>
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -222,31 +218,25 @@ export function TodayPanel({
       ) : null}
 
       {!hasEntriesForToday ? (
-        <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-          <div className="clip-notched ops-notch-panel-inner tactical-subpanel-strong relative px-4 py-3">
-            <SectorGlyphConstellation />
-            <div className="relative z-10 max-w-2xl">
-              <p className="text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
-                Awaiting first mark
-              </p>
-              <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
-                No sectors are marked for today. Set one state below and the
-                daily roll-up will start tracking live progress.
-              </p>
-            </div>
+        <div className="panel-shadow mb-4 clip-notched ops-notch-panel-outer tactical-subpanel-strong relative px-4 py-3">
+          <SectorGlyphConstellation />
+          <div className="relative z-10 max-w-2xl">
+            <p className="ops-eyebrow-mixed">Awaiting first mark</p>
+            <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
+              No sectors are marked for today. Set one state below and the daily
+              roll-up will start tracking live progress.
+            </p>
           </div>
         </div>
       ) : null}
 
-      <div className="mb-4 clip-notched ops-notch-panel-outer bg-ops-panel-border p-px">
-        <div
-          id={directSelectHintId}
-          className="clip-notched ops-notch-panel-inner tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary"
-        >
-          Choose a state directly. Arrow keys move inside the control group.
-          Unmarked means no status recorded for the day. Nominal and degraded
-          are deliberate check-ins, not automatic carry-forward.
-        </div>
+      <div
+        id={directSelectHintId}
+        className="mb-4 clip-notched ops-notch-panel-outer tactical-subpanel px-4 py-3 text-sm leading-6 text-ops-text-secondary"
+      >
+        Choose a state directly. Arrow keys move inside the control group.
+        Unmarked means no status recorded for the day. Nominal and degraded are
+        deliberate check-ins, not automatic carry-forward.
       </div>
 
       <DayCompletionRollup
@@ -256,7 +246,7 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:gap-5 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5">
         {SECTORS.map((sector, index) => (
           <div key={sector.id}>
             <DomainCard

@@ -109,7 +109,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest,woff2}'],
           globIgnores: [
             '**/boot-fallback-harness.html',
             '**/crash-fallback-harness.html',

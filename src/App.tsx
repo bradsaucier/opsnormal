@@ -236,9 +236,12 @@ function App() {
             <div className="grid gap-5 lg:gap-6">
               <div className="flex max-w-4xl gap-4">
                 <div
-                  className="hidden w-px shrink-0 self-stretch bg-ops-accent/45 sm:block"
+                  className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
                   aria-hidden="true"
-                />
+                >
+                  <span className="h-14 w-0.5 bg-ops-accent/60" />
+                  <span className="mt-2 h-full w-px flex-1 bg-ops-border-struct" />
+                </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <span
@@ -367,19 +370,21 @@ function App() {
           innerClassName="tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary"
         >
           <footer>
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="lg:max-w-2xl">
-                <p className="ops-eyebrow font-semibold text-ops-text-primary">
-                  Boundary
-                </p>
-                <p className="mt-2">
-                  OpsNormal is a personal status tracking tool. It is not a
-                  medical device and does not diagnose, treat, cure, or prevent
-                  any disease or condition. It does not provide medical or
-                  psychological advice.
-                </p>
+            <div className="border-t border-ops-border-soft pt-5">
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
+                <div className="lg:max-w-2xl">
+                  <p className="ops-eyebrow font-semibold text-ops-text-primary">
+                    Boundary
+                  </p>
+                  <p className="mt-2">
+                    OpsNormal is a personal status tracking tool. It is not a
+                    medical device and does not diagnose, treat, cure, or
+                    prevent any disease or condition. It does not provide
+                    medical or psychological advice.
+                  </p>
+                </div>
+                <FooterProvenance />
               </div>
-              <FooterProvenance />
             </div>
           </footer>
         </NotchedFrame>
