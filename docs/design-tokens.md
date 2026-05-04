@@ -29,7 +29,7 @@ The cockpit voice stays on `--font-mono`.
 
 Mono is reserved for:
 
-- product title and section headings
+- product title chrome where the brand needs cockpit weight
 - eyebrows, sector sigils, status labels, and action buttons
 - telemetry chips, provenance facts, and tabular grid values
 - radio chips and compact controls where state recognition matters
@@ -37,6 +37,7 @@ Mono is reserved for:
 Application rules:
 
 - Do not put descriptive paragraphs back on the mono stack.
+- Use `.ops-headline-h2` and `.ops-headline-h3` for readable section and card headings.
 - Do not remove mono from sigils, readiness status, telemetry, or controls.
 - Prefer `.ops-mono` or `.ops-eyebrow` when a component needs explicit tactical voice.
 
@@ -45,7 +46,7 @@ Application rules:
 OpsNormal uses a small tracking scale instead of one-off component values.
 
 - `--ops-tracking-display`: `0.10em` for the product title and large display values
-- `--ops-tracking-section`: `0.08em` for section and card headings
+- `--ops-tracking-section`: `0.04em` for legacy compact headings
 - `--ops-tracking-eyebrow`: `0.14em` for standard eyebrows and compact labels
 - `--ops-tracking-eyebrow-strong`: `0.18em` for high-level shell metadata
 - `--ops-tracking-action`: `0.14em` for clipped action buttons
@@ -53,6 +54,7 @@ OpsNormal uses a small tracking scale instead of one-off component values.
 
 Application rules:
 
+- Use `.ops-headline-h2` and `.ops-headline-h3` before adding heading-specific size or tracking utilities.
 - Use `.ops-tracking-display`, `.ops-tracking-section`, `.ops-eyebrow`, `.ops-eyebrow-strong`, or `.ops-tracking-table` before adding an arbitrary tracking value.
 - Action controls inherit tracking from `.ops-action-button`.
 - Do not escalate eyebrow tracking above the product name.
@@ -60,21 +62,21 @@ Application rules:
 ## Core surfaces
 
 - `--color-ops-base`: `#0a0f0d`
-- `--color-ops-surface-1`: `#151d1a`
-- `--color-ops-surface-2`: `#1c2521`
-- `--color-ops-surface-3`: `#24302a`
-- `--color-ops-surface-base`: `#101613`
-- `--color-ops-surface-raised`: `#18211d`
-- `--color-ops-surface-overlay`: `#1f2a25`
-- `--color-ops-surface-interactive`: `#28342e`
+- `--color-ops-surface-base`: `#0e1411`
+- `--color-ops-surface-1`: `#121814`
+- `--color-ops-surface-2`: `#1a221e`
+- `--color-ops-surface-3`: `#222b27`
+- `--color-ops-surface-raised`: `#1a221e`
+- `--color-ops-surface-overlay`: `#222b27`
+- `--color-ops-surface-interactive`: `#26342d`
 - `--color-ops-text-primary`: `#e6ece9`
 - `--color-ops-text-secondary`: `#b4bfba`
 - `--color-ops-text-muted`: `#8b9691`
-- `--color-ops-border-soft`: `#ffffff14`
-- `--color-ops-border-struct`: `#ffffff29`
-- `--color-ops-border-strong`: `#ffffff3a`
-- `--color-ops-panel-border`: `#ffffff1a`
-- `--color-ops-panel-border-strong`: `#ffffff24`
+- `--color-ops-border-soft`: `#ffffff12`
+- `--color-ops-border-struct`: `#ffffff26`
+- `--color-ops-border-strong`: `#ffffff38`
+- `--color-ops-panel-border`: `#ffffff12`
+- `--color-ops-panel-border-strong`: `#ffffff26`
 - `--color-ops-accent`: `#6ee7b7`
 - `--color-ops-accent-muted`: `#b7f7da`
 - `--color-ops-accent-border`: `#6ee7b724`
@@ -86,6 +88,22 @@ Application rules:
 - Prefer `surface-overlay` for nested decision zones, detail briefs, support strips, and subordinate notes.
 - Prefer `surface-base` for compact chips, secondary labels, and inset status containers.
 - Use panel border tokens instead of one-off `border-white/10` and `bg-black/20` combinations when the surface belongs to the notch-clipped chrome language.
+- Use the four-step surface ramp to create visible lift. Do not introduce intermediate dark greens for local component depth.
+
+## Hover and elevation scale
+
+- `--ops-hover-1-bg`: `rgba(255, 255, 255, 0.01)`
+- `--ops-hover-2-bg`: `rgba(255, 255, 255, 0.025)`
+- `--ops-elevation-1`: standard card elevation
+- `--ops-elevation-2`: active or hovered panel elevation
+- `--ops-motion-standard`: `160ms ease-out`
+- `--ops-motion-select`: `220ms cubic-bezier(0.2, 0.8, 0.2, 1)`
+
+Application rules:
+
+- Use hover 1 for quiet rows and hover 2 for interactive cards or grid cells.
+- Animate transform, opacity, color, background, border, and shadow only.
+- New motion must remain covered by the reduced-motion override.
 
 ## Shared chrome utilities
 
@@ -100,6 +118,9 @@ Inset support surfaces:
 
 - `.tactical-subpanel`
 - `.tactical-subpanel-strong`
+- `.ops-flat-panel`
+- `.ops-flat-panel-strong`
+- `.ops-inline-alert`
 
 Compact support surfaces:
 
@@ -114,7 +135,10 @@ Compact support surfaces:
 Application rules:
 
 - Use `tactical-panel` for major clipped shells that define the page rhythm.
-- Use `tactical-subpanel` for secondary decision zones and narrative guidance inside a section.
+- Reserve clipped panel notches for the app shell, first-level section cards, and key repeated controls.
+- Use `ops-flat-panel` for secondary decision zones and narrative guidance inside a section.
+- Use `ops-inline-alert` for non-critical banners that need tone without a full notched frame.
+- Use `tactical-subpanel` only when a nested control truly needs cockpit framing.
 - Use `tactical-subpanel-strong` when a detail brief or selected-state summary should read one step higher than surrounding support strips.
 - Use `tactical-chip-panel` for compact meta blocks, legends, and grouped facts that should feel inset rather than flat.
 - Keep these utilities inside the current cockpit language. They are not a license to add decorative glow, blur, or card-rounding.
@@ -229,7 +253,6 @@ Tone classes:
 - `.ops-action-button-emerald`
 - `.ops-action-button-emerald-solid`
 - `.ops-action-button-amber`
-- `.ops-action-button-orange`
 - `.ops-action-button-rose`
 - `.ops-action-button-red`
 
@@ -239,6 +262,8 @@ Guidance:
 - Default button notch is `--ops-notch-chip`.
 - Default size is 44px minimum height. Use `ops-action-button-sm` for compact alert actions and `ops-action-button-lg` for high-emphasis recovery actions.
 - Use semantic tone modifiers rather than ad hoc border and background values.
+- Use emerald for primary affirmative actions, amber for caution, and red or rose for destructive paths.
+- `success`, `success-solid`, `warning`, and `danger` are compatibility aliases. New JSX should use the canonical tone class names above.
 - Keep focus indication inside the clipped geometry with the shared inset focus treatment.
 - Avoid rounded button chrome inside primary tactical panels.
 
@@ -251,13 +276,14 @@ The tone map is intentionally six-part. `success` and `neutral` stay distinct so
 - `info`: sky outer gradient and sky raised inner gradient for update and system-notice surfaces
 - `success`: emerald accent outer gradient and emerald-raised inner gradient for install and positive-setup surfaces
 - `attention`: amber outer gradient and amber raised inner gradient for monitor states that need eyes-on without declaring active failure
-- `warning`: orange outer gradient and orange raised inner gradient for elevated recovery or backup risk
+- `warning`: amber outer gradient and amber raised inner gradient for elevated recovery or backup risk
 - `danger`: red outer gradient and red raised inner gradient for destructive or hard-stop alert states
 - `neutral`: structural outer border and neutral raised inner gradient for steady-state support cards
 
 Application rules:
 
-- Keep alert surfaces at panel notch scale through `NotchedFrame`.
+- Use standard alert surfaces at panel notch scale through `NotchedFrame`.
+- Use inline alert intensity when a non-critical banner needs tone without another clipped frame.
 - Use the shared alert heading tracking value of `0.16em`.
 - Preserve consumer-specific `role`, `aria-live`, `aria-atomic`, `aria-labelledby`, and `data-testid` wiring when composing the primitive.
 - Prefer the alert tone's mapped action-button variant for the primary action in that surface.
@@ -271,30 +297,31 @@ Do not use them as general decorative accents.
 Nominal:
 
 - `--ops-status-nominal-border`: `rgba(110, 231, 183, 0.56)`
-- `--ops-status-nominal-bg`: `rgba(110, 231, 183, 0.30)`
+- `--ops-status-nominal-bg`: `rgba(110, 231, 183, 0.34)`
 - `--ops-status-nominal-text`: `#c9fae4`
 
 Degraded:
 
-- `--ops-status-degraded-border`: `rgba(245, 158, 11, 0.78)`
-- `--ops-status-degraded-bg`: `rgba(245, 158, 11, 0.28)`
-- `--ops-status-degraded-text`: `#fde7b0`
+- `--ops-status-degraded-border`: `rgba(245, 158, 11, 0.72)`
+- `--ops-status-degraded-bg`: `rgba(245, 158, 11, 0.26)`
+- `--ops-status-degraded-text`: `#fbd38d`
 
 Unmarked:
 
 - `--ops-status-unmarked-border`: `rgba(255, 255, 255, 0.16)`
-- `--ops-status-unmarked-bg`: `rgba(36, 48, 42, 0.72)`
+- `--ops-status-unmarked-bg`: `rgba(255, 255, 255, 0.04)`
 - `--ops-status-unmarked-text`: `#96a39d`
 
 ## Provenance lane
 
-The footer carries a Provenance lane as a sibling to the Boundary disclaimer.
+The footer carries Boundary and Provenance in one column with a hairline divider.
 It is intentionally muted and secondary. It surfaces build version, license,
 and a compact source link.
 
 Application rules:
 
 - Provenance content stays inside the existing footer `tactical-subpanel`.
+- Keep Boundary and Provenance in one vertical rhythm.
 - Use `.ops-provenance-facts` for the build and license definition list.
 - Use `.ops-action-button .ops-action-button-subtle .ops-provenance-source`
   for the source link. The local `.ops-provenance-source` override drops the
