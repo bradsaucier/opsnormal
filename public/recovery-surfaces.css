@@ -115,11 +115,11 @@
 }
 
 .ops-boot-fallback-button {
-  color: #fdba74;
+  color: #fef3c7;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
-    rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.4);
+    rgba(245, 158, 11, 0.12);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .ops-crash-fallback-detail-card,
@@ -194,11 +194,11 @@
 }
 
 .ops-crash-fallback-button-reload {
-  color: #fdba74;
+  color: #fef3c7;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
-    rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.4);
+    rgba(245, 158, 11, 0.12);
+  border-color: rgba(251, 191, 36, 0.4);
 }
 
 .ops-crash-fallback-danger-zone {
