@@ -19,8 +19,7 @@ type TelemetrySparkState = 'nominal' | 'degraded' | 'unmarked';
 const toneClassNameByTone: Record<TelemetryTone, string> = {
   default: 'text-ops-text-primary',
   accent: 'text-ops-accent-muted',
-  attention:
-    'bg-[var(--ops-status-degraded-bg)] text-[var(--ops-status-degraded-text)]',
+  attention: 'ops-telemetry-attention',
   subtle: 'text-ops-text-secondary',
 };
 
