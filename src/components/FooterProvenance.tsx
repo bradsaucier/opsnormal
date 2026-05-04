@@ -5,7 +5,7 @@ const REPO_URL = 'https://github.com/bradsaucier/opsnormal';
 export function FooterProvenance() {
   return (
     <div
-      className="ops-provenance flex flex-col gap-3 sm:w-full lg:items-start"
+      className="ops-provenance grid gap-3 sm:w-full sm:self-end lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-8"
       data-testid="footer-provenance"
     >
       <p className="ops-eyebrow-strong font-semibold text-ops-text-primary">
@@ -23,19 +23,17 @@ export function FooterProvenance() {
           <dd>MIT</dd>
         </div>
       </dl>
-      <div className="w-full border-t border-ops-border-soft pt-4 sm:max-w-xs">
-        <a
-          className="ops-action-button ops-action-button-subtle ops-provenance-source"
-          href={REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View OpsNormal source on GitHub. Opens in a new tab."
-          data-testid="footer-provenance-source"
-        >
-          <GitHubMark />
-          <span>Source</span>
-        </a>
-      </div>
+      <a
+        className="ops-action-button ops-action-button-subtle ops-provenance-source"
+        href={REPO_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View OpsNormal source on GitHub. Opens in a new tab."
+        data-testid="footer-provenance-source"
+      >
+        <GitHubMark />
+        <span>Source</span>
+      </a>
     </div>
   );
 }
