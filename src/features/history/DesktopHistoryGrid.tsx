@@ -95,7 +95,10 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                     degraded, and UN for unmarked.
                   </caption>
                   <thead role="rowgroup">
-                    <tr role="row">
+                    <tr
+                      role="row"
+                      className="shadow-[0_1px_0_var(--color-ops-border-struct)]"
+                    >
                       <th
                         role="columnheader"
                         className="sticky top-0 left-0 z-30 border-r border-b border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold tracking-[0.16em] text-ops-text-secondary uppercase"
