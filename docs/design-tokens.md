@@ -263,7 +263,7 @@ Guidance:
 - Default size is 44px minimum height. Use `ops-action-button-sm` for compact alert actions and `ops-action-button-lg` for high-emphasis recovery actions.
 - Use semantic tone modifiers rather than ad hoc border and background values.
 - Use emerald for primary affirmative actions, amber for caution, and red or rose for destructive paths.
-- `success`, `success-solid`, `warning`, and `danger` are compatibility aliases. New JSX should use the canonical tone class names above.
+- Legacy action tone aliases were removed. JSX should use the canonical tone class names above.
 - Keep focus indication inside the clipped geometry with the shared inset focus treatment.
 - Avoid rounded button chrome inside primary tactical panels.
 
