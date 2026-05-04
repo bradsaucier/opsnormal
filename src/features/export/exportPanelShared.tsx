@@ -45,10 +45,10 @@ export function AccordionSection({
           aria-controls={panelId}
           onClick={() => onToggle(sectionKey)}
           className={[
-            'ops-focus-ring-inset flex min-h-[64px] w-full items-start justify-between gap-4 border-l-2 px-4 py-4 text-left transition-colors hover:border-ops-accent/30 hover:bg-white/[0.05]',
+            'ops-export-accordion-trigger ops-focus-ring-inset flex min-h-[60px] w-full items-start justify-between gap-4 px-4 py-4 text-left transition-[background-color,border-color,box-shadow,transform]',
             isOpen
-              ? 'border-ops-accent/40 bg-white/[0.025]'
-              : 'border-transparent',
+              ? 'ops-export-accordion-trigger-open bg-white/[0.015]'
+              : 'ops-export-accordion-trigger-collapsed',
           ].join(' ')}
         >
           <span>
@@ -61,11 +61,11 @@ export function AccordionSection({
           </span>
           <span
             aria-hidden="true"
-            className={`mt-1 inline-flex h-7 w-7 items-center justify-center text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
+            className={`mt-1 inline-flex h-6 w-6 items-center justify-center text-ops-accent transition-transform ${isOpen ? 'rotate-90' : ''}`}
           >
             <svg
               viewBox="0 0 12 12"
-              className="h-3.5 w-3.5"
+              className="h-3 w-3"
               fill="none"
               stroke="currentColor"
               strokeLinecap="square"
