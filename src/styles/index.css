@@ -180,11 +180,6 @@ body {
         transparent 0 31px,
         rgba(255, 255, 255, 0.012) 31px 32px
       ),
-      radial-gradient(
-        circle at 50% 80px,
-        rgba(110, 231, 183, 0.05),
-        transparent 34%
-      ),
       linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%),
       var(--color-ops-base);
   }
@@ -288,6 +283,16 @@ h3,
   letter-spacing: var(--ops-tracking-display);
 }
 
+.ops-display-lockup-title {
+  letter-spacing: var(--ops-tracking-section);
+}
+
+@media (min-width: 640px) {
+  .ops-display-lockup-title {
+    letter-spacing: var(--ops-tracking-display);
+  }
+}
+
 .ops-tracking-section {
   letter-spacing: var(--ops-tracking-section);
 }
@@ -345,21 +350,21 @@ h3,
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) top
       left / 8px 1px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) top
       left / 1px 8px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) top
       right / 8px 1px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) top
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) top
       right / 1px 8px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) bottom
       left / 8px 1px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) bottom
       left / 1px 8px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) bottom
       right / 8px 1px no-repeat,
-    linear-gradient(rgba(110, 231, 183, 0.16), rgba(110, 231, 183, 0.16)) bottom
+    linear-gradient(rgba(110, 231, 183, 0.1), rgba(110, 231, 183, 0.1)) bottom
       right / 1px 8px no-repeat;
 }
 
@@ -1065,8 +1070,26 @@ h3,
   transition: background-color 120ms ease;
 }
 
-.ops-history-row:hover {
+.ops-history-row:nth-child(even) {
   background: var(--ops-hover-1-bg);
+}
+
+.ops-history-row-selected {
+  background: var(--ops-hover-2-bg);
+}
+
+.ops-history-row:hover {
+  background: var(--ops-hover-2-bg);
+}
+
+.ops-history-mobile-row-even {
+  background: var(--ops-hover-1-bg);
+}
+
+.ops-history-mobile-sector-label.ops-history-mobile-row-even {
+  background:
+    linear-gradient(var(--ops-hover-1-bg), var(--ops-hover-1-bg)),
+    var(--color-ops-surface-2);
 }
 
 .ops-history-cell {
@@ -1281,34 +1304,6 @@ h3,
   --ops-button-text: #e0f2fe;
 }
 
-.ops-action-button-success {
-  --ops-button-border: rgba(110, 231, 183, 0.4);
-  --ops-button-bg: rgba(16, 185, 129, 0.16);
-  --ops-button-bg-hover: rgba(16, 185, 129, 0.24);
-  --ops-button-text: #ecfdf5;
-}
-
-.ops-action-button-success-solid {
-  --ops-button-border: rgba(110, 231, 183, 0.45);
-  --ops-button-bg: rgba(16, 185, 129, 0.85);
-  --ops-button-bg-hover: rgba(16, 185, 129, 0.94);
-  --ops-button-text: #ffffff;
-}
-
-.ops-action-button-warning {
-  --ops-button-border: rgba(251, 191, 36, 0.36);
-  --ops-button-bg: rgba(245, 158, 11, 0.14);
-  --ops-button-bg-hover: rgba(245, 158, 11, 0.22);
-  --ops-button-text: #fef3c7;
-}
-
-.ops-action-button-danger {
-  --ops-button-border: rgba(248, 113, 113, 0.38);
-  --ops-button-bg: rgba(239, 68, 68, 0.14);
-  --ops-button-bg-hover: rgba(239, 68, 68, 0.24);
-  --ops-button-text: #fee2e2;
-}
-
 .ops-action-button-neutral {
   --ops-button-border: rgba(255, 255, 255, 0.16);
   --ops-button-bg: rgba(255, 255, 255, 0.05);
@@ -1337,7 +1332,6 @@ h3,
   --ops-button-text: #ffffff;
 }
 
-.ops-action-button-success-solid:focus-visible,
 .ops-action-button-emerald-solid:focus-visible {
   box-shadow:
     inset 0 0 0 1px var(--ops-focus-ring-solid-edge),
