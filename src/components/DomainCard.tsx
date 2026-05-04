@@ -13,7 +13,7 @@ interface DomainCardProps {
   onSelect: (sectorId: Sector['id'], status: UiStatus) => Promise<void>;
 }
 
-const STATUS_OPTIONS: UiStatus[] = ['unmarked', 'nominal', 'degraded'];
+const STATUS_OPTIONS: UiStatus[] = ['nominal', 'degraded', 'unmarked'];
 const RADIO_CONTROL_KEYS = new Set([
   ' ',
   'Enter',
@@ -178,9 +178,10 @@ export function DomainCard({
         </div>
 
         <div className="mt-6">
-          <div className="ops-sector-caption border-t border-ops-border-soft pt-3">
-            <span>{busy ? 'SAVING' : 'STATE'}</span>
-          </div>
+          <div
+            className="ops-sector-caption border-t border-ops-border-soft pt-3"
+            aria-hidden="true"
+          />
 
           {busy ? (
             <span id={busyHintId} className="sr-only">

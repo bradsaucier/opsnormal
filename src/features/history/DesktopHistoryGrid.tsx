@@ -258,7 +258,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
         >
           <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
             <div
-              className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-5 ${getStatusSpineClassName(selectedStatus)}`}
+              className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong ops-flat-panel-strong p-5 ${getStatusSpineClassName(selectedStatus)}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>

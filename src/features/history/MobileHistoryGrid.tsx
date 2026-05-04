@@ -340,7 +340,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         aria-live="polite"
       >
         <div
-          className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
+          className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong ops-flat-panel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
