@@ -18,6 +18,7 @@ export function BackupActionBanner({ prompt }: BackupActionBannerProps) {
       description={prompt.detail}
       role="alert"
       titleId="backup-action-banner-title"
+      intensity="inline"
       actions={
         <a
           href="#backup-and-recovery"
