@@ -60,19 +60,19 @@ function TelemetryChip({
   return (
     <div
       className={[
-        'ops-telemetry-chip flex min-h-[var(--ops-chip-min-h-lg)] flex-col justify-between px-3 py-3 text-left lg:px-4',
+        'ops-telemetry-chip flex min-h-[var(--ops-chip-min-h-lg)] flex-col justify-between px-3 py-3.5 text-left lg:px-4',
         isShimmering ? 'ops-telemetry-chip-shimmer' : '',
         toneClassNameByTone[tone],
       ].join(' ')}
     >
-      <span className="ops-eyebrow text-[10px] font-semibold text-ops-text-muted">
+      <span className="ops-eyebrow text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted">
         {label}
       </span>
       <span className="mt-2 text-2xl leading-none font-semibold tracking-[0.04em] uppercase [font-variant-numeric:tabular-nums] sm:text-3xl">
         {value}
       </span>
       {detail ? (
-        <span className="mt-2 text-[10px] leading-4 tracking-[0.10em] text-ops-text-muted uppercase">
+        <span className="mt-2 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
           {detail}
         </span>
       ) : null}
@@ -84,7 +84,7 @@ function TelemetryHorizon({ children }: { children: ReactNode }) {
   return (
     <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
       <div className="clip-notched ops-notch-panel-inner tactical-subpanel bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(110,231,183,0.035)_32%,rgba(255,255,255,0)_54%),var(--color-ops-surface-overlay)]">
-        <div className="grid lg:grid-cols-[11rem_minmax(0,1fr)]">
+        <div className="grid lg:grid-cols-[10rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)]">
           <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
             <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
               Status horizon
