@@ -357,7 +357,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 {selectedDaySummary}
               </p>
             </div>
-            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.12em] text-ops-text-secondary">
+            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.12em] text-ops-text-secondary sm:hidden">
               {visibleWeekIndex + 1} of {weekGroups.length} week groups
             </div>
           </div>
