@@ -239,7 +239,8 @@ function App() {
                   className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
                   aria-hidden="true"
                 >
-                  <span className="h-14 w-0.5 bg-ops-accent/60" />
+                  <span className="h-16 w-0.5 bg-ops-accent/75 shadow-[0_0_16px_rgba(110,231,183,0.22)]" />
+                  <span className="mt-2 h-8 w-px bg-ops-accent-border" />
                   <span className="mt-2 h-full w-px flex-1 bg-ops-border-struct" />
                 </div>
                 <div className="min-w-0">
@@ -264,6 +265,7 @@ function App() {
                   </p>
                 </div>
               </div>
+              <div className="h-px bg-ops-border-soft" aria-hidden="true" />
               <ErrorBoundary
                 fallbackRender={() => (
                   <HeaderTelemetryFallback
@@ -367,10 +369,10 @@ function App() {
         <NotchedFrame
           emphasis="quiet"
           notch="shell"
-          innerClassName="tactical-subpanel px-4 py-4 text-sm leading-6 text-ops-text-secondary"
+          innerClassName="tactical-subpanel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
         >
           <footer>
-            <div className="border-t border-ops-border-soft pt-5">
+            <div className="border-t border-ops-panel-border-strong pt-6">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
                 <div className="lg:max-w-2xl">
                   <p className="ops-eyebrow font-semibold text-ops-text-primary">
