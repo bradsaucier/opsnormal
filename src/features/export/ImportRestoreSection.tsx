@@ -494,7 +494,7 @@ export function ImportRestoreSection({
                                   !replaceReady ||
                                   importBusy
                                 }
-                                className={`${actionButtonClasses} ${replaceConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-orange'}`}
+                                className={`${actionButtonClasses} ${replaceConfirmState === 'armed' ? 'ops-action-button-red' : 'ops-action-button-amber'}`}
                               >
                                 {importBusy
                                   ? 'Writing Import'
