@@ -148,7 +148,7 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[14rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[15rem]',
+          'clip-notched ops-notch-panel-inner tactical-panel flex min-h-[15rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[16rem]',
           spineClassName,
         ].join(' ')}
       >
@@ -168,16 +168,16 @@ export function DomainCard({
               />
               <span>{sector.shortLabel}</span>
             </span>
-            <h3 className="mt-1.5 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
+            <h3 className="mt-2 text-lg font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
               {sector.label}
             </h3>
-            <p className="mt-2.5 text-sm leading-6 text-ops-text-secondary">
+            <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
               {sector.description}
             </p>
           </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <div className="ops-sector-caption border-t border-ops-border-soft pt-3">
             <span>{busy ? 'SAVING' : 'STATE'}</span>
           </div>
