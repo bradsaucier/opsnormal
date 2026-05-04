@@ -245,9 +245,18 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-6 xl:grid-cols-5 xl:gap-5">
         {SECTORS.map((sector, index) => (
-          <div key={sector.id} className="h-full">
+          <div
+            key={sector.id}
+            className={[
+              'h-full md:col-span-2 xl:col-span-1',
+              index === SECTORS.length - 1
+                ? 'sm:col-span-2 md:col-span-3 xl:col-span-1'
+                : '',
+              index === SECTORS.length - 2 ? 'md:col-span-3 xl:col-span-1' : '',
+            ].join(' ')}
+          >
             <DomainCard
               sector={sector}
               sectorSigil={`S${index + 1}`}

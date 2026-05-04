@@ -234,15 +234,7 @@ function App() {
         >
           <header>
             <div className="grid gap-4 lg:gap-6">
-              <div className="flex max-w-4xl gap-4">
-                <div
-                  className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
-                  aria-hidden="true"
-                >
-                  <span className="h-16 w-0.5 bg-ops-accent/75 shadow-[0_0_16px_rgba(110,231,183,0.22)]" />
-                  <span className="mt-2 h-8 w-px bg-ops-accent-border" />
-                  <span className="mt-2 h-full w-px flex-1 bg-ops-border-struct" />
-                </div>
+              <div className="flex max-w-4xl">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <span
@@ -255,7 +247,7 @@ function App() {
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="ops-tracking-display mt-3 text-3xl font-semibold text-ops-text-primary uppercase sm:mt-4 sm:text-4xl lg:text-5xl">
+                  <h1 className="ops-display-lockup-title mt-3 text-3xl font-semibold text-ops-text-primary uppercase sm:mt-4 sm:text-4xl lg:text-5xl">
                     OpsNormal
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">

@@ -118,12 +118,12 @@ function TelemetryChip({
         toneClassNameByTone[tone],
       ].join(' ')}
     >
-      <span className="ops-eyebrow text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted">
+      <span className="ops-eyebrow text-[10px] font-semibold text-ops-text-muted">
         {label}
       </span>
       <span
         className={[
-          'mt-2 leading-none font-semibold tracking-[0.04em] uppercase [font-variant-numeric:tabular-nums]',
+          'ops-tracking-table mt-2 leading-none font-semibold uppercase [font-variant-numeric:tabular-nums]',
           isPrimary ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl',
         ].join(' ')}
       >
@@ -131,7 +131,7 @@ function TelemetryChip({
       </span>
       {sparkline ? <TelemetrySparkline states={sparkline} /> : null}
       {detail ? (
-        <span className="mt-2 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
+        <span className="ops-eyebrow mt-2 text-[10px] leading-4 text-ops-text-muted">
           {detail}
         </span>
       ) : null}
@@ -148,7 +148,7 @@ function TelemetryHorizon({ children }: { children: ReactNode }) {
             <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
               Status horizon
             </p>
-            <p className="mt-1 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
+            <p className="ops-eyebrow mt-1 text-[10px] leading-4 text-ops-text-muted">
               30-day local picture
             </p>
           </div>

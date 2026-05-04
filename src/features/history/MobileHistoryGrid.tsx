@@ -267,11 +267,16 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       );
                     })}
 
-                    {SECTORS.map((sector) => {
+                    {SECTORS.map((sector, sectorIndex) => {
+                      const isAlternateRow = sectorIndex % 2 === 1;
+
                       return [
                         <div
                           key={`${sector.id}:label`}
-                          className="sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-primary"
+                          className={[
+                            'ops-history-mobile-sector-label sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-primary',
+                            isAlternateRow ? 'ops-history-mobile-row-even' : '',
+                          ].join(' ')}
                         >
                           <span
                             className="text-ops-text-muted"
@@ -295,15 +300,24 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             <div
                               key={`${sector.id}:${dateKey}`}
                               className={[
-                                'ops-grid-cell min-h-10 transition [font-variant-numeric:tabular-nums]',
+                                'flex min-h-10 items-center px-0.5 py-1',
                                 isSelectedDay
                                   ? 'outline outline-1 -outline-offset-1 outline-[var(--ops-focus-ring)]'
                                   : '',
-                                getCellClassName(status),
+                                isAlternateRow
+                                  ? 'ops-history-mobile-row-even'
+                                  : '',
                               ].join(' ')}
                               title={cellLabel}
                             >
-                              {getStatusCellText(status)}
+                              <div
+                                className={[
+                                  'ops-grid-cell transition [font-variant-numeric:tabular-nums]',
+                                  getCellClassName(status),
+                                ].join(' ')}
+                              >
+                                {getStatusCellText(status)}
+                              </div>
                             </div>
                           );
                         }),

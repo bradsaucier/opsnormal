@@ -182,12 +182,7 @@ export function DomainCard({
           </div>
         </div>
 
-        <div className="mt-5">
-          <div
-            className="ops-sector-caption border-t border-ops-border-soft pt-3"
-            aria-hidden="true"
-          />
-
+        <div className="mt-5 border-t border-ops-border-soft pt-4">
           {busy ? (
             <span id={busyHintId} className="sr-only">
               Saving local write. Stand by.
@@ -198,7 +193,7 @@ export function DomainCard({
             role="radiogroup"
             aria-label={`${sector.label} status`}
             aria-describedby={describedBy}
-            className="mt-3 grid grid-cols-3 gap-2"
+            className="grid grid-cols-3 gap-2"
           >
             {STATUS_OPTIONS.map((option, optionIndex) => {
               const content = getStatusContent(option);

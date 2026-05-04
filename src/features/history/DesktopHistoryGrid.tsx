@@ -150,7 +150,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                           role="row"
                           className={[
                             'ops-history-row',
-                            isSelectedRow ? 'bg-white/[0.035]' : '',
+                            isSelectedRow ? 'ops-history-row-selected' : '',
                           ].join(' ')}
                         >
                           <th
