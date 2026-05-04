@@ -16,6 +16,11 @@ export function SectionCard({
   emphasis = 'standard',
   children,
 }: SectionCardProps) {
+  const eyebrowClassName =
+    emphasis === 'primary'
+      ? 'ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted'
+      : 'ops-eyebrow ops-mono text-xs font-semibold text-ops-text-muted';
+
   return (
     <div className="panel-shadow">
       <div
@@ -24,12 +29,8 @@ export function SectionCard({
         <section className="tactical-panel clip-notched ops-notch-panel-inner ops-section-surface p-6 sm:p-7 lg:p-8">
           <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
-              {eyebrow ? (
-                <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
-                  {eyebrow}
-                </p>
-              ) : null}
-              <h2 className="ops-tracking-section mt-1 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
+              {eyebrow ? <p className={eyebrowClassName}>{eyebrow}</p> : null}
+              <h2 className="ops-tracking-section mt-1 text-2xl font-semibold text-ops-text-primary uppercase sm:text-2xl lg:text-3xl">
                 {title}
               </h2>
             </div>
