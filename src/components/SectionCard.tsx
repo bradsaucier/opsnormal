@@ -35,8 +35,10 @@ export function SectionCard({
               </h2>
             </div>
             {meta ? (
-              <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-3 text-sm text-ops-text-secondary sm:min-w-[14rem] sm:text-right">
-                {meta}
+              <div className="lg:flex lg:self-stretch lg:border-l lg:border-ops-border-soft lg:pl-6">
+                <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-3 text-sm text-ops-text-secondary sm:min-w-[14rem] sm:text-right lg:flex lg:items-center lg:justify-end">
+                  {meta}
+                </div>
               </div>
             ) : null}
           </div>
