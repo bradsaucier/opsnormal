@@ -3,6 +3,8 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useEntriesForDateRange } from '../db/hooks';
 import { computeCheckInStreak, computeCompletionState } from '../lib/history';
 import type { StorageHealth } from '../lib/storage';
+import type { DailyEntry } from '../types';
+import { SECTORS } from '../types';
 
 interface HeaderTelemetryProps {
   dateKeys: string[];
@@ -12,6 +14,7 @@ interface HeaderTelemetryProps {
 }
 
 type TelemetryTone = 'default' | 'accent' | 'attention' | 'subtle';
+type TelemetrySparkState = 'nominal' | 'degraded' | 'unmarked';
 
 const toneClassNameByTone: Record<TelemetryTone, string> = {
   default: 'text-ops-text-primary',
@@ -44,16 +47,67 @@ function formatLastBackupAge(lastBackupAt: string | null) {
   return `${elapsedDays}D ago`;
 }
 
+function buildTelemetrySparkline(
+  entries: DailyEntry[],
+  dateKeys: string[],
+): TelemetrySparkState[] {
+  const statusesByDate = new Map<string, Array<DailyEntry['status']>>();
+
+  for (const entry of entries) {
+    const statuses = statusesByDate.get(entry.date) ?? [];
+    statuses.push(entry.status);
+    statusesByDate.set(entry.date, statuses);
+  }
+
+  return dateKeys.map((dateKey) => {
+    const statuses = statusesByDate.get(dateKey);
+
+    if (!statuses?.length) {
+      return 'unmarked';
+    }
+
+    if (
+      statuses.length < SECTORS.length ||
+      statuses.some((status) => status === 'degraded')
+    ) {
+      return 'degraded';
+    }
+
+    return 'nominal';
+  });
+}
+
+function TelemetrySparkline({ states }: { states: TelemetrySparkState[] }) {
+  if (!states.length) {
+    return null;
+  }
+
+  return (
+    <div className="ops-telemetry-spark mt-3" aria-hidden="true">
+      {states.map((state, index) => (
+        <span
+          key={`${state}-${index}`}
+          className={`ops-telemetry-spark-segment ops-telemetry-spark-${state}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 function TelemetryChip({
   label,
   value,
   detail,
   isShimmering = false,
+  isPrimary = false,
+  sparkline,
   tone = 'default',
 }: {
   detail?: string;
   isShimmering?: boolean;
+  isPrimary?: boolean;
   label: string;
+  sparkline?: TelemetrySparkState[];
   tone?: TelemetryTone;
   value: string;
 }) {
@@ -65,18 +119,18 @@ function TelemetryChip({
         toneClassNameByTone[tone],
       ].join(' ')}
     >
-      <span className="ops-eyebrow flex items-center gap-2 text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted">
-        {tone === 'attention' ? (
-          <span
-            className="h-1.5 w-1.5 rounded-full bg-[var(--ops-status-degraded-border)]"
-            aria-hidden="true"
-          />
-        ) : null}
-        <span>{label}</span>
+      <span className="ops-eyebrow text-[10px] font-semibold tracking-[0.14em] text-ops-text-muted">
+        {label}
       </span>
-      <span className="mt-2 text-2xl leading-none font-semibold tracking-[0.02em] [font-variant-numeric:tabular-nums] sm:text-3xl">
+      <span
+        className={[
+          'mt-2 leading-none font-semibold tracking-[0.04em] uppercase [font-variant-numeric:tabular-nums]',
+          isPrimary ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl',
+        ].join(' ')}
+      >
         {value}
       </span>
+      {sparkline ? <TelemetrySparkline states={sparkline} /> : null}
       {detail ? (
         <span className="mt-2 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
           {detail}
@@ -88,14 +142,21 @@ function TelemetryChip({
 
 function TelemetryHorizon({ children }: { children: ReactNode }) {
   return (
-    <div className="ops-flat-panel">
-      <div className="border-b border-ops-border-soft px-3 py-2 lg:px-4">
-        <p className="ops-eyebrow text-[10px] font-semibold text-ops-text-muted">
-          Status horizon - 30-day local picture
-        </p>
-      </div>
-      <div className="ops-telemetry-grid grid grid-cols-2 lg:grid-cols-4">
-        {children}
+    <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
+      <div className="clip-notched ops-notch-panel-inner tactical-subpanel bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(110,231,183,0.035)_32%,rgba(255,255,255,0)_54%),var(--color-ops-surface-overlay)]">
+        <div className="grid lg:grid-cols-[10rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)]">
+          <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
+            <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
+              Status horizon
+            </p>
+            <p className="mt-1 text-[10px] leading-4 tracking-[0.12em] text-ops-text-muted uppercase">
+              30-day local picture
+            </p>
+          </div>
+          <div className="ops-telemetry-grid grid grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -117,6 +178,10 @@ export function HeaderTelemetry({
   const streak = useMemo(
     () => computeCheckInStreak(entries, todayKey),
     [entries, todayKey],
+  );
+  const streakSparkline = useMemo(
+    () => buildTelemetrySparkline(entries, dateKeys),
+    [dateKeys, entries],
   );
   const lastBackupLabel = formatLastBackupAge(lastBackupAt);
   const previousStreakRef = useRef(streak);
@@ -158,6 +223,8 @@ export function HeaderTelemetry({
         value={`${streak}D`}
         tone="accent"
         isShimmering={isStreakShimmering}
+        isPrimary
+        sparkline={streakSparkline}
       />
       <TelemetryChip
         label="Today"
@@ -185,7 +252,13 @@ export function HeaderTelemetryFallback({
 }: Pick<HeaderTelemetryProps, 'lastBackupAt' | 'storageHealth'>) {
   return (
     <TelemetryHorizon>
-      <TelemetryChip label="Streak" value="0D" tone="accent" />
+      <TelemetryChip
+        label="Streak"
+        value="0D"
+        tone="accent"
+        isPrimary
+        sparkline={Array<TelemetrySparkState>(30).fill('unmarked')}
+      />
       <TelemetryChip label="Today" value="0/5" detail="Assessing" />
       <TelemetryChip
         label="Data posture"
