@@ -105,6 +105,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                         role="columnheader"
                         className="sticky top-0 left-0 z-30 border-r border-b border-ops-border-struct bg-ops-surface-2 px-4 py-1.5 text-left text-xs font-semibold tracking-[0.12em] text-ops-text-secondary uppercase"
                         scope="col"
+                        aria-sort="none"
                       >
                         Sector
                       </th>
@@ -118,17 +119,18 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                             key={dateKey}
                             role="columnheader"
                             className={[
-                              'sticky top-0 z-20 min-w-[2.75rem] border-b border-ops-border-struct px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-[0.12em]',
+                              'sticky top-0 z-20 min-w-[3rem] border-b border-ops-border-struct px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-[0.12em]',
                               (dateIndex + 1) % 7 === 0
                                 ? 'ops-history-week-boundary'
                                 : '',
                               isToday
-                                ? 'ops-history-today-header bg-emerald-300/10 text-ops-accent-muted'
+                                ? 'ops-history-today-header bg-ops-surface-1 text-ops-accent-muted'
                                 : isSelectedColumn
                                   ? 'bg-white/[0.035] text-ops-text-primary'
                                   : 'bg-ops-surface-1 text-ops-text-secondary',
                             ].join(' ')}
                             scope="col"
+                            aria-sort="none"
                             aria-current={isToday ? 'date' : undefined}
                             title={isToday ? 'Today' : undefined}
                           >
