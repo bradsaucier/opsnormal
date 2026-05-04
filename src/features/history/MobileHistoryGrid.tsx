@@ -1,7 +1,7 @@
 import { StatusBadge } from '../../components/StatusBadge';
 import { StatusLegend } from '../../components/StatusLegend';
 import { SectorGlyphMark } from '../../components/icons/SectorGlyphs';
-import { formatDayLabel, formatLongDate } from '../../lib/date';
+import { formatDayLabel, formatLongDate, formatWeekday } from '../../lib/date';
 import { getUiStatus } from '../../lib/history';
 import { getStatusCellText, getStatusLabel } from '../../lib/status';
 import { SECTORS } from '../../types';
@@ -195,17 +195,18 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
                     </div>
-                    <div
-                      id={weekStateId}
-                      className={[
-                        'clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold uppercase tracking-[0.12em]',
-                        visibleWeekIndex === weekIndex
-                          ? 'text-ops-accent-muted'
-                          : 'text-ops-text-muted',
-                      ].join(' ')}
-                    >
-                      {visibleWeekIndex === weekIndex ? 'On deck' : 'Stand by'}
-                    </div>
+                    {visibleWeekIndex === weekIndex ? (
+                      <div
+                        id={weekStateId}
+                        className="clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold tracking-[0.12em] text-ops-accent-muted uppercase"
+                      >
+                        On deck
+                      </div>
+                    ) : (
+                      <span id={weekStateId} className="sr-only">
+                        Inactive week
+                      </span>
+                    )}
                   </div>
 
                   <div
@@ -238,7 +239,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           ].join(' ')}
                         >
                           <span className="block text-[10px] text-ops-text-muted">
-                            {formatLongDate(dateKey).split(',')[0]}
+                            {formatWeekday(dateKey)}
                           </span>
                           <span className="mt-1 block">
                             {formatDayLabel(dateKey)}
@@ -316,18 +317,16 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
 
       <div
         id="mobile-history-daily-brief"
-        className="mt-4 clip-notched ops-notch-panel-outer bg-ops-border-struct p-px"
+        className={`ops-flat-panel-strong mt-4 p-4 ${getStatusSpineClassName(selectedStatus)}`}
         aria-live="polite"
       >
-        <div
-          className={`clip-notched ops-notch-panel-inner tactical-subpanel-strong p-4 ${getStatusSpineClassName(selectedStatus)}`}
-        >
+        <div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
                 Daily brief
               </p>
-              <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+              <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
                 {formatLongDate(selectedCell.dateKey)}
               </h3>
               <p
@@ -353,7 +352,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     <span className="text-ops-text-muted" aria-hidden="true">
                       <SectorGlyphMark sectorId={sector.id} />
                     </span>
-                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
+                    <p className="text-sm font-semibold text-ops-text-primary">
                       {sector.label}
                     </p>
                   </div>
