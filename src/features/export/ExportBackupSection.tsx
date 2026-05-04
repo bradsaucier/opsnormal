@@ -42,7 +42,7 @@ export function ExportBackupSection({
             <button
               type="button"
               onClick={() => void onJsonExport()}
-              className={`${actionButtonClasses} ops-action-button-lg ops-action-button-success-solid`}
+              className={`${actionButtonClasses} ops-action-button-lg ops-action-button-emerald-solid`}
             >
               Export JSON
             </button>
