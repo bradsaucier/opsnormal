@@ -90,7 +90,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             or step the window with the week controls. Tap a day column for the
             daily brief.
           </p>
-          <p className="text-xs leading-5 tracking-[0.04em] text-ops-text-muted">
+          <p className="ops-tracking-caption text-xs leading-5 text-ops-text-muted">
             Week groups snap into place. Explicit previous and next controls
             keep the path visible when swipe is inconvenient or unavailable.
           </p>
@@ -118,18 +118,18 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="clip-notched ops-notch-chip tactical-chip-panel grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 text-left text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
+                className="ops-flat-panel ops-tracking-grid px-3 py-2 text-center text-xs uppercase text-ops-text-secondary max-[360px]:px-2"
               >
+                <span className="block text-[10px] text-ops-text-muted">
+                  Week {visibleWeekIndex + 1} of {weekGroups.length}
+                </span>
                 <h3
                   id={visibleWeekHeadingId}
-                  className="text-xs text-ops-text-primary"
+                  className="mt-1 text-xs text-ops-text-primary"
                 >
                   Week of {formatDayLabel(visibleWeekStart)} to{' '}
                   {formatDayLabel(visibleWeekEnd)}
                 </h3>
-                <span className="text-right text-[10px] text-ops-text-muted">
-                  Week {visibleWeekIndex + 1} of {weekGroups.length}
-                </span>
               </div>
               <button
                 type="button"
@@ -205,12 +205,12 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 <div className="clip-notched ops-notch-panel-inner tactical-subpanel p-3">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
+                      <p className="ops-tracking-eyebrow text-xs font-semibold uppercase text-ops-text-muted">
                         Week {weekIndex + 1}
                       </p>
                       <p
                         id={weekHeadingId}
-                        className="mt-1 text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
+                        className="ops-tracking-grid mt-1 text-xs uppercase text-ops-text-secondary"
                       >
                         {formatDayLabel(weekStart)} to {formatDayLabel(weekEnd)}
                       </p>
@@ -218,7 +218,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     <div
                       id={weekStateId}
                       className={[
-                        'clip-notched ops-notch-chip tactical-chip-panel px-2.5 py-1 text-right text-[10px] font-semibold uppercase tracking-[0.12em]',
+                        'ops-flat-panel ops-tracking-grid px-2.5 py-1 text-right text-[10px] font-semibold uppercase',
                         visibleWeekIndex === weekIndex
                           ? 'text-ops-accent-muted'
                           : 'text-ops-text-muted',
@@ -231,7 +231,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                   <div
                     className={`grid gap-2 ${getMobileWeekGridColumnsClass(weekGroup.length)}`}
                   >
-                    <div className="sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-secondary">
+                    <div className="ops-tracking-grid sticky left-0 z-10 bg-ops-surface-2 px-2 py-2 text-left text-[11px] font-semibold uppercase text-ops-text-secondary">
                       Sector
                     </div>
                     {weekGroup.map((dateKey) => {
@@ -248,7 +248,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                           aria-pressed={isSelectedDay}
                           aria-current={isToday ? 'date' : undefined}
                           className={[
-                            'ops-focus-ring-chip ops-notch-chip clip-notched min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] transition hover:border-ops-border-struct hover:bg-white/[0.045] hover:text-ops-text-primary',
+                            'ops-focus-ring-chip ops-notch-chip clip-notched ops-tracking-grid min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase transition hover:border-ops-border-struct hover:bg-white/[0.045] hover:text-ops-text-primary',
                             isSelectedDay
                               ? 'border-ops-accent bg-emerald-300/12 text-ops-accent-muted'
                               : 'border-ops-border-soft bg-ops-surface-2 text-ops-text-secondary',
@@ -267,16 +267,11 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                       );
                     })}
 
-                    {SECTORS.map((sector, sectorIndex) => {
-                      const isAlternateRow = sectorIndex % 2 === 1;
-
+                    {SECTORS.map((sector) => {
                       return [
                         <div
                           key={`${sector.id}:label`}
-                          className={[
-                            'ops-history-mobile-sector-label sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ops-text-primary',
-                            isAlternateRow ? 'ops-history-mobile-row-even' : '',
-                          ].join(' ')}
+                          className="ops-tracking-grid sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-ops-surface-2 px-2 text-[11px] font-semibold uppercase text-ops-text-primary"
                         >
                           <span
                             className="text-ops-text-muted"
@@ -300,25 +295,15 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             <div
                               key={`${sector.id}:${dateKey}`}
                               className={[
-                                'flex min-h-10 items-center px-0.5 py-1',
+                                'ops-grid-cell min-h-10 transition [font-variant-numeric:tabular-nums]',
                                 isSelectedDay
                                   ? 'outline outline-1 -outline-offset-1 outline-[var(--ops-focus-ring)]'
                                   : '',
-                                isAlternateRow
-                                  ? 'ops-history-mobile-row-even'
-                                  : '',
+                                getCellClassName(status),
                               ].join(' ')}
                               title={cellLabel}
                             >
-                              <div
-                                className={[
-                                  'ops-grid-cell [font-variant-numeric:tabular-nums]',
-                                  'transition-[background-color,box-shadow,color,transform]',
-                                  getCellClassName(status),
-                                ].join(' ')}
-                              >
-                                {getStatusCellText(status)}
-                              </div>
+                              {getStatusCellText(status)}
                             </div>
                           );
                         }),
@@ -339,9 +324,9 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             <span
               key={weekGroup[0] ?? `week-${weekIndex}`}
               className={[
-                'clip-notched ops-notch-chip h-1.5 w-1.5 rounded-[2px] border',
+                'clip-notched ops-notch-chip h-[3px] w-3 border',
                 visibleWeekIndex === weekIndex
-                  ? 'ops-history-selected-cell border-ops-accent bg-ops-accent'
+                  ? 'border-ops-accent bg-ops-accent'
                   : 'border-ops-border-struct bg-transparent',
               ].join(' ')}
             />
@@ -359,10 +344,10 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
+              <p className="ops-tracking-eyebrow text-xs font-semibold uppercase text-ops-text-muted">
                 Daily brief
               </p>
-              <h3 className="mt-2 text-base font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+              <h3 className="ops-tracking-title mt-2 text-base font-semibold uppercase text-ops-text-primary">
                 {formatLongDate(selectedCell.dateKey)}
               </h3>
               <p
@@ -372,7 +357,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 {selectedDaySummary}
               </p>
             </div>
-            <div className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-xs uppercase tracking-[0.12em] text-ops-text-secondary sm:hidden">
+            <div className="ops-flat-panel ops-tracking-grid px-3 py-2 text-xs uppercase text-ops-text-secondary">
               {visibleWeekIndex + 1} of {weekGroups.length} week groups
             </div>
           </div>
@@ -388,7 +373,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     <span className="text-ops-text-muted" aria-hidden="true">
                       <SectorGlyphMark sectorId={sector.id} />
                     </span>
-                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
+                    <p className="ops-tracking-section text-sm font-semibold uppercase text-ops-text-primary">
                       {sector.label}
                     </p>
                   </div>
@@ -402,7 +387,7 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                     </span>
                   </p>
                 </div>
-                <StatusBadge status={status} />
+                <StatusBadge status={status} size="sm" />
               </div>
             ))}
           </div>
