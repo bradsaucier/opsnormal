@@ -114,6 +114,7 @@ function TelemetryChip({
     <div
       className={[
         'ops-telemetry-chip flex min-h-[var(--ops-chip-min-h-lg)] flex-col justify-between px-3 py-3.5 text-left lg:px-4',
+        isPrimary ? 'ops-telemetry-chip-primary' : '',
         isShimmering ? 'ops-telemetry-chip-shimmer' : '',
         toneClassNameByTone[tone],
       ].join(' ')}
@@ -124,7 +125,7 @@ function TelemetryChip({
       <span
         className={[
           'ops-tracking-table mt-2 leading-none font-semibold uppercase [font-variant-numeric:tabular-nums]',
-          isPrimary ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl',
+          isPrimary ? 'text-3xl sm:text-4xl' : 'text-lg sm:text-xl',
         ].join(' ')}
       >
         {value}
