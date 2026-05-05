@@ -59,7 +59,10 @@ export function DomainCard({
 
   const shellClassName = busy
     ? 'panel-shadow clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px'
-    : 'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
+    : [
+        'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/20 focus-within:bg-ops-accent/30',
+        resolvedStatus === 'unmarked' ? 'ops-domain-card-unmarked' : '',
+      ].join(' ');
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
@@ -193,7 +196,12 @@ export function DomainCard({
             role="radiogroup"
             aria-label={`${sector.label} status`}
             aria-describedby={describedBy}
-            className="grid grid-cols-3 gap-2"
+            className={[
+              'ops-domain-status-controls grid grid-cols-3 gap-2',
+              resolvedStatus === 'unmarked'
+                ? 'ops-domain-status-controls-pending'
+                : '',
+            ].join(' ')}
           >
             {STATUS_OPTIONS.map((option, optionIndex) => {
               const content = getStatusContent(option);
