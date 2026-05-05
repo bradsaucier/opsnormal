@@ -37,6 +37,14 @@ export function HistoryGrid(props: HistoryGridProps) {
               wall of unmarked cells.
             </p>
           </div>
+          <div
+            aria-hidden="true"
+            className="mt-5 grid max-w-xl grid-cols-7 gap-1 opacity-40"
+          >
+            {Array.from({ length: 35 }).map((_, index) => (
+              <span key={index} className="ops-grid-cell ops-grid-unmarked" />
+            ))}
+          </div>
         </div>
       ) : model.isDesktopHistory ? (
         <DesktopHistoryGrid model={model} />
