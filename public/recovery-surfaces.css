@@ -3,9 +3,9 @@
   --ops-fallback-panel-notch: 12px;
   --ops-fallback-chip-notch: 8px;
   --ops-fallback-base: #0a0f0d;
-  --ops-fallback-surface-base: #101613;
-  --ops-fallback-surface-raised: #18211d;
-  --ops-fallback-surface-overlay: #1f2a25;
+  --ops-fallback-surface-base: #0e1411;
+  --ops-fallback-surface-raised: #1a221e;
+  --ops-fallback-surface-overlay: #222b27;
   --ops-fallback-text-primary: #e6ece9;
   --ops-fallback-text-secondary: #b4bfba;
   --ops-fallback-text-muted: #9aa6a0;
@@ -267,4 +267,26 @@
 .ops-crash-fallback-checkbox:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@media (forced-colors: active) {
+  .ops-boot-fallback-shell,
+  .ops-crash-fallback-shell,
+  .ops-crash-fallback-detail-card,
+  .ops-crash-fallback-danger-zone,
+  .ops-boot-fallback-button,
+  .ops-crash-fallback-button {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .ops-boot-fallback-button:focus-visible,
+  .ops-crash-fallback-button:focus-visible,
+  .ops-crash-fallback-checkbox:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }
