@@ -30,10 +30,10 @@ export function SectionCard({
           {emphasis === 'primary' ? (
             <span className="ops-section-primary-tick" aria-hidden="true" />
           ) : null}
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
             <div className="max-w-3xl">
               {eyebrow ? <p className={eyebrowClassName}>{eyebrow}</p> : null}
-              <h2 className="ops-tracking-section mt-1 text-2xl font-semibold text-ops-text-primary uppercase sm:text-2xl lg:text-3xl">
+              <h2 className="ops-headline-h2 mt-1 text-ops-text-primary">
                 {title}
               </h2>
             </div>
