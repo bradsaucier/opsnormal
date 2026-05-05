@@ -38,7 +38,7 @@ export function SectionCrashFallback({
         <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-status-degraded-text)]">
           Section fault
         </p>
-        <h2 className="mt-2 text-sm font-semibold tracking-[0.06em] text-ops-text-primary uppercase">
+        <h2 className="ops-tracking-title mt-2 text-sm font-semibold text-ops-text-primary uppercase">
           {sectionName} offline
         </h2>
         <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
@@ -66,7 +66,7 @@ export function SectionCrashFallback({
           </button>
         </div>
         <details className="clip-notched ops-notch-chip tactical-chip-panel mt-4 p-3 text-sm text-ops-text-secondary">
-          <summary className="ops-details-summary flex cursor-pointer items-center justify-between gap-3 font-semibold tracking-[0.08em] text-ops-text-primary uppercase">
+          <summary className="ops-details-summary ops-tracking-section flex cursor-pointer items-center justify-between gap-3 font-semibold text-ops-text-primary uppercase">
             <span>Fault details</span>
             <svg
               viewBox="0 0 12 12"
