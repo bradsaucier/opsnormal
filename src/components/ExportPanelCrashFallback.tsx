@@ -118,12 +118,10 @@ export function ExportPanelCrashFallback({
           tabIndex={-1}
           className="ops-focus-ring-inset"
         >
-          <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-status-degraded-text)]">
+          <p className="ops-eyebrow text-[var(--ops-status-degraded-text)]">
             Section fault
           </p>
-          <h2 className="ops-tracking-title mt-2 text-sm font-semibold text-ops-text-primary uppercase">
-            Backup and Recovery offline
-          </h2>
+          <h2 className="ops-headline-h3 mt-2">Backup and Recovery offline</h2>
           <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
             This panel crashed, but the rest of OpsNormal is still online.
             Emergency export stays available through the isolated crash-export

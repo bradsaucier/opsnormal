@@ -1,4 +1,9 @@
-import type { PropsWithChildren } from 'react';
+import {
+  forwardRef,
+  type ElementType,
+  type HTMLAttributes,
+  type PropsWithChildren,
+} from 'react';
 
 export type NotchedFrameEmphasis =
   | 'primary'
@@ -7,8 +12,9 @@ export type NotchedFrameEmphasis =
   | 'inset'
   | 'quiet';
 
-interface NotchedFrameProps extends PropsWithChildren {
-  className?: string;
+interface NotchedFrameProps
+  extends PropsWithChildren, HTMLAttributes<HTMLElement> {
+  as?: ElementType;
   emphasis?: NotchedFrameEmphasis;
   notch?: 'panel' | 'shell' | 'chip';
   outerClassName?: string;
@@ -22,48 +28,59 @@ function joinClasses(
   return values.filter(Boolean).join(' ');
 }
 
-export function NotchedFrame({
-  className,
-  emphasis = 'standard',
-  notch = 'panel',
-  outerClassName,
-  innerClassName,
-  withShadow = true,
-  children,
-}: NotchedFrameProps) {
-  const outerNotchClassName =
-    notch === 'shell'
-      ? 'ops-notch-shell-outer'
-      : notch === 'chip'
-        ? 'ops-notch-chip'
-        : 'ops-notch-panel-outer';
-  const innerNotchClassName =
-    notch === 'shell'
-      ? 'ops-notch-shell-inner'
-      : notch === 'chip'
-        ? 'ops-notch-chip'
-        : 'ops-notch-panel-inner';
+export const NotchedFrame = forwardRef<HTMLElement, NotchedFrameProps>(
+  function NotchedFrame(
+    {
+      as: Component = 'div',
+      className,
+      emphasis = 'standard',
+      notch = 'panel',
+      outerClassName,
+      innerClassName,
+      withShadow = true,
+      children,
+      ...rest
+    },
+    ref,
+  ) {
+    const outerNotchClassName =
+      notch === 'shell'
+        ? 'ops-notch-shell-outer'
+        : notch === 'chip'
+          ? 'ops-notch-chip'
+          : 'ops-notch-panel-outer';
+    const innerNotchClassName =
+      notch === 'shell'
+        ? 'ops-notch-shell-inner'
+        : notch === 'chip'
+          ? 'ops-notch-chip'
+          : 'ops-notch-panel-inner';
 
-  return (
-    <div className={joinClasses(withShadow && 'panel-shadow', className)}>
-      <div
-        className={joinClasses(
-          'clip-notched p-px',
-          outerNotchClassName,
-          !outerClassName && `ops-frame-emphasis-${emphasis}`,
-          outerClassName,
-        )}
+    return (
+      <Component
+        ref={ref}
+        className={joinClasses(withShadow && 'panel-shadow', className)}
+        {...rest}
       >
         <div
           className={joinClasses(
-            'clip-notched',
-            innerNotchClassName,
-            innerClassName,
+            'clip-notched p-px',
+            outerNotchClassName,
+            !outerClassName && `ops-frame-emphasis-${emphasis}`,
+            outerClassName,
           )}
         >
-          {children}
+          <div
+            className={joinClasses(
+              'clip-notched',
+              innerNotchClassName,
+              innerClassName,
+            )}
+          >
+            {children}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      </Component>
+    );
+  },
+);

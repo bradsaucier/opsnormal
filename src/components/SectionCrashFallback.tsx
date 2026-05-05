@@ -35,12 +35,10 @@ export function SectionCrashFallback({
         tabIndex={-1}
         className="ops-focus-ring-inset"
       >
-        <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-status-degraded-text)]">
+        <p className="ops-eyebrow text-[var(--ops-status-degraded-text)]">
           Section fault
         </p>
-        <h2 className="ops-tracking-title mt-2 text-sm font-semibold text-ops-text-primary uppercase">
-          {sectionName} offline
-        </h2>
+        <h2 className="ops-headline-h3 mt-2">{sectionName} offline</h2>
         <p className="mt-2 text-sm leading-6 text-ops-text-secondary">
           This section crashed, but the rest of OpsNormal is still online. Retry
           the section or reload the page. Local data on this device remains
