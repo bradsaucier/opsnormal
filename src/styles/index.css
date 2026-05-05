@@ -62,23 +62,23 @@
 
 @theme {
   --color-ops-base: #0a0f0d;
-  --color-ops-surface-1: #151d1a;
-  --color-ops-surface-2: #1c2521;
-  --color-ops-surface-3: #24302a;
-  --color-ops-surface-base: #101613;
-  --color-ops-surface-raised: #18211d;
-  --color-ops-surface-overlay: #1f2a25;
-  --color-ops-surface-interactive: #28342e;
+  --color-ops-surface-base: #0e1411;
+  --color-ops-surface-1: #121814;
+  --color-ops-surface-2: #1a221e;
+  --color-ops-surface-3: #222b27;
+  --color-ops-surface-raised: #1a221e;
+  --color-ops-surface-overlay: #222b27;
+  --color-ops-surface-interactive: #26342d;
   --color-ops-text-primary: #e6ece9;
   --color-ops-text-secondary: #b4bfba;
   --color-ops-text-muted: #8b9691;
   --color-ops-accent: #6ee7b7;
   --color-ops-accent-muted: #b7f7da;
-  --color-ops-border-soft: #ffffff14;
-  --color-ops-border-struct: #ffffff29;
-  --color-ops-border-strong: #ffffff3a;
-  --color-ops-panel-border: #ffffff1a;
-  --color-ops-panel-border-strong: #ffffff24;
+  --color-ops-border-soft: #ffffff12;
+  --color-ops-border-struct: #ffffff26;
+  --color-ops-border-strong: #ffffff38;
+  --color-ops-panel-border: #ffffff12;
+  --color-ops-panel-border-strong: #ffffff26;
   --color-ops-accent-border: #6ee7b724;
   --spacing-ops-2: 0.5rem;
   --spacing-ops-3: 0.75rem;
@@ -131,6 +131,16 @@
     0 8px 18px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.14);
   --ops-focus-ring-solid-edge: rgba(2, 18, 12, 0.96);
   --ops-focus-ring-solid-outer: rgba(255, 255, 255, 0.92);
+  --ops-focus-ring-shadow-default:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 3px var(--ops-focus-ring);
+  --ops-focus-ring-shadow-chip:
+    inset 0 0 0 1px var(--ops-focus-ring-edge),
+    inset 0 0 0 2px var(--ops-focus-ring);
+  --ops-focus-ring-shadow-on-solid:
+    inset 0 0 0 1px var(--ops-focus-ring-solid-edge),
+    inset 0 0 0 3px var(--ops-focus-ring-solid-outer),
+    0 0 0 1px var(--ops-focus-ring-solid-edge);
   --ops-chip-min-h-sm: 36px;
   --ops-chip-min-h: 44px;
   --ops-chip-min-h-lg: 52px;
@@ -142,13 +152,13 @@
   --ops-text-on-emerald: #ecfdf5;
   --ops-fade-edge: var(--color-ops-surface-overlay);
   --ops-status-nominal-border: rgba(110, 231, 183, 0.56);
-  --ops-status-nominal-bg: rgba(110, 231, 183, 0.3);
+  --ops-status-nominal-bg: rgba(110, 231, 183, 0.34);
   --ops-status-nominal-text: #c9fae4;
   --ops-status-degraded-border: rgba(245, 158, 11, 0.72);
-  --ops-status-degraded-bg: rgba(245, 158, 11, 0.28);
+  --ops-status-degraded-bg: rgba(245, 158, 11, 0.26);
   --ops-status-degraded-text: #fbd38d;
   --ops-status-unmarked-border: rgba(255, 255, 255, 0.16);
-  --ops-status-unmarked-bg: rgba(36, 48, 42, 0.72);
+  --ops-status-unmarked-bg: rgba(255, 255, 255, 0.04);
   --ops-status-unmarked-text: #96a39d;
   --ops-today-rail: rgba(110, 231, 183, 0.36);
   --ops-radio-chip-status-border: rgba(255, 255, 255, 0.18);
@@ -170,6 +180,11 @@ body {
       0deg,
       transparent 0 31px,
       rgba(255, 255, 255, 0.012) 31px 32px
+    ),
+    radial-gradient(
+      circle at 50% 56px,
+      rgba(110, 231, 183, 0.04),
+      transparent 28%
     ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%),
     var(--color-ops-base);
@@ -212,6 +227,7 @@ h2,
 h3,
 .ops-mono,
 .ops-eyebrow,
+.ops-eyebrow-strong,
 .ops-eyebrow-primary,
 .ops-eyebrow-quiet,
 .ops-sector-caption,
@@ -270,20 +286,24 @@ h3,
     0 0 0 4px rgba(183, 247, 218, 0.9);
 }
 
-.ops-eyebrow {
-  letter-spacing: var(--ops-tracking-eyebrow);
+.ops-eyebrow,
+.ops-eyebrow-strong,
+.ops-eyebrow-primary,
+.ops-eyebrow-quiet {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
   text-transform: uppercase;
+}
+
+.ops-eyebrow,
+.ops-eyebrow-primary,
+.ops-eyebrow-quiet {
+  letter-spacing: var(--ops-tracking-eyebrow);
 }
 
 .ops-eyebrow-strong {
   letter-spacing: var(--ops-tracking-eyebrow-strong);
-  text-transform: uppercase;
-}
-
-.ops-eyebrow-primary,
-.ops-eyebrow-quiet {
-  letter-spacing: var(--ops-tracking-eyebrow);
-  text-transform: uppercase;
 }
 
 .ops-eyebrow-primary {
@@ -293,6 +313,32 @@ h3,
 
 .ops-eyebrow-quiet {
   color: var(--color-ops-text-muted);
+}
+
+.ops-headline-h2,
+.ops-headline-h3 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-ops-text-primary);
+}
+
+.ops-headline-h2 {
+  font-size: 1.25rem;
+  line-height: 1.45;
+}
+
+.ops-headline-h3 {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  .ops-headline-h2 {
+    font-size: 1.5rem;
+    line-height: 1.35;
+  }
 }
 
 .ops-tracking-caption {
@@ -523,9 +569,7 @@ h3,
 
 .history-scroll-shell:focus-visible {
   outline: none;
-  box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-edge),
-    inset 0 0 0 3px var(--ops-focus-ring);
+  box-shadow: var(--ops-focus-ring-shadow-default);
 }
 
 .history-scroll-shell::-webkit-scrollbar {
@@ -1154,7 +1198,8 @@ h3,
 .ops-history-today-cell.ops-history-week-boundary {
   box-shadow:
     inset 1px 0 0 var(--ops-today-rail),
-    inset -1px 0 0 rgba(110, 231, 183, 0.22);
+    inset -1px 0 0 rgba(110, 231, 183, 0.22),
+    inset 0 -1px 0 var(--color-ops-border-soft);
 }
 
 .ops-history-selected-cell {
@@ -1179,26 +1224,19 @@ h3,
 .ops-focus-ring-inset:focus-visible,
 .ops-focus-ring-inset:focus-within {
   outline: none;
-  box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-edge),
-    inset 0 0 0 3px var(--ops-focus-ring);
+  box-shadow: var(--ops-focus-ring-shadow-default);
 }
 
 .ops-focus-ring-within:focus-within {
-  box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-edge),
-    inset 0 0 0 3px var(--ops-focus-ring);
+  box-shadow: var(--ops-focus-ring-shadow-default);
 }
 
 .ops-focus-ring-chip:focus-visible,
 .ops-focus-ring-chip-proxy:focus-visible > .ops-focus-ring-chip {
   outline: none;
   box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-edge),
-    inset 0 0 0 2px var(--ops-focus-ring),
-    var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000),
-    var(--tw-shadow, 0 0 #0000),
+    var(--ops-focus-ring-shadow-chip), var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow, 0 0 #0000),
     var(--ops-focus-ring-base-shadow, 0 0 #0000);
 }
 
@@ -1299,9 +1337,7 @@ h3,
 
 .ops-action-button:focus-visible {
   outline: none;
-  box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-edge),
-    inset 0 0 0 3px var(--ops-focus-ring);
+  box-shadow: var(--ops-focus-ring-shadow-default);
 }
 
 .ops-action-button:disabled {
@@ -1390,10 +1426,7 @@ h3,
 
 .ops-action-button-success-solid:focus-visible,
 .ops-action-button-emerald-solid:focus-visible {
-  box-shadow:
-    inset 0 0 0 1px var(--ops-focus-ring-solid-edge),
-    inset 0 0 0 3px var(--ops-focus-ring-solid-outer),
-    0 0 0 1px var(--ops-focus-ring-solid-edge);
+  box-shadow: var(--ops-focus-ring-shadow-on-solid);
 }
 
 .ops-action-button-amber {
@@ -1455,6 +1488,86 @@ h3,
   .ops-export-accordion-trigger-collapsed:hover,
   .ops-history-cell:hover {
     transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .tactical-panel,
+  .tactical-subpanel,
+  .tactical-subpanel-strong,
+  .tactical-chip-panel,
+  .ops-section-surface,
+  .ops-flat-panel,
+  .ops-flat-panel-strong,
+  .ops-inline-alert,
+  .ops-status-frame,
+  .ops-telemetry-chip,
+  .ops-action-button,
+  .ops-radio-chip,
+  .ops-grid-cell,
+  .ops-history-selected-cell,
+  .ops-crash-fallback-shell,
+  .ops-boot-fallback-shell {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .ops-section-frame,
+  .ops-frame-emphasis-primary,
+  .ops-frame-emphasis-standard,
+  .ops-frame-emphasis-support,
+  .ops-frame-emphasis-inset,
+  .ops-frame-emphasis-quiet,
+  .ops-history-edge-left,
+  .ops-history-edge-right {
+    background: CanvasText;
+  }
+
+  .ops-status-nominal,
+  .ops-status-degraded,
+  .ops-status-unmarked {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .ops-grid-nominal,
+  .ops-grid-degraded,
+  .ops-grid-unmarked {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+  }
+
+  .ops-history-today-header,
+  .ops-history-today-cell {
+    border-inline: 2px solid Highlight;
+    box-shadow: none;
+  }
+
+  .ops-focus-ring-inset:focus-visible,
+  .ops-focus-ring-inset:focus-within,
+  .ops-focus-ring-within:focus-within,
+  .ops-focus-ring-chip:focus-visible,
+  .ops-focus-ring-chip-proxy:focus-visible,
+  .ops-focus-ring-chip-proxy:focus-visible > .ops-focus-ring-chip,
+  .ops-action-button:focus-visible,
+  .ops-radio-chip:focus-visible,
+  .history-scroll-shell:focus-visible,
+  .ops-skip-link:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  .ops-sector-spine-nominal,
+  .ops-sector-spine-degraded,
+  .ops-sector-spine-unmarked,
+  .ops-section-spine-fault,
+  .ops-rollup-spine {
+    box-shadow: none;
+    border-inline-start: 2px solid Highlight;
   }
 }
 
@@ -1522,6 +1635,7 @@ h3,
 
 @media (max-width: 640px) {
   .ops-action-button:not(.ops-action-button-sm),
+  .ops-status-frame,
   .ops-radio-chip,
   .history-week-card .ops-focus-ring-chip {
     min-height: var(--ops-chip-min-h-lg);
@@ -1537,81 +1651,4 @@ h3,
     width: auto;
     align-self: flex-start;
   }
-}
-
-.ops-boot-fallback-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
-  padding: 2rem;
-  background-color: var(--color-ops-base);
-  color: #e4e4e7;
-}
-
-.ops-boot-fallback-container {
-  max-width: 40rem;
-  margin: 0 auto;
-}
-
-.ops-boot-fallback-eyebrow {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #fca5a5;
-}
-
-.ops-boot-fallback-title {
-  margin-top: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.ops-boot-fallback-copy {
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  line-height: 1.75;
-  color: #a1a1aa;
-}
-
-.ops-boot-fallback-actions {
-  margin-top: 1.5rem;
-}
-
-.ops-boot-fallback-button {
-  --notch: var(--ops-notch-chip);
-  -webkit-clip-path: polygon(
-    var(--notch) 0,
-    100% 0,
-    100% calc(100% - var(--notch)),
-    calc(100% - var(--notch)) 100%,
-    0 100%,
-    0 var(--notch)
-  );
-  clip-path: polygon(
-    var(--notch) 0,
-    100% 0,
-    100% calc(100% - var(--notch)),
-    calc(100% - var(--notch)) 100%,
-    0 100%,
-    0 var(--notch)
-  );
-  transform: translateZ(0);
-  border: 1px solid rgba(251, 146, 60, 0.4);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 68%),
-    rgba(251, 146, 60, 0.1);
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #fdba74;
-  cursor: pointer;
-}
-
-.ops-boot-fallback-button:focus-visible {
-  outline: 2px solid rgba(253, 186, 116, 0.72);
-  outline-offset: 2px;
 }
