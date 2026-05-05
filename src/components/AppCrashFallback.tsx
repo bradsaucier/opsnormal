@@ -234,7 +234,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
         >
           <div className="grid gap-5">
             <div>
-              <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-[var(--ops-status-degraded-text)]">
+              <p className="ops-eyebrow-strong text-[var(--ops-status-degraded-text)]">
                 Render fault
               </p>
               <h1 className="ops-crash-fallback-title ops-tracking-display mt-2 text-2xl font-semibold text-ops-text-primary uppercase sm:text-3xl">
@@ -251,9 +251,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
             </div>
 
             <div className="clip-notched ops-notch-chip tactical-chip-panel p-4">
-              <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
-                Error detail
-              </p>
+              <p className="ops-eyebrow text-ops-text-muted">Error detail</p>
               <p
                 className="mt-2 font-mono text-xs leading-5 text-[var(--ops-status-degraded-text)] break-words"
                 role="alert"
@@ -304,7 +302,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
               withShadow={false}
             >
               <div ref={clearActionRef}>
-                <p className="ops-eyebrow text-xs font-semibold text-[var(--ops-text-on-red)]">
+                <p className="ops-eyebrow text-[var(--ops-text-on-red)]">
                   Destructive recovery
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--ops-text-on-red)]">
