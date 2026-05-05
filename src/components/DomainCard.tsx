@@ -221,7 +221,7 @@ export function DomainCard({
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'ops-focus-ring-chip ops-radio-chip ops-tracking-grid min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase',
+                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel ops-tracking-grid min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase',
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
