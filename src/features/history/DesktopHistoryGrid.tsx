@@ -34,6 +34,10 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
     selectedStatusSummary,
     todayKey,
   } = model;
+  const footnoteBorderClassName =
+    selectedStatus === 'nominal'
+      ? 'border-ops-accent/24'
+      : 'border-ops-border-soft';
 
   return (
     <>
@@ -235,7 +239,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                                 <div
                                   title={cellLabel}
                                   className={[
-                                    'ops-grid-cell ops-focus-ring-chip mx-auto w-full transition [font-variant-numeric:tabular-nums]',
+                                    'ops-grid-cell ops-focus-ring-chip mx-auto w-full transition-[background-color,box-shadow,color,transform] [font-variant-numeric:tabular-nums]',
                                     getCellClassName(status),
                                   ].join(' ')}
                                 >
@@ -273,7 +277,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                 </div>
                 <StatusBadge status={selectedStatus} />
               </div>
-              <p className="mt-5 text-2xl leading-none font-semibold tracking-[0.04em] text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
+              <p className="mt-5 text-xl leading-none font-semibold tracking-[0.02em] text-ops-text-primary normal-case [font-variant-numeric:tabular-nums]">
                 {formatLongDate(selectedCell.dateKey)}
               </p>
               <p
@@ -282,7 +286,12 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
               >
                 {selectedStatusSummary}
               </p>
-              <p className="mt-4 border-t border-ops-border-soft pt-4 text-xs leading-5 tracking-[0.12em] text-ops-text-muted uppercase">
+              <p
+                className={[
+                  'mt-4 border-t pt-4 text-xs leading-5 tracking-[0.12em] text-ops-text-muted uppercase',
+                  footnoteBorderClassName,
+                ].join(' ')}
+              >
                 {selectedCell.dateKey === todayKey
                   ? 'Today is live. Use the Today panel to update the current status picture.'
                   : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}
