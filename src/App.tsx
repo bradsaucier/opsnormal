@@ -11,7 +11,6 @@ import {
 import { NotchedFrame } from './components/NotchedFrame';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
-import { SectorGlyphConstellation } from './components/SectorGlyphConstellation';
 import { SectorGlyphMark } from './components/icons/SectorGlyphs';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { BackupActionBanner } from './features/export/BackupActionBanner';
@@ -226,21 +225,28 @@ function App() {
       <main
         id="main-content"
         tabIndex={-1}
-        className="app-shell mx-auto flex w-full max-w-[1280px] flex-col gap-6 2xl:max-w-[1440px] lg:gap-8"
+        className="app-shell mx-auto flex w-full max-w-7xl flex-col gap-6 lg:gap-8"
       >
         <NotchedFrame
           emphasis="primary"
           notch="shell"
-          innerClassName="tactical-panel relative isolate overflow-hidden bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
+          innerClassName="tactical-panel ops-surface-hero p-5 sm:p-6 lg:p-8"
         >
-          <SectorGlyphConstellation />
           <header>
-            <div className="grid gap-4 lg:gap-6">
-              <div className="flex max-w-4xl">
+            <div className="grid gap-5 lg:gap-6">
+              <div className="flex max-w-4xl gap-4">
+                <div
+                  className="hidden w-3 shrink-0 flex-col items-center self-stretch sm:flex"
+                  aria-hidden="true"
+                >
+                  <span className="h-16 w-0.5 bg-ops-accent/75 shadow-[0_0_16px_rgba(110,231,183,0.22)]" />
+                  <span className="mt-2 h-8 w-px bg-ops-accent-border" />
+                  <span className="mt-2 h-full w-px flex-1 bg-ops-border-struct" />
+                </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <span
-                      className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-8 w-8 items-center justify-center border border-ops-accent/30 text-ops-accent-muted"
+                      className="inline-flex h-5 w-5 items-center justify-center text-ops-accent-muted"
                       aria-hidden="true"
                     >
                       <SectorGlyphMark sectorId="work-school" />
@@ -249,14 +255,18 @@ function App() {
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="ops-display-lockup-title mt-3 text-3xl font-semibold text-ops-text-primary normal-case sm:mt-4 sm:text-4xl md:uppercase lg:text-[2.75rem]">
+                  <h1 className="ops-tracking-display mt-4 text-4xl font-semibold text-ops-text-primary uppercase sm:mt-5 sm:text-5xl">
                     OpsNormal
                   </h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">
                     A local-only mirror for daily balance across work or school,
                     household, relationships, body, and rest. No account. No
                     cloud sync. No analytics layer.
                   </p>
+                  <div className="mt-5 space-y-1.5" aria-hidden="true">
+                    <span className="block h-px max-w-2xl bg-ops-border-soft" />
+                    <span className="clip-notched ops-notch-chip block h-1 w-12 bg-ops-accent/65 shadow-[0_0_14px_rgba(110,231,183,0.18)]" />
+                  </div>
                 </div>
               </div>
               <ErrorBoundary
@@ -278,33 +288,31 @@ function App() {
           </header>
         </NotchedFrame>
 
-        <div className="flex flex-col gap-3">
-          <InstallBanner compact={hasPriorityAlert} />
-          <PwaUpdateBanner
-            needRefresh={needRefresh}
-            offlineReady={offlineReady}
-            isApplyingUpdate={isApplyingUpdate}
-            updateStalled={updateStalled}
-            reloadRecoveryRequired={reloadRecoveryRequired}
-            externalUpdateInProgress={externalUpdateInProgress}
-            externalUpdateStalled={externalUpdateStalled}
-            onReload={handleApplyUpdate}
-            onDismiss={handleDismissBanner}
-            onReloadPage={handleReloadPage}
-            compact={hasPriorityAlert}
+        <InstallBanner compact={hasPriorityAlert} />
+        <PwaUpdateBanner
+          needRefresh={needRefresh}
+          offlineReady={offlineReady}
+          isApplyingUpdate={isApplyingUpdate}
+          updateStalled={updateStalled}
+          reloadRecoveryRequired={reloadRecoveryRequired}
+          externalUpdateInProgress={externalUpdateInProgress}
+          externalUpdateStalled={externalUpdateStalled}
+          onReload={handleApplyUpdate}
+          onDismiss={handleDismissBanner}
+          onReloadPage={handleReloadPage}
+          compact={hasPriorityAlert}
+        />
+        {databaseBlockedMessage ? (
+          <AlertSurface
+            tone="attention"
+            title="Database Upgrade Blocked"
+            description={databaseBlockedMessage}
+            role="alert"
+            aria-atomic="true"
+            titleId="database-upgrade-blocked-title"
           />
-          {databaseBlockedMessage ? (
-            <AlertSurface
-              tone="attention"
-              title="Database Upgrade Blocked"
-              description={databaseBlockedMessage}
-              role="alert"
-              aria-atomic="true"
-              titleId="database-upgrade-blocked-title"
-            />
-          ) : null}
-          <BackupActionBanner prompt={backupActionPrompt} />
-        </div>
+        ) : null}
+        <BackupActionBanner prompt={backupActionPrompt} />
 
         <ErrorBoundary
           resetKeys={[todayKey]}
@@ -364,22 +372,24 @@ function App() {
         <NotchedFrame
           emphasis="quiet"
           notch="shell"
-          innerClassName="tactical-subpanel ops-footer-panel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
+          innerClassName="tactical-subpanel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
         >
           <footer>
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
-              <div className="lg:max-w-2xl">
-                <p className="ops-eyebrow font-semibold text-ops-text-primary">
-                  Boundary
-                </p>
-                <p className="mt-2">
-                  OpsNormal is a personal status tracking tool. It is not a
-                  medical device and does not diagnose, treat, cure, or prevent
-                  any disease or condition. It does not provide medical or
-                  psychological advice.
-                </p>
+            <div className="border-t border-ops-panel-border-strong pt-6">
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
+                <div className="lg:max-w-2xl">
+                  <p className="ops-eyebrow-strong font-semibold text-ops-text-primary">
+                    Boundary
+                  </p>
+                  <p className="mt-2">
+                    OpsNormal is a personal status tracking tool. It is not a
+                    medical device and does not diagnose, treat, cure, or
+                    prevent any disease or condition. It does not provide
+                    medical or psychological advice.
+                  </p>
+                </div>
+                <FooterProvenance />
               </div>
-              <FooterProvenance />
             </div>
           </footer>
         </NotchedFrame>
