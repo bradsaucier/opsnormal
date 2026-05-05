@@ -155,6 +155,7 @@ Application rules:
 Frame emphasis:
 
 - `NotchedFrame` supports `primary`, `standard`, `support`, `inset`, and `quiet` emphasis.
+- `NotchedFrame` supports an `as` prop and forwarded refs so repeated notched wrappers stay centralized without breaking semantic containers.
 - Use `primary` for top-level live operator chrome.
 - Use `standard` for normal nested panels.
 - Use `support` for recovery, backup, and fault surfaces.
@@ -178,6 +179,7 @@ Focus chrome:
 
 - `.ops-focus-ring-inset` for panel-scale and accordion-scale interactive surfaces that should carry the full inset focus treatment.
 - `.ops-focus-ring-chip` for radio chips, history cells, and compact day selectors where the full 3px inset ring reads too heavy.
+- Forced-colors focus falls back to a system `Highlight` outline so the interface remains legible when gradients and shadows are suppressed.
 
 Application rules:
 
