@@ -14,11 +14,6 @@ interface DomainCardProps {
 }
 
 const STATUS_OPTIONS: UiStatus[] = ['nominal', 'degraded', 'unmarked'];
-const STATUS_CONTROL_LABELS: Record<UiStatus, string> = {
-  nominal: 'NOM',
-  degraded: 'DEG',
-  unmarked: 'NONE',
-};
 const RADIO_CONTROL_KEYS = new Set([
   ' ',
   'Enter',
@@ -58,11 +53,8 @@ export function DomainCard({
     : instructionId;
 
   const shellClassName = busy
-    ? 'panel-shadow clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px'
-    : [
-        'ops-domain-card panel-shadow group clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/20 focus-within:bg-ops-accent/30',
-        resolvedStatus === 'unmarked' ? 'ops-domain-card-unmarked' : '',
-      ].join(' ');
+    ? 'clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px'
+    : 'ops-domain-card group clip-notched ops-notch-panel-outer h-full bg-ops-border-strong p-px transition-colors hover:bg-ops-accent/25 focus-within:bg-ops-accent/25';
 
   useEffect(() => {
     const pendingStatus = pendingKeyboardFocusStatusRef.current;
@@ -156,19 +148,19 @@ export function DomainCard({
     <div className={shellClassName}>
       <div
         className={[
-          'clip-notched ops-notch-panel-inner tactical-panel ops-domain-card-shell flex h-full min-h-[13rem] transform-gpu flex-col justify-between bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_28%),var(--color-ops-surface-2)] p-4 text-left transition-transform duration-150 ease-out sm:p-5 xl:min-h-[14rem]',
+          'clip-notched ops-notch-panel-inner ops-surface-card flex h-full min-h-[15rem] transform-gpu flex-col justify-between p-4 text-left transition-transform duration-150 ease-out group-hover:-translate-y-px group-focus-within:-translate-y-px sm:p-5 xl:min-h-[16rem]',
           spineClassName,
         ].join(' ')}
       >
         <div className="flex items-start gap-3">
           <span
-            className="clip-notched ops-notch-chip tactical-chip-panel inline-flex h-9 w-9 shrink-0 items-center justify-center border border-ops-border-soft text-ops-text-muted"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[2px] border border-ops-border-soft bg-ops-surface-base text-ops-text-muted"
             aria-hidden="true"
           >
             <SectorGlyphMark sectorId={sector.id} />
           </span>
           <div className="min-w-0">
-            <span className="ops-mono flex flex-wrap items-center gap-2 text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+            <span className="ops-mono ops-tracking-eyebrow flex flex-wrap items-center gap-2 text-xs font-semibold text-ops-text-muted uppercase">
               <span className="text-ops-accent/70">{sectorSigil}</span>
               <span
                 className="h-3 w-px bg-ops-border-struct"
@@ -176,7 +168,7 @@ export function DomainCard({
               />
               <span>{sector.shortLabel}</span>
             </span>
-            <h3 className="mt-2 text-sm leading-5 font-semibold tracking-[0.04em] text-ops-text-primary uppercase md:normal-case md:tracking-[0.02em]">
+            <h3 className="ops-tracking-caption mt-2 text-sm leading-5 font-semibold text-ops-text-primary uppercase">
               {sector.label}
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
@@ -185,7 +177,12 @@ export function DomainCard({
           </div>
         </div>
 
-        <div className="mt-5 border-t border-ops-border-soft pt-4">
+        <div className="mt-6">
+          <div
+            className="ops-sector-caption border-t border-ops-border-soft pt-3"
+            aria-hidden="true"
+          />
+
           {busy ? (
             <span id={busyHintId} className="sr-only">
               Saving local write. Stand by.
@@ -196,12 +193,7 @@ export function DomainCard({
             role="radiogroup"
             aria-label={`${sector.label} status`}
             aria-describedby={describedBy}
-            className={[
-              'ops-domain-status-controls grid grid-cols-3 gap-2',
-              resolvedStatus === 'unmarked'
-                ? 'ops-domain-status-controls-pending'
-                : '',
-            ].join(' ')}
+            className="mt-3 grid grid-cols-3 gap-2"
           >
             {STATUS_OPTIONS.map((option, optionIndex) => {
               const content = getStatusContent(option);
@@ -229,14 +221,14 @@ export function DomainCard({
                   }}
                   onKeyDown={(event) => handleRadioKeyDown(event, optionIndex)}
                   className={[
-                    'ops-focus-ring-chip ops-radio-chip tactical-chip-panel min-h-11 border px-1 py-2 text-center text-[10px] font-semibold tracking-normal uppercase',
+                    'ops-focus-ring-chip ops-radio-chip ops-tracking-grid min-h-11 border px-2 py-2 text-center text-[11px] font-semibold uppercase',
                     busy ? 'cursor-wait opacity-70' : '',
                     isSelected
                       ? `${content.classes} shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]`
                       : 'ops-radio-chip-ghost text-ops-text-secondary hover:text-ops-text-primary',
                   ].join(' ')}
                 >
-                  {STATUS_CONTROL_LABELS[option]}
+                  {content.shortLabel}
                 </button>
               );
             })}
