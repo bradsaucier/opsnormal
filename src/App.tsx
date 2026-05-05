@@ -251,7 +251,7 @@ function App() {
                     >
                       <SectorGlyphMark sectorId="work-school" />
                     </span>
-                    <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent/70">
+                    <p className="ops-eyebrow-strong text-ops-accent/70">
                       Personal Readiness Tracker
                     </p>
                   </div>
@@ -378,7 +378,7 @@ function App() {
             <div className="border-t border-ops-panel-border-strong pt-6">
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
                 <div className="lg:max-w-2xl">
-                  <p className="ops-eyebrow-strong font-semibold text-ops-text-primary">
+                  <p className="ops-eyebrow-strong text-ops-text-primary">
                     Boundary
                   </p>
                   <p className="mt-2">
