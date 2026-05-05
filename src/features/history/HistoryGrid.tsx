@@ -26,10 +26,8 @@ export function HistoryGrid(props: HistoryGridProps) {
       {!model.hasEntries ? (
         <div className="ops-flat-panel-strong p-5 sm:p-6">
           <div className="max-w-2xl">
-            <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
-              No history yet
-            </p>
-            <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
+            <p className="ops-eyebrow text-ops-text-muted">No history yet</p>
+            <h3 className="ops-headline-h3 mt-2">
               Today's check-ins will mirror here as you mark them.
             </h3>
             <p className="mt-3 text-sm leading-6 text-ops-text-secondary">
