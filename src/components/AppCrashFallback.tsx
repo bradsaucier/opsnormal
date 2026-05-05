@@ -230,7 +230,7 @@ export function AppCrashFallback({ error, onRetry }: AppCrashFallbackProps) {
       <div className="mx-auto max-w-4xl">
         <NotchedFrame
           emphasis="support"
-          innerClassName="tactical-panel ops-section-spine-fault bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(249,115,22,0.035)_24%,rgba(255,255,255,0)_46%),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
+          innerClassName="tactical-panel ops-section-spine-fault ops-surface-fault-card p-5 sm:p-6 lg:p-7"
         >
           <div className="grid gap-5">
             <div>
