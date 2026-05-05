@@ -71,8 +71,8 @@ export function AlertSurface({
           className={joinClasses(
             'font-semibold uppercase',
             isCompact
-              ? 'text-[11px] tracking-[0.10em] text-ops-text-secondary'
-              : 'text-sm tracking-[0.14em]',
+              ? 'ops-tracking-display text-[11px] text-ops-text-secondary'
+              : 'ops-tracking-eyebrow text-sm',
             !isCompact && tonePalette.titleClassName,
             titleClassName,
           )}
