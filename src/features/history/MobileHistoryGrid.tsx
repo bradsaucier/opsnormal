@@ -118,18 +118,18 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="clip-notched ops-notch-chip tactical-chip-panel px-3 py-2 text-center text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
+                className="clip-notched ops-notch-chip tactical-chip-panel grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 text-left text-xs uppercase tracking-[0.12em] text-ops-text-secondary"
               >
-                <span className="block text-[10px] text-ops-text-muted">
-                  Week {visibleWeekIndex + 1} of {weekGroups.length}
-                </span>
                 <h3
                   id={visibleWeekHeadingId}
-                  className="mt-1 text-xs text-ops-text-primary"
+                  className="text-xs text-ops-text-primary"
                 >
                   Week of {formatDayLabel(visibleWeekStart)} to{' '}
                   {formatDayLabel(visibleWeekEnd)}
                 </h3>
+                <span className="text-right text-[10px] text-ops-text-muted">
+                  Week {visibleWeekIndex + 1} of {weekGroups.length}
+                </span>
               </div>
               <button
                 type="button"
@@ -312,7 +312,8 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
                             >
                               <div
                                 className={[
-                                  'ops-grid-cell transition [font-variant-numeric:tabular-nums]',
+                                  'ops-grid-cell [font-variant-numeric:tabular-nums]',
+                                  'transition-[background-color,box-shadow,color,transform]',
                                   getCellClassName(status),
                                 ].join(' ')}
                               >
@@ -338,9 +339,9 @@ export function MobileHistoryGrid({ model }: MobileHistoryGridProps) {
             <span
               key={weekGroup[0] ?? `week-${weekIndex}`}
               className={[
-                'clip-notched ops-notch-chip h-[3px] w-3 border',
+                'clip-notched ops-notch-chip h-1.5 w-1.5 rounded-[2px] border',
                 visibleWeekIndex === weekIndex
-                  ? 'border-ops-accent bg-ops-accent'
+                  ? 'ops-history-selected-cell border-ops-accent bg-ops-accent'
                   : 'border-ops-border-struct bg-transparent',
               ].join(' ')}
             />

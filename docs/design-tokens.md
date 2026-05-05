@@ -45,7 +45,8 @@ Application rules:
 
 OpsNormal uses a small tracking scale instead of one-off component values.
 
-- `--ops-tracking-display`: `0.10em` for the product title and large display values
+- `--ops-tracking-display`: `0.08em` for the product title and large display values
+- `--ops-tracking-display-sm`: `0.04em` for compact product title lockups
 - `--ops-tracking-section`: `0.08em` for compact section headings
 - `--ops-tracking-eyebrow`: `0.14em` for standard eyebrows and compact labels
 - `--ops-tracking-eyebrow-strong`: `0.18em` for high-level shell metadata
@@ -71,7 +72,7 @@ Application rules:
 - `--color-ops-surface-interactive`: `#28342e`
 - `--color-ops-text-primary`: `#e6ece9`
 - `--color-ops-text-secondary`: `#b4bfba`
-- `--color-ops-text-muted`: `#8b9691`
+- `--color-ops-text-muted`: `#9aa6a0`
 - `--color-ops-border-soft`: `#ffffff14`
 - `--color-ops-border-struct`: `#ffffff29`
 - `--color-ops-border-strong`: `#ffffff3a`
@@ -80,6 +81,7 @@ Application rules:
 - `--color-ops-accent`: `#6ee7b7`
 - `--color-ops-accent-muted`: `#b7f7da`
 - `--color-ops-accent-border`: `#6ee7b724`
+- `--ops-accent-edge`: `rgba(110, 231, 183, 0.36)`
 
 Application rules:
 
@@ -98,6 +100,7 @@ Application rules:
 - `--ops-elevation-2`: active or hovered panel elevation
 - `--ops-motion-standard`: `160ms ease-out`
 - `--ops-motion-select`: `cubic-bezier(0.2, 0, 0, 1)`
+- `--ops-button-glow`: primary emerald hover lift
 
 Application rules:
 
@@ -284,6 +287,7 @@ Application rules:
 
 - Use standard alert surfaces at panel notch scale through `NotchedFrame`.
 - Use inline alert intensity when a non-critical banner needs tone without another clipped frame.
+- Preserve the tone rail classes on alert inners. They provide non-color-only status recognition.
 - Use the shared alert heading tracking value of `0.16em`.
 - Preserve consumer-specific `role`, `aria-live`, `aria-atomic`, `aria-labelledby`, and `data-testid` wiring when composing the primitive.
 - Prefer the alert tone's mapped action-button variant for the primary action in that surface.

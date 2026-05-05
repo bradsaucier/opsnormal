@@ -11,6 +11,7 @@ import {
 import { NotchedFrame } from './components/NotchedFrame';
 import { PwaUpdateBanner } from './components/PwaUpdateBanner';
 import { SectionCrashFallback } from './components/SectionCrashFallback';
+import { SectorGlyphConstellation } from './components/SectorGlyphConstellation';
 import { SectorGlyphMark } from './components/icons/SectorGlyphs';
 import { TodayPanel } from './features/checkin/TodayPanel';
 import { BackupActionBanner } from './features/export/BackupActionBanner';
@@ -230,8 +231,9 @@ function App() {
         <NotchedFrame
           emphasis="primary"
           notch="shell"
-          innerClassName="tactical-panel bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
+          innerClassName="tactical-panel relative isolate overflow-hidden bg-[linear-gradient(180deg,rgba(110,231,183,0.10),rgba(255,255,255,0.02)),var(--color-ops-surface-1)] p-5 sm:p-6 lg:p-7"
         >
+          <SectorGlyphConstellation />
           <header>
             <div className="grid gap-4 lg:gap-6">
               <div className="flex max-w-4xl">
@@ -247,7 +249,7 @@ function App() {
                       Personal Readiness Tracker
                     </p>
                   </div>
-                  <h1 className="ops-display-lockup-title mt-3 text-3xl font-semibold text-ops-text-primary uppercase sm:mt-4 sm:text-4xl lg:text-5xl">
+                  <h1 className="ops-display-lockup-title mt-3 text-3xl font-semibold text-ops-text-primary normal-case sm:mt-4 sm:text-4xl md:uppercase lg:text-[2.75rem]">
                     OpsNormal
                   </h1>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-ops-text-secondary sm:text-base">
@@ -362,7 +364,7 @@ function App() {
         <NotchedFrame
           emphasis="quiet"
           notch="shell"
-          innerClassName="tactical-subpanel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
+          innerClassName="tactical-subpanel ops-footer-panel px-4 py-4 text-sm leading-7 text-ops-text-secondary"
         >
           <footer>
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
