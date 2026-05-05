@@ -5,6 +5,7 @@ import { computeCheckInStreak, computeCompletionState } from '../lib/history';
 import type { StorageHealth } from '../lib/storage';
 import type { DailyEntry } from '../types';
 import { SECTORS } from '../types';
+import { NotchedFrame } from './NotchedFrame';
 
 interface HeaderTelemetryProps {
   dateKeys: string[];
@@ -142,23 +143,25 @@ function TelemetryChip({
 
 function TelemetryHorizon({ children }: { children: ReactNode }) {
   return (
-    <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-      <div className="clip-notched ops-notch-panel-inner tactical-subpanel ops-surface-horizon-card">
-        <div className="grid lg:grid-cols-[10rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)]">
-          <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
-            <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
-              Status horizon
-            </p>
-            <p className="ops-tracking-grid mt-1 text-[10px] leading-4 text-ops-text-muted uppercase">
-              30-day local picture
-            </p>
-          </div>
-          <div className="ops-telemetry-grid grid grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
-            {children}
-          </div>
+    <NotchedFrame
+      withShadow={false}
+      outerClassName="bg-ops-border-struct"
+      innerClassName="tactical-subpanel ops-surface-horizon-card"
+    >
+      <div className="grid lg:grid-cols-[10rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)]">
+        <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
+          <p className="ops-eyebrow-strong text-ops-accent-muted">
+            Status horizon
+          </p>
+          <p className="ops-tracking-grid mt-1 text-[10px] leading-4 text-ops-text-muted uppercase">
+            30-day local picture
+          </p>
+        </div>
+        <div className="ops-telemetry-grid grid grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,minmax(0,1fr))]">
+          {children}
         </div>
       </div>
-    </div>
+    </NotchedFrame>
   );
 }
 
