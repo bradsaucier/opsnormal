@@ -5,7 +5,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/Inter-Latin.woff2') format('woff2');
+  src: url('/fonts/Inter-Latin-400.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
@@ -17,7 +17,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/Inter-Latin.woff2') format('woff2');
+  src: url('/fonts/Inter-Latin-600.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
     U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
@@ -71,7 +71,7 @@
   --color-ops-surface-interactive: #28342e;
   --color-ops-text-primary: #e6ece9;
   --color-ops-text-secondary: #b4bfba;
-  --color-ops-text-muted: #8b9691;
+  --color-ops-text-muted: #9aa6a0;
   --color-ops-accent: #6ee7b7;
   --color-ops-accent-muted: #b7f7da;
   --color-ops-border-soft: #ffffff14;
@@ -111,7 +111,8 @@
   --ops-notch-chip: 8px;
   --ops-focus-ring: rgba(229, 255, 242, 0.92);
   --ops-focus-ring-edge: rgba(10, 15, 13, 0.96);
-  --ops-tracking-display: 0.1em;
+  --ops-tracking-display: 0.08em;
+  --ops-tracking-display-sm: 0.04em;
   --ops-tracking-section: 0.08em;
   --ops-tracking-eyebrow: 0.14em;
   --ops-tracking-eyebrow-strong: 0.18em;
@@ -120,6 +121,8 @@
   --ops-hover-1-bg: rgba(255, 255, 255, 0.015);
   --ops-hover-2-bg: rgba(255, 255, 255, 0.035);
   --ops-motion-standard: 160ms ease-out;
+  --ops-accent-edge: rgba(110, 231, 183, 0.36);
+  --ops-button-glow: 0 6px 16px rgba(16, 185, 129, 0.2);
   --ops-motion-select: cubic-bezier(0.2, 0, 0, 1);
   --ops-elevation-1:
     0 8px 18px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.14);
@@ -142,7 +145,7 @@
   --ops-status-nominal-text: #c9fae4;
   --ops-status-degraded-border: rgba(245, 158, 11, 0.72);
   --ops-status-degraded-bg: rgba(245, 158, 11, 0.28);
-  --ops-status-degraded-text: #fbd38d;
+  --ops-status-degraded-text: #fde7b1;
   --ops-status-unmarked-border: rgba(255, 255, 255, 0.16);
   --ops-status-unmarked-bg: rgba(36, 48, 42, 0.72);
   --ops-status-unmarked-text: #96a39d;
@@ -162,23 +165,28 @@ body {
   min-height: 100dvh;
   overscroll-behavior-y: contain;
   background:
-    repeating-linear-gradient(
-      0deg,
-      transparent 0 31px,
-      rgba(255, 255, 255, 0.012) 31px 32px
+    radial-gradient(
+      ellipse at 50% -20%,
+      rgba(110, 231, 183, 0.06),
+      transparent 55%
     ),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%),
     var(--color-ops-base);
   color: var(--color-ops-text-primary);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 1280px) {
   body {
     background:
+      radial-gradient(
+        ellipse at 50% -20%,
+        rgba(110, 231, 183, 0.06),
+        transparent 55%
+      ),
       repeating-linear-gradient(
         0deg,
-        transparent 0 31px,
-        rgba(255, 255, 255, 0.012) 31px 32px
+        transparent 0 55px,
+        rgba(255, 255, 255, 0.008) 55px 56px
       ),
       linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 22%),
       var(--color-ops-base);
@@ -284,10 +292,16 @@ h3,
 }
 
 .ops-display-lockup-title {
-  letter-spacing: var(--ops-tracking-section);
+  letter-spacing: var(--ops-tracking-display-sm);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
+  .ops-display-lockup-title {
+    letter-spacing: var(--ops-tracking-section);
+  }
+}
+
+@media (min-width: 1024px) {
   .ops-display-lockup-title {
     letter-spacing: var(--ops-tracking-display);
   }
@@ -604,8 +618,8 @@ h3,
 }
 
 .ops-grid-unmarked {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.66);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
@@ -628,8 +642,8 @@ h3,
     inset 0 -24px 42px rgba(10, 15, 13, 0.14),
     0 0 0 1px rgba(255, 255, 255, 0.02);
   transition:
-    box-shadow 140ms ease,
-    transform 140ms ease;
+    box-shadow var(--ops-motion-standard),
+    transform var(--ops-motion-standard);
 }
 
 .ops-sector-spine-nominal {
@@ -650,13 +664,45 @@ h3,
 .ops-domain-card:focus-within .ops-sector-spine-degraded,
 .ops-domain-card:hover .ops-sector-spine-unmarked,
 .ops-domain-card:focus-within .ops-sector-spine-unmarked {
-  --ops-sector-spine-width: 5px;
+  --ops-sector-spine-width: 6px;
+}
+
+.ops-domain-card-shell {
+  transition:
+    transform var(--ops-motion-standard),
+    box-shadow var(--ops-motion-standard);
+}
+
+.ops-domain-card:hover .ops-domain-card-shell,
+.ops-domain-card:focus-within .ops-domain-card-shell {
+  box-shadow:
+    inset var(--ops-sector-spine-width) 0 0 var(--ops-sector-spine-color),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 0 0 1px var(--ops-accent-edge),
+    inset 0 -24px 42px rgba(10, 15, 13, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    var(--ops-elevation-1);
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .ops-domain-card:hover .ops-domain-card-shell,
   .ops-domain-card:focus-within .ops-domain-card-shell {
     transform: translateY(-1px);
+  }
+
+  .ops-domain-status-controls-pending {
+    animation: ops-unmarked-control-pulse 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes ops-unmarked-control-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+
+  50% {
+    box-shadow: inset 0 0 0 1px rgba(110, 231, 183, 0.16);
   }
 }
 
@@ -889,6 +935,12 @@ h3,
   overflow: hidden;
 }
 
+.ops-telemetry-chip-primary {
+  box-shadow:
+    inset 0 0 0 1px var(--ops-accent-edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
 .ops-telemetry-spark {
   display: flex;
   height: 12px;
@@ -992,12 +1044,12 @@ h3,
 .ops-radio-chip {
   border-radius: 2px;
   transition:
-    transform 120ms ease,
-    box-shadow 120ms ease,
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease,
-    opacity 120ms ease;
+    transform var(--ops-motion-standard),
+    box-shadow var(--ops-motion-standard),
+    background-color var(--ops-motion-standard),
+    border-color var(--ops-motion-standard),
+    color var(--ops-motion-standard),
+    opacity var(--ops-motion-standard);
 }
 
 .ops-radio-chip-ghost {
@@ -1058,8 +1110,8 @@ h3,
 }
 
 .ops-radio-chip.ops-status-unmarked[aria-checked='true'] {
-  --ops-radio-chip-status-border: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.18);
+  --ops-radio-chip-status-border: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.22);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 38%),
     rgba(255, 255, 255, 0.06);
@@ -1067,7 +1119,7 @@ h3,
 }
 
 .ops-history-row {
-  transition: background-color 120ms ease;
+  transition: background-color var(--ops-motion-standard);
 }
 
 .ops-history-row:nth-child(even) {
@@ -1094,9 +1146,9 @@ h3,
 
 .ops-history-cell {
   transition:
-    background-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 120ms ease;
+    background-color var(--ops-motion-standard),
+    box-shadow var(--ops-motion-standard),
+    transform var(--ops-motion-standard);
 }
 
 .ops-history-cell:hover {
@@ -1332,6 +1384,13 @@ h3,
   --ops-button-text: #ffffff;
 }
 
+.ops-action-button-emerald-solid:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.18),
+    var(--ops-button-glow);
+}
+
 .ops-action-button-emerald-solid:focus-visible {
   box-shadow:
     inset 0 0 0 1px var(--ops-focus-ring-solid-edge),
@@ -1368,8 +1427,39 @@ h3,
 }
 
 .ops-export-accordion-trigger {
-  transition-duration: 150ms;
-  transition-timing-function: var(--ops-motion-select);
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.ops-alert-surface {
+  box-shadow: inset 4px 0 0 var(--ops-alert-rail);
+}
+
+.ops-alert-tone-info {
+  --ops-alert-rail: rgba(125, 211, 252, 0.52);
+}
+
+.ops-alert-tone-success {
+  --ops-alert-rail: var(--ops-status-nominal-border);
+}
+
+.ops-alert-tone-attention,
+.ops-alert-tone-warning {
+  --ops-alert-rail: var(--ops-status-degraded-border);
+}
+
+.ops-alert-tone-danger {
+  --ops-alert-rail: rgba(248, 113, 113, 0.54);
+}
+
+.ops-alert-tone-neutral {
+  --ops-alert-rail: var(--color-ops-border-struct);
+}
+
+.ops-footer-panel {
+  box-shadow:
+    inset 4px 0 0 rgba(110, 231, 183, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 .ops-export-accordion-trigger-open {
