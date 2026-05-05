@@ -14,10 +14,10 @@ export function HistoryGrid(props: HistoryGridProps) {
       title="30-Day Readiness Grid"
       meta={
         <div className="space-y-1 text-right">
-          <div className="text-sm font-semibold uppercase tracking-[0.08em] text-ops-text-primary">
+          <div className="ops-tracking-section text-sm font-semibold uppercase text-ops-text-primary">
             {model.streak} day streak
           </div>
-          <div className="text-xs uppercase tracking-[0.14em] text-ops-text-muted">
+          <div className="ops-tracking-eyebrow text-xs uppercase text-ops-text-muted">
             Full daily check-ins
           </div>
         </div>
@@ -26,7 +26,7 @@ export function HistoryGrid(props: HistoryGridProps) {
       {!model.hasEntries ? (
         <div className="ops-flat-panel-strong p-5 sm:p-6">
           <div className="max-w-2xl">
-            <p className="ops-eyebrow text-xs font-semibold tracking-[0.14em] text-ops-text-muted uppercase">
+            <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
               No history yet
             </p>
             <h3 className="ops-headline-h3 mt-2 text-ops-text-primary">
@@ -36,14 +36,6 @@ export function HistoryGrid(props: HistoryGridProps) {
               The grid opens after the first saved sector so the page avoids a
               wall of unmarked cells.
             </p>
-          </div>
-          <div
-            aria-hidden="true"
-            className="mt-5 grid max-w-xl grid-cols-7 gap-1 opacity-40"
-          >
-            {Array.from({ length: 35 }).map((_, index) => (
-              <span key={index} className="ops-grid-cell ops-grid-unmarked" />
-            ))}
           </div>
         </div>
       ) : model.isDesktopHistory ? (

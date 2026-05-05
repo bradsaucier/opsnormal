@@ -45,9 +45,11 @@ Application rules:
 
 OpsNormal uses a small tracking scale instead of one-off component values.
 
-- `--ops-tracking-display`: `0.08em` for the product title and large display values
-- `--ops-tracking-display-sm`: `0.04em` for compact product title lockups
-- `--ops-tracking-section`: `0.08em` for compact section headings
+- `--ops-tracking-caption`: `0.04em` for compact titles and data values
+- `--ops-tracking-title`: `0.06em` for card titles and fault headings
+- `--ops-tracking-display`: `0.10em` for the product title and large display values
+- `--ops-tracking-section`: `0.08em` for section-level metadata
+- `--ops-tracking-grid`: `0.12em` for mobile and desktop grid labels
 - `--ops-tracking-eyebrow`: `0.14em` for standard eyebrows and compact labels
 - `--ops-tracking-eyebrow-strong`: `0.18em` for high-level shell metadata
 - `--ops-tracking-action`: `0.14em` for clipped action buttons
@@ -56,32 +58,31 @@ OpsNormal uses a small tracking scale instead of one-off component values.
 Application rules:
 
 - Use `.ops-headline-h2` and `.ops-headline-h3` before adding heading-specific size or tracking utilities.
-- Use `.ops-tracking-display`, `.ops-tracking-section`, `.ops-eyebrow`, `.ops-eyebrow-strong`, or `.ops-tracking-table` before adding an arbitrary tracking value.
+- Use the `ops-tracking-*` utilities, `.ops-eyebrow`, `.ops-eyebrow-primary`, `.ops-eyebrow-quiet`, or `.ops-eyebrow-strong` before adding an arbitrary tracking value.
 - Action controls inherit tracking from `.ops-action-button`.
 - Do not escalate eyebrow tracking above the product name.
 
 ## Core surfaces
 
 - `--color-ops-base`: `#0a0f0d`
-- `--color-ops-surface-base`: `#101613`
-- `--color-ops-surface-1`: `#151d1a`
-- `--color-ops-surface-2`: `#1c2521`
-- `--color-ops-surface-3`: `#24302a`
-- `--color-ops-surface-raised`: `#18211d`
-- `--color-ops-surface-overlay`: `#1f2a25`
-- `--color-ops-surface-interactive`: `#28342e`
+- `--color-ops-surface-base`: `#0e1411`
+- `--color-ops-surface-1`: `#121814`
+- `--color-ops-surface-2`: `#1a221e`
+- `--color-ops-surface-3`: `#222b27`
+- `--color-ops-surface-raised`: `#1a221e`
+- `--color-ops-surface-overlay`: `#222b27`
+- `--color-ops-surface-interactive`: `#26342d`
 - `--color-ops-text-primary`: `#e6ece9`
 - `--color-ops-text-secondary`: `#b4bfba`
-- `--color-ops-text-muted`: `#9aa6a0`
-- `--color-ops-border-soft`: `#ffffff14`
-- `--color-ops-border-struct`: `#ffffff29`
-- `--color-ops-border-strong`: `#ffffff3a`
-- `--color-ops-panel-border`: `#ffffff1a`
-- `--color-ops-panel-border-strong`: `#ffffff24`
+- `--color-ops-text-muted`: `#8b9691`
+- `--color-ops-border-soft`: `#ffffff12`
+- `--color-ops-border-struct`: `#ffffff26`
+- `--color-ops-border-strong`: `#ffffff38`
+- `--color-ops-panel-border`: `#ffffff12`
+- `--color-ops-panel-border-strong`: `#ffffff26`
 - `--color-ops-accent`: `#6ee7b7`
 - `--color-ops-accent-muted`: `#b7f7da`
 - `--color-ops-accent-border`: `#6ee7b724`
-- `--ops-accent-edge`: `rgba(110, 231, 183, 0.36)`
 
 Application rules:
 
@@ -94,13 +95,14 @@ Application rules:
 
 ## Hover and elevation scale
 
-- `--ops-hover-1-bg`: `rgba(255, 255, 255, 0.015)`
-- `--ops-hover-2-bg`: `rgba(255, 255, 255, 0.035)`
+- `--ops-hover-1-bg`: `rgba(255, 255, 255, 0.01)`
+- `--ops-hover-2-bg`: `rgba(255, 255, 255, 0.025)`
 - `--ops-elevation-1`: standard card elevation
 - `--ops-elevation-2`: active or hovered panel elevation
+- `--ops-motion-fast`: `90ms ease-out`
 - `--ops-motion-standard`: `160ms ease-out`
+- `--ops-motion-slow`: `240ms ease-out`
 - `--ops-motion-select`: `cubic-bezier(0.2, 0, 0, 1)`
-- `--ops-button-glow`: primary emerald hover lift
 
 Application rules:
 
@@ -121,6 +123,9 @@ Inset support surfaces:
 
 - `.tactical-subpanel`
 - `.tactical-subpanel-strong`
+- `.ops-surface-card`
+- `.ops-surface-raised-card`
+- `.ops-surface-overlay-card`
 - `.ops-flat-panel`
 - `.ops-flat-panel-strong`
 - `.ops-inline-alert`
@@ -266,7 +271,7 @@ Guidance:
 - Default size is 44px minimum height. Use `ops-action-button-sm` for compact alert actions and `ops-action-button-lg` for high-emphasis recovery actions.
 - Use semantic tone modifiers rather than ad hoc border and background values.
 - Use emerald for primary affirmative actions, amber for caution, and red or rose for destructive paths.
-- Legacy action tone aliases were removed. JSX should use the canonical tone class names above.
+- `success`, `success-solid`, `warning`, and `danger` are compatibility aliases. New JSX should use the canonical tone class names above.
 - Keep focus indication inside the clipped geometry with the shared inset focus treatment.
 - Avoid rounded button chrome inside primary tactical panels.
 
@@ -287,7 +292,6 @@ Application rules:
 
 - Use standard alert surfaces at panel notch scale through `NotchedFrame`.
 - Use inline alert intensity when a non-critical banner needs tone without another clipped frame.
-- Preserve the tone rail classes on alert inners. They provide non-color-only status recognition.
 - Use the shared alert heading tracking value of `0.16em`.
 - Preserve consumer-specific `role`, `aria-live`, `aria-atomic`, `aria-labelledby`, and `data-testid` wiring when composing the primitive.
 - Prefer the alert tone's mapped action-button variant for the primary action in that surface.

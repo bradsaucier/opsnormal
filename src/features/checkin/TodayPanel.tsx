@@ -50,27 +50,24 @@ function DayCompletionRollup({
   const remainingCount = Math.max(totalCount - markedCount, 0);
 
   return (
-    <div className="ops-flat-panel-strong mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+    <div className="ops-flat-panel-strong mb-4 grid gap-4 p-4 sm:p-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
       <div className="min-w-[8rem]">
-        <p className="ops-eyebrow-mixed">Daily roll-up</p>
-        <p className="mt-2 text-3xl leading-none font-semibold text-ops-text-primary [font-variant-numeric:tabular-nums]">
+        <p className="ops-eyebrow-primary text-xs font-semibold">
+          Daily roll-up
+        </p>
+        <p className="mt-2 text-2xl leading-none font-semibold text-ops-text-primary [font-variant-numeric:tabular-nums]">
           {markedCount}/{totalCount}
         </p>
       </div>
-      <div
-        className={[
-          'text-sm leading-6 text-ops-text-secondary',
-          isComplete ? 'lg:hidden' : '',
-        ].join(' ')}
-      >
+      <div className="text-sm leading-6 text-ops-text-secondary">
         {isComplete
           ? 'All five sectors are marked for today.'
           : `${remainingCount} sector${remainingCount === 1 ? '' : 's'} still open.`}
       </div>
-      <div className="col-span-2 flex flex-wrap items-center gap-3 sm:col-span-1 sm:justify-end lg:col-span-1 lg:col-start-3">
+      <div className="flex flex-wrap items-center gap-3 lg:justify-end">
         <span
           className={[
-            'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-8 items-center border px-3 text-xs font-semibold tracking-[0.14em] uppercase',
+            'ops-status-frame ops-tracking-eyebrow inline-flex min-h-8 items-center rounded-[2px] border px-3 text-xs font-semibold uppercase',
             isComplete ? 'ops-complete-badge' : '',
             isComplete ? 'ops-status-nominal' : 'ops-status-unmarked',
           ].join(' ')}
@@ -78,20 +75,20 @@ function DayCompletionRollup({
           {isComplete ? 'Complete' : 'Open'}
         </span>
         <div
-          className="clip-notched ops-notch-chip tactical-chip-panel flex items-center gap-1.5 px-2 py-1.5"
+          className="flex items-center gap-1.5"
           aria-label="Today sector status pips"
         >
           {SECTORS.map((sector, index) => (
             <span
               key={sector.id}
               className={[
-                'inline-flex h-5 w-5 items-center justify-center border',
+                'inline-flex h-6 w-6 items-center justify-center rounded-[2px] border',
                 getRollupPipClassName(statuses[index] ?? 'unmarked'),
               ].join(' ')}
               title={sector.label}
             >
               <span className="sr-only">{sector.label}</span>
-              <span className="text-[9px] leading-none text-ops-text-primary/70">
+              <span className="text-xs leading-none text-ops-text-primary/70">
                 <SectorGlyphMark sectorId={sector.id} />
               </span>
             </span>
@@ -186,7 +183,7 @@ export function TodayPanel({
           <div>{formatLongDate(todayKey)}</div>
           <span
             className={[
-              'ops-status-frame clip-notched ops-notch-chip inline-flex min-h-7 items-center border px-2.5 text-xs font-semibold tracking-[0.14em] uppercase [font-variant-numeric:tabular-nums]',
+              'ops-status-frame ops-tracking-eyebrow inline-flex min-h-7 items-center rounded-[2px] border px-2.5 text-xs font-semibold uppercase [font-variant-numeric:tabular-nums]',
               completion.isComplete
                 ? 'ops-status-nominal'
                 : 'ops-status-unmarked',
@@ -221,21 +218,25 @@ export function TodayPanel({
         </div>
       ) : null}
 
+      {!hasEntriesForToday ? (
+        <div className="ops-flat-panel-strong mb-4 px-4 py-3">
+          <p className="ops-eyebrow-primary text-xs font-semibold">
+            Awaiting first mark
+          </p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-ops-text-secondary">
+            No sectors are marked for today. Set one state below and the daily
+            roll-up will start tracking live progress.
+          </p>
+        </div>
+      ) : null}
+
       <div
-        className={[
-          'mb-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary',
-          hasEntriesForToday ? 'ops-flat-panel' : 'ops-flat-panel-strong',
-        ].join(' ')}
+        id={directSelectHintId}
+        className="ops-flat-panel mb-4 px-4 py-3 text-sm leading-6 text-ops-text-secondary"
       >
-        {!hasEntriesForToday ? (
-          <p className="ops-eyebrow-mixed mb-2">Awaiting first mark</p>
-        ) : null}
-        <p id={directSelectHintId}>
-          {!hasEntriesForToday ? 'No sectors are marked for today. ' : null}
-          Choose a state directly. Arrow keys move inside the control group.
-          Unmarked means no status recorded for the day. Nominal and degraded
-          are deliberate check-ins, not automatic carry-forward.
-        </p>
+        Choose a state directly. Arrow keys move inside the control group.
+        Unmarked means no status recorded for the day. Nominal and degraded are
+        deliberate check-ins, not automatic carry-forward.
       </div>
 
       <DayCompletionRollup
@@ -245,18 +246,9 @@ export function TodayPanel({
         totalCount={completion.totalCount}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-6 xl:grid-cols-5 xl:gap-5">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-5">
         {SECTORS.map((sector, index) => (
-          <div
-            key={sector.id}
-            className={[
-              'h-full md:col-span-2 xl:col-span-1',
-              index === SECTORS.length - 1
-                ? 'sm:col-span-2 md:col-span-3 xl:col-span-1'
-                : '',
-              index === SECTORS.length - 2 ? 'md:col-span-3 xl:col-span-1' : '',
-            ].join(' ')}
-          >
+          <div key={sector.id}>
             <DomainCard
               sector={sector}
               sectorSigil={`S${index + 1}`}

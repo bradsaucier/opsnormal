@@ -102,8 +102,7 @@ function getSignalChromeClasses(
   if (tone === 'safe') {
     return {
       outer: 'bg-ops-panel-border-strong',
-      inner:
-        'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)]',
+      inner: 'ops-surface-raised-card',
       label: 'text-ops-text-muted',
       value: 'text-ops-text-primary',
       detail: 'text-ops-text-secondary',
@@ -113,8 +112,7 @@ function getSignalChromeClasses(
   if (tone === 'warning') {
     return {
       outer: 'bg-ops-panel-border-strong',
-      inner:
-        'bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)_28%),var(--color-ops-surface-raised)]',
+      inner: 'ops-surface-raised-card',
       label: 'text-[var(--ops-status-degraded-text)] opacity-80',
       value: 'text-[var(--ops-status-degraded-text)]',
       detail: 'text-ops-text-secondary',
@@ -123,8 +121,7 @@ function getSignalChromeClasses(
 
   return {
     outer: 'bg-ops-border-soft',
-    inner:
-      'bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_26%),var(--color-ops-surface-overlay)]',
+    inner: 'ops-surface-overlay-card',
     label: 'text-ops-text-muted',
     value: 'text-ops-text-primary',
     detail: 'text-ops-text-secondary',
@@ -184,7 +181,7 @@ export function PreviewFactCard({
   return (
     <div role="listitem" className="panel-shadow">
       <div className="clip-notched ops-notch-chip bg-ops-border-soft p-px">
-        <div className="clip-notched ops-notch-chip bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%),var(--color-ops-surface-overlay)] p-3">
+        <div className="clip-notched ops-notch-chip ops-surface-overlay-card p-3">
           <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
             {label}
           </p>

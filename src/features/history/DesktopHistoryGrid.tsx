@@ -34,10 +34,6 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
     selectedStatusSummary,
     todayKey,
   } = model;
-  const footnoteBorderClassName =
-    selectedStatus === 'nominal'
-      ? 'border-ops-accent/24'
-      : 'border-ops-border-soft';
 
   return (
     <>
@@ -47,7 +43,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
             This grid is the mirror. Patterns matter more than extra
             instrumentation.
           </p>
-          <p className="text-xs leading-5 tracking-[0.04em] text-ops-text-muted">
+          <p className="ops-tracking-caption text-xs leading-5 text-ops-text-muted">
             Desktop holds the full 30-day picture. Tab exits the grid. Select a
             cell for the detail brief.
           </p>
@@ -107,9 +103,8 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                     >
                       <th
                         role="columnheader"
-                        className="sticky top-0 left-0 z-30 border-r border-b border-ops-border-struct bg-ops-surface-2 px-4 py-1.5 text-left text-xs font-semibold tracking-[0.12em] text-ops-text-secondary uppercase"
+                        className="ops-tracking-grid sticky top-0 left-0 z-30 border-r border-b border-ops-border-struct bg-ops-surface-2 px-4 py-1.5 text-left text-xs font-semibold text-ops-text-secondary uppercase"
                         scope="col"
-                        aria-sort="none"
                       >
                         Sector
                       </th>
@@ -123,18 +118,17 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                             key={dateKey}
                             role="columnheader"
                             className={[
-                              'sticky top-0 z-20 min-w-[3rem] border-b border-ops-border-struct px-2 py-1.5 text-center text-xs font-semibold uppercase tracking-[0.12em]',
+                              'ops-tracking-grid sticky top-0 z-20 min-w-[2.75rem] border-b border-ops-border-struct px-2 py-1.5 text-center text-xs font-semibold uppercase',
                               (dateIndex + 1) % 7 === 0
                                 ? 'ops-history-week-boundary'
                                 : '',
                               isToday
-                                ? 'ops-history-today-header bg-ops-surface-1 text-ops-accent-muted'
+                                ? 'ops-history-today-header bg-emerald-300/10 text-ops-accent-muted'
                                 : isSelectedColumn
                                   ? 'bg-white/[0.035] text-ops-text-primary'
                                   : 'bg-ops-surface-1 text-ops-text-secondary',
                             ].join(' ')}
                             scope="col"
-                            aria-sort="none"
                             aria-current={isToday ? 'date' : undefined}
                             title={isToday ? 'Today' : undefined}
                           >
@@ -154,13 +148,13 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                           role="row"
                           className={[
                             'ops-history-row',
-                            isSelectedRow ? 'ops-history-row-selected' : '',
+                            isSelectedRow ? 'bg-white/[0.035]' : '',
                           ].join(' ')}
                         >
                           <th
                             role="rowheader"
                             className={[
-                              'ops-history-sector-divider sticky left-0 z-20 border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold tracking-[0.16em] uppercase',
+                              'ops-history-sector-divider ops-tracking-table sticky left-0 z-20 border-r border-ops-border-struct bg-ops-surface-2 px-4 py-3 text-left text-xs font-semibold uppercase',
                               isSelectedRow
                                 ? 'text-ops-accent-muted'
                                 : 'text-ops-text-primary',
@@ -239,7 +233,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
                                 <div
                                   title={cellLabel}
                                   className={[
-                                    'ops-grid-cell ops-focus-ring-chip mx-auto w-full transition-[background-color,box-shadow,color,transform] [font-variant-numeric:tabular-nums]',
+                                    'ops-grid-cell ops-focus-ring-chip mx-auto w-full transition [font-variant-numeric:tabular-nums]',
                                     getCellClassName(status),
                                   ].join(' ')}
                                 >
@@ -268,16 +262,16 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="ops-eyebrow text-xs font-semibold uppercase tracking-[0.14em] text-ops-text-muted">
+                  <p className="ops-eyebrow text-xs font-semibold text-ops-text-muted">
                     Selected cell
                   </p>
-                  <h3 className="mt-2 text-sm font-semibold uppercase tracking-[0.06em] text-ops-text-primary">
+                  <h3 className="ops-tracking-title mt-2 text-sm font-semibold uppercase text-ops-text-primary">
                     {selectedSector.label}
                   </h3>
                 </div>
-                <StatusBadge status={selectedStatus} />
+                <StatusBadge status={selectedStatus} size="lg" />
               </div>
-              <p className="mt-5 text-xl leading-none font-semibold tracking-[0.02em] text-ops-text-primary normal-case [font-variant-numeric:tabular-nums]">
+              <p className="ops-tracking-caption mt-5 text-2xl leading-none font-semibold text-ops-text-primary uppercase [font-variant-numeric:tabular-nums]">
                 {formatLongDate(selectedCell.dateKey)}
               </p>
               <p
@@ -286,12 +280,7 @@ export function DesktopHistoryGrid({ model }: DesktopHistoryGridProps) {
               >
                 {selectedStatusSummary}
               </p>
-              <p
-                className={[
-                  'mt-4 border-t pt-4 text-xs leading-5 tracking-[0.12em] text-ops-text-muted uppercase',
-                  footnoteBorderClassName,
-                ].join(' ')}
-              >
+              <p className="ops-tracking-grid mt-4 border-t border-ops-border-soft pt-4 text-xs leading-5 text-ops-text-muted uppercase">
                 {selectedCell.dateKey === todayKey
                   ? 'Today is live. Use the Today panel to update the current status picture.'
                   : 'History is read-only. Use the Today panel to set the current day and let the grid reflect the pattern.'}

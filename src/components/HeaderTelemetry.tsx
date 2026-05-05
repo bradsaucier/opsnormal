@@ -19,7 +19,8 @@ type TelemetrySparkState = 'nominal' | 'degraded' | 'unmarked';
 const toneClassNameByTone: Record<TelemetryTone, string> = {
   default: 'text-ops-text-primary',
   accent: 'text-ops-accent-muted',
-  attention: 'ops-telemetry-attention',
+  attention:
+    'bg-[var(--ops-status-degraded-bg)] text-[var(--ops-status-degraded-text)]',
   subtle: 'text-ops-text-secondary',
 };
 
@@ -114,7 +115,6 @@ function TelemetryChip({
     <div
       className={[
         'ops-telemetry-chip flex min-h-[var(--ops-chip-min-h-lg)] flex-col justify-between px-3 py-3.5 text-left lg:px-4',
-        isPrimary ? 'ops-telemetry-chip-primary' : '',
         isShimmering ? 'ops-telemetry-chip-shimmer' : '',
         toneClassNameByTone[tone],
       ].join(' ')}
@@ -124,15 +124,15 @@ function TelemetryChip({
       </span>
       <span
         className={[
-          'ops-tracking-table mt-2 leading-none font-semibold uppercase [font-variant-numeric:tabular-nums]',
-          isPrimary ? 'text-3xl sm:text-4xl' : 'text-lg sm:text-xl',
+          'ops-tracking-caption mt-2 leading-none font-semibold uppercase [font-variant-numeric:tabular-nums]',
+          isPrimary ? 'text-3xl sm:text-4xl' : 'text-xl sm:text-2xl',
         ].join(' ')}
       >
         {value}
       </span>
       {sparkline ? <TelemetrySparkline states={sparkline} /> : null}
       {detail ? (
-        <span className="ops-eyebrow mt-2 text-[10px] leading-4 text-ops-text-muted">
+        <span className="ops-tracking-grid mt-2 text-[10px] leading-4 text-ops-text-muted uppercase">
           {detail}
         </span>
       ) : null}
@@ -143,13 +143,13 @@ function TelemetryChip({
 function TelemetryHorizon({ children }: { children: ReactNode }) {
   return (
     <div className="clip-notched ops-notch-panel-outer bg-ops-border-struct p-px">
-      <div className="clip-notched ops-notch-panel-inner tactical-subpanel bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(110,231,183,0.035)_32%,rgba(255,255,255,0)_54%),var(--color-ops-surface-overlay)]">
+      <div className="clip-notched ops-notch-panel-inner tactical-subpanel ops-surface-horizon-card">
         <div className="grid lg:grid-cols-[10rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)]">
           <div className="border-b border-ops-border-soft px-3 py-3 lg:border-r lg:border-b-0 lg:px-4">
             <p className="ops-eyebrow-strong ops-mono text-xs font-semibold text-ops-accent-muted">
               Status horizon
             </p>
-            <p className="ops-eyebrow mt-1 text-[10px] leading-4 text-ops-text-muted">
+            <p className="ops-tracking-grid mt-1 text-[10px] leading-4 text-ops-text-muted uppercase">
               30-day local picture
             </p>
           </div>

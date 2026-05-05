@@ -204,7 +204,7 @@ export function ImportRestoreSection({
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="flex-1">
                 <h4
-                  className={`text-sm font-semibold tracking-[var(--ops-tracking-table)] uppercase ${infoTone.titleClassName}`}
+                  className={`ops-tracking-table text-sm font-semibold uppercase ${infoTone.titleClassName}`}
                 >
                   Import preview
                 </h4>

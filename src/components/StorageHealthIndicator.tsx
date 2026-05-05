@@ -222,13 +222,13 @@ export function StorageHealthIndicator({
             className={`grid gap-2 text-xs leading-5 sm:grid-cols-2 ${tonePalette.definitionClassName}`}
           >
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">
+              <dt className="ops-tracking-grid font-semibold uppercase">
                 Install path
               </dt>
               <dd className="mt-1">{getInstallStateLabel(storageHealth)}</dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">
+              <dt className="ops-tracking-grid font-semibold uppercase">
                 Persistence
               </dt>
               <dd className="mt-1">
@@ -236,13 +236,13 @@ export function StorageHealthIndicator({
               </dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">
+              <dt className="ops-tracking-grid font-semibold uppercase">
                 Reconnect state
               </dt>
               <dd className="mt-1">{getReconnectLabel(storageHealth)}</dd>
             </div>
             <div>
-              <dt className="font-semibold tracking-[0.12em] uppercase">
+              <dt className="ops-tracking-grid font-semibold uppercase">
                 Write verify
               </dt>
               <dd className="mt-1">{getVerificationLabel(storageHealth)}</dd>
@@ -250,7 +250,7 @@ export function StorageHealthIndicator({
           </dl>
         ) : null}
         <p
-          className={`text-xs tracking-[0.16em] uppercase ${tonePalette.subduedClassName}`}
+          className={`ops-tracking-table text-xs uppercase ${tonePalette.subduedClassName}`}
         >
           {storageHealth
             ? formatStorageSummary(storageHealth)
